@@ -1,0 +1,5 @@
+{
+    "assetsDir": "resources/assets/",
+    "cssOutput": "public/css/",
+    "jsOutput": "public/js/"
+}

@@ -1,0 +1,94 @@
+/* globals */
+.spacer1 {
+  height: 14px;
+}
+.spacer2 {
+  height: 28px;
+}
+.spacer3 {
+  height: 42px;
+}
+.spacer4 {
+  height: 56px;
+}
+.spacer5 {
+  height: 70px;
+}
+.spacer6 {
+  height: 84px;
+}
+/* structure */
+body {
+  line-height: 1;
+}
+div#wrapper {
+  margin: 0 auto -48px;
+  /* the bottom margin is the negative value of the footer's height */
+  min-height: 100%;
+}
+header {
+  margin-bottom: 24px;
+}
+.top-bar-section ul li > span.informational {
+  display: block;
+  width: 100%;
+  color: white;
+  padding-left: 15px;
+  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: normal;
+  text-transform: none;
+}
+.top-bar-section ul li > span.informational a {
+  color: white;
+  text-decoration: underline;
+  padding-left: 0 !important;
+}
+footer {
+  border-top: 2px solid #660f39;
+  background-color: #2c0719;
+  height: 48px;
+  margin-top: 50px;
+}
+footer div.contents {
+  margin: 0;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+footer div.contents a {
+  color: white;
+  text-decoration: underline;
+}
+footer div.contents ul {
+  margin: 0;
+  padding: 14px 24px;
+  font-size: 0.8rem;
+}
+/* page-elements */
+.txid {
+  font-size: 0.85rem;
+  line-height: 1.25rem;
+}
+.amount {
+  font-size: 0.95rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  color: #444;
+}
+.transactionList .row {
+  padding-top: 4px;
+  padding-bottom: 2px;
+  border-bottom: 1px dotted #ccc;
+}
+.transactionList .row:nth-child(odd) {
+  background: #f2f2f2;
+  position: relative;
+}
+.transactionList .row.xcp-tx .amount {
+  color: #3d9970;
+}
+.transactionList {
+  height: 600px;
+  overflow: hidden;
+}

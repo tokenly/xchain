@@ -1,0 +1,41 @@
+
+.txid {
+    font-size: 0.85rem;
+    line-height: 1.25rem;
+}
+
+.amount {
+    font-size: 0.95rem;
+    line-height: 1.25rem;
+    font-weight: 600;
+    color: #444;
+}
+
+.transactionList .row {
+    padding-top: 4px;
+    padding-bottom: 2px;
+    border-bottom: 1px dotted #ccc;
+}
+
+.transactionList .row:nth-child(odd) {
+    background: #f2f2f2;
+    position: relative;
+}
+
+
+.transactionList .row.xcp-tx .amount {
+    color: @olive;
+    // background: #ff8;
+    // display: block;
+    // position: absolute;
+    // top: 0; left: 0;
+    // width: 100%; height: 100%;
+    // border-left: 12px solid #ff6;
+    // border-right: 12px solid #ff6;
+}
+
+
+.transactionList {
+    height: 600px;
+    overflow: hidden;
+}
