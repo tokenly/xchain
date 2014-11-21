@@ -17,6 +17,7 @@
 @stop
 
 @section('appJavascriptIncludes')
-    <script src="//faye.tokenly.dev:8200/public/client.js"></script>
+    <!-- <script src="//faye.tokenly.dev:8200/public/client.js"></script> -->
+    <script src="//pusher.dev01.tokenly.co/public/client.js"></script>
     <script src="/js/TransactionStreamer.js"></script>
 @stop
