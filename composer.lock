@@ -4,7 +4,7 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "86740eaa60995552bb3981a731022b77",
+    "hash": "25cd6c60ec600e306734780591450936",
     "packages": [
         {
             "name": "classpreloader/classpreloader",
@@ -1800,12 +1800,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-asset-info-cache.git",
-                "reference": "724ea0e45d5a990ec7338d5fa541a7298b8cada2"
+                "reference": "34abcf1c90d5161c798592325d47c2517a9fb198"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-asset-info-cache/zipball/724ea0e45d5a990ec7338d5fa541a7298b8cada2",
-                "reference": "724ea0e45d5a990ec7338d5fa541a7298b8cada2",
+                "url": "https://api.github.com/repos/tokenly/counterparty-asset-info-cache/zipball/34abcf1c90d5161c798592325d47c2517a9fb198",
+                "reference": "34abcf1c90d5161c798592325d47c2517a9fb198",
                 "shasum": ""
             },
             "require": {
@@ -1839,7 +1839,7 @@
                 }
             ],
             "description": "Fetches and caches counterparty asset information",
-            "time": "2014-11-20 19:38:35"
+            "time": "2014-11-21 11:44:08"
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
@@ -1882,6 +1882,58 @@
             ],
             "description": "A counterparty transaction parser",
             "time": "2014-11-21 03:32:37"
+        },
+        {
+            "name": "tokenly/xchain-listener",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tokenly/xchain-listener.git",
+                "reference": "c10f223c7d26ee3a7c65822b2b83b6a6fe156467"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tokenly/xchain-listener/zipball/c10f223c7d26ee3a7c65822b2b83b6a6fe156467",
+                "reference": "c10f223c7d26ee3a7c65822b2b83b6a6fe156467",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.5.0",
+                "tokenly/bitcoin-currency-lib": "dev-master",
+                "tokenly/counterparty-asset-info-cache": "dev-master"
+            },
+            "require-dev": {
+                "laravel/framework": "5.0.x-dev@dev",
+                "mockery/mockery": "~0.9",
+                "orchestra/testbench": "3.0.*@dev",
+                "phpunit/phpunit": "~4",
+                "tokenly/counterparty-transaction-parser": "dev-master"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "test/base/TestCase.php"
+                ],
+                "psr-0": {
+                    "Tokenly\\XChainListener": "src"
+                },
+                "psr-4": {
+                    "Tokenly\\XChainListener\\Test\\": "test/lib"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Devon Weller",
+                    "email": "dweller@devonweller.com",
+                    "homepage": "http://devonweller.com"
+                }
+            ],
+            "description": "A Counterparty transaction library",
+            "time": "2014-11-21 13:35:46"
         },
         {
             "name": "tokenly/xcpd-client",
@@ -2880,6 +2932,7 @@
     "stability-flags": {
         "tokenly/counterparty-transaction-parser": 20,
         "tokenly/counterparty-asset-info-cache": 20,
+        "tokenly/xchain-listener": 20,
         "tokenly/bitcoin-currency-lib": 20,
         "tokenly/xcpd-client": 20,
         "nc/faye-client": 20
