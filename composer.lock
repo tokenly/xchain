@@ -1889,12 +1889,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/xchain-listener.git",
-                "reference": "c10f223c7d26ee3a7c65822b2b83b6a6fe156467"
+                "reference": "b50956fd57ce4548a8ae94eef60735df35466f33"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/xchain-listener/zipball/c10f223c7d26ee3a7c65822b2b83b6a6fe156467",
-                "reference": "c10f223c7d26ee3a7c65822b2b83b6a6fe156467",
+                "url": "https://api.github.com/repos/tokenly/xchain-listener/zipball/b50956fd57ce4548a8ae94eef60735df35466f33",
+                "reference": "b50956fd57ce4548a8ae94eef60735df35466f33",
                 "shasum": ""
             },
             "require": {
