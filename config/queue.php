@@ -30,14 +30,22 @@ return [
 
 	'connections' => [
 
+		'btctx' => [
+			'driver' => 'beanstalkd',
+			'host'   => getenv('BEANSTALK_HOST') ?: '127.0.0.1',
+			'queue'  => 'btctx',
+			'port'   => getenv('BEANSTALK_PORT') ?: 11300,
+			'ttr'    => 60,
+		],
+
 		'sync' => [
 			'driver' => 'sync',
 		],
 
 		'beanstalkd' => [
 			'driver' => 'beanstalkd',
-			'host'   => 'localhost',
-			'queue'  => 'default',
+			'host'   => getenv('BEANSTALK_HOST') ?: '127.0.0.1',
+			'port'   => getenv('BEANSTALK_PORT') ?: 11300,
 			'ttr'    => 60,
 		],
 
