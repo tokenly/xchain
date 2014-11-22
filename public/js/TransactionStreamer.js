@@ -6,14 +6,6 @@
       var client, txList;
       client = new window.Faye.Client("" + pusherUrl + "/public");
       txList = $('.transactionList');
-      client.addExtension({
-        outgoing: function(message, callback) {
-          console.log("message.channel=", message.channel);
-          if (message.channel === '/meta/connect') {
-            console.log("connected with " + message.connectionType);
-          }
-        }
-      });
       client.subscribe('/tick', function(message) {
         console.log('ts=', message.ts);
       });

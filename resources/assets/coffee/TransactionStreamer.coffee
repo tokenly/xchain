@@ -6,13 +6,13 @@ window.Streamer = do ($=jQuery)->
         client = new window.Faye.Client("#{pusherUrl}/public")
         txList = $('.transactionList')
 
-        client.addExtension {
-            outgoing: (message, callback)->
-                console.log "message.channel=",message.channel
-                if message.channel == '/meta/connect'
-                    console.log "connected with #{message.connectionType}"
-                return
-        }
+        # client.addExtension {
+        #     outgoing: (message, callback)->
+        #         console.log "message.channel=",message.channel
+        #         if message.channel == '/meta/connect'
+        #             console.log "connected with #{message.connectionType}"
+        #         return
+        # }
 
         client.subscribe '/tick', (message)->
             console.log('ts=',message.ts);
