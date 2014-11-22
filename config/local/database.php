@@ -2,6 +2,8 @@
 
 return [
 
+	'default' => 'mysql',
+
 	/*
 	|--------------------------------------------------------------------------
 	| Database Connections
@@ -23,23 +25,12 @@ return [
 		'mysql' => [
 			'driver'    => 'mysql',
 			'host'      => 'localhost',
-			'database'  => 'homestead',
-			'username'  => 'homestead',
-			'password'  => 'secret',
+			'database'  => 'tokenly_xchain_dev',
+			'username'  => 'root',
+			'password'  => '',
 			'charset'   => 'utf8',
 			'collation' => 'utf8_unicode_ci',
 			'prefix'    => '',
-		],
-
-		'pgsql' => [
-			'driver'   => 'pgsql',
-			'host'     => 'localhost',
-			'database' => 'homestead',
-			'username' => 'homestead',
-			'password' => 'secret',
-			'charset'  => 'utf8',
-			'prefix'   => '',
-			'schema'   => 'public',
 		],
 
 	],

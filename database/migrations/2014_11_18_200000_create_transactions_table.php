@@ -13,10 +13,14 @@ class CreateTransactionsTable extends Migration
      */
     public function up()
     {
-        Schema::create('xchain_transactions', function (Blueprint $table) {
+        Schema::create('transaction', function (Blueprint $table) {
             $table->increments('id');
             $table->char('txid', 64)->index();
-
+            $table->boolean('is_mempool')->index();
+            $table->boolean('is_xcp')->index();
+            $table->mediumInteger('block_seen');
+            $table->mediumInteger('block_confirmed')->index();
+            $table->timestamps();
         });
     }
 
@@ -27,6 +31,6 @@ class CreateTransactionsTable extends Migration
      */
     public function down()
     {
-        Schema::drop('xchain_transactions');
+        Schema::drop('transaction');
     }
 }

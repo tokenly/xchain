@@ -1,6 +1,6 @@
 <?php
 
-namespace Tokenly\XChainListener\Repository;
+namespace App\Repositories;
 
 use \Exception;
 

@@ -54,10 +54,10 @@ return [
 
 		'mysql' => [
 			'driver'    => 'mysql',
-			'host'      => 'localhost',
-			'database'  => 'forge',
-			'username'  => 'forge',
-			'password'  => '',
+            'host'      => 'mariadb',
+            'database'  => 'tokenly_accounts_prod',
+            'username'  => getenv('DB_USERNAME') ?: 'root',
+            'password'  => getenv('DB_PASSWORD') ?: '',
 			'charset'   => 'utf8',
 			'collation' => 'utf8_unicode_ci',
 			'prefix'    => '',
