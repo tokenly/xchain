@@ -95,7 +95,7 @@ return [
 	|
 	*/
 
-	'log' => 'daily',
+	'log' => 'single',
 
 	/*
 	|--------------------------------------------------------------------------
@@ -152,6 +152,7 @@ return [
 		 */
 		'App\Providers\XChain\XChainHandlerServiceProvider',
 		'App\Providers\XChain\BlockingBeanstalkServiceProvider',
+		'App\Providers\XChain\LogEntries\LogEntriesServiceProvider',
 	],
 
 	/*
