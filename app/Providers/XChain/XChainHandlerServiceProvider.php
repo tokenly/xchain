@@ -21,7 +21,7 @@ class XChainHandlerServiceProvider extends ServiceProvider {
 
     protected function bindFayeClient() {
         $this->app->bind('Nc\FayeClient\Client', function($app) {
-            $client = new Client(new CurlAdapter(), $app['config']['faye.serverUrl']);
+            $client = new Client(new CurlAdapter(), $app['config']['pusher.serverUrl'].'/public');
             return $client;
         });
     }

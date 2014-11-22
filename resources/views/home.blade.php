@@ -17,7 +17,7 @@
 @stop
 
 @section('appJavascriptIncludes')
-    <!-- <script src="//faye.tokenly.dev:8200/public/client.js"></script> -->
-    <script src="//pusher.dev01.tokenly.co/public/client.js"></script>
+    <script src="{{$pusherUrl}}/public/client.js"></script>
     <script src="/js/TransactionStreamer.js"></script>
+    <script>window.Streamer.init('{{$pusherUrl}}');</script>
 @stop
