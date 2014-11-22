@@ -151,7 +151,7 @@ return [
 		 * Local App Service Providers...
 		 */
 		'App\Providers\XChain\XChainHandlerServiceProvider',
-		'App\Providers\XChain\BlockingBeanstalkServiceProvider',
+		'App\Providers\XChain\BlockingBeanstalkd\BlockingBeanstalkServiceProvider',
 		'App\Providers\XChain\LogEntries\LogEntriesServiceProvider',
 	],
 

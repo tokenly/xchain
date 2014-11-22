@@ -1,12 +1,9 @@
 <?php 
 
-namespace App\Providers\XChain;
+namespace App\Providers\XChain\BlockingBeanstalkd;
 
 use App\Providers\XChain\BlockingBeanstalkd\BlockingBeanstalkdConnector;
 use Illuminate\Queue\QueueServiceProvider;
-use Illuminate\Support\ServiceProvider;
-use Nc\FayeClient\Adapter\CurlAdapter;
-use Nc\FayeClient\Client;
 
 class BlockingBeanstalkServiceProvider extends QueueServiceProvider {
 
