@@ -31,7 +31,7 @@ return [
 	'connections' => [
 
 		'btctx' => [
-			'driver' => 'beanstalkd',
+			'driver' => 'blockingbeanstalkd',
 			'host'   => '127.0.0.1',
 			'queue'  => 'btctx',
 			'port'   => 11302,

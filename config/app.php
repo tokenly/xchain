@@ -133,7 +133,7 @@ return [
 		'Illuminate\Hashing\HashServiceProvider',
 		'Illuminate\Mail\MailServiceProvider',
 		'Illuminate\Pagination\PaginationServiceProvider',
-		'Illuminate\Queue\QueueServiceProvider',
+		// 'Illuminate\Queue\QueueServiceProvider', // <-- we override this
 		'Illuminate\Redis\RedisServiceProvider',
 		'Illuminate\Auth\Passwords\PasswordResetServiceProvider',
 		'Illuminate\Session\SessionServiceProvider',
@@ -151,6 +151,7 @@ return [
 		 * Local App Service Providers...
 		 */
 		'App\Providers\XChain\XChainHandlerServiceProvider',
+		'App\Providers\XChain\BlockingBeanstalkServiceProvider',
 	],
 
 	/*

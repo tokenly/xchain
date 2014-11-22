@@ -31,7 +31,7 @@ return [
 	'connections' => [
 
 		'btctx' => [
-			'driver' => 'beanstalkd',
+			'driver' => 'blockingbeanstalkd',
 			'host'   => getenv('BEANSTALK_HOST') ?: '127.0.0.1',
 			'queue'  => 'btctx',
 			'port'   => getenv('BEANSTALK_PORT') ?: 11300,
