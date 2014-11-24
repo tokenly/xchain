@@ -19,6 +19,7 @@ class XChainHandler {
         $push_data = [
             'txid'             => $tx_event['txid'],
             'isCounterpartyTx' => $tx_event['isCounterpartyTx'],
+            'type'             => $tx_event['isCounterpartyTx'] ? $tx_event['counterPartyTxType'] : 'bitcoin',
             'quantity'         => $tx_event['quantity'],
             'asset'            => $tx_event['asset'],
             'source'           => ($tx_event['sources'] ? $tx_event['sources'][0] : null),

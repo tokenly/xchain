@@ -19,6 +19,13 @@ window.Streamer = do ($=jQuery)->
             return
 
         client.subscribe '/tx', (event)->
+            if event.isCounterpartyTx and event.type != 'send'
+                desc = "#{event.type}"
+            else
+                desc = "#{event.quantity} #{event.asset}"
+
+
+
             newEl = $("""
                 <div class="row #{if event.isCounterpartyTx then 'xcp' else 'btc'}-tx">
                     <span class="highlight"></span>
