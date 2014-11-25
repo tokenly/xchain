@@ -1,6 +1,6 @@
 <?php 
 
-namespace App\Providers\XChain\LogEntries;
+namespace App\Providers\LogEntries;
 
 use Illuminate\Support\ServiceProvider;
 use Monolog\Formatter\JsonFormatter;
@@ -16,9 +16,6 @@ class LogEntriesServiceProvider extends ServiceProvider {
 
         if ($token) {
             $handler = new LogEntriesHandler($token, $this->app['config']['logentries.ssl']);
-
-            // $formatter = new LineFormatter("%level_name%: %message% %context%\n", null, false);
-            // $handler->setFormatter($formatter);
 
             $formatter = new JsonFormatter();
             $handler->setFormatter($formatter);

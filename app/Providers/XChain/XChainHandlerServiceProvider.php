@@ -8,6 +8,8 @@ use Nc\FayeClient\Client;
 
 class XChainHandlerServiceProvider extends ServiceProvider {
 
+    protected $defer = true;
+
     /**
      * Register the service provider.
      *
@@ -16,9 +18,13 @@ class XChainHandlerServiceProvider extends ServiceProvider {
     public function register()
     {
         $this->bindFayeClient();
-        $this->app->make('events')->subscribe('App\Handlers\XChain\XChainHandler');
+        $this->app->make('events')->subscribe('App\Handlers\XChain\XChainWebsocketPusherHandler');
+
+        $this->app->make('events')->subscribe('App\Handlers\XChain\XChainNotificationBuilderHandler');
     }
 
+
+    // this is for the websocket pusher
     protected function bindFayeClient() {
         $this->app->bind('Nc\FayeClient\Client', function($app) {
             $client = new Client(new CurlAdapter(), $app['config']['pusher.serverUrl'].'/public');

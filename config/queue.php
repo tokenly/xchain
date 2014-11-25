@@ -38,38 +38,14 @@ return [
 			'ttr'    => 60,
 		],
 
-		'sync' => [
-			'driver' => 'sync',
-		],
-
-		'beanstalkd' => [
-			'driver' => 'beanstalkd',
+		'notifications_out' => [
+			'driver' => 'blockingbeanstalkd',
 			'host'   => getenv('BEANSTALK_HOST') ?: '127.0.0.1',
+			'queue'  => 'notifications_out',
 			'port'   => getenv('BEANSTALK_PORT') ?: 11300,
 			'ttr'    => 60,
 		],
 
-		'sqs' => [
-			'driver' => 'sqs',
-			'key'    => 'your-public-key',
-			'secret' => 'your-secret-key',
-			'queue'  => 'your-queue-url',
-			'region' => 'us-east-1',
-		],
-
-		'iron' => [
-			'driver'  => 'iron',
-			'host'    => 'mq-aws-us-east-1.iron.io',
-			'token'   => 'your-token',
-			'project' => 'your-project-id',
-			'queue'   => 'your-queue-name',
-			'encrypt' => true,
-		],
-
-		'redis' => [
-			'driver' => 'redis',
-			'queue'  => 'default',
-		],
 
 	],
 

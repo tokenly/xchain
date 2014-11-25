@@ -1,0 +1,33 @@
+# simple mempool transaction received
+
+monitoredAddresses:
+  - address: RECIPIENT01
+    monitor_type: receive
+
+transactions:
+  -
+    txid: tx01
+    mempool: true
+    sender: SENDER01
+    recipient: RECIPIENT01
+    isCounterpartyTx: true
+    asset: LTBCOIN
+    quantity: 500
+    blockId: 300000
+
+notifications:
+  -
+    txid: tx01
+    event: receive
+    notifiedAddress: RECIPIENT01
+    sources: SENDER01
+    isCounterpartyTx: true
+    destinations: RECIPIENT01
+    confirmed: false
+    confirmations: 0
+    asset: LTBCOIN
+    quantity: 500
+    blockId: 300000
+
+
+

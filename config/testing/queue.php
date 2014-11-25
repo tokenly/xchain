@@ -15,7 +15,7 @@ return [
 	|
 	*/
 
-	'default' => 'beanstalkd',
+	'default' => 'sync',
 
 	/*
 	|--------------------------------------------------------------------------
@@ -31,12 +31,13 @@ return [
 	'connections' => [
 
 		'btctx' => [
-			'driver' => 'blockingbeanstalkd',
-			'host'   => '127.0.0.1',
-			'queue'  => 'btctx',
-			'port'   => 11302,
-			'ttr'    => 60,
+			'driver' => 'sync',
 		],
+
+		'notifications_out' => [
+			'driver' => 'sync',
+		],
+
 
 	],
 
@@ -52,7 +53,7 @@ return [
 	*/
 
 	'failed' => [
-		'database' => 'mysql', 'table' => 'failed_jobs',
+		'database' => 'sqlite', 'table' => 'failed_jobs',
 	],
 
 ];
