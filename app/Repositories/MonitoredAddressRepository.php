@@ -12,6 +12,7 @@ class MonitoredAddressRepository
 {
 
     public function create($attributes) {
+        if (!isset($attributes['active'])) { $attributes['active'] = true; }
         return MonitoredAddress::create($attributes);
     }
 

@@ -17,6 +17,7 @@ class CreateMonitoredAddressTable extends Migration
             $table->increments('id');
             $table->char('address', 35)->index();
             $table->tinyInteger('monitor_type');
+            $table->tinyInteger('active');
             $table->timestamps();
         });
     }

@@ -12,7 +12,8 @@
         "tokenly/xchain-listener": "dev-master@dev",
         "tokenly/bitcoin-currency-lib": "dev-master@dev",
         "tokenly/xcpd-client": "dev-master@dev",
-        "nc/faye-client": "dev-master"
+        "nc/faye-client": "dev-master",
+        "rhumsaa/uuid": "~2."
     },
     "require-dev": {
         "phpunit/phpunit": "~4.0"
