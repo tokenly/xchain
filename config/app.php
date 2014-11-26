@@ -150,7 +150,7 @@ return [
 		/*
 		 * Local App Service Providers...
 		 */
-		'App\Providers\XChain\BlockingBeanstalkd\BlockingBeanstalkServiceProvider', // <-- must go first
+		'App\Providers\BlockingBeanstalkd\BlockingBeanstalkServiceProvider', // <-- must go first
 		'App\Providers\XChain\XChainHandlerServiceProvider',
 		'App\Providers\LogEntries\LogEntriesServiceProvider',
 	],

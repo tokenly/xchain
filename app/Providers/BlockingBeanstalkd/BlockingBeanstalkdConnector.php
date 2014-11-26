@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Providers\XChain\BlockingBeanstalkd;
+namespace App\Providers\BlockingBeanstalkd;
 
-use App\Providers\XChain\BlockingBeanstalkd\BlockingBeanstalkdQueue;
+use App\Providers\BlockingBeanstalkd\BlockingBeanstalkdQueue;
 use Illuminate\Queue\Connectors\ConnectorInterface;
 use Pheanstalk\Pheanstalk;
 use Pheanstalk\PheanstalkInterface;

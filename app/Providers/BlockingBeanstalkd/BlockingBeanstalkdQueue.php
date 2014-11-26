@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Providers\XChain\BlockingBeanstalkd;
+namespace App\Providers\BlockingBeanstalkd;
 
 
 use Illuminate\Queue\BeanstalkdQueue;

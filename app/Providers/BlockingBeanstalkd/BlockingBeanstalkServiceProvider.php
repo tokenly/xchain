@@ -1,8 +1,8 @@
 <?php 
 
-namespace App\Providers\XChain\BlockingBeanstalkd;
+namespace App\Providers\BlockingBeanstalkd;
 
-use App\Providers\XChain\BlockingBeanstalkd\BlockingBeanstalkdConnector;
+use App\Providers\BlockingBeanstalkd\BlockingBeanstalkdConnector;
 use Illuminate\Queue\QueueServiceProvider;
 
 class BlockingBeanstalkServiceProvider extends QueueServiceProvider {
