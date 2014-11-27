@@ -27,4 +27,9 @@ class NotificationRepository
         return Notification::find($id)->first();
     }
 
+    public function findByUuid($uuid) {
+        return Notification::where(['uuid', $uuid])->first();
+    }
+
+
 }

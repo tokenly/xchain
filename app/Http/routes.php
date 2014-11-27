@@ -13,6 +13,9 @@
 
 $router->get('/', 'HomeController@index');
 
+$router->resource('api/v1/monitor', 'MonitorController', ['except' => ['create','edit']]);
+
+
 /*
 |--------------------------------------------------------------------------
 | Authentication & Password Reset Controllers

@@ -15,7 +15,7 @@ class CreateNotificationTable extends Migration
     {
         Schema::create('notification', function (Blueprint $table) {
             $table->increments('id');
-            $table->char('uuid', 36);
+            $table->char('uuid', 36)->unique();
             $table->integer('monitored_address_id')->unsigned();
             $table->foreign('monitored_address_id')->references('id')->on('monitored_address');
             $table->tinyInteger('status')->index();

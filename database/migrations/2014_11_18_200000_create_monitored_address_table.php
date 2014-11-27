@@ -15,6 +15,7 @@ class CreateMonitoredAddressTable extends Migration
     {
         Schema::create('monitored_address', function (Blueprint $table) {
             $table->increments('id');
+            $table->char('uuid', 36)->unique();
             $table->char('address', 35)->index();
             $table->tinyInteger('monitor_type');
             $table->tinyInteger('active');

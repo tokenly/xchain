@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Models\Base\APIModel;
 use \Exception;
 
 /*
 * MonitoredAddress
 */
-class MonitoredAddress extends Model
+class MonitoredAddress extends APIModel
 {
 
     const MONITOR_TYPE_SEND    = 1;
@@ -22,6 +22,8 @@ class MonitoredAddress extends Model
     protected $table = 'monitored_address';
 
     protected static $unguarded = true;
+
+    protected $api_attributes = ['id', 'address', 'monitor_type', 'active'];
 
 
     public function setMonitorTypeAttribute($type_text) { $this->attributes['monitor_type'] = $this->monitorTypeTextToMonitorTypeID($type_text); }
