@@ -1,8 +1,12 @@
 <?php namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Helpers\APIControllerHelper;
 use App\Http\Requests\API\CreateMonitorRequest;
+use App\Http\Requests\API\UpdateMonitorRequest;
 use App\Repositories\MonitoredAddressRepository;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 
 class MonitorController extends Controller {
@@ -12,34 +16,20 @@ class MonitorController extends Controller {
      *
      * @return Response
      */
-    public function index()
+    public function index(APIControllerHelper $helper, MonitoredAddressRepository $address_respository)
     {
         // all monitors
-        
+        return $helper->index($address_respository);
     }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return Response
-     */
-    // public function create()
-    // {
-    //  //
-    // }
 
     /**
      * Store a newly created resource in storage.
      *
      * @return Response
      */
-    public function store(CreateMonitorRequest $request, MonitoredAddressRepository $address_respository)
+    public function store(APIControllerHelper $helper, CreateMonitorRequest $request, MonitoredAddressRepository $address_respository)
     {
-        $attributes = $request->only(['address', 'monitorType', 'active',]);
-
-        $new_address = $address_respository->create($attributes);
-
-        return json_encode($new_address->serializeForAPI());
+        return $helper->store($address_respository, $request->only(array_keys($request->rules())));
     }
 
     /**
@@ -48,21 +38,10 @@ class MonitorController extends Controller {
      * @param  int  $id
      * @return Response
      */
-    public function show($id)
+    public function show(APIControllerHelper $helper, MonitoredAddressRepository $address_respository, $id)
     {
-        //
+        return $helper->show($address_respository, $id);
     }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return Response
-     */
-    // public function edit($id)
-    // {
-    //  //
-    // }
 
     /**
      * Update the specified resource in storage.
@@ -70,9 +49,10 @@ class MonitorController extends Controller {
      * @param  int  $id
      * @return Response
      */
-    public function update($id)
+    public function update(APIControllerHelper $helper, UpdateMonitorRequest $request, MonitoredAddressRepository $address_respository, $id)
     {
-        //
+        Log::info('attrs:'.json_encode($request->only(array_keys($request->rules()), 192)));
+        return $helper->update($address_respository, $id, $request->only(array_keys($request->rules())));
     }
 
     /**
@@ -81,9 +61,9 @@ class MonitorController extends Controller {
      * @param  int  $id
      * @return Response
      */
-    public function destroy($id)
+    public function destroy(APIControllerHelper $helper, MonitoredAddressRepository $address_respository, $id)
     {
-        //
+        return $helper->destroy($address_respository, $id);
     }
 
 }

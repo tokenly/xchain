@@ -8,56 +8,124 @@ class MonitoredAddressAPITest extends TestCase {
 
     public function testAPIAddMonitoredAddress()
     {
-        // post using API
+        $api_tester = $this->getAPITester();
+
         $posted_vars = [
             'address'     => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD',
             'monitorType' => 'receive',
         ];
-        $response = $this->call('POST', '/api/v1/monitor', $posted_vars);
-        PHPUnit::assertEquals(200, $response->getStatusCode(), "Response was: ".$response->getContent());
-        $created_address_from_api = json_decode($response->getContent(), 1);
-        PHPUnit::assertNotEmpty($created_address_from_api);
-        PHPUnit::assertEquals(
-            ['id' => $created_address_from_api['id'], 'address' => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', 'monitorType' => 'receive', 'active' => true],
-            $created_address_from_api
-        );
-
-    
-        $monitored_address_repo = $this->app->make('App\Repositories\MonitoredAddressRepository');
-        $loaded_address_model = $monitored_address_repo->findByAddress('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD')->first();
-        PHPUnit::assertNotEmpty($loaded_address_model);
-        PHPUnit::assertEquals($created_address_from_api['id'], $loaded_address_model['uuid']);
-        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $loaded_address_model['address']);
+        $expected_created_resource = [
+            'id'          => '{{response.id}}',
+            'address'     => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD',
+            'monitorType' => 'receive',
+            'active'      => true
+        ];
+        $loaded_address_model = $api_tester->testAddResource($posted_vars, $expected_created_resource);
     }
 
     public function testAPIErrorsAddMonitoredAddress()
     {
-        $this->runMonitorError(
+        $api_tester = $this->getAPITester();
+        $api_tester->testAddErrors([
             [
-                'address'     => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD',
-                'monitorType' => 'bad',
+                'postVars' => [
+                    'address'     => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD',
+                    'monitorType' => 'bad',
+                ],
+                'expectedErrorString' => 'The selected monitor type is invalid',
             ],
-            'The selected monitor type is invalid'
-        );
-
-        $this->runMonitorError(
             [
+                'postVars' => [
                 'address'     => 'xBAD123456789',
                 'monitorType' => 'receive',
             ],
-            'The address was invalid'
-        );
+                'expectedErrorString' => 'The address was invalid',
+            ],
+        ]);
     }
 
+    public function testAPIListMonitoredAddresses() {
+        $api_tester = $this->getAPITester();
+
+        $helper = $this->app->make('\MonitoredAddressHelper');
+        $created_addresses = [
+            $helper->createSampleMonitoredAddress(),
+            $helper->createSampleMonitoredAddress(['address' => '1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz']),
+        ];
+
+        $loaded_addresses_from_api = $api_tester->testListResources($created_addresses);
+
+        // sanity check
+        PHPUnit::assertEquals('1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz', $loaded_addresses_from_api[1]['address']);
+    }
+
+    public function testAPIGetMonitoredAddress() {
+        $helper = $this->app->make('\MonitoredAddressHelper');
+        $created_address = $helper->createSampleMonitoredAddress();
+
+        $api_tester = $this->getAPITester();
+        $loaded_address_from_api = $api_tester->testGetResource($created_address);
+        PHPUnit::assertEquals(true, $loaded_address_from_api['active']);
+    }
+
+    public function testAPIGetInactiveMonitoredAddress() {
+        $helper = $this->app->make('\MonitoredAddressHelper');
+        $created_address = $helper->createSampleMonitoredAddress(['active' => false]);
+
+        $api_tester = $this->getAPITester();
+        $loaded_address_from_api = $api_tester->testGetResource($created_address);
+        PHPUnit::assertEquals(false, $loaded_address_from_api['active']);
+    }
+
+    public function testAPIUpdateMonitoredAddress() {
+        $helper = $this->app->make('\MonitoredAddressHelper');
+        $created_address = $helper->createSampleMonitoredAddress();
+        $update_vars = [
+            'monitorType' => 'send',
+            'active'      => false,
+        ];
+
+        $api_tester = $this->getAPITester();
+        $loaded_address_from_api = $api_tester->testUpdateResource($created_address, $update_vars);
+        PHPUnit::assertEquals(false, $loaded_address_from_api['active']);
+
+    }
+
+    public function testAPIUpdateErrorsMonitoredAddress() {
+        $helper = $this->app->make('\MonitoredAddressHelper');
+        $created_address = $helper->createSampleMonitoredAddress();
+
+        $api_tester = $this->getAPITester();
+        $api_tester->testUpdateErrors($created_address, [
+            [
+                'postVars' => [
+                    'monitorType' => 'bad',
+                ],
+                'expectedErrorString' => 'The selected monitor type is invalid',
+            ],
+            [
+                'postVars' => [
+                    'active' => 'foobar',
+                ],
+                'expectedErrorString' => 'The active field must be true or false',
+            ],
+        ]);
+
+    }
+
+    public function testAPIDeleteMonitoredAddress() {
+        $helper = $this->app->make('\MonitoredAddressHelper');
+        $created_address = $helper->createSampleMonitoredAddress();
+        $api_tester = $this->getAPITester();
+        $api_tester->testDeleteResource($created_address);
+    }
 
 
     ////////////////////////////////////////////////////////////////////////
     
-    protected function runMonitorError($posted_vars, $expected_error) {
-        $response = $this->call('POST', '/api/v1/monitor', $posted_vars);
-        PHPUnit::assertEquals(400, $response->getStatusCode(), "Response was: ".$response->getContent());
-        $response_data = json_decode($response->getContent(), true);
-        PHPUnit::assertContains($expected_error, $response_data['errors'][0]);
+    protected function getAPITester() {
+        return $this->app->make('APITester', [$this, '/api/v1/monitors', $this->app->make('App\Repositories\MonitoredAddressRepository')]);
     }
+
 
 }

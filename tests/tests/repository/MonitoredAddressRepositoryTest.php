@@ -36,5 +36,32 @@ class MonitoredAddressRepositoryTest extends TestCase {
         PHPUnit::assertEquals(2, $loaded_address_models->count());
     }
 
+    public function testFindByUUID()
+    {
+        // insert
+        $monitored_address_repo = $this->app->make('App\Repositories\MonitoredAddressRepository');
+        $created_address = $monitored_address_repo->create(['address' => '1recipient111111111111111111111111', 'monitor_type' => 'receive']);
+
+        // load from repo
+        $loaded_address_model = $monitored_address_repo->findByUuid($created_address['uuid']);
+        PHPUnit::assertNotEmpty($loaded_address_model);
+        PHPUnit::assertEquals($created_address['id'], $loaded_address_model['id']);
+        PHPUnit::assertEquals($created_address['address'], $loaded_address_model['address']);
+    }
+
+    public function testDeleteByUUID()
+    {
+        // insert
+        $monitored_address_repo = $this->app->make('App\Repositories\MonitoredAddressRepository');
+        $created_address = $monitored_address_repo->create(['address' => '1recipient111111111111111111111111', 'monitor_type' => 'receive']);
+
+        // delete
+        PHPUnit::assertTrue($monitored_address_repo->deleteByUuid($created_address['uuid']));
+
+        // load from repo
+        $loaded_address_model = $monitored_address_repo->findByUuid($created_address['uuid']);
+        PHPUnit::assertEmpty($loaded_address_model);
+    }
+
 
 }

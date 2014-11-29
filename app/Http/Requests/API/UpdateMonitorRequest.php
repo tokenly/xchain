@@ -7,25 +7,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Validator;
 use LinusU\Bitcoin\AddressValidator;
 
-class CreateMonitorRequest extends APIRequest {
+class UpdateMonitorRequest extends APIRequest {
 
-
-
-    public function getValidatorInstance()
-    {
-        $validator = parent::getValidatorInstance();
-
-        $validator->after(function () use ($validator)
-        {
-            // validate address
-            $address = $this->get('address');
-            if (!AddressValidator::isValid($address)) {
-                $validator->errors()->add('address', 'The address was invalid.');
-            }
-        });
-
-        return $validator;
-    }
 
 
     /**
@@ -36,8 +19,7 @@ class CreateMonitorRequest extends APIRequest {
     public function rules()
     {
         return [
-            'address'     => 'required',
-            'monitorType' => 'required|in:send,receive',
+            'monitorType' => 'in:send,receive',
             'active'      => 'boolean',
         ];
     }
@@ -51,5 +33,6 @@ class CreateMonitorRequest extends APIRequest {
     {
         return true;
     }
+
 
 }

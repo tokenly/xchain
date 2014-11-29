@@ -29,6 +29,9 @@ class MonitoredAddress extends APIModel
     public function setMonitorTypeAttribute($type_text) { $this->attributes['monitor_type'] = $this->monitorTypeTextToMonitorTypeID($type_text); }
     public function getMonitorTypeAttribute() { return $this->monitorTypeIDToMonitorTypeText($this->attributes['monitor_type']); }
 
+    public function setActiveAttribute($active) { $this->attributes['active'] = $active ? 1 : 0; }
+    public function getActiveAttribute() { return !!$this->attributes['active']; }
+
 
     public function monitorTypeTextToMonitorTypeID($type_text) {
         switch ($type_text) {
