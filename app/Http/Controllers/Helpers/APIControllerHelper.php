@@ -69,6 +69,7 @@ class APIControllerHelper {
         $success = $api_resource_repository->update($resource, $attributes);
         if (!$success) { return new JsonResponse(['errors' => ['resource not found']], 404); }
 
+        return json_encode($resource->serializeForAPI());
     }
 
     /**

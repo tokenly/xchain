@@ -51,7 +51,6 @@ class MonitorController extends Controller {
      */
     public function update(APIControllerHelper $helper, UpdateMonitorRequest $request, MonitoredAddressRepository $address_respository, $id)
     {
-        Log::info('attrs:'.json_encode($request->only(array_keys($request->rules()), 192)));
         return $helper->update($address_respository, $id, $request->only(array_keys($request->rules())));
     }
 

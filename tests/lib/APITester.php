@@ -91,15 +91,16 @@ class APITester
         $response = $this->laravel_test->call('PATCH', $this->url_base.'/'.$created_resource['uuid'], $update_vars);
         PHPUnit::assertEquals(200, $response->getStatusCode(), "Response was: ".$response->getContent());
         $loaded_resource_from_api = json_decode($response->getContent(), 1);
+        PHPUnit::assertNotEmpty($loaded_resource_from_api);
 
         $response = $this->laravel_test->call('GET', $this->url_base.'/'.$created_resource['uuid']);
         PHPUnit::assertEquals(200, $response->getStatusCode(), "Response was: ".$response->getContent());
-
-        $loaded_resource_from_api = json_decode($response->getContent(), 1);
-        PHPUnit::assertEquals($created_resource['uuid'], $loaded_resource_from_api['id']);
+        $reloaded_resource_from_api = json_decode($response->getContent(), 1);
+        PHPUnit::assertEquals($created_resource['uuid'], $reloaded_resource_from_api['id']);
 
         foreach($update_vars as $k => $v) {
             PHPUnit::assertEquals($update_vars[$k], $loaded_resource_from_api[$k]);
+            PHPUnit::assertEquals($update_vars[$k], $reloaded_resource_from_api[$k]);
         }
 
         return $loaded_resource_from_api;
