@@ -146,6 +146,7 @@ return [
 		 */
 		'Tokenly\XChainListener\XChainListenerServiceProvider',
 		'Tokenly\XCPDClient\XCPDClientServiceProvider',
+		'Tokenly\HmacAuth\ServiceProvider\HmacAuthServiceProvider',
 
 		/*
 		 * Local App Service Providers...

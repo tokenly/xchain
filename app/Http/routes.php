@@ -13,7 +13,9 @@
 
 $router->get('/', 'HomeController@index');
 
-$router->resource('api/v1/monitors', 'API\MonitorController', ['except' => ['create','edit']]);
+$router->resource('api/v1/monitors', 'API\MonitorController', [
+    'except'     => ['create','edit']
+]);
 
 
 /*

@@ -1,4 +1,6 @@
-<?php namespace App\Http\Requests\API;
+<?php
+
+namespace App\Http\Requests\API\PaymentAddress;
 
 use App\Http\Requests\API\Base\APIRequest;
 use Illuminate\Http\Exception\HttpResponseException;
@@ -7,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Validator;
 use LinusU\Bitcoin\AddressValidator;
 
-class UpdateMonitorRequest extends APIRequest {
+class UpdatePaymentAddressRequest extends APIRequest {
 
 
 

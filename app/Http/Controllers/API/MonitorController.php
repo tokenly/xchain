@@ -4,18 +4,22 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Helpers\APIControllerHelper;
-use App\Http\Requests\API\CreateMonitorRequest;
-use App\Http\Requests\API\UpdateMonitorRequest;
+use App\Http\Requests\API\Monitor\CreateMonitorRequest;
+use App\Http\Requests\API\Monitor\UpdateMonitorRequest;
 use App\Repositories\MonitoredAddressRepository;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 
 class MonitorController extends Controller {
 
+    public function __construct() {
+        $this->middleware('hmacauth');
+    }
+
+
     /**
      * Display a listing of the resource.
      *
+     * @Middleware("hmacauth")
      * @return Response
      */
     public function index(APIControllerHelper $helper, MonitoredAddressRepository $address_respository)
