@@ -19,6 +19,7 @@ class APIRequest extends Request {
         }
 
         $json_response = [
+            'message' => 'This request was not valid.',
             'errors' => $json_errors_list,
         ];
         $response = new JsonResponse($json_response, 400);

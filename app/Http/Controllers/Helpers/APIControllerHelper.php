@@ -48,7 +48,7 @@ class APIControllerHelper {
     public function show(APIResourceRepositoryContract $api_resource_repository, $id)
     {
         $resource = $api_resource_repository->findByUuid($id);
-        if (!$resource) { return new JsonResponse(['errors' => ['resource not found']], 404); }
+        if (!$resource) { return new JsonResponse(['message' => 'resource not found'], 404); }
 
         return json_encode($resource->serializeForAPI());
     }
@@ -64,10 +64,10 @@ class APIControllerHelper {
     {
         Log::info('$attributes='.json_encode($attributes, 192));
         $resource = $api_resource_repository->findByUuid($id);
-        if (!$resource) { return new JsonResponse(['errors' => ['resource not found']], 404); }
+        if (!$resource) { return new JsonResponse(['message' => 'resource not found'], 404); }
 
         $success = $api_resource_repository->update($resource, $attributes);
-        if (!$success) { return new JsonResponse(['errors' => ['resource not found']], 404); }
+        if (!$success) { return new JsonResponse(['message' => 'resource not found'], 404); }
 
         return json_encode($resource->serializeForAPI());
     }
@@ -81,7 +81,7 @@ class APIControllerHelper {
     public function destroy(APIResourceRepositoryContract $api_resource_repository, $id)
     {
         $resource = $api_resource_repository->findByUuid($id);
-        if (!$resource) { return new JsonResponse(['errors' => ['resource not found']], 404); }
+        if (!$resource) { return new JsonResponse(['message' => 'resource not found'], 404); }
 
         // delete
         $api_resource_repository->delete($resource);
