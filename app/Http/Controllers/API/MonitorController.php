@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 class MonitorController extends Controller {
 
     public function __construct() {
+        // require hmacauth middleware
         $this->middleware('hmacauth');
     }
 
@@ -19,7 +20,6 @@ class MonitorController extends Controller {
     /**
      * Display a listing of the resource.
      *
-     * @Middleware("hmacauth")
      * @return Response
      */
     public function index(APIControllerHelper $helper, MonitoredAddressRepository $address_respository)

@@ -62,7 +62,6 @@ class APIControllerHelper {
      */
     public function update(APIResourceRepositoryContract $api_resource_repository, $id, $attributes)
     {
-        Log::info('$attributes='.json_encode($attributes, 192));
         $resource = $api_resource_repository->findByUuid($id);
         if (!$resource) { return new JsonResponse(['message' => 'resource not found'], 404); }
 

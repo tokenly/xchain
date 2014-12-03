@@ -124,7 +124,7 @@ class MonitoredAddressAPITest extends TestCase {
     ////////////////////////////////////////////////////////////////////////
     
     protected function getAPITester() {
-        return $this->app->make('APITester', [$this, '/api/v1/monitors', $this->app->make('App\Repositories\MonitoredAddressRepository')]);
+        return $this->app->make('APITester', [$this->app, '/api/v1/monitors', $this->app->make('App\Repositories\MonitoredAddressRepository')]);
     }
 
 

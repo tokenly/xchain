@@ -21,9 +21,7 @@ class XChainNotificationBuilderHandler {
         $destinations = ($tx_event['destinations'] ? $tx_event['destinations'] : []);
 
         // get all addresses that we care about
-        $this->wlog("\$sources: ".json_encode($sources, 192)." \$destinations=".json_encode($destinations, 192)." combined: ".json_encode(array_merge($sources, $destinations), 192));
         $found_addresses = $this->monitored_address_repository->findByAddresses(array_unique(array_merge($sources, $destinations)));
-        $this->wlog("finding ".json_encode(array_unique(array_merge($sources, $destinations)), 192)." and found ".$found_addresses->count());
         if (!$found_addresses->count()) { return; }
 
         $this->wlog("begin loop");
