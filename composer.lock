@@ -2000,12 +2000,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/hmac-auth.git",
-                "reference": "6341accab2b80030cb9443a8099cb222d85d7aca"
+                "reference": "f48a4cfbf7a50cbf208bc23b105c23eba79ff40f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/6341accab2b80030cb9443a8099cb222d85d7aca",
-                "reference": "6341accab2b80030cb9443a8099cb222d85d7aca",
+                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/f48a4cfbf7a50cbf208bc23b105c23eba79ff40f",
+                "reference": "f48a4cfbf7a50cbf208bc23b105c23eba79ff40f",
                 "shasum": ""
             },
             "require": {
@@ -2034,7 +2034,7 @@
                 }
             ],
             "description": "A library",
-            "time": "2014-11-26 02:08:23"
+            "time": "2014-12-03 02:24:47"
         },
         {
             "name": "tokenly/xchain-listener",
