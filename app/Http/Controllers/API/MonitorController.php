@@ -57,7 +57,7 @@ class MonitorController extends Controller {
      */
     public function update(APIControllerHelper $helper, UpdateMonitorRequest $request, MonitoredAddressRepository $address_respository, $id)
     {
-        return $helper->update($address_respository, $id, $request->only(array_keys($request->rules())));
+        return $helper->update($address_respository, $id, $helper->getAttributesFromRequest($request));
     }
 
     /**

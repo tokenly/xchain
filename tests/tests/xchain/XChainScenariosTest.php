@@ -28,7 +28,10 @@ class XChainScenariosTest extends TestCase {
 
     protected function runScenario($scenario_number) {
         $filename = "scenario".sprintf('%02d', $scenario_number).".yml";
-        $this->scenarioRunner()->runScenario($filename);
+        $scenario_runner = $this->scenarioRunner();
+        $scenario_data = $scenario_runner->loadScenario($filename);
+        $scenario_runner->runScenario($scenario_data);
+        $scenario_runner->validateScenario($scenario_data);
     }
 
     protected function scenarioRunner() {

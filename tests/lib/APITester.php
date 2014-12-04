@@ -133,9 +133,12 @@ class APITester
     }
 
     protected function fillExpectedResourceWithAPIRespose($expected_created_resource, $response_from_api) {
-        if ($expected_created_resource['id'] == '{{response.id}}') {
-            $expected_created_resource['id'] = $response_from_api['id'];
+        foreach($expected_created_resource as $k => $v) {
+            if (preg_match('!\{\{response\.(.*)\}\}!', $v, $matches)) {
+                $expected_created_resource[$k] = $response_from_api[$matches[1]];
+            }
         }
+
         return $expected_created_resource;
     }
 

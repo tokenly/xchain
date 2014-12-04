@@ -23,7 +23,7 @@ class MonitoredAddress extends APIModel
 
     protected static $unguarded = true;
 
-    protected $api_attributes = ['id', 'address', 'monitor_type', 'active'];
+    protected $api_attributes = ['id', 'address', 'monitor_type', 'webhook_endpoint', 'active'];
 
 
     public function setMonitorTypeAttribute($type_text) { $this->attributes['monitor_type'] = $this->monitorTypeTextToMonitorTypeID($type_text); }
@@ -32,6 +32,8 @@ class MonitoredAddress extends APIModel
     public function setActiveAttribute($active) { $this->attributes['active'] = $active ? 1 : 0; }
     public function getActiveAttribute() { return !!$this->attributes['active']; }
 
+    public function setWebhookEndpointAttribute($webhook_endpoint) { $this->attributes['webhook_endpoint'] = $webhook_endpoint; }
+    public function getWebhookEndpointAttribute() { return $this->attributes['webhook_endpoint']; }
 
     public function monitorTypeTextToMonitorTypeID($type_text) {
         switch ($type_text) {

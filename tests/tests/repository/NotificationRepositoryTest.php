@@ -9,7 +9,8 @@ class NotificationRepositoryTest extends TestCase {
     public function testAddNotification()
     {
         $monitored_address_repo = $this->app->make('App\Repositories\MonitoredAddressRepository');
-        $created_address_model = $monitored_address_repo->create(['address' => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', 'monitor_type' => 'receive']);
+        $monitored_address_helper = $this->app->make('\MonitoredAddressHelper');
+        $created_address_model = $monitored_address_repo->create($monitored_address_helper->sampleDBVars());
 
         // insert
         $notification_repo = $this->app->make('App\Repositories\NotificationRepository');
@@ -21,6 +22,7 @@ class NotificationRepositoryTest extends TestCase {
         PHPUnit::assertNotEmpty($loaded_notification_model['uuid']);
         PHPUnit::assertEquals($created_notification_model['id'], $loaded_notification_model['id']);
         PHPUnit::assertEquals($created_address_model['id'], $loaded_notification_model['monitored_address_id']);
+        PHPUnit::assertEquals('new', $loaded_notification_model['status']);
     }
 
 

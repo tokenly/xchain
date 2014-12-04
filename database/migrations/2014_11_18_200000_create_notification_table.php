@@ -19,7 +19,9 @@ class CreateNotificationTable extends Migration
             $table->integer('monitored_address_id')->unsigned();
             $table->foreign('monitored_address_id')->references('id')->on('monitored_address');
             $table->tinyInteger('status')->index();
-            // $table->text('error');
+            $table->integer('attempts')->nullable();
+            $table->timestamp('returned')->nullable();
+            $table->text('error')->nullable();
             $table->timestamps();
         });
     }

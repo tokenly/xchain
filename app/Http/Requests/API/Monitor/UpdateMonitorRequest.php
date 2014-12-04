@@ -21,8 +21,9 @@ class UpdateMonitorRequest extends APIRequest {
     public function rules()
     {
         return [
-            'monitorType' => 'in:send,receive',
-            'active'      => 'boolean',
+            'monitorType'     => 'in:send,receive',
+            'webhookEndpoint' => 'url',
+            'active'          => 'boolean',
         ];
     }
 

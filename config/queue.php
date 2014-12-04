@@ -46,6 +46,14 @@ return [
 			'ttr'    => 60,
 		],
 
+		'notifications_return' => [
+			'driver' => 'blockingbeanstalkd',
+			'host'   => getenv('BEANSTALK_HOST') ?: '127.0.0.1',
+			'queue'  => 'notifications_return',
+			'port'   => getenv('BEANSTALK_PORT') ?: 11300,
+			'ttr'    => 60,
+		],
+
 
 	],
 

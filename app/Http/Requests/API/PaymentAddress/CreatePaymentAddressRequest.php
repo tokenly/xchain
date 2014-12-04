@@ -17,14 +17,14 @@ class CreatePaymentAddressRequest extends APIRequest {
     {
         $validator = parent::getValidatorInstance();
 
-        $validator->after(function () use ($validator)
-        {
-            // validate address
-            $address = $this->get('address');
-            if (!AddressValidator::isValid($address)) {
-                $validator->errors()->add('address', 'The address was invalid.');
-            }
-        });
+        // $validator->after(function () use ($validator)
+        // {
+        //     // validate address
+        //     $address = $this->get('address');
+        //     if (!AddressValidator::isValid($address)) {
+        //         $validator->errors()->add('address', 'The address was invalid.');
+        //     }
+        // });
 
         return $validator;
     }
@@ -38,9 +38,6 @@ class CreatePaymentAddressRequest extends APIRequest {
     public function rules()
     {
         return [
-            'address'     => 'required',
-            'monitorType' => 'required|in:send,receive',
-            'active'      => 'boolean',
         ];
     }
 

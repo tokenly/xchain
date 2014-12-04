@@ -38,9 +38,10 @@ class CreateMonitorRequest extends APIRequest {
     public function rules()
     {
         return [
-            'address'     => 'required',
-            'monitorType' => 'required|in:send,receive',
-            'active'      => 'boolean',
+            'address'         => 'required',
+            'webhookEndpoint' => 'required|url',
+            'monitorType'     => 'required|in:send,receive',
+            'active'          => 'boolean',
         ];
     }
 

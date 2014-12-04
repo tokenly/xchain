@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Helpers;
 
+use App\Http\Requests\Request;
 use App\Repositories\Contracts\APIResourceRepositoryContract;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -87,6 +88,18 @@ class APIControllerHelper {
 
         // return 204
         return new Response('', 204);
+    }
+
+    public function getAttributesFromRequest(Request $request) {
+        $attributes = [];
+        $allowed_vars = array_keys($request->rules());
+        $request_vars = $request->all();
+        foreach($allowed_vars as $allowed_var_name) {
+            if (isset($request_vars[$allowed_var_name])) {
+                $attributes[$allowed_var_name] = $request_vars[$allowed_var_name];
+            }
+        }
+        return $attributes;
     }
 
 }

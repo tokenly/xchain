@@ -10,15 +10,13 @@ class MonitoredAddressAPITest extends TestCase {
     {
         $api_tester = $this->getAPITester();
 
-        $posted_vars = [
-            'address'     => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD',
-            'monitorType' => 'receive',
-        ];
+        $posted_vars = $this->app->make('\MonitoredAddressHelper')->sampleVars();
         $expected_created_resource = [
-            'id'          => '{{response.id}}',
-            'address'     => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD',
-            'monitorType' => 'receive',
-            'active'      => true
+            'id'              => '{{response.id}}',
+            'address'         => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD',
+            'monitorType'     => 'receive',
+            'webhookEndpoint' => 'http://xchain.tokenly.dev/notifyme',
+            'active'          => true
         ];
         $loaded_address_model = $api_tester->testAddResource($posted_vars, $expected_created_resource);
     }
@@ -30,16 +28,33 @@ class MonitoredAddressAPITest extends TestCase {
             [
                 'postVars' => [
                     'address'     => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD',
+                    'webhookEndpoint' => 'http://xchain.tokenly.dev/notifyme',
                     'monitorType' => 'bad',
                 ],
                 'expectedErrorString' => 'The selected monitor type is invalid',
             ],
             [
                 'postVars' => [
-                'address'     => 'xBAD123456789',
-                'monitorType' => 'receive',
-            ],
+                    'address'     => 'xBAD123456789',
+                    'webhookEndpoint' => 'http://xchain.tokenly.dev/notifyme',
+                    'monitorType' => 'receive',
+                ],
                 'expectedErrorString' => 'The address was invalid',
+            ],
+            [
+                'postVars' => [
+                    'address'     => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD',
+                    'webhookEndpoint' => 'badbadurl',
+                    'monitorType' => 'receive',
+                ],
+                'expectedErrorString' => 'The webhook endpoint format is invalid',
+            ],
+            [
+                'postVars' => [
+                    'address'     => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD',
+                    'monitorType' => 'receive',
+                ],
+                'expectedErrorString' => 'The webhook endpoint field is required',
             ],
         ]);
     }
@@ -84,11 +99,16 @@ class MonitoredAddressAPITest extends TestCase {
             'monitorType' => 'send',
             'active'      => false,
         ];
-
         $api_tester = $this->getAPITester();
         $loaded_address_from_api = $api_tester->testUpdateResource($created_address, $update_vars);
         PHPUnit::assertEquals(false, $loaded_address_from_api['active']);
 
+        $update_vars = [
+            'webhookEndpoint' => 'http://xchain.tokenly.dev/notifyme2',
+        ];
+        $api_tester = $this->getAPITester();
+        $loaded_address_from_api = $api_tester->testUpdateResource($created_address, $update_vars);
+        PHPUnit::assertEquals('http://xchain.tokenly.dev/notifyme2', $loaded_address_from_api['webhookEndpoint']);
     }
 
     public function testAPIUpdateErrorsMonitoredAddress() {

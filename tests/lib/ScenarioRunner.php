@@ -13,11 +13,12 @@ use \PHPUnit_Framework_Assert as PHPUnit;
 class ScenarioRunner
 {
 
-    function __construct(Dispatcher $events, QueueManager $queue_manager, MonitoredAddressRepository $monitored_address_repository) {
+    function __construct(Dispatcher $events, QueueManager $queue_manager, MonitoredAddressRepository $monitored_address_repository, MonitoredAddressHelper $monitored_address_helper) {
         // $this->app = $app;
         $this->events                       = $events;
         $this->queue_manager                = $queue_manager;
         $this->monitored_address_repository = $monitored_address_repository;
+        $this->monitored_address_helper     = $monitored_address_helper;
 
         $this->queue_manager->addConnector('sync', function()
         {
@@ -26,11 +27,12 @@ class ScenarioRunner
 
     }
 
-    public function runScenario($filename) {
+    public function loadScenario($filename) {
         $filepath = base_path().'/tests/fixtures/scenarios/'.$filename;
-        $scenario_data = Yaml::parse($filepath);
-        PHPUnit::assertNotEmpty($scenario_data);
+        return Yaml::parse($filepath);
+    }
 
+    public function runScenario($scenario_data) {
         // set up the scenario
         $this->addMonitoredAddresses($scenario_data['monitoredAddresses']);
 
@@ -39,8 +41,9 @@ class ScenarioRunner
             $transaction_event = $this->normalizeTransactionEvent($raw_transaction_event);
             $this->processTransactionEvent($transaction_event);
         }
+    }
 
-        // validate notifications
+    public function validateScenario($scenario_data) {
         foreach ($scenario_data['notifications'] as $raw_expected_notification) {
             // get actual notification
             $actual_notification = $this->getActualNotification();
@@ -50,13 +53,12 @@ class ScenarioRunner
 
             $this->validateNotification($expected_notification, $actual_notification);
         }
-
     }
 
 
     protected function addMonitoredAddresses($addresses) {
         foreach($addresses as $attributes) {
-            $this->monitored_address_repository->create($attributes);
+            $this->monitored_address_repository->create($this->monitored_address_helper->sampleDBVars($attributes));
         }
     }
 
@@ -104,7 +106,8 @@ class ScenarioRunner
         $raw_queue_entry = $this->queue_manager
             ->connection('notifications_out')
             ->pop();
-        return $raw_queue_entry ? $raw_queue_entry['data'] : [];
+        if ($raw_queue_entry) { $raw_queue_entry = json_decode($raw_queue_entry, true); }
+        return $raw_queue_entry ? json_decode($raw_queue_entry['payload'], true) : [];
     }
 
     protected function normalizeExpectedNotification($raw_expected_notification, $actual_notification) {
@@ -126,7 +129,7 @@ class ScenarioRunner
         $normalized_expected_notification['quantitySat'] = CurrencyUtil::valueToSatoshis($normalized_expected_notification['quantity']);
 
         // not required
-        foreach (['counterpartyTx','bitcoinTx','timestamp'] as $field) {
+        foreach (['counterpartyTx','bitcoinTx','transactionTime','notificationId','webhookEndpoint',] as $field) {
             if (isset($actual_notification[$field])) { $normalized_expected_notification[$field] = $actual_notification[$field]; }
                 else if (isset($raw_expected_notification[$field])) { $normalized_expected_notification[$field] = $raw_expected_notification[$field]; }
         }

@@ -15,6 +15,9 @@ class CreatePaymentAddressTable extends Migration {
 		Schema::create('payment_address', function(Blueprint $table)
 		{
 			$table->increments('id');
+            $table->char('uuid', 36)->unique();
+            $table->char('address', 35)->index();
+            $table->char('private_key_token', 40);
 			$table->timestamps();
 		});
 	}

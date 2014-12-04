@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Notification;
+use Illuminate\Database\Eloquent\Model;
 use Rhumsaa\Uuid\Uuid;
 use \Exception;
 
@@ -28,8 +29,30 @@ class NotificationRepository
     }
 
     public function findByUuid($uuid) {
-        return Notification::where(['uuid', $uuid])->first();
+        return Notification::where('uuid', $uuid)->first();
     }
+
+
+    public function updateByUuid($uuid, $attributes) {
+        return $this->update($this->findByUuid($uuid), $attributes);
+    }
+
+    public function update(Model $address, $attributes) {
+        return $address->update($attributes);
+    }
+
+
+    public function deleteByUuid($uuid) {
+        if ($address = self::findByUuid($uuid)) {
+            return self::delete($address);
+        }
+        return false;
+    }
+
+    public function delete(Model $address) {
+        return $address->delete();
+    }
+
 
 
 }

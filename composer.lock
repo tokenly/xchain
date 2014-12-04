@@ -4,8 +4,50 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "821a5a7ef7c07d301d412d6ecf67a368",
+    "hash": "fc1893e04c7fd1c2dc68571ac78e9c2c",
     "packages": [
+        {
+            "name": "bitwasp/bitcoin-lib",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Bit-Wasp/bitcoin-lib-php.git",
+                "reference": "5718ca0bd1dc4c2a28c8e9265c47b794e213cdf1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Bit-Wasp/bitcoin-lib-php/zipball/5718ca0bd1dc4c2a28c8e9265c47b794e213cdf1",
+                "reference": "5718ca0bd1dc4c2a28c8e9265c47b794e213cdf1",
+                "shasum": ""
+            },
+            "require": {
+                "ext-gmp": "*",
+                "mdanter/ecc": "dev-master",
+                "php": ">=5.3.3"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~3.7",
+                "squizlabs/php_codesniffer": "~1.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "BitWasp\\BitcoinLib\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Unlicense"
+            ],
+            "authors": [
+                {
+                    "name": "Thomas Kerin",
+                    "email": "thomas.kerin@gmail.com"
+                }
+            ],
+            "description": "Bitcoin library",
+            "time": "2014-11-24 17:43:35"
+        },
         {
             "name": "classpreloader/classpreloader",
             "version": "1.0.2",
@@ -664,6 +706,64 @@
                 "validator"
             ],
             "time": "2014-08-20 13:04:51"
+        },
+        {
+            "name": "mdanter/ecc",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/mdanter/phpecc.git",
+                "reference": "154c1c9dfcd8c530333fcbda88e7216f2021c364"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/mdanter/phpecc/zipball/154c1c9dfcd8c530333fcbda88e7216f2021c364",
+                "reference": "154c1c9dfcd8c530333fcbda88e7216f2021c364",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4.1",
+                "squizlabs/php_codesniffer": "~1.5"
+            },
+            "suggest": {
+                "ext-bcmath": "Required if GMP is not installed.",
+                "ext-gmp": "Improves drastically ECDSA library performance"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Mdanter\\Ecc\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Matyas Danter",
+                    "homepage": "http://matejdanter.com/",
+                    "role": "Author"
+                },
+                {
+                    "name": "Thibaud Fabre",
+                    "email": "thibaud@aztech.io",
+                    "homepage": "http://aztech.io",
+                    "role": "Maintainer"
+                },
+                {
+                    "name": "Drak",
+                    "email": "drak@zikula.org",
+                    "homepage": "http://zikula.org",
+                    "role": "Maintainer"
+                }
+            ],
+            "description": "PHP Elliptic Curve Cryptography library",
+            "homepage": "https://github.com/mdanter/phpecc",
+            "time": "2014-11-20 09:10:57"
         },
         {
             "name": "monolog/monolog",
@@ -1866,6 +1966,48 @@
             "time": "2014-11-04 14:29:39"
         },
         {
+            "name": "tokenly/bitcoin-address-lib",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tokenly/bitcoin-address-lib.git",
+                "reference": "f2f6393cae56e7bdf3891f1c6f7f16cf31daf91c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-address-lib/zipball/f2f6393cae56e7bdf3891f1c6f7f16cf31daf91c",
+                "reference": "f2f6393cae56e7bdf3891f1c6f7f16cf31daf91c",
+                "shasum": ""
+            },
+            "require": {
+                "bitwasp/bitcoin-lib": "dev-master",
+                "mdanter/ecc": "dev-master",
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Tokenly\\BitcoinAddressLib": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Devon Weller",
+                    "email": "dweller@devonweller.com",
+                    "homepage": "http://devonweller.com"
+                }
+            ],
+            "description": "A bitcoin address helper library",
+            "time": "2014-12-03 12:54:41"
+        },
+        {
             "name": "tokenly/bitcoin-currency-lib",
             "version": "dev-master",
             "source": {
@@ -2035,6 +2177,46 @@
             ],
             "description": "A library",
             "time": "2014-12-03 02:24:47"
+        },
+        {
+            "name": "tokenly/token-generator",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tokenly/token-generator.git",
+                "reference": "f3422f54e82d6e1d24b7dec46135db4e845f63ee"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tokenly/token-generator/zipball/f3422f54e82d6e1d24b7dec46135db4e845f63ee",
+                "reference": "f3422f54e82d6e1d24b7dec46135db4e845f63ee",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.5.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Tokenly\\TokenGenerator": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Devon Weller",
+                    "email": "dweller@devonweller.com",
+                    "homepage": "http://devonweller.com"
+                }
+            ],
+            "description": "A library to generate random strings",
+            "time": "2014-12-03 03:55:02"
         },
         {
             "name": "tokenly/xchain-listener",
@@ -3086,9 +3268,11 @@
         "tokenly/counterparty-transaction-parser": 20,
         "tokenly/counterparty-asset-info-cache": 20,
         "tokenly/xchain-listener": 20,
+        "tokenly/bitcoin-address-lib": 20,
         "tokenly/bitcoin-currency-lib": 20,
         "tokenly/xcpd-client": 20,
         "tokenly/hmac-auth": 20,
+        "tokenly/token-generator": 20,
         "nc/faye-client": 20
     },
     "prefer-stable": false,

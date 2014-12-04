@@ -13,6 +13,9 @@ class Kernel extends ConsoleKernel {
 	 */
 	protected $commands = [
 		'App\Console\Commands\InspireCommand',
+
+		// xchain commands
+		'App\Console\Commands\Development\PopulateNotificationCommand',
 	];
 
 	/**

@@ -147,6 +147,7 @@ return [
 		'Tokenly\XChainListener\XChainListenerServiceProvider',
 		'Tokenly\XCPDClient\XCPDClientServiceProvider',
 		'Tokenly\HmacAuth\ServiceProvider\HmacAuthServiceProvider',
+		'Tokenly\BitcoinAddressLib\BitcoinAddressServiceProvider',
 
 		/*
 		 * Local App Service Providers...
