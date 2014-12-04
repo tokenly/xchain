@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\MonitoredAddress;
 use App\Models\Notification;
 use Illuminate\Database\Eloquent\Model;
 use Rhumsaa\Uuid\Uuid;
@@ -13,12 +14,14 @@ use \Exception;
 class NotificationRepository
 {
 
-    public function create($address, $status='new', $attributes=[]) {
+    public function create(MonitoredAddress $address, $attributes) {
+        if (!isset($attributes['txid'])) { throw new Exception("TXID is required", 1); }
+        if (isset($attributes['monitored_address_id'])) { throw new Exception("monitored_address_id not allowed", 1); }
+
         if (!isset($attributes['uuid'])) { $attributes['uuid'] = Uuid::uuid4()->toString(); }
+        if (!isset($attributes['status'])) { $attributes['status'] = 'new'; }
 
         $attributes['monitored_address_id'] = $address['id'];
-
-        $attributes['status'] = $status;
 
         return Notification::create($attributes);
     }

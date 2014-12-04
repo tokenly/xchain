@@ -19,6 +19,8 @@ class XChainNotificationBuilderHandler {
 
     public function pushEvent($tx_event)
     {
+        $this->wlog('$tx_event: '.json_encode($tx_event, 192));
+
         $sources = ($tx_event['sources'] ? $tx_event['sources'] : []);
         $destinations = ($tx_event['destinations'] ? $tx_event['destinations'] : []);
 
@@ -38,7 +40,14 @@ class XChainNotificationBuilderHandler {
             }
 
             // create a notification
-            $notification_model = $this->notification_repository->create($found_address);
+            $confirmations = isset($tx_event['bitcoinTx']['confirmations']) ? $tx_event['bitcoinTx']['confirmations'] : 0;
+            $notification_model = $this->notification_repository->create(
+                $found_address,
+                [
+                    'txid'          => $tx_event['txid'],
+                    'confirmations' => $confirmations,
+                ]
+            );
             
             $api_key = '[none]';
             $api_secret = '[secret]';
@@ -62,6 +71,8 @@ class XChainNotificationBuilderHandler {
 
                 // ISO 8601
                 'transactionTime'  => $this->getISO8601Timestamp($tx_event['timestamp']),
+                'confirmations'    => $confirmations,
+                'confirmed'        => $confirmations > 0,
             ];
 
             $notification_json = json_encode($notification);

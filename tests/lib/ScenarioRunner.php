@@ -62,8 +62,14 @@ class ScenarioRunner
         }
     }
 
+    // normalize the transaction
     protected function normalizeTransactionEvent($raw_transaction_event) {
-        $sample_filename = 'default_xcp_parsed_01.json';
+        $meta = isset($raw_transaction_event['meta']) ? $raw_transaction_event['meta'] : [];
+        if (isset($meta['baseTransactionFilename'])) {
+            $sample_filename = $meta['baseTransactionFilename'];
+        } else {
+            $sample_filename = 'default_xcp_parsed_01.json';
+        }
         $default = json_decode(file_get_contents(base_path().'/tests/fixtures/transactions/'.$sample_filename), true);
         $normalized_transaction_event = $default;
 
@@ -78,9 +84,9 @@ class ScenarioRunner
         if (isset($raw_transaction_event['recipient'])) {
             $normalized_transaction_event['destinations'] = [$raw_transaction_event['recipient']];
         }
-
         
         if (isset($raw_transaction_event['isCounterpartyTx'])) { $normalized_transaction_event['isCounterpartyTx'] = $raw_transaction_event['isCounterpartyTx']; }
+
 
         if (isset($raw_transaction_event['asset'])) { $normalized_transaction_event['asset'] = $raw_transaction_event['asset']; }
 
@@ -88,6 +94,9 @@ class ScenarioRunner
             $normalized_transaction_event['quantity'] = $raw_transaction_event['quantity'];
             $normalized_transaction_event['quantitySat'] = CurrencyUtil::valueToSatoshis($raw_transaction_event['quantity']);
         }
+
+        if (isset($raw_transaction_event['confirmations'])) { $normalized_transaction_event['bitcoinTx']['confirmations'] = $raw_transaction_event['confirmations']; }
+
 
         // timing
         if (isset($raw_transaction_event['mempool'])) {}
@@ -129,9 +138,9 @@ class ScenarioRunner
         $normalized_expected_notification['quantitySat'] = CurrencyUtil::valueToSatoshis($normalized_expected_notification['quantity']);
 
         // not required
-        foreach (['counterpartyTx','bitcoinTx','transactionTime','notificationId','webhookEndpoint',] as $field) {
-            if (isset($actual_notification[$field])) { $normalized_expected_notification[$field] = $actual_notification[$field]; }
-                else if (isset($raw_expected_notification[$field])) { $normalized_expected_notification[$field] = $raw_expected_notification[$field]; }
+        foreach (['confirmations','confirmed','counterpartyTx','bitcoinTx','transactionTime','notificationId','webhookEndpoint',] as $field) {
+            if (isset($raw_expected_notification[$field])) { $normalized_expected_notification[$field] = $raw_expected_notification[$field]; }
+                else if (isset($actual_notification[$field])) { $normalized_expected_notification[$field] = $actual_notification[$field]; }
         }
 
 

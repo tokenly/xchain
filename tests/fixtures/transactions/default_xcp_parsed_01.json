@@ -15,7 +15,7 @@
     "bitcoinTx": {
         "blockhash": "00000000000000000347e702fdc4d6ed74dca01844857deb5fec560c25b14d51",
         "blocktime": 1416091287,
-        "confirmations": 25,
+        "confirmations": 0,
         "fees": 3.5e-5,
         "locktime": 0,
         "size": 306,

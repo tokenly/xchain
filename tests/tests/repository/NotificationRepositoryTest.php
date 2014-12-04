@@ -13,10 +13,11 @@ class NotificationRepositoryTest extends TestCase {
         $created_address_model = $monitored_address_repo->create($monitored_address_helper->sampleDBVars());
 
         // insert
-        $notification_repo = $this->app->make('App\Repositories\NotificationRepository');
-        $created_notification_model = $notification_repo->create($created_address_model);
+        $notification_helper = $this->app->make('\NotificationHelper');
+        $created_notification_model = $notification_helper->createSampleNotification($created_address_model);
 
         // load from repo
+        $notification_repo = $this->app->make('App\Repositories\NotificationRepository');
         $loaded_notification_model = $notification_repo->findById($created_notification_model['id']);
         PHPUnit::assertNotEmpty($loaded_notification_model);
         PHPUnit::assertNotEmpty($loaded_notification_model['uuid']);
