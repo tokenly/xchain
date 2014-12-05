@@ -20,5 +20,7 @@ class Transaction extends Model
 
     protected static $unguarded = true;
 
+    public function setParsedTxAttribute($parsed_tx) { $this->attributes['parsed_tx'] = json_encode($parsed_tx); }
+    public function getParsedTxAttribute() { return json_decode($this->attributes['parsed_tx'], true); }
 
 }

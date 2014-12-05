@@ -20,6 +20,7 @@ class CreateTransactionTable extends Migration
             $table->boolean('is_xcp')->index();
             $table->mediumInteger('block_seen');
             $table->mediumInteger('block_confirmed')->index();
+            $table->longText('parsed_tx');
             $table->timestamps();
         });
     }
