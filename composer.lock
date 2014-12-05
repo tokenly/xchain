@@ -1971,12 +1971,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-address-lib.git",
-                "reference": "f2f6393cae56e7bdf3891f1c6f7f16cf31daf91c"
+                "reference": "c8073a5a2ea160f19bdb35235aededbd480d51a0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-address-lib/zipball/f2f6393cae56e7bdf3891f1c6f7f16cf31daf91c",
-                "reference": "f2f6393cae56e7bdf3891f1c6f7f16cf31daf91c",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-address-lib/zipball/c8073a5a2ea160f19bdb35235aededbd480d51a0",
+                "reference": "c8073a5a2ea160f19bdb35235aededbd480d51a0",
                 "shasum": ""
             },
             "require": {
@@ -2005,7 +2005,7 @@
                 }
             ],
             "description": "A bitcoin address helper library",
-            "time": "2014-12-03 12:54:41"
+            "time": "2014-12-05 01:20:17"
         },
         {
             "name": "tokenly/bitcoin-currency-lib",
