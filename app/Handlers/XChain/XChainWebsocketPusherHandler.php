@@ -27,7 +27,7 @@ class XChainWebsocketPusherHandler {
             'destination'      => ($tx_event['destinations'] ? $tx_event['destinations'][0] : null),
         ];
 
-        $this->log->info('sending notification', $notification);
+        // $this->log->info('sending notification', $notification);
     }
 
     public function subscribe($events) {

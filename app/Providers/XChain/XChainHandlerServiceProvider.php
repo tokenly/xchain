@@ -19,8 +19,8 @@ class XChainHandlerServiceProvider extends ServiceProvider {
     {
         $this->bindFayeClient();
         $this->app->make('events')->subscribe('App\Handlers\XChain\XChainWebsocketPusherHandler');
-
         $this->app->make('events')->subscribe('App\Handlers\XChain\XChainNotificationBuilderHandler');
+        $this->app->make('events')->subscribe('App\Handlers\XChain\XChainBlockHandler');
     }
 
 

@@ -19,7 +19,7 @@ class XChainNotificationBuilderHandler {
 
     public function pushEvent($tx_event)
     {
-        $this->wlog('$tx_event: '.json_encode($tx_event, 192));
+        // $this->wlog('$tx_event: '.json_encode($tx_event, 192));
 
         $sources = ($tx_event['sources'] ? $tx_event['sources'] : []);
         $destinations = ($tx_event['destinations'] ? $tx_event['destinations'] : []);
