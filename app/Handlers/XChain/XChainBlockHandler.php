@@ -57,7 +57,7 @@ class XChainBlockHandler {
 
                     // update the transaction
                     if ($transaction['block_confirmed_hash']) {
-                        echo "\$transaction['block_confirmed_hash']:\n".json_encode($transaction['block_confirmed_hash'], 192)."\n";
+                        // echo "\$transaction['block_confirmed_hash']:\n".json_encode($transaction['block_confirmed_hash'], 192)."\n";
                         // this is a previously confirmed transaction
                         $block_hash_for_transaction = $transaction['block_confirmed_hash'];
                         $confirmations = $this->getConfirmationsForBlockHash($block_hash_for_transaction, $block_event['height']);

@@ -61,14 +61,15 @@ class ScenarioRunner
     }
 
     public function validateScenario($scenario_data) {
-        if (isset($scenario_data['notifications'])) { $this->validateNotifications($scenario_data['notifications']); }
+        $meta = isset($scenario_data['meta']) ? $scenario_data['meta'] : [];
+        if (isset($scenario_data['notifications'])) { $this->validateNotifications($scenario_data['notifications'], $meta); }
         if (isset($scenario_data['transaction_rows'])) { $this->validateTransactionRows($scenario_data['transaction_rows']); }
     }
 
     ////////////////////////////////////////////////////////////////////////
     // Validate Notifications
 
-    protected function validateNotifications($notifications) {
+    protected function validateNotifications($notifications, $meta) {
         foreach ($notifications as $offset => $raw_expected_notification) {
             // get actual notification
             $actual_notification = $this->getActualNotification();
@@ -77,6 +78,18 @@ class ScenarioRunner
             $expected_notification = $this->normalizeExpectedNotification($raw_expected_notification, $actual_notification);
 
             $this->validateNotification($expected_notification, $actual_notification);
+        }
+
+        // check extra notifications
+        $allow_extra_notifications = isset($meta['allowExtraNotifications']) ? $meta['allowExtraNotifications'] : false;
+        if (!$allow_extra_notifications) {
+            $actual_notifications = [];
+            while ($actual_notification = $this->getActualNotification()) {
+                $actual_notifications[] = $actual_notification;
+            }
+            if ($actual_notifications) {
+                throw new Exception("Found ".count($actual_notifications)." unexpected extra notification(s): ".substr(rtrim(json_encode($actual_notifications, 192)), 0, 400), 1);
+            }
         }
     }
 
