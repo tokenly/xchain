@@ -18,7 +18,7 @@ class SampleBlockHelper
         return $data;
     }
 
-    public function createSampleBlock($filename='sample_parsed_block_01.json', $parsed_block_overrides=[]) {
+    public function createSampleBlock($filename='default_parsed_block_01.json', $parsed_block_overrides=[]) {
         $parsed_block = $this->loadSampleBlock($filename);
 
         $parsed_block = array_replace_recursive($parsed_block, $parsed_block_overrides);

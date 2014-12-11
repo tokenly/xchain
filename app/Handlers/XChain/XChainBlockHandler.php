@@ -2,21 +2,24 @@
 
 namespace App\Handlers\XChain;
 
+use App\Blockchain\Block\BlockChainRepository;
 use App\Blockchain\Transaction\TransactionStore;
-use App\Repositories\BlockRepository;
 use App\Repositories\TransactionRepository;
+use Exception;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Logging\Log;
-use Exception;
 
+/**
+ * This is invoked when a new block is received
+ */
 class XChainBlockHandler {
 
-    const MAX_CONFIRMATIONS = 6;
+    const MAX_CONFIRMATIONS_TO_NOTIFY = 6;
 
-    public function __construct(TransactionStore $transaction_store, TransactionRepository $transaction_repository, BlockRepository $block_repository, Dispatcher $events, Log $log) {
+    public function __construct(TransactionStore $transaction_store, TransactionRepository $transaction_repository, BlockChainRepository $blockchain_repository, Dispatcher $events, Log $log) {
         $this->transaction_store      = $transaction_store;
         $this->transaction_repository = $transaction_repository;
-        $this->block_repository       = $block_repository;
+        $this->blockchain_repository      = $blockchain_repository;
         $this->events                 = $events;
         $this->log                    = $log;
     }
@@ -29,7 +32,7 @@ class XChainBlockHandler {
         
 
         // update the block repository
-        $new_block_model = $this->block_repository->create([
+        $new_block_model = $this->blockchain_repository->create([
             'hash'         => $block_event['hash'],
             'height'       => $block_event['height'],
             'parsed_block' => $block_event
@@ -48,10 +51,17 @@ class XChainBlockHandler {
                 $transaction = $cached_transaction;
                 if (!$transaction['block_confirmed_hash'] OR $transaction['block_confirmed_hash'] != $block_event['hash']) {
                     // update the parsed_tx
-                    $parsed_tx = $cached_transaction['parsed_tx'];
+                    $parsed_tx = $transaction['parsed_tx'];
                     $parsed_tx['bitcoinTx']['blockhash'] = $block_event['hash'];
                     $parsed_tx['bitcoinTx']['blocktime'] = $block_event['time'];
 
+                    // check to see if it was reorganized
+                    $was_reorganized = ($transaction['block_confirmed_hash'] AND $transaction['block_confirmed_hash'] != $block_event['hash']);
+                    if ($was_reorganized) {
+                        // we must reload this transaction from insight
+                        // since this transaction was reorganized
+                        $transaction = $this->transaction_store->getParsedTransactionFromInsight($txid);
+                    }
 
                     $this->wlog("transaction $txid was confirmed in block: {$transaction['block_confirmed_hash']}");
 
@@ -86,7 +96,9 @@ class XChainBlockHandler {
         // also update every transaction that needs a new confirmation sent
         //   find all transactions in the last 6 blocks
         //   and send out notifications
-        $blocks = $this->block_repository->findAllAsOfHeight($block_event['height'] - (self::MAX_CONFIRMATIONS - 1));
+        // echo "\$this->blockchain_repository->findAll()->all():\n".json_encode($this->blockchain_repository->findAll()->all(), 192)."\n";
+        $blocks = $this->blockchain_repository->findAllAsOfHeightEndingWithBlockhash($block_event['height'] - (self::MAX_CONFIRMATIONS_TO_NOTIFY - 1), $block_event['hash']);
+        // echo "\$blocks:\n".json_encode($blocks, 192)."\n";
         $block_hashes = [];
         foreach($blocks as $block) { $block_hashes[] = $block['hash']; }
         foreach($this->transaction_repository->findAllTransactionsConfirmedInBlockHashes($block_hashes) as $transaction_model) {
@@ -101,7 +113,7 @@ class XChainBlockHandler {
     }
 
     protected function getConfirmationsForBlockHash($hash, $current_height) {
-        $block = $this->block_repository->findByHash($hash);
+        $block = $this->blockchain_repository->findByHash($hash);
         if (!$block) { return null; }
         return $current_height - $block['height'] + 1;
 

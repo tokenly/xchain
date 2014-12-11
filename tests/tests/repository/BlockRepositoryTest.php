@@ -37,11 +37,11 @@ class BlockRepositoryTest extends TestCase {
     public function testFindAllAsOfHeight()
     {
         // insert
-        $created_block_model_1 = $this->blockHelper()->createSampleBlock('sample_parsed_block_01.json', ['hash' => 'BLOCKHASH01', 'height' => 333000, 'parsed_block' => ['height' => 333000]]);
-        $created_block_model_2 = $this->blockHelper()->createSampleBlock('sample_parsed_block_01.json', ['hash' => 'BLOCKHASH02', 'height' => 333001, 'parsed_block' => ['height' => 333001]]);
+        $created_block_model_1 = $this->blockHelper()->createSampleBlock('default_parsed_block_01.json', ['hash' => 'BLOCKHASH01', 'height' => 333000, 'parsed_block' => ['height' => 333000]]);
+        $created_block_model_2 = $this->blockHelper()->createSampleBlock('default_parsed_block_01.json', ['hash' => 'BLOCKHASH02', 'height' => 333001, 'parsed_block' => ['height' => 333001]]);
         // create 3 and 4 in the wrong order
-        $created_block_model_4 = $this->blockHelper()->createSampleBlock('sample_parsed_block_01.json', ['hash' => 'BLOCKHASH04', 'height' => 333003, 'parsed_block' => ['height' => 333003]]);
-        $created_block_model_3 = $this->blockHelper()->createSampleBlock('sample_parsed_block_01.json', ['hash' => 'BLOCKHASH03', 'height' => 333002, 'parsed_block' => ['height' => 333002]]);
+        $created_block_model_4 = $this->blockHelper()->createSampleBlock('default_parsed_block_01.json', ['hash' => 'BLOCKHASH04', 'height' => 333003, 'parsed_block' => ['height' => 333003]]);
+        $created_block_model_3 = $this->blockHelper()->createSampleBlock('default_parsed_block_01.json', ['hash' => 'BLOCKHASH03', 'height' => 333002, 'parsed_block' => ['height' => 333002]]);
 
         // load all as of 333003
         $tx_repo = $this->app->make('App\Repositories\BlockRepository');

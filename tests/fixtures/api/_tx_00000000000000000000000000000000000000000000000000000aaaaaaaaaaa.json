@@ -1,0 +1,51 @@
+{
+    "txid": "00000000000000000000000000000000000000000000000000000aaaaaaaaaaa",
+    "version": 1,
+    "locktime": 0,
+    "vin": [{
+        "txid": "cc669b824186886407ad7edd46796437e20ad73c89080420c45e5803f917228d",
+        "vout": 2,
+        "scriptSig": {
+            "asm": "3045022100a37bcfd3087fa4ba9480ce09c7adf02ba3ce2208d6170b42e50b5b2633b91ee6022025d409d3d9dae0a159982c7ab079787948b6b6c5f87fa583d3886ebf1e074c8901 02f4aef682535628a7e0492b2b5db1aa312348c3095e0258e26b275b25b10290e6"
+        },
+        "sequence": 4294967295,
+        "n": 0,
+        "addr": "1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1",
+        "valueSat": 781213,
+        "value": 0.00781213,
+        "doubleSpentTxID": null
+    }],
+    "vout": [{
+        "value": "0.00400000",
+        "n": 0,
+        "scriptPubKey": {
+            "asm": "OP_DUP OP_HASH160 c56cb39f9b289c0ec4ef6943fa107c904820fe09 OP_EQUALVERIFY OP_CHECKSIG",
+            "reqSigs": 1,
+            "type": "pubkeyhash",
+            "addresses": ["1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD"]
+        },
+        "spentTxId": "e90bc279294d704d09b227ad0e37459f61cccb85008605656dc8b024235eefe8",
+        "spentIndex": 2,
+        "spentTs": 1403958484
+    }, {
+        "value": "0.00361213",
+        "n": 1,
+        "scriptPubKey": {
+            "asm": "OP_DUP OP_HASH160 6ca4b6b20eac497e9ca94489c545a3372bdd2fa7 OP_EQUALVERIFY OP_CHECKSIG",
+            "reqSigs": 1,
+            "type": "pubkeyhash",
+            "addresses": ["1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1"]
+        },
+        "spentTxId": "3587bfa8d96c10b6696728651900db2ad6b41321ea44f26693de4f90d2b63526",
+        "spentIndex": 0,
+        "spentTs": 1405081243
+    }],
+    "blockhash": "BLOCKHASH02FORKBBB",
+    "confirmations": 1,
+    "time": 1403957896,
+    "blocktime": 1403957896,
+    "valueOut": 0.00761213,
+    "size": 226,
+    "valueIn": 0.00781213,
+    "fees": 0.0002
+}

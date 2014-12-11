@@ -24,10 +24,9 @@ events:
   -
     type: block
     hash: BLOCKHASH02
+    previousblockhash: 000000000000000015f697b296584d9d443d2225c67df9033157a9efe4a8faa0
     height: 333001
-    tx:
-        # a random transaction we don't care about
-        - 2c4eb2613c9b12c66f07527d9e58d53cf4bcaeb25fbdc2e44c62bd2a3d165d56
+    tx: ["2c4eb2613c9b12c66f07527d9e58d53cf4bcaeb25fbdc2e44c62bd2a3d165d56"] # one random transaction we don't care about
 
 
 notifications:

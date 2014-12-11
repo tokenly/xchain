@@ -1,0 +1,88 @@
+# blockchain reorganization after confirmed transaction sends notice
+
+monitoredAddresses:
+  - address: RECIPIENT01
+    monitor_type: receive
+
+events:
+  -
+    type: block
+    hash: BLOCKHASH01BASE
+    height: 333000
+    tx:
+        - 000000000000000000000000000000000000000000000000000000000001ba5e # a random transaction we don't care about
+  -
+    type: transaction
+    meta:
+        baseFilename: default_xcp_parsed_mempool_01.json
+    txid: 00000000000000000000000000000000000000000000000000000aaaaaaaaaaa
+    sender: SENDER01
+    recipient: RECIPIENT01
+    isCounterpartyTx: true
+    asset: LTBCOIN
+    quantity: 500
+    blockId: 300000
+
+  # confirm the transaction in fork AAA
+  -
+    type: block
+    hash: BLOCKHASH01FORKAAA
+    height: 333001
+    tx:
+        - 000000000000000000000000000000000000000000000000000000000001ba5e
+        - 00000000000000000000000000000000000000000000000000000aaaaaaaaaaa
+
+  # fork the chain
+  -
+    type: block
+    hash: BLOCKHASH01FORKBBB
+    previousblockhash: BLOCKHASH01BASE
+    height: 333001
+    tx:
+        - 000000000000000000000000000000000000000000000000000000000001ba5e # a random transaction we don't care about
+
+  # confirm the transaction in fork BBB
+  -
+    type: block
+    hash: BLOCKHASH02FORKBBB
+    previousblockhash: BLOCKHASH01FORKBBB
+    height: 333002
+    tx:
+        - 000000000000000000000000000000000000000000000000000000000001ba5e
+        - 00000000000000000000000000000000000000000000000000000aaaaaaaaaaa
+
+  # another unrelated block in fork BBB
+  -
+    type: block
+    hash: BLOCKHASH03FORKBBB
+    previousblockhash: BLOCKHASH02FORKBBB
+    height: 333003
+    tx:
+        - 000000000000000000000000000000000000000000000000000000000001ba5e # a random transaction we don't care about
+
+
+
+notifications:
+    # mempool
+  - meta: { baseFilename: xcp_mempool_notification_01.yml }
+    txid: 00000000000000000000000000000000000000000000000000000aaaaaaaaaaa
+
+    # 1 confirmation
+  - meta: { baseFilename: xcp_confirmed_notification_01.yml }
+    txid: 00000000000000000000000000000000000000000000000000000aaaaaaaaaaa
+    blockhash: BLOCKHASH01FORKAAA
+
+    # 1 confirmation (again - this time in a separate fork)
+  - meta: { baseFilename: xcp_confirmed_notification_01.yml }
+    txid: 00000000000000000000000000000000000000000000000000000aaaaaaaaaaa
+    blockhash: BLOCKHASH02FORKBBB
+
+    # 2 confirmations
+  - meta: { baseFilename: xcp_confirmed_notification_01.yml }
+    txid: 00000000000000000000000000000000000000000000000000000aaaaaaaaaaa
+    blockhash: BLOCKHASH02FORKBBB
+    confirmations: 2
+
+
+meta:
+  allowExtraNotifications: false

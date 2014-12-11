@@ -1,0 +1,33 @@
+{
+    "blockhash": "BLOCKHASH01BASE",
+    "blocktime": 1418043763,
+    "confirmations": 1,
+    "isCoinBase": true,
+    "locktime": 0,
+    "size": 103,
+    "time": 1418043763,
+    "txid": "000000000000000000000000000000000000000000000000000000000001ba5e",
+    "valueOut": 25.00867204,
+    "version": 1,
+    "vin": [
+        {
+            "coinbase": "03661605055485a03b01108357df00001688",
+            "n": 0,
+            "sequence": 4294967295
+        }
+    ],
+    "vout": [
+        {
+            "n": 0,
+            "scriptPubKey": {
+                "addresses": [
+                    "1KTNEBhQdj81UhDkJaoe3r8VtAsrnmpmnS"
+                ],
+                "asm": "OP_DUP OP_HASH160 ca6ecc7d4d671d8c5c964a48dbb0bc194407a306 OP_EQUALVERIFY OP_CHECKSIG",
+                "reqSigs": 1,
+                "type": "pubkeyhash"
+            },
+            "value": "25.00867204"
+        }
+    ]
+}

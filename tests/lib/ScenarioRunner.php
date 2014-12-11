@@ -120,34 +120,44 @@ class ScenarioRunner
             $sample_filename = $meta['baseFilename'];
 
             $default = Yaml::parse(base_path().'/tests/fixtures/notifications/'.$sample_filename);
-            $raw_expected_notification = array_replace_recursive($default, $raw_expected_notification);
+            $expected_notification = array_replace_recursive($default, $raw_expected_notification);
+        } else {
+            $expected_notification = $raw_expected_notification;
         }
 
 
-        if (isset($raw_expected_notification['sources'])) {
-            $normalized_expected_notification['sources'] = is_array($raw_expected_notification['sources']) ? $raw_expected_notification['sources'] : [$raw_expected_notification['sources']];
+        if (isset($expected_notification['sources'])) {
+            $normalized_expected_notification['sources'] = is_array($expected_notification['sources']) ? $expected_notification['sources'] : [$expected_notification['sources']];
         }
-        if (isset($raw_expected_notification['destinations'])) {
-            $normalized_expected_notification['destinations'] = is_array($raw_expected_notification['destinations']) ? $raw_expected_notification['destinations'] : [$raw_expected_notification['destinations']];
+        if (isset($expected_notification['destinations'])) {
+            $normalized_expected_notification['destinations'] = is_array($expected_notification['destinations']) ? $expected_notification['destinations'] : [$expected_notification['destinations']];
         }
 
         ///////////////////
         // EXPECTED
         foreach (['txid','isCounterpartyTx','quantity','asset','notifiedAddress','event',] as $field) {
-            if (isset($raw_expected_notification[$field])) { $normalized_expected_notification[$field] = $raw_expected_notification[$field]; }
+            if (isset($expected_notification[$field])) { $normalized_expected_notification[$field] = $expected_notification[$field]; }
         }
         ///////////////////
-
-        // build satoshis
-        $normalized_expected_notification['quantitySat'] = CurrencyUtil::valueToSatoshis($normalized_expected_notification['quantity']);
 
         ///////////////////
         // OPTIONAL
         foreach (['confirmations','confirmed','counterpartyTx','bitcoinTx','transactionTime','notificationId','webhookEndpoint',] as $field) {
-            if (isset($raw_expected_notification[$field])) { $normalized_expected_notification[$field] = $raw_expected_notification[$field]; }
+            if (isset($expected_notification[$field])) { $normalized_expected_notification[$field] = $expected_notification[$field]; }
                 else if (isset($actual_notification[$field])) { $normalized_expected_notification[$field] = $actual_notification[$field]; }
         }
         ///////////////////
+
+        ///////////////////
+        // Special
+        // build satoshis
+        $normalized_expected_notification['quantitySat'] = CurrencyUtil::valueToSatoshis($normalized_expected_notification['quantity']);
+        // blockhash
+        if (isset($raw_expected_notification['blockhash'])) {
+            $normalized_expected_notification['bitcoinTx']['blockhash'] = $raw_expected_notification['blockhash'];
+        }
+        ///////////////////
+
 
 
         return $normalized_expected_notification;
@@ -255,16 +265,21 @@ class ScenarioRunner
         if (isset($meta['baseBlockFilename'])) {
             $sample_filename = $meta['baseBlockFilename'];
         } else {
-            $sample_filename = 'sample_parsed_block_01.json';
+            $sample_filename = 'default_parsed_block_01.json';
         }
         $default = json_decode(file_get_contents(base_path().'/tests/fixtures/blocks/'.$sample_filename), true);
         $normalized_block_event = $default;
 
         ///////////////////
         // OPTIONAL
-        foreach (['hash','tx','height',] as $field) {
+        foreach (['hash','tx','height','previousblockhash',] as $field) {
             if (isset($raw_block_event[$field])) { $normalized_block_event[$field] = $raw_block_event[$field]; }
         }
+        ///////////////////
+
+        ///////////////////
+        // SPECIAL
+        // if (isset($raw_block_event['previousblockhash'])) { $normalized_block_event['previousblockhash'] = $raw_block_event['previousblockhash']; }
         ///////////////////
 
         // echo "\$normalized_block_event:\n".json_encode($normalized_block_event, 192)."\n";
