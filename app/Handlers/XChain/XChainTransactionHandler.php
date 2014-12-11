@@ -2,27 +2,38 @@
 
 namespace App\Handlers\XChain;
 
+use App\Blockchain\Transaction\TransactionStore;
 use App\Repositories\MonitoredAddressRepository;
 use App\Repositories\NotificationRepository;
 use Illuminate\Contracts\Logging\Log;
 use Illuminate\Queue\QueueManager;
 use Nc\FayeClient\Client as FayeClient;
 
-class XChainNotificationBuilderHandler {
+class XChainTransactionHandler {
 
-    public function __construct(MonitoredAddressRepository $monitored_address_repository, NotificationRepository $notification_repository, QueueManager $queue_manager, Log $log) {
+    public function __construct(MonitoredAddressRepository $monitored_address_repository, NotificationRepository $notification_repository, TransactionStore $transaction_store, QueueManager $queue_manager, Log $log) {
         $this->monitored_address_repository = $monitored_address_repository;
         $this->notification_repository      = $notification_repository;
+        $this->transaction_store            = $transaction_store;
         $this->queue_manager                = $queue_manager;
         $this->log                          = $log;
     }
 
-    public function pushEvent($tx_event)
-    {
-        // $this->wlog('$tx_event: '.json_encode($tx_event, 192));
+    public function storeParsedTransaction($parsed_tx) {
+        // we don't store confirmations
+        unset($parsed_tx['bitcoinTx']['confirmations']);
 
-        $sources = ($tx_event['sources'] ? $tx_event['sources'] : []);
-        $destinations = ($tx_event['destinations'] ? $tx_event['destinations'] : []);
+        $transaction = $this->transaction_store->storeParsedTransaction($parsed_tx);
+        return;
+    }
+
+    public function sendNotifications($parsed_tx, $confirmations)
+    {
+        // echo "\$parsed_tx:\n".json_encode($parsed_tx, 192)."\n";
+        $this->wlog('sendNotifications txid: '.$parsed_tx['txid'].' $confirmations: '.$confirmations);
+
+        $sources = ($parsed_tx['sources'] ? $parsed_tx['sources'] : []);
+        $destinations = ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []);
 
         // get all addresses that we care about
         $found_addresses = $this->monitored_address_repository->findByAddresses(array_unique(array_merge($sources, $destinations)));
@@ -40,11 +51,10 @@ class XChainNotificationBuilderHandler {
             }
 
             // create a notification
-            $confirmations = isset($tx_event['bitcoinTx']['confirmations']) ? $tx_event['bitcoinTx']['confirmations'] : 0;
             $notification_model = $this->notification_repository->create(
                 $found_address,
                 [
-                    'txid'          => $tx_event['txid'],
+                    'txid'          => $parsed_tx['txid'],
                     'confirmations' => $confirmations,
                 ]
             );
@@ -57,22 +67,22 @@ class XChainNotificationBuilderHandler {
                 'notificationId'   => $notification_model['uuid'],
                 'notifiedAddress'  => $found_address['address'],
 
-                'txid'             => $tx_event['txid'],
-                'isCounterpartyTx' => $tx_event['isCounterpartyTx'],
-                'quantity'         => $tx_event['quantity'],
-                'quantitySat'      => $tx_event['quantitySat'],
-                'asset'            => $tx_event['asset'],
+                'txid'             => $parsed_tx['txid'],
+                'isCounterpartyTx' => $parsed_tx['isCounterpartyTx'],
+                'quantity'         => $parsed_tx['quantity'],
+                'quantitySat'      => $parsed_tx['quantitySat'],
+                'asset'            => $parsed_tx['asset'],
 
-                'sources'          => ($tx_event['sources'] ? $tx_event['sources'] : []),
-                'destinations'     => ($tx_event['destinations'] ? $tx_event['destinations'] : []),
+                'sources'          => ($parsed_tx['sources'] ? $parsed_tx['sources'] : []),
+                'destinations'     => ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []),
 
-                'counterpartyTx'   => $tx_event['counterpartyTx'],
-                'bitcoinTx'        => $tx_event['bitcoinTx'],
+                'counterpartyTx'   => $parsed_tx['counterpartyTx'],
+                'bitcoinTx'        => $parsed_tx['bitcoinTx'],
 
                 // ISO 8601
-                'transactionTime'  => $this->getISO8601Timestamp($tx_event['timestamp']),
+                'transactionTime'  => $this->getISO8601Timestamp($parsed_tx['timestamp']),
                 'confirmations'    => $confirmations,
-                'confirmed'        => $confirmations > 0,
+                'confirmed'        => ($confirmations > 0 ? true : false),
             ];
 
             $notification_json = json_encode($notification);
@@ -105,7 +115,9 @@ class XChainNotificationBuilderHandler {
     }
 
     public function subscribe($events) {
-        $events->listen('xchain.tx.received', 'App\Handlers\XChain\XChainNotificationBuilderHandler@pushEvent');
+        $events->listen('xchain.tx.received', 'App\Handlers\XChain\XChainTransactionHandler@storeParsedTransaction');
+        $events->listen('xchain.tx.received', 'App\Handlers\XChain\XChainTransactionHandler@sendNotifications');
+        $events->listen('xchain.tx.confirmed', 'App\Handlers\XChain\XChainTransactionHandler@sendNotifications');
     }
 
     protected function wlog($text) {

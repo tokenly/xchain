@@ -18,8 +18,7 @@ class CreateTransactionTable extends Migration
             $table->char('txid', 64)->index();
             $table->boolean('is_mempool')->index();
             $table->boolean('is_xcp')->index();
-            $table->mediumInteger('block_seen');
-            $table->mediumInteger('block_confirmed')->index();
+            $table->char('block_confirmed_hash', 64)->index()->nullable();
             $table->longText('parsed_tx');
             $table->timestamps();
         });

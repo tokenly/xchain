@@ -21,9 +21,10 @@ class TestMemorySyncQueue extends SyncQueue
         array_push($this->memory[$queue], $payload);
     }
 
+    // takes the first value from the from of the array (FIFO)
     public function pop($queue = null) {
         $queue = $queue ?: $this->default;
-        return array_pop($this->memory[$queue]);
+        return isset($this->memory[$queue]) ? array_shift($this->memory[$queue]) : null;
     }
 
 

@@ -18,12 +18,12 @@ class SampleTransactionsHelper
         return $data;
     }
 
-    public function createSampleTransaction($filename='sample_xcp_parsed_01.json', $block_seen=300000, $parsed_tx_overrides=[]) {
+    public function createSampleTransaction($filename='sample_xcp_parsed_01.json', $parsed_tx_overrides=[]) {
         $parsed_tx = $this->loadSampleTransaction($filename);
 
-        $parsed_tx = array_merge_recursive($parsed_tx, $parsed_tx_overrides);
+        $parsed_tx = array_replace_recursive($parsed_tx, $parsed_tx_overrides);
 
-        $transaction_model = $this->transaction_repository->create($parsed_tx, $block_seen);
+        $transaction_model = $this->transaction_repository->create($parsed_tx);
         return $transaction_model;
     }
 

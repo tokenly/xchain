@@ -1,0 +1,30 @@
+# receiving a block sends a second notification with a confirmation of 1
+
+monitoredAddresses:
+  - address: RECIPIENT01
+    monitor_type: receive
+
+events:
+  -
+    type: transaction
+    meta:
+        baseFilename: default_xcp_parsed_mempool_01.json
+    txid: cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
+    sender: SENDER01
+    recipient: RECIPIENT01
+    isCounterpartyTx: true
+    asset: LTBCOIN
+    quantity: 500
+    blockId: 300000
+  -
+    type: block
+    tx:
+        - f88d98717dacb985e3ad49ffa66b8562d8194f1885f58425e1c8582ce2ac5b58
+        - cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
+
+
+notifications:
+    # mempool
+  - meta: { baseFilename: xcp_mempool_notification_01.yml }
+    # 1 confirmation
+  - meta: { baseFilename: xcp_confirmed_notification_01.yml }

@@ -4,8 +4,9 @@ monitoredAddresses:
   - address: RECIPIENT01
     monitor_type: receive
 
-transactions:
+events:
   -
+    type: transaction
     txid: cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
     sender: SENDER01
     recipient: RECIPIENT01
@@ -15,18 +16,7 @@ transactions:
     blockId: 300000
 
 notifications:
-  -
-    txid: cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
-    event: receive
-    notifiedAddress: RECIPIENT01
-    sources: SENDER01
-    isCounterpartyTx: true
-    destinations: RECIPIENT01
-    confirmed: false
-    confirmations: 0
-    asset: LTBCOIN
-    quantity: 500
-    blockId: 300000
+  - meta: { baseFilename: xcp_mempool_notification_01.yml }
 
 
 

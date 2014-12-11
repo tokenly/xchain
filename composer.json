@@ -14,6 +14,7 @@
         "tokenly/bitcoin-currency-lib": "dev-master@dev",
         "tokenly/xcpd-client": "dev-master@dev",
         "tokenly/hmac-auth": "dev-master@dev",
+        "tokenly/insight-client": "dev-master@dev",
         "tokenly/token-generator": "dev-master@dev",
         "nc/faye-client": "dev-master",
         "rhumsaa/uuid": "~2.",

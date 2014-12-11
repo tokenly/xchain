@@ -12,14 +12,13 @@ use \Exception;
 class TransactionRepository
 {
 
-    public function create($parsed_tx, $block_seen, $block_confirmed=null) {
+    public function create($parsed_tx) {
         return Transaction::create([
-            'txid'            => $parsed_tx['txid'],
-            'is_xcp'          => $parsed_tx['isCounterpartyTx'] ? 1 : 0,
-            'block_seen'      => $block_seen,
-            'block_confirmed' => $block_confirmed === null ? 0 : $block_confirmed,
-            'is_mempool'      => $block_confirmed === null ? 1 : 0,
-            'parsed_tx'       => $parsed_tx,
+            'txid'                 => $parsed_tx['txid'],
+            'is_xcp'               => $parsed_tx['isCounterpartyTx'] ? 1 : 0,
+            'block_confirmed_hash' => isset($parsed_tx['bitcoinTx']['blockhash']) ? $parsed_tx['bitcoinTx']['blockhash'] : null,
+            'is_mempool'           => isset($parsed_tx['bitcoinTx']['blockhash']) ? 0 : 1,
+            'parsed_tx'            => $parsed_tx,
         ]);
     }
 
@@ -27,23 +26,27 @@ class TransactionRepository
         return Transaction::where('txid', $txid)->first();
     }
 
+    public function findAllTransactionsConfirmedInBlockHashes($hashes, $columns=['*']) {
+        return Transaction::whereIn('block_confirmed_hash', $hashes)->get($columns);
+    }
+
     public function updateByTXID($txid, $attributes) {
         return $this->update($this->findByTXID($txid), $attributes);
     }
 
-    public function update(Model $address, $attributes) {
-        return $address->update($attributes);
+    public function update(Model $transaction, $attributes) {
+        return $transaction->update($attributes);
     }
 
     public function deleteByTXID($txid) {
-        if ($address = self::findByTXID($txid)) {
-            return self::delete($address);
+        if ($transaction = self::findByTXID($txid)) {
+            return self::delete($transaction);
         }
         return false;
     }
 
-    public function delete(Model $address) {
-        return $address->delete();
+    public function delete(Model $transaction) {
+        return $transaction->delete();
     }
 
 

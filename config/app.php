@@ -144,8 +144,9 @@ return [
 		/*
 		 * Vendor Service Providers...
 		 */
-		'Tokenly\XChainListener\XChainListenerServiceProvider',
 		'Tokenly\XCPDClient\XCPDClientServiceProvider',
+		'Tokenly\Insight\InsightServiceProvider',
+		'Tokenly\XChainListener\XChainListenerServiceProvider',
 		'Tokenly\HmacAuth\ServiceProvider\HmacAuthServiceProvider',
 		'Tokenly\BitcoinAddressLib\BitcoinAddressServiceProvider',
 
