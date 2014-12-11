@@ -21,7 +21,8 @@
         "linusu/bitcoin-address-validator": "~0"
     },
     "require-dev": {
-        "phpunit/phpunit": "~4"
+        "phpunit/phpunit": "~4",
+        "satooshi/php-coveralls": "dev-master"
     },
     "autoload": {
         "classmap": [
