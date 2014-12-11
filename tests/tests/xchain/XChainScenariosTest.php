@@ -22,9 +22,7 @@ class XChainScenariosTest extends TestCase {
         PHPUnit::assertGreaterThan(0, $scenario_number_count);
         for ($i=1; $i <= $scenario_number_count; $i++) { 
             // clear the db
-            if ($i > 1) {
-                $this->resetForScenario();
-            }
+            if ($i > 1) { $this->resetForScenario(); }
 
             $this->runScenario($i);
         }
