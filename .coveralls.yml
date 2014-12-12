@@ -1,4 +1,4 @@
-# .coveralls.yml example configuration
+# .coveralls.yml configuration
 
 repo_token: pseoIQINLFIEmM569JqLSTiEozLs0WgPQ
 service_name: travis-ci
