@@ -26,6 +26,7 @@ class NotificationHelper
         return array_merge([
             'confirmations' => 0,
             'txid'          => 'cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741',
+            'notification'  => ['foo' => 'bar'],
         ], $override_vars);
     }
 

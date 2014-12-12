@@ -31,6 +31,10 @@ class NotificationRepository
         return Notification::find($id)->first();
     }
 
+    public function findByMonitoredAddressId($monitored_address_id) {
+        return Notification::where('monitored_address_id', $monitored_address_id)->orderBy('id')->get();
+    }
+
     public function findByUuid($uuid) {
         return Notification::where('uuid', $uuid)->first();
     }

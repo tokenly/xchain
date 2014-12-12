@@ -28,6 +28,12 @@ class BlockRepository
         return Block::where('height', '>=', $height)->orderBy('height')->get();
     }
 
+    public function findLatestBlockHeight() {
+        $block = Block::orderBy('height', 'desc')->limit(1)->first();
+        if (!$block) { return null; }
+        return $block['height'];
+    }
+
     public function updateByHash($hash, $attributes) {
         return $this->update($this->findByHash($hash), $attributes);
     }

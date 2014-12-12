@@ -15,6 +15,7 @@ $router->get('/', 'HomeController@index');
 
 $router->resource('api/v1/monitors', 'API\MonitorController', ['except' => ['create','edit']]);
 $router->resource('api/v1/addresses', 'API\PaymentAddressController', ['except' => ['create','edit']]);
+$router->get('api/v1/transactions/{address}', 'API\TransactionController@index');
 
 
 /*

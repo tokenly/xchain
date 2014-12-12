@@ -65,13 +65,14 @@ class APITester
     }
 
 
-    public function testListResources($actual_created_sample_resources) {
+    public function testListResources($actual_created_sample_resources, $url_extension=null) {
         $expected_created_resources_response = [];
         foreach($actual_created_sample_resources as $resource_model) {
             $expected_created_resources_response[] = $resource_model->serializeForAPI();
         }
 
-        $response = $this->callAPIWithAuthentication('GET', $this->url_base);
+        // echo "url:\n".json_encode($this->url_base.$url_extension, 192)."\n";
+        $response = $this->callAPIWithAuthentication('GET', $this->url_base.$url_extension);
         PHPUnit::assertEquals(200, $response->getStatusCode(), "Response was: ".$response->getContent());
         $loaded_resources_from_api = json_decode($response->getContent(), 1);
         PHPUnit::assertEquals($expected_created_resources_response, $loaded_resources_from_api);
@@ -123,6 +124,16 @@ class APITester
     }
 
 
+    public function callAPIWithAuthentication($method, $uri, $parameters = [], $cookies = [], $files = [], $server = [], $content = null) {
+        $request = Request::create($uri, $method, $parameters, $cookies, $files, $server, $content);
+        $generator = new Generator();
+        $api_token = 'TESTAPITOKEN';
+        $secret = 'TESTAPISECRET';
+        $generator->addSignatureToSymfonyRequest($request, $api_token, $secret);
+        return $this->app->make('Illuminate\Contracts\Http\Kernel')->handle($request);
+    }
+
+
     ////////////////////////////////////////////////////////////////////////
     
     protected function runErrorScenario($method, $url_path, $posted_vars, $expected_error) {
@@ -142,13 +153,5 @@ class APITester
         return $expected_created_resource;
     }
 
-    protected function callAPIWithAuthentication($method, $uri, $parameters = [], $cookies = [], $files = [], $server = [], $content = null) {
-        $request = Request::create($uri, $method, $parameters, $cookies, $files, $server, $content);
-        $generator = new Generator();
-        $api_token = 'TESTAPITOKEN';
-        $secret = 'TESTAPISECRET';
-        $generator->addSignatureToSymfonyRequest($request, $api_token, $secret);
-        return $this->app->make('Illuminate\Contracts\Http\Kernel')->handle($request);
-    }
 
 }

@@ -24,6 +24,7 @@ class CreateNotificationTable extends Migration
             $table->integer('attempts')->nullable();
             $table->timestamp('returned')->nullable();
             $table->text('error')->nullable();
+            $table->longText('notification');
             $table->timestamps();
         });
     }

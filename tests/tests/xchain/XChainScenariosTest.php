@@ -30,7 +30,7 @@ class XChainScenariosTest extends TestCase {
 
 
     protected function runScenario($scenario_number) {
-        $this->initMocks();
+        // $this->initMocks();
 
         $filename = "scenario".sprintf('%02d', $scenario_number).".yml";
         $scenario_runner = $this->scenarioRunner();
@@ -41,21 +41,21 @@ class XChainScenariosTest extends TestCase {
 
     protected function scenarioRunner() {
         if (!isset($this->scenario_runner)) {
-            $this->scenario_runner = $this->app->make('\ScenarioRunner');
+            $this->scenario_runner = $this->app->make('\ScenarioRunner')->initMocks($this);
         }
         return $this->scenario_runner;
     }
 
-    protected function initMocks() {
-        if (!isset($this->mocks_inited)) {
-            $this->mocks_inited = true;
+    // protected function initMocks() {
+    //     if (!isset($this->mocks_inited)) {
+    //         $this->mocks_inited = true;
 
-            $mock_builder = new \InsightAPIMockBuilder();
-            $mock_builder->installMockInsightClient($this->app, $this);
+    //         $mock_builder = new \InsightAPIMockBuilder();
+    //         $mock_builder->installMockInsightClient($this->app, $this);
 
-        }
-        return $this->mocks_inited;
-    }
+    //     }
+    //     return $this->mocks_inited;
+    // }
 
     protected function resetForScenario() {
         // reset the DB

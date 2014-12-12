@@ -3,6 +3,7 @@
 namespace App\Handlers\XChain;
 
 use App\Blockchain\Block\BlockChainRepository;
+use App\Blockchain\Block\ConfirmationsBuilder;
 use App\Blockchain\Transaction\TransactionStore;
 use App\Repositories\TransactionRepository;
 use Exception;
@@ -16,10 +17,12 @@ class XChainBlockHandler {
 
     const MAX_CONFIRMATIONS_TO_NOTIFY = 6;
 
-    public function __construct(TransactionStore $transaction_store, TransactionRepository $transaction_repository, BlockChainRepository $blockchain_repository, Dispatcher $events, Log $log) {
+
+    public function __construct(TransactionStore $transaction_store, TransactionRepository $transaction_repository, BlockChainRepository $blockchain_repository, ConfirmationsBuilder $confirmations_builder, Dispatcher $events, Log $log) {
         $this->transaction_store      = $transaction_store;
         $this->transaction_repository = $transaction_repository;
-        $this->blockchain_repository      = $blockchain_repository;
+        $this->confirmations_builder  = $confirmations_builder;
+        $this->blockchain_repository  = $blockchain_repository;
         $this->events                 = $events;
         $this->log                    = $log;
     }
@@ -70,7 +73,7 @@ class XChainBlockHandler {
                         // echo "\$transaction['block_confirmed_hash']:\n".json_encode($transaction['block_confirmed_hash'], 192)."\n";
                         // this is a previously confirmed transaction
                         $block_hash_for_transaction = $transaction['block_confirmed_hash'];
-                        $confirmations = $this->getConfirmationsForBlockHash($block_hash_for_transaction, $block_event['height']);
+                        $confirmations = $this->confirmations_builder->getConfirmationsForBlockHashAsOfHeight($block_hash_for_transaction, $block_event['height']);
                         $this->wlog("transaction was confirmed in block: {$transaction['block_confirmed_hash']} \$confirmations is $confirmations");
                         if ($confirmations === null) { throw new Exception("Unable to load confirmations for block {$block_hash_for_transaction}", 1); }
                     }
@@ -102,7 +105,7 @@ class XChainBlockHandler {
         $block_hashes = [];
         foreach($blocks as $block) { $block_hashes[] = $block['hash']; }
         foreach($this->transaction_repository->findAllTransactionsConfirmedInBlockHashes($block_hashes) as $transaction_model) {
-            $confirmations = $this->getConfirmationsForBlockHash($transaction_model['block_confirmed_hash'], $block_event['height']);
+            $confirmations = $this->confirmations_builder->getConfirmationsForBlockHashAsOfHeight($transaction_model['block_confirmed_hash'], $block_event['height']);
             $this->events->fire('xchain.tx.confirmed', [$transaction_model['parsed_tx'], $confirmations]);
         }
 
@@ -110,13 +113,6 @@ class XChainBlockHandler {
 
     public function subscribe($events) {
         $events->listen('xchain.block.received', 'App\Handlers\XChain\XChainBlockHandler@handleNewBlock');
-    }
-
-    protected function getConfirmationsForBlockHash($hash, $current_height) {
-        $block = $this->blockchain_repository->findByHash($hash);
-        if (!$block) { return null; }
-        return $current_height - $block['height'] + 1;
-
     }
 
     protected function wlog($text) {

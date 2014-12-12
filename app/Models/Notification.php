@@ -27,6 +27,9 @@ class Notification extends Model
     public function setStatusAttribute($type_text) { $this->attributes['status'] = $this->statusTextToStatusID($type_text); }
     public function getStatusAttribute() { return $this->statusIDToStatusText($this->attributes['status']); }
 
+    public function setNotificationAttribute($notification) { $this->attributes['notification'] = json_encode($notification); }
+    public function getNotificationAttribute() { return json_decode($this->attributes['notification'], true); }
+
     public function statusTextToStatusID($type_text) {
         switch ($type_text) {
             case 'new': return self::STATUS_NEW;

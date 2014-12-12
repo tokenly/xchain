@@ -50,21 +50,9 @@ class XChainTransactionHandler {
                 case 'receive': $event_type = 'receive'; break;
             }
 
-            // create a notification
-            $notification_model = $this->notification_repository->create(
-                $found_address,
-                [
-                    'txid'          => $parsed_tx['txid'],
-                    'confirmations' => $confirmations,
-                ]
-            );
-            
-            $api_key = '[none]';
-            $api_secret = '[secret]';
-
             $notification = [
                 'event'            => $event_type,
-                'notificationId'   => $notification_model['uuid'],
+                'notificationId'   => null,
                 'notifiedAddress'  => $found_address['address'],
 
                 'txid'             => $parsed_tx['txid'],
@@ -85,6 +73,23 @@ class XChainTransactionHandler {
                 'confirmed'        => ($confirmations > 0 ? true : false),
             ];
 
+
+            // create a notification
+            $notification_vars_for_model = $notification;
+            unset($notification_vars_for_model['notificationId']);
+            $notification_model = $this->notification_repository->create(
+                $found_address,
+                [
+                    'txid'          => $parsed_tx['txid'],
+                    'confirmations' => $confirmations,
+                    'notification'  => $notification_vars_for_model,
+                ]
+            );
+            
+            $api_key = '[none]';
+            $api_secret = '[secret]';
+
+            $notification['notificationId'] = $notification_model['uuid'];
             $notification_json = json_encode($notification);
 
             $signature = hash_hmac('sha256', $notification_json, $api_secret, false);

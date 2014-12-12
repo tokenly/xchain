@@ -3,6 +3,7 @@
 use App\Repositories\MonitoredAddressRepository;
 use App\Repositories\TransactionRepository;
 use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Queue\QueueManager;
 use Symfony\Component\Yaml\Yaml;
 use Tokenly\CurrencyLib\CurrencyUtil;
@@ -14,8 +15,8 @@ use \PHPUnit_Framework_Assert as PHPUnit;
 class ScenarioRunner
 {
 
-    function __construct(Dispatcher $events, QueueManager $queue_manager, MonitoredAddressRepository $monitored_address_repository, MonitoredAddressHelper $monitored_address_helper, TransactionRepository $transaction_repository) {
-        // $this->app = $app;
+    function __construct(Application $app, Dispatcher $events, QueueManager $queue_manager, MonitoredAddressRepository $monitored_address_repository, MonitoredAddressHelper $monitored_address_helper, TransactionRepository $transaction_repository) {
+        $this->app                          = $app;
         $this->events                       = $events;
         $this->queue_manager                = $queue_manager;
         $this->monitored_address_repository = $monitored_address_repository;
@@ -26,6 +27,27 @@ class ScenarioRunner
         {
             return new \TestMemorySyncConnector();
         });
+    }
+
+    public function initMocks($test_case) {
+        if (!isset($this->mocks_inited)) {
+            $this->mocks_inited = true;
+
+            $mock_builder = new \InsightAPIMockBuilder();
+            $mock_builder->installMockInsightClient($this->app, $test_case);
+
+        }
+        return $this;
+    }
+
+    public function runScenarioByNumber($scenario_number) {
+        $scenario_data = $this->loadScenarioByNumber($scenario_number);
+        return $this->runScenario($scenario_data);
+    }
+
+    public function loadScenarioByNumber($scenario_number) {
+        $filename = "scenario".sprintf('%02d', $scenario_number).".yml";
+        return $this->loadScenario($filename);
     }
 
     public function loadScenario($filename) {
@@ -65,6 +87,7 @@ class ScenarioRunner
         if (isset($scenario_data['notifications'])) { $this->validateNotifications($scenario_data['notifications'], $meta); }
         if (isset($scenario_data['transaction_rows'])) { $this->validateTransactionRows($scenario_data['transaction_rows']); }
     }
+
 
     ////////////////////////////////////////////////////////////////////////
     // Validate Notifications
