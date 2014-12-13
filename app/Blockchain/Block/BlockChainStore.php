@@ -46,7 +46,7 @@ class BlockChainStore {
 
         while ($blocks_found < $backfill_max) {
             $block_model = $this->findByHash($working_hash);
-            $block = $block_model['parsed_block'];
+            $block = $block_model ? $block_model['parsed_block'] : null;
             ++$blocks_found;
 
             if (!$block) {
