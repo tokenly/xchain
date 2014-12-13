@@ -2212,12 +2212,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/insight-client.git",
-                "reference": "4790311e18b291a9ff9534395d6453ba5219d04f"
+                "reference": "0928d2ec0919a5fa9a973d88479b5258f40045b8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/insight-client/zipball/4790311e18b291a9ff9534395d6453ba5219d04f",
-                "reference": "4790311e18b291a9ff9534395d6453ba5219d04f",
+                "url": "https://api.github.com/repos/tokenly/insight-client/zipball/0928d2ec0919a5fa9a973d88479b5258f40045b8",
+                "reference": "0928d2ec0919a5fa9a973d88479b5258f40045b8",
                 "shasum": ""
             },
             "require": {
@@ -2245,7 +2245,7 @@
                 }
             ],
             "description": "A client library for the Bitpay Insight API",
-            "time": "2014-12-11 14:52:58"
+            "time": "2014-12-13 20:16:50"
         },
         {
             "name": "tokenly/token-generator",
@@ -2293,12 +2293,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/xchain-listener.git",
-                "reference": "0359929dfe190124e8f5cab918b6ebbbb65e03b5"
+                "reference": "a6ec465fa0cdbb14041110b1754ccfdaa7f375a7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/xchain-listener/zipball/0359929dfe190124e8f5cab918b6ebbbb65e03b5",
-                "reference": "0359929dfe190124e8f5cab918b6ebbbb65e03b5",
+                "url": "https://api.github.com/repos/tokenly/xchain-listener/zipball/a6ec465fa0cdbb14041110b1754ccfdaa7f375a7",
+                "reference": "a6ec465fa0cdbb14041110b1754ccfdaa7f375a7",
                 "shasum": ""
             },
             "require": {
@@ -2337,7 +2337,7 @@
                 }
             ],
             "description": "A Counterparty transaction library",
-            "time": "2014-12-11 14:51:38"
+            "time": "2014-12-13 20:17:17"
         },
         {
             "name": "tokenly/xcpd-client",
