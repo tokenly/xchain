@@ -17,9 +17,9 @@ class TransactionController extends Controller {
      *
      * @return Response
      */
-    public function index(MonitoredAddressRepository $monitored_address_repository, NotificationRepository $notification_respository, ConfirmationsBuilder $confirmations_builder, $address)
+    public function index(MonitoredAddressRepository $monitored_address_repository, NotificationRepository $notification_respository, ConfirmationsBuilder $confirmations_builder, $addressId)
     {
-        $monitored_address = $monitored_address_repository->findByAddress($address)->first();
+        $monitored_address = $monitored_address_repository->findByUuid($addressId);
         if (!$monitored_address) {
             if (!$monitored_address) { return new JsonResponse(['message' => 'resource not found'], 404); }
         }
