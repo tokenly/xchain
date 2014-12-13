@@ -29,3 +29,6 @@ transaction_rows:
         expected:
             txid: cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
             block_confirmed_hash: 000000000000000015f697b296584d9d443d2225c67df9033157a9efe4a8faa0
+
+meta:
+  autoBackfill: true

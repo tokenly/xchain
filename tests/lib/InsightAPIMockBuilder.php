@@ -20,6 +20,11 @@ class InsightAPIMockBuilder
             return $data;
         })); 
 
+        $mock->method('getBlock')->will($test_case->returnCallback(function($hash) {
+            $data = $this->loadAPIFixture('_block_'.$hash.'.json');
+            return $data;
+        })); 
+
         $app->bind('Tokenly\Insight\Client', function() use ($mock) {
             return $mock;
         });

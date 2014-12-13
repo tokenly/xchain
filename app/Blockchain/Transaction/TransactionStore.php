@@ -2,6 +2,7 @@
 
 namespace App\Blockchain\Transaction;
 
+use App\Providers\EventLog\Facade\EventLog;
 use App\Repositories\TransactionRepository;
 use Illuminate\Contracts\Logging\Log;
 use Tokenly\Insight\Client;
@@ -32,6 +33,8 @@ class TransactionStore {
     }
 
     public function getParsedTransactionFromInsight($txid) {
+        EventLog::increment('insight.loadtx');
+
         // load
         $api_data = $this->fetchTransactionFromInsight($txid);
 

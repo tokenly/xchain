@@ -15,12 +15,13 @@ use \PHPUnit_Framework_Assert as PHPUnit;
 class ScenarioRunner
 {
 
-    function __construct(Application $app, Dispatcher $events, QueueManager $queue_manager, MonitoredAddressRepository $monitored_address_repository, MonitoredAddressHelper $monitored_address_helper, TransactionRepository $transaction_repository) {
+    function __construct(Application $app, Dispatcher $events, QueueManager $queue_manager, MonitoredAddressRepository $monitored_address_repository, MonitoredAddressHelper $monitored_address_helper, SampleBlockHelper $sample_block_helper, TransactionRepository $transaction_repository) {
         $this->app                          = $app;
         $this->events                       = $events;
         $this->queue_manager                = $queue_manager;
         $this->monitored_address_repository = $monitored_address_repository;
         $this->monitored_address_helper     = $monitored_address_helper;
+        $this->sample_block_helper          = $sample_block_helper;
         $this->transaction_repository       = $transaction_repository;
 
         $this->queue_manager->addConnector('sync', function()
@@ -29,7 +30,7 @@ class ScenarioRunner
         });
     }
 
-    public function initMocks($test_case) {
+    public function init($test_case) {
         if (!isset($this->mocks_inited)) {
             $this->mocks_inited = true;
 
@@ -37,6 +38,7 @@ class ScenarioRunner
             $mock_builder->installMockInsightClient($this->app, $test_case);
 
         }
+
         return $this;
     }
 
@@ -56,6 +58,11 @@ class ScenarioRunner
     }
 
     public function runScenario($scenario_data) {
+        $auto_backfill = (!isset($scenario_data['meta']['autoBackfill']) OR $scenario_data['meta']['autoBackfill']);
+        if ($auto_backfill) {
+            $this->autoBackfillBlock();
+        }
+
         // set up the scenario
         $this->addMonitoredAddresses($scenario_data['monitoredAddresses']);
 
@@ -117,7 +124,8 @@ class ScenarioRunner
     }
 
     protected function validateNotification($expected_notification, $actual_notification) {
-        PHPUnit::assertEquals($expected_notification, $actual_notification);
+        PHPUnit::assertNotEmpty($actual_notification, "Missing notification ".json_encode($expected_notification, 192));
+        PHPUnit::assertEquals($expected_notification, $actual_notification, "Notification mismatch");
     }
 
     protected function getActualNotification() {
@@ -218,6 +226,17 @@ class ScenarioRunner
         return $normalized_expected_transaction_row;
     }
 
+
+    ////////////////////////////////////////////////////////////////////////
+    // Blocks
+    
+    protected function autoBackfillBlock($block_name=null) {
+        if ($block_name === null) {
+            $block_name = 'default_backfill_block_01.json';
+        }
+        $block_model = $this->sample_block_helper->createSampleBlock($block_name);
+        return;
+    }
 
     ////////////////////////////////////////////////////////////////////////
     // Monitored Addresses

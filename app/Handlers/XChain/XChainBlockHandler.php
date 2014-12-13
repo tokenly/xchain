@@ -2,9 +2,10 @@
 
 namespace App\Handlers\XChain;
 
-use App\Blockchain\Block\BlockChainRepository;
+use App\Blockchain\Block\BlockChainStore;
 use App\Blockchain\Block\ConfirmationsBuilder;
 use App\Blockchain\Transaction\TransactionStore;
+use App\Providers\EventLog\Facade\EventLog;
 use App\Repositories\TransactionRepository;
 use Exception;
 use Illuminate\Contracts\Events\Dispatcher;
@@ -17,25 +18,35 @@ class XChainBlockHandler {
 
     const MAX_CONFIRMATIONS_TO_NOTIFY = 6;
 
-
-    public function __construct(TransactionStore $transaction_store, TransactionRepository $transaction_repository, BlockChainRepository $blockchain_repository, ConfirmationsBuilder $confirmations_builder, Dispatcher $events, Log $log) {
+    public function __construct(TransactionStore $transaction_store, TransactionRepository $transaction_repository, BlockChainStore $blockchain_store, ConfirmationsBuilder $confirmations_builder, Dispatcher $events, Log $log) {
         $this->transaction_store      = $transaction_store;
         $this->transaction_repository = $transaction_repository;
         $this->confirmations_builder  = $confirmations_builder;
-        $this->blockchain_repository  = $blockchain_repository;
+        $this->blockchain_store       = $blockchain_store;
         $this->events                 = $events;
         $this->log                    = $log;
     }
 
-    public function handleNewBlock($block_event)
-    {
-        $this->wlog('$block_event: '."\n".json_encode($block_event, 192));
+    public function handleNewBlock($block_event) {
+        // backfill any missing blocks
+        $missing_block_events = $this->blockchain_store->loadMissingBlockEventsFromInsight($block_event['previousblockhash']);
 
-        // handle orphan blocks
-        
+        // process missing blocks
+        foreach($missing_block_events as $missing_block_event) {
+            EventLog::log('block.missing', $missing_block_event, ['height', 'hash']);
+            $this->processBlock($missing_block_event);
+        }
+
+        // lastly - process this block
+        $this->processBlock($block_event);
+    }
+
+    public function processBlock($block_event)
+    {
+        EventLog::log('block', $block_event, ['height', 'hash', 'previousblockhash', 'time']);
 
         // update the block repository
-        $new_block_model = $this->blockchain_repository->create([
+        $new_block_model = $this->blockchain_store->create([
             'hash'         => $block_event['hash'],
             'height'       => $block_event['height'],
             'parsed_block' => $block_event
@@ -99,8 +110,8 @@ class XChainBlockHandler {
         // also update every transaction that needs a new confirmation sent
         //   find all transactions in the last 6 blocks
         //   and send out notifications
-        // echo "\$this->blockchain_repository->findAll()->all():\n".json_encode($this->blockchain_repository->findAll()->all(), 192)."\n";
-        $blocks = $this->blockchain_repository->findAllAsOfHeightEndingWithBlockhash($block_event['height'] - (self::MAX_CONFIRMATIONS_TO_NOTIFY - 1), $block_event['hash']);
+        // echo "\$this->blockchain_store->findAll()->all():\n".json_encode($this->blockchain_store->findAll()->all(), 192)."\n";
+        $blocks = $this->blockchain_store->findAllAsOfHeightEndingWithBlockhash($block_event['height'] - (self::MAX_CONFIRMATIONS_TO_NOTIFY - 1), $block_event['hash']);
         // echo "\$blocks:\n".json_encode($blocks, 192)."\n";
         $block_hashes = [];
         foreach($blocks as $block) { $block_hashes[] = $block['hash']; }

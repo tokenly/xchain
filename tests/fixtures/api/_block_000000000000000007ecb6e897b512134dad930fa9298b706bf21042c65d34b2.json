@@ -1,0 +1,22 @@
+{
+    "bits": "181b7b74",
+    "chainwork": "0000000000000000000000000000000000000000000326ef99882600d7732333",
+    "confirmations": 1264,
+    "difficulty": 40007470271.27126,
+    "hash": "000000000000000007ecb6e897b512134dad930fa9298b706bf21042c65d34b2",
+    "height": 332912,
+    "isMainChain": true,
+    "merkleroot": "22fabc1e9513587f991bd5eecac62812d4cd5c772c0a58edf66fb17b267d1130",
+    "nextblockhash": "000000000000000015f697b296584d9d443d2225c67df9033157a9efe4a8faa0",
+    "nonce": 1807369287,
+    "previousblockhash": "0000000000000000015feea45dfcdccd5904484f08976cc61b96ba667df911a8",
+    "reward": 25,
+    "size": 225983,
+    "time": 1417741663,
+    "tx": [
+        "be416e7b19df5a4caad25bb6189b1e0d3d78dc824fd848a00e582ce83ccc7923",
+        "ec6aedfe27d2267ca34d6020a98662a6a69d0318f49134ae3f027666141ddb58",
+        "ab53e7bb0fc256a6afbe9000981f00f55238a959c270d79e0595c3e9a46214fb"
+   ],
+    "version": 2
+}

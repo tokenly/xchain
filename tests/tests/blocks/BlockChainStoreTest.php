@@ -2,7 +2,7 @@
 
 use \PHPUnit_Framework_Assert as PHPUnit;
 
-class BlockChainRepositoryTest extends TestCase {
+class BlockChainStoreTest extends TestCase {
 
     protected $useDatabase = true;
 
@@ -39,7 +39,7 @@ class BlockChainRepositoryTest extends TestCase {
             'parsed_block' => ['height' => 333004]
         ]);
 
-        $blockchain_repo = $this->app->make('App\Blockchain\Block\BlockChainRepository');
+        $blockchain_repo = $this->app->make('App\Blockchain\Block\BlockChainStore');
 
         // load all on chain BLOCKHASH02FORKAAA
         $loaded_block_models = $blockchain_repo->findAllAsOfHeightEndingWithBlockhash(333000, 'BLOCKHASH02FORKAAA');
@@ -61,6 +61,37 @@ class BlockChainRepositoryTest extends TestCase {
         PHPUnit::assertEquals('BLOCKHASH03FORKBBB', $loaded_block_models[2]['hash']);
         PHPUnit::assertEquals('BLOCKHASH04FORKBBB', $loaded_block_models[3]['hash']);
 
+    }
+
+    public function testFindMissingBlocks() {
+        // init mocks
+        $mock_builder = new \InsightAPIMockBuilder();
+        $mock_builder->installMockInsightClient($this->app, $this);
+
+        // insert
+        $created_block_model_1 = $this->blockHelper()->createSampleBlock('default_parsed_block_01.json', [
+            'hash' => 'BLOCKHASH01BASE01',
+            'height' => 333000,
+            'parsed_block' => ['height' => 333000]
+        ]);
+        $created_block_model_2 = $this->blockHelper()->createSampleBlock('default_parsed_block_01.json', [
+            'hash' => 'BLOCKHASH02',
+            'previousblockhash' => 'BLOCKHASH01BASE01',
+            'height' => 333001,
+            'parsed_block' => ['height' => 333001]
+        ]);
+        // MISSING BLOCKHASH03
+        $created_block_model_3 = $this->blockHelper()->createSampleBlock('default_parsed_block_01.json', [
+            'hash' => 'BLOCKHASH04',
+            'previousblockhash' => 'BLOCKHASH03',
+            'height' => 333003,
+            'parsed_block' => ['height' => 333003]
+        ]);
+
+        $blockchain_store = $this->app->make('App\Blockchain\Block\BlockChainStore');
+        $block_events = $blockchain_store->loadMissingBlockEventsFromInsight('BLOCKHASH03', 4);
+        PHPUnit::assertCount(1, $block_events);
+        PHPUnit::assertEquals('BLOCKHASH03', $block_events[0]['hash']);
     }
 
 
