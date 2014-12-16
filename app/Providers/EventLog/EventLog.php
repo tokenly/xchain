@@ -30,7 +30,6 @@ class EventLog {
         $this->log($metric, ['action' => 'increment']);
     } 
 
-
     public function log($event, $raw_data, $array_keys_only=null, $other_columns=null) {
         try {
             if ($array_keys_only) {
@@ -58,5 +57,14 @@ class EventLog {
             Log::error($e->getCode()." ".$e->getMessage()." in ".$e->getFile()." at line ".$e->getLine());
         }
     }
+
+    public function logError($event, Exception $e) {
+        $raw_data = [
+            'error' => $e->getMessage(),
+            'code'  => $e->getCode(),
+        ];
+        $this->log($event, $raw_data);
+    }
+
 
 }
