@@ -35,7 +35,7 @@ class UserRepository implements APIResourceRepositoryContract
         }
 
         // hash any password
-        if (isset($attributes['password'])) {
+        if (isset($attributes['password']) AND strlen($attributes['password'])) {
             $attributes['password'] = Hash::make($attributes['password']);
         } else {
             // un-guessable random password
@@ -51,6 +51,10 @@ class UserRepository implements APIResourceRepositoryContract
 
     public function findByUuid($uuid) {
         return User::where('uuid', $uuid)->first();
+    }
+
+    public function findByEmail($email) {
+        return User::where('email', $email)->first();
     }
 
     public function updateByUuid($uuid, $attributes) {

@@ -17,6 +17,7 @@ class Kernel extends ConsoleKernel {
 		// xchain commands
 		'App\Console\Commands\Development\PopulateNotificationCommand',
 		'App\Console\Commands\Blocks\LoadMissingBlocksCommand',
+		'App\Console\Commands\APIUser\APIUserCommand',
 	];
 
 	/**

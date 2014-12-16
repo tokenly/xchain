@@ -32,9 +32,10 @@ class APIUserCommand extends Command {
         parent::configure();
 
         $this
-            // ->addOption('maximum-blocks', 'm', InputOption::VALUE_OPTIONAL, 'Maximum blocks to backfill', 10)
+            ->addOption('email', 'e', InputOption::VALUE_REQUIRED, 'Email Address')
+            ->addOption('password', 'p', InputOption::VALUE_OPTIONAL, 'Password', null)
             ->setHelp(<<<EOF
-Backfills any missing blocks
+Create a new user with API Credentials
 EOF
         );
     }
@@ -46,27 +47,16 @@ EOF
      */
     public function fire()
     {
-        
-        
+        $user_repository = $this->laravel->make('App\Repositories\UserRepository');
+        $user_vars = [
+            'email' => $this->input->getOption('email'),
+            'password' => $this->input->getOption('password'),
 
-        $backfill_max = $this->input->getOption('maximum-blocks');
-        $blockchain_repository = $this->laravel->make('App\Blockchain\Block\BlockChainStore');
-        $block_handler = $this->laravel->make('App\Handlers\XChain\XChainBlockHandler');
-        $insight_client = $this->laravel->make('Tokenly\Insight\Client');
+        ];
+        $user_model = $user_repository->create($user_vars);
         
-        // load the current block from insight
-        $data = $insight_client->getBestBlockHash();
-        $first_missing_hash = $blockchain_repository->findFirstMissingHash($data['bestblockhash'], $backfill_max);
-        if ($first_missing_hash) {
-            // backfill any missing blocks
-            $missing_block_events = $blockchain_repository->loadMissingBlockEventsFromInsight($first_missing_hash, $backfill_max);
-
-            // process missing blocks
-            foreach($missing_block_events as $missing_block_event) {
-                EventLog::log('block.missing.cli', $missing_block_event, ['height', 'hash']);
-                $block_handler->processBlock($missing_block_event);
-            }
-        }
+        // log
+        EventLog::log('user.create.cli', $user_model, ['id', 'email', 'apikey']);
     }
 
 }
