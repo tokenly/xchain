@@ -61,7 +61,7 @@ EOF
 
         foreach($users as $user) {
             $user['password'] = '********';
-            echo json_encode($user, 192)."\n";
+            $this->line(json_encode($user, 192));
         }
     }
 

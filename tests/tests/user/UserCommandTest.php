@@ -9,7 +9,7 @@ class UserCommandTest extends TestCase {
     public function testCLIAddUser()
     {
         // insert
-        $this->app['Illuminate\Contracts\Console\Kernel']->call('xchain:new-user', ['--email' => 'samplecli@tokenly.co']);
+        $this->app['Illuminate\Contracts\Console\Kernel']->call('xchain:new-user', ['email' => 'samplecli@tokenly.co']);
 
         // load from repo
         $user_repo = $this->app->make('App\Repositories\UserRepository');
@@ -17,6 +17,22 @@ class UserCommandTest extends TestCase {
         PHPUnit::assertNotEmpty($loaded_user_model);
         PHPUnit::assertGreaterThan(0, $loaded_user_model['id']);
         PHPUnit::assertEquals('samplecli@tokenly.co', $loaded_user_model['email']);
+    }
+
+
+    public function testCLIListUsers()
+    {
+        $kernel = $this->app['Illuminate\Contracts\Console\Kernel'];
+
+        // insert
+        $kernel->call('xchain:new-user', ['email' => 'samplecli@tokenly.co']);
+
+        // list
+        $kernel->call('xchain:list-users');
+        $output = $kernel->output();
+        
+        PHPUnit::assertNotEmpty($output);
+        PHPUnit::assertContains('samplecli@tokenly.co', $output);
     }
 
 
