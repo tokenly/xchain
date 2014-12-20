@@ -14,8 +14,8 @@ class MonitoredAddressHelper
     }
 
 
-    public function createSampleMonitoredAddress($override_vars=[]) {
-        return $this->monitored_address_repository->create(array_merge($this->sampleVars(), $override_vars));
+    public function createSampleMonitoredAddress($user, $override_vars=[]) {
+        return $this->monitored_address_repository->createWithUser($user, array_merge($this->sampleVars(), $override_vars));
     }
 
     public function sampleVars($override_vars=[]) {
@@ -23,6 +23,7 @@ class MonitoredAddressHelper
             'address'         => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD',
             'monitorType'     => 'receive',
             'webhookEndpoint' => 'http://xchain.tokenly.dev/notifyme',
+            'user_id'         => 1,
         ], $override_vars);
     }
 
@@ -31,6 +32,7 @@ class MonitoredAddressHelper
             'address'          => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD',
             'monitor_type'     => 'receive',
             'webhook_endpoint' => 'http://xchain.tokenly.dev/notifyme',
+            'user_id'          => 1,
         ], $override_vars);
     }
 

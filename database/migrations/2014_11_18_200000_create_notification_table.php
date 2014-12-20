@@ -18,8 +18,10 @@ class CreateNotificationTable extends Migration
             $table->char('uuid', 36)->unique();
             $table->char('txid', 64)->index();
             $table->integer('confirmations');
-            $table->integer('monitored_address_id')->unsigned();
+            $table->integer('monitored_address_id')->unsigned()->nullable();
             $table->foreign('monitored_address_id')->references('id')->on('monitored_address');
+            $table->integer('user_id')->unsigned()->nullable();
+            $table->foreign('user_id')->references('id')->on('users');
             $table->tinyInteger('status')->index();
             $table->integer('attempts')->nullable();
             $table->timestamp('returned')->nullable();

@@ -56,7 +56,7 @@ EOF
         $user_model = $user_repository->create($user_vars);
         
         // log
-        EventLog::log('user.create.cli', $user_model, ['id', 'email', 'apikey']);
+        EventLog::log('user.create.cli', $user_model, ['id', 'email', 'apisecretkey']);
     }
 
 }

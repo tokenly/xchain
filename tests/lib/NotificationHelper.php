@@ -19,7 +19,7 @@ class NotificationHelper
             $address_model = $this->monitored_address_helper->createSampleMonitoredAddress();
         }
 
-        return $this->notification_repository->create($address_model, array_merge($this->sampleVars(), $override_vars));
+        return $this->notification_repository->createForMonitoredAddress($address_model, array_merge($this->sampleVars(), $override_vars));
     }
 
     public function sampleVars($override_vars=[]) {

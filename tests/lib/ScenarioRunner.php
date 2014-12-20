@@ -15,7 +15,7 @@ use \PHPUnit_Framework_Assert as PHPUnit;
 class ScenarioRunner
 {
 
-    function __construct(Application $app, Dispatcher $events, QueueManager $queue_manager, MonitoredAddressRepository $monitored_address_repository, MonitoredAddressHelper $monitored_address_helper, SampleBlockHelper $sample_block_helper, TransactionRepository $transaction_repository) {
+    function __construct(Application $app, Dispatcher $events, QueueManager $queue_manager, MonitoredAddressRepository $monitored_address_repository, MonitoredAddressHelper $monitored_address_helper, SampleBlockHelper $sample_block_helper, TransactionRepository $transaction_repository, UserHelper $user_helper) {
         $this->app                          = $app;
         $this->events                       = $events;
         $this->queue_manager                = $queue_manager;
@@ -23,6 +23,7 @@ class ScenarioRunner
         $this->monitored_address_helper     = $monitored_address_helper;
         $this->sample_block_helper          = $sample_block_helper;
         $this->transaction_repository       = $transaction_repository;
+        $this->user_helper                  = $user_helper;
 
         $this->queue_manager->addConnector('sync', function()
         {
@@ -243,8 +244,15 @@ class ScenarioRunner
 
     protected function addMonitoredAddresses($addresses) {
         foreach($addresses as $attributes) {
-            $this->monitored_address_repository->create($this->monitored_address_helper->sampleDBVars($attributes));
+            $this->monitored_address_repository->createWithUser($this->getSampleUser(), $this->monitored_address_helper->sampleDBVars($attributes));
         }
+    }
+
+    protected function getSampleUser() {
+        if (!isset($this->sample_user)) {
+            $this->sample_user = $this->user_helper->createSampleUser();
+        }
+        return $this->sample_user;
     }
 
     ////////////////////////////////////////////////////////////////////////

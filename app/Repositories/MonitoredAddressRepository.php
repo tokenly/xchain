@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\MonitoredAddress;
+use App\Models\User;
 use App\Repositories\Contracts\APIResourceRepositoryContract;
 use Illuminate\Database\Eloquent\Model;
 use Rhumsaa\Uuid\Uuid;
@@ -13,6 +14,13 @@ use \Exception;
 */
 class MonitoredAddressRepository implements APIResourceRepositoryContract
 {
+
+    public function createWithUser(User $user, $attributes) {
+        if (!isset($user['id']) OR !$user['id']) { throw new Exception("User ID is required", 1); }
+
+        $attributes['user_id'] = $user['id'];
+        return $this->create($attributes);
+    }
 
     public function create($attributes) {
         if (!isset($attributes['uuid'])) { $attributes['uuid'] = Uuid::uuid4()->toString(); }

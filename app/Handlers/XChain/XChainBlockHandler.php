@@ -6,10 +6,13 @@ use App\Blockchain\Block\BlockChainStore;
 use App\Blockchain\Block\ConfirmationsBuilder;
 use App\Blockchain\Transaction\TransactionStore;
 use App\Providers\EventLog\Facade\EventLog;
+use App\Repositories\NotificationRepository;
 use App\Repositories\TransactionRepository;
+use App\Repositories\UserRepository;
 use Exception;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Logging\Log;
+use Illuminate\Queue\QueueManager;
 
 /**
  * This is invoked when a new block is received
@@ -18,13 +21,16 @@ class XChainBlockHandler {
 
     const MAX_CONFIRMATIONS_TO_NOTIFY = 6;
 
-    public function __construct(TransactionStore $transaction_store, TransactionRepository $transaction_repository, BlockChainStore $blockchain_store, ConfirmationsBuilder $confirmations_builder, Dispatcher $events, Log $log) {
-        $this->transaction_store      = $transaction_store;
-        $this->transaction_repository = $transaction_repository;
-        $this->confirmations_builder  = $confirmations_builder;
-        $this->blockchain_store       = $blockchain_store;
-        $this->events                 = $events;
-        $this->log                    = $log;
+    public function __construct(TransactionStore $transaction_store, TransactionRepository $transaction_repository, NotificationRepository $notification_repository, UserRepository $user_repository, BlockChainStore $blockchain_store, ConfirmationsBuilder $confirmations_builder, QueueManager $queue_manager, Dispatcher $events, Log $log) {
+        $this->transaction_store       = $transaction_store;
+        $this->transaction_repository  = $transaction_repository;
+        $this->notification_repository = $notification_repository;
+        $this->user_repository         = $user_repository;
+        $this->confirmations_builder   = $confirmations_builder;
+        $this->blockchain_store        = $blockchain_store;
+        $this->queue_manager           = $queue_manager;
+        $this->events                  = $events;
+        $this->log                     = $log;
     }
 
     public function handleNewBlock($block_event) {
@@ -106,6 +112,62 @@ class XChainBlockHandler {
             }
         }
 
+        // send a new block notification
+        $notification = [
+            'event'             => 'block',
+            'notificationId'    => null,
+
+            'hash'              => $block_event['hash'],
+            'height'            => $block_event['height'],
+            'previousblockhash' => $block_event['previousblockhash'],
+            'time'              => $this->getISO8601Timestamp($block_event['time']),
+        ];
+
+
+
+        // create a notification for each user
+        $notification_vars_for_model = $notification;
+        unset($notification_vars_for_model['notificationId']);
+        foreach ($this->user_repository->findWithWebhookEndpoint() as $user) {
+            $notification_model = $this->notification_repository->createForUser(
+                $user,
+                [
+                    'txid'          => $parsed_tx['txid'],
+                    'confirmations' => $confirmations,
+                    'notification'  => $notification_vars_for_model,
+                ]
+            );
+
+            $notification['notificationId'] = $notification_model['uuid'];
+            $notification_json = json_encode($notification);
+
+            $api_key = $user['apitoken'];
+            $api_secret = $user['apisecretkey'];
+            $signature = hash_hmac('sha256', $notification_json, $api_secret, false);
+
+
+            $notification_entry = [
+                'meta' => [
+                    'id'        => $notification_model['uuid'],
+                    'endpoint'  => $user['webhook_endpoint'],
+                    'timestamp' => time(),
+                    'apiKey'    => $api_key,
+                    'signature' => $signature,
+                    'attempt'   => 0,
+                ],
+
+                'payload' => $notification_json,
+            ];
+
+            // put notification in the queue
+            $this->queue_manager
+                ->connection('notifications_out')
+                ->pushRaw(json_encode($notification_entry), 'notifications_out');
+        }
+        
+
+
+
         // send notifications
         // also update every transaction that needs a new confirmation sent
         //   find all transactions in the last 6 blocks
@@ -129,6 +191,16 @@ class XChainBlockHandler {
     protected function wlog($text) {
         $this->log->info($text);
     }
+
+    protected function getISO8601Timestamp($timestamp=null) {
+        $_t = new \DateTime('now');
+        if ($timestamp !== null) {
+            $_t->setTimestamp($timestamp);
+        }
+        $_t->setTimezone(new \DateTimeZone('UTC'));
+        return $_t->format(\DateTime::ISO8601);
+    }
+
 }
 
 

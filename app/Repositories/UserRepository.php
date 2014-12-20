@@ -30,8 +30,8 @@ class UserRepository implements APIResourceRepositoryContract
         if (!isset($attributes['apitoken'])) {
             $attributes['apitoken'] = $token_generator->generateToken(16, 'T');
         }
-        if (!isset($attributes['apikey'])) {
-            $attributes['apikey'] = $token_generator->generateToken(41, 'K');
+        if (!isset($attributes['apisecretkey'])) {
+            $attributes['apisecretkey'] = $token_generator->generateToken(41, 'K');
         }
 
         // hash any password
@@ -55,6 +55,14 @@ class UserRepository implements APIResourceRepositoryContract
 
     public function findByEmail($email) {
         return User::where('email', $email)->first();
+    }
+
+    public function findByAPIToken($api_token) {
+        return User::where('apitoken', $api_token)->first();
+    }
+
+    public function findWithWebhookEndpoint() {
+        return User::where('webhook_endpoint', '!=', '');
     }
 
     public function updateByUuid($uuid, $attributes) {

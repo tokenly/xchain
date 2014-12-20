@@ -48,7 +48,7 @@ class EventLog {
             $this->influxdb->insert('events', $row);
 
             // write to laravel log
-            Log::debug('event:'.$event." ".json_encode($data, 192));
+            Log::debug('event:'.$event." ".str_replace('\n', "\n", json_encode($data, 192)));
         } catch (RuntimeException $e) {
             // influxdb probably not connected...
             Log::error("RuntimeException in ".$e->getFile()." at line ".$e->getLine());
@@ -58,11 +58,18 @@ class EventLog {
         }
     }
 
-    public function logError($event, Exception $e) {
-        $raw_data = [
-            'error' => $e->getMessage(),
-            'code'  => $e->getCode(),
-        ];
+    public function logError($event, $error_or_data) {
+        if ($error_or_data instanceof Exception) {
+            $e = $error_or_data;
+            $raw_data = [
+                'error' => $e->getMessage(),
+                'code'  => $e->getCode(),
+                'line'  => $e->getLine(),
+                'file'  => $e->getFile(),
+            ];
+        } else {
+            $raw_data = $error_or_data;
+        }
         $this->log($event, $raw_data);
     }
 

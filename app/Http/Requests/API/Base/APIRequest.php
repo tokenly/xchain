@@ -3,6 +3,7 @@
 namespace App\Http\Requests\API\Base;
 
 use App\Http\Requests\Request;
+use App\Providers\EventLog\Facade\EventLog;
 use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -23,6 +24,9 @@ class APIRequest extends Request {
             'errors' => $json_errors_list,
         ];
         $response = new JsonResponse($json_response, 400);
+
+        EventLog::logError('error.api.invalid_request', ['errors' => $json_errors_list]);
+
 
         throw new HttpResponseException($response);
     }

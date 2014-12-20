@@ -19,8 +19,11 @@ class UserHelper
 
     public function sampleVars($override_vars=[]) {
         return array_merge([
-            'email'    => 'sample@tokenly.co',
-            'password' => 'foo',
+            'apitoken'         => 'TESTAPITOKEN',
+            'apisecretkey'     => 'TESTAPISECRET',
+            'email'            => 'sample@tokenly.co',
+            'password'         => 'foo',
+            'webhook_endpoint' => 'http://localhost/foo',
         ], $override_vars);
     }
 

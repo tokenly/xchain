@@ -77,7 +77,7 @@ class XChainTransactionHandler {
             // create a notification
             $notification_vars_for_model = $notification;
             unset($notification_vars_for_model['notificationId']);
-            $notification_model = $this->notification_repository->create(
+            $notification_model = $this->notification_repository->createForMonitoredAddress(
                 $found_address,
                 [
                     'txid'          => $parsed_tx['txid'],

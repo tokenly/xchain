@@ -7,7 +7,9 @@ use App\Http\Controllers\Helpers\APIControllerHelper;
 use App\Http\Requests\API\Monitor\CreateMonitorRequest;
 use App\Http\Requests\API\Monitor\UpdateMonitorRequest;
 use App\Repositories\MonitoredAddressRepository;
+use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Support\Facades\Log;
+use Exception;
 
 class MonitorController extends Controller {
 
@@ -33,9 +35,15 @@ class MonitorController extends Controller {
      *
      * @return Response
      */
-    public function store(APIControllerHelper $helper, CreateMonitorRequest $request, MonitoredAddressRepository $address_respository)
+    public function store(APIControllerHelper $helper, CreateMonitorRequest $request, MonitoredAddressRepository $address_respository, Guard $auth)
     {
-        return $helper->store($address_respository, $request->only(array_keys($request->rules())));
+        $user = $auth->getUser();
+        if (!$user) { throw new Exception("User not found", 1); }
+
+        $attributes = $request->only(array_keys($request->rules()));
+        $attributes['user_id'] = $user['id'];
+
+        return $helper->store($address_respository, $attributes);
     }
 
     /**

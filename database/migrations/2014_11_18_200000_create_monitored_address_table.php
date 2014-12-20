@@ -18,6 +18,8 @@ class CreateMonitoredAddressTable extends Migration
             $table->char('uuid', 36)->unique();
             $table->char('address', 35)->index();
             $table->text('webhook_endpoint');
+            $table->integer('user_id')->unsigned();
+            $table->foreign('user_id')->references('id')->on('users');
             $table->tinyInteger('monitor_type');
             $table->tinyInteger('active');
             $table->timestamps();

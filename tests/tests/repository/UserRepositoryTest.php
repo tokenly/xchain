@@ -21,6 +21,19 @@ class UserRepositoryTest extends TestCase {
     }
 
 
+    public function testFindByAPIToken()
+    {
+        // insert
+        $user_repo = $this->app->make('App\Repositories\UserRepository');
+        $created_user_model = $user_repo->create($this->app->make('\UserHelper')->sampleDBVars());
+
+        // load from repo
+        $loaded_user_model = $user_repo->findByAPIToken('TESTAPITOKEN');
+        PHPUnit::assertNotEmpty($loaded_user_model);
+        PHPUnit::assertEquals('TESTAPITOKEN', $loaded_user_model['apitoken']);
+    }
+
+
 
     public function testDeleteByUUID()
     {

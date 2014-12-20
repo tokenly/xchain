@@ -10,6 +10,9 @@ class MonitoredAddressAPITest extends TestCase {
     {
         $api_tester = $this->getAPITester();
 
+        // sample user for Auth
+        $sample_user = $this->app->make('\UserHelper')->createSampleUser();
+
         $posted_vars = $this->app->make('\MonitoredAddressHelper')->sampleVars();
         $expected_created_resource = [
             'id'              => '{{response.id}}',
@@ -19,10 +22,16 @@ class MonitoredAddressAPITest extends TestCase {
             'active'          => true
         ];
         $loaded_address_model = $api_tester->testAddResource($posted_vars, $expected_created_resource);
+
+        // check the user_id
+        PHPUnit::assertEquals($sample_user['id'], $loaded_address_model['user_id']);
     }
 
     public function testAPIErrorsAddMonitoredAddress()
     {
+        // sample user for Auth
+        $sample_user = $this->app->make('\UserHelper')->createSampleUser();
+
         $api_tester = $this->getAPITester();
         $api_tester->testAddErrors([
             [
@@ -62,10 +71,13 @@ class MonitoredAddressAPITest extends TestCase {
     public function testAPIListMonitoredAddresses() {
         $api_tester = $this->getAPITester();
 
+        // sample user for Auth
+        $sample_user = $this->app->make('\UserHelper')->createSampleUser();
+
         $helper = $this->app->make('\MonitoredAddressHelper');
         $created_addresses = [
-            $helper->createSampleMonitoredAddress(),
-            $helper->createSampleMonitoredAddress(['address' => '1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz']),
+            $helper->createSampleMonitoredAddress($sample_user),
+            $helper->createSampleMonitoredAddress($sample_user, ['address' => '1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz']),
         ];
 
         $loaded_addresses_from_api = $api_tester->testListResources($created_addresses);
@@ -75,8 +87,11 @@ class MonitoredAddressAPITest extends TestCase {
     }
 
     public function testAPIGetMonitoredAddress() {
+        // sample user for Auth
+        $sample_user = $this->app->make('\UserHelper')->createSampleUser();
+
         $helper = $this->app->make('\MonitoredAddressHelper');
-        $created_address = $helper->createSampleMonitoredAddress();
+        $created_address = $helper->createSampleMonitoredAddress($sample_user);
 
         $api_tester = $this->getAPITester();
         $loaded_address_from_api = $api_tester->testGetResource($created_address);
@@ -84,8 +99,11 @@ class MonitoredAddressAPITest extends TestCase {
     }
 
     public function testAPIGetInactiveMonitoredAddress() {
+        // sample user for Auth
+        $sample_user = $this->app->make('\UserHelper')->createSampleUser();
+
         $helper = $this->app->make('\MonitoredAddressHelper');
-        $created_address = $helper->createSampleMonitoredAddress(['active' => false]);
+        $created_address = $helper->createSampleMonitoredAddress($sample_user, ['active' => false]);
 
         $api_tester = $this->getAPITester();
         $loaded_address_from_api = $api_tester->testGetResource($created_address);
@@ -93,8 +111,11 @@ class MonitoredAddressAPITest extends TestCase {
     }
 
     public function testAPIUpdateMonitoredAddress() {
+        // sample user for Auth
+        $sample_user = $this->app->make('\UserHelper')->createSampleUser();
+
         $helper = $this->app->make('\MonitoredAddressHelper');
-        $created_address = $helper->createSampleMonitoredAddress();
+        $created_address = $helper->createSampleMonitoredAddress($sample_user);
         $update_vars = [
             'monitorType' => 'send',
             'active'      => false,
@@ -112,8 +133,11 @@ class MonitoredAddressAPITest extends TestCase {
     }
 
     public function testAPIUpdateErrorsMonitoredAddress() {
+        // sample user for Auth
+        $sample_user = $this->app->make('\UserHelper')->createSampleUser();
+
         $helper = $this->app->make('\MonitoredAddressHelper');
-        $created_address = $helper->createSampleMonitoredAddress();
+        $created_address = $helper->createSampleMonitoredAddress($sample_user);
 
         $api_tester = $this->getAPITester();
         $api_tester->testUpdateErrors($created_address, [
@@ -134,8 +158,11 @@ class MonitoredAddressAPITest extends TestCase {
     }
 
     public function testAPIDeleteMonitoredAddress() {
+        // sample user for Auth
+        $sample_user = $this->app->make('\UserHelper')->createSampleUser();
+
         $helper = $this->app->make('\MonitoredAddressHelper');
-        $created_address = $helper->createSampleMonitoredAddress();
+        $created_address = $helper->createSampleMonitoredAddress($sample_user);
         $api_tester = $this->getAPITester();
         $api_tester->testDeleteResource($created_address);
     }
