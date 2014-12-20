@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\API;
 
 use App\Blockchain\Block\ConfirmationsBuilder;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\API\Base\APIController;
 use App\Http\Controllers\Helpers\APIControllerHelper;
 use App\Repositories\MonitoredAddressRepository;
 use App\Repositories\NotificationRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 
-class TransactionController extends Controller {
+class TransactionController extends APIController {
 
     /**
      * Display a listing of the resource.

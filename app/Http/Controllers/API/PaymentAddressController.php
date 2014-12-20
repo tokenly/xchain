@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\API\Base\APIController;
 use App\Http\Controllers\Helpers\APIControllerHelper;
 use App\Http\Requests\API\PaymentAddress\CreatePaymentAddressRequest;
 use App\Http\Requests\API\PaymentAddress\UpdatePaymentAddressRequest;
 use App\Repositories\PaymentAddressRepository;
 use Illuminate\Support\Facades\Log;
 
-class PaymentAddressController extends Controller {
+class PaymentAddressController extends APIController {
 
     /**
      * Display a listing of the resource.

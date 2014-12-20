@@ -9,6 +9,7 @@ use Exception;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Contracts\Routing\Middleware;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Tokenly\HmacAuth\Exception\AuthorizationException;
 
 class AuthenticateAPI implements Middleware {
@@ -33,6 +34,7 @@ class AuthenticateAPI implements Middleware {
         $this->hmac_validator  = new \Tokenly\HmacAuth\Validator(function($api_token) use ($auth) {
             // lookup the API secrect by $api_token using $this->auth
             $user = $this->user_repository->findByAPIToken($api_token);
+            Log::debug('user: '.json_encode($user, 192));
 
             if (!$user) { return null; }
 
@@ -62,7 +64,7 @@ class AuthenticateAPI implements Middleware {
 
         } catch (AuthorizationException $e) {
             // unauthorized
-            EventLog::logError('error.auth.unauthenticated', $e);
+            EventLog::logError('error.auth.unauthenticated', $e, ['remoteIp' => $request->getClientIp()]);
             $error_message = $e->getAuthorizationErrorString();
             $error_code = $e->getCode();
 

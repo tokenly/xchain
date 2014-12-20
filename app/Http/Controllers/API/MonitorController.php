@@ -2,22 +2,16 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\API\Base\APIController;
 use App\Http\Controllers\Helpers\APIControllerHelper;
 use App\Http\Requests\API\Monitor\CreateMonitorRequest;
 use App\Http\Requests\API\Monitor\UpdateMonitorRequest;
 use App\Repositories\MonitoredAddressRepository;
+use Exception;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Support\Facades\Log;
-use Exception;
 
-class MonitorController extends Controller {
-
-    public function __construct() {
-        // require hmacauth middleware
-        $this->middleware('hmacauth');
-    }
-
+class MonitorController extends APIController {
 
     /**
      * Display a listing of the resource.

@@ -4,7 +4,6 @@ use Illuminate\Http\Request;
 use Tokenly\HmacAuth\Generator;
 use \PHPUnit_Framework_Assert as PHPUnit;
 
-
 /**
 *  APITester
 *  Test API resource requests
@@ -16,6 +15,33 @@ class APITester
         $this->app                 = $app;
         $this->url_base            = $url_base;
         $this->resource_repository = $resource_repository;
+    }
+
+    public function ensureAuthenticatedUser() {
+        if (!isset($this->authenticated_user)) {
+            $user_helper = $this->app->make('\UserHelper');
+            $this->authenticated_user = $user_helper->getSampleUser();
+            if (!$this->authenticated_user) { 
+                $this->authenticated_user = $user_helper->createSampleUser();
+            }
+        }
+
+        return $this;
+    }
+
+    public function testRequireAuth($method='POST', $url_extension='') {
+        $uri = $this->url_base.$url_extension;
+        $parameters = [];
+        $cookies = [];
+        $files = [];
+        $server = [];
+        $content = null;
+
+        $request = Request::create($uri, $method, $parameters, $cookies, $files, $server, $content);
+
+        // expect to get a 403
+        $response = $this->app->make('Illuminate\Contracts\Http\Kernel')->handle($request);
+        PHPUnit::assertEquals(403, $response->getStatusCode(), "Expected 403 Unauthenticated response.  Got ".$response->getStatusCode()." instead.");
     }
 
     public function testAddResource($posted_vars, $expected_created_resource)

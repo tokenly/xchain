@@ -6,6 +6,11 @@ class MonitoredAddressAPITest extends TestCase {
 
     protected $useDatabase = true;
 
+    public function testRequireAuthForMonitoredAddress() {
+        $api_tester = $this->getAPITester();
+        $api_tester->testRequireAuth();
+    }
+
     public function testAPIAddMonitoredAddress()
     {
         $api_tester = $this->getAPITester();

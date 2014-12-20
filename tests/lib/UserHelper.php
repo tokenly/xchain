@@ -12,6 +12,9 @@ class UserHelper
         $this->user_repository = $user_repository;
     }
 
+    public function getSampleUser($email='sample@tokenly.co') {
+        return $this->user_repository->findByEmail($email);
+    }
 
     public function createSampleUser($override_vars=[]) {
         return $this->user_repository->create(array_merge($this->sampleVars(), $override_vars));

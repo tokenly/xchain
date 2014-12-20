@@ -58,7 +58,7 @@ class EventLog {
         }
     }
 
-    public function logError($event, $error_or_data) {
+    public function logError($event, $error_or_data, $additional_error_data=null) {
         if ($error_or_data instanceof Exception) {
             $e = $error_or_data;
             $raw_data = [
@@ -70,6 +70,12 @@ class EventLog {
         } else {
             $raw_data = $error_or_data;
         }
+
+        // merge extra data
+        if ($additional_error_data !== null) {
+            $raw_data = array_merge($raw_data, $additional_error_data);
+        }
+
         $this->log($event, $raw_data);
     }
 

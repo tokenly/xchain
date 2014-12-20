@@ -6,13 +6,24 @@ class TransactionsAPITest extends TestCase {
 
     protected $useDatabase = true;
 
-
-    public function testAPIListTransactions() {
-        $api_tester = $this->getAPITester();
-
+    public function testRequireAuthForTransactions() {
         // run a scenario first
         $this->app->make('\ScenarioRunner')->init($this)->runScenarioByNumber(6);
     
+        // find the address
+        $monitored_address = $this->monitoredAddressByAddress('RECIPIENT01');
+
+        $api_tester = $this->getAPITester();
+        $api_tester->testRequireAuth('GET', '/'.$monitored_address['uuid']);
+    }
+
+
+    public function testAPIListTransactions() {
+        // run a scenario first
+        $this->app->make('\ScenarioRunner')->init($this)->runScenarioByNumber(6);
+
+        // get the API tester (must be after running the scenario)
+        $api_tester = $this->getAPITester();
 
         // find the address
         $monitored_address = $this->monitoredAddressByAddress('RECIPIENT01');
@@ -26,12 +37,13 @@ class TransactionsAPITest extends TestCase {
         PHPUnit::assertEquals($monitored_address['address'], $loaded_transactions_from_api[0]['notifiedAddress']);
     }
 
-    public function testAPIListTransactionsUpdatesConfirmations() {
-        $api_tester = $this->getAPITester();
-
+    public function testBlockUpdatesConfirmationsForListTransactions() {
         // run a scenario first
         $this->app->make('\ScenarioRunner')->init($this)->runScenarioByNumber(6);
     
+        // get the API tester (must be after running the scenario)
+        $api_tester = $this->getAPITester();
+
         // make the current block an arbitrary high number (99)
         $this->app->make('SampleBlockHelper')->createSampleBlock('default_parsed_block_01.json', ['hash' => 'BLOCKHASH99', 'height' => 333099, 'parsed_block' => ['height' => 333099]]);
 
@@ -59,8 +71,11 @@ class TransactionsAPITest extends TestCase {
     ////////////////////////////////////////////////////////////////////////
     
     protected function getAPITester() {
-        return $this->app->make('APITester', [$this->app, '/api/v1/transactions', $this->app->make('App\Repositories\TransactionRepository')]);
+        $api_tester =  $this->app->make('APITester', [$this->app, '/api/v1/transactions', $this->app->make('App\Repositories\TransactionRepository')]);
+        $api_tester->ensureAuthenticatedUser();
+        return $api_tester;
     }
+
 
 
     protected function txHelper() {
@@ -74,6 +89,7 @@ class TransactionsAPITest extends TestCase {
         return $monitored_address;
 
     }
+
 
 
 }
