@@ -2170,12 +2170,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/hmac-auth.git",
-                "reference": "358091aeeef583760dc064fd1c4bfed38c987d49"
+                "reference": "0c938d4a9e1b8d4916d26d9b99c2f18370bd70a9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/358091aeeef583760dc064fd1c4bfed38c987d49",
-                "reference": "358091aeeef583760dc064fd1c4bfed38c987d49",
+                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/0c938d4a9e1b8d4916d26d9b99c2f18370bd70a9",
+                "reference": "0c938d4a9e1b8d4916d26d9b99c2f18370bd70a9",
                 "shasum": ""
             },
             "require": {
@@ -2204,7 +2204,7 @@
                 }
             ],
             "description": "A library",
-            "time": "2014-12-11 14:51:54"
+            "time": "2014-12-20 13:22:59"
         },
         {
             "name": "tokenly/insight-client",
@@ -2293,12 +2293,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/xchain-listener.git",
-                "reference": "a6ec465fa0cdbb14041110b1754ccfdaa7f375a7"
+                "reference": "ee4c16b0acb8b797b2daf96ce15617b383a1b32c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/xchain-listener/zipball/a6ec465fa0cdbb14041110b1754ccfdaa7f375a7",
-                "reference": "a6ec465fa0cdbb14041110b1754ccfdaa7f375a7",
+                "url": "https://api.github.com/repos/tokenly/xchain-listener/zipball/ee4c16b0acb8b797b2daf96ce15617b383a1b32c",
+                "reference": "ee4c16b0acb8b797b2daf96ce15617b383a1b32c",
                 "shasum": ""
             },
             "require": {
@@ -2337,7 +2337,7 @@
                 }
             ],
             "description": "A Counterparty transaction library",
-            "time": "2014-12-13 20:17:17"
+            "time": "2014-12-20 13:16:04"
         },
         {
             "name": "tokenly/xcpd-client",
