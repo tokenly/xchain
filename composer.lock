@@ -2051,17 +2051,16 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-address-lib.git",
-                "reference": "5dbcfe5575507e9b9d25227c0600497becda8941"
+                "reference": "138aad59b9ec1ce00218aa23197e2e40d925020e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-address-lib/zipball/5dbcfe5575507e9b9d25227c0600497becda8941",
-                "reference": "5dbcfe5575507e9b9d25227c0600497becda8941",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-address-lib/zipball/138aad59b9ec1ce00218aa23197e2e40d925020e",
+                "reference": "138aad59b9ec1ce00218aa23197e2e40d925020e",
                 "shasum": ""
             },
             "require": {
                 "bitwasp/bitcoin-lib": "dev-master",
-                "mdanter/ecc": "dev-master",
                 "php": ">=5.4.0"
             },
             "require-dev": {
@@ -2085,7 +2084,7 @@
                 }
             ],
             "description": "A bitcoin address helper library",
-            "time": "2014-12-11 14:52:10"
+            "time": "2015-01-03 15:22:53"
         },
         {
             "name": "tokenly/bitcoin-currency-lib",
@@ -2222,12 +2221,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-sender.git",
-                "reference": "19921b3e7fa7a0af69e6357bdb0a338f899551bf"
+                "reference": "484926d917baeb04c425bb51dca18d241bb893ac"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-sender/zipball/19921b3e7fa7a0af69e6357bdb0a338f899551bf",
-                "reference": "19921b3e7fa7a0af69e6357bdb0a338f899551bf",
+                "url": "https://api.github.com/repos/tokenly/counterparty-sender/zipball/484926d917baeb04c425bb51dca18d241bb893ac",
+                "reference": "484926d917baeb04c425bb51dca18d241bb893ac",
                 "shasum": ""
             },
             "require": {
@@ -2256,7 +2255,7 @@
                 }
             ],
             "description": "A library",
-            "time": "2014-12-20 18:14:46"
+            "time": "2015-01-03 17:51:56"
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
@@ -2306,12 +2305,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/hmac-auth.git",
-                "reference": "0c938d4a9e1b8d4916d26d9b99c2f18370bd70a9"
+                "reference": "c817437536562741ccf6ceb8955033a45f847f5f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/0c938d4a9e1b8d4916d26d9b99c2f18370bd70a9",
-                "reference": "0c938d4a9e1b8d4916d26d9b99c2f18370bd70a9",
+                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/c817437536562741ccf6ceb8955033a45f847f5f",
+                "reference": "c817437536562741ccf6ceb8955033a45f847f5f",
                 "shasum": ""
             },
             "require": {
@@ -2340,7 +2339,7 @@
                 }
             ],
             "description": "A library",
-            "time": "2014-12-20 13:22:59"
+            "time": "2015-01-03 17:51:09"
         },
         {
             "name": "tokenly/insight-client",
@@ -3750,6 +3749,7 @@
         "satooshi/php-coveralls": 20
     },
     "prefer-stable": false,
+    "prefer-lowest": false,
     "platform": [],
     "platform-dev": []
 }
