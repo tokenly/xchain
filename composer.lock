@@ -4,7 +4,7 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "798b4f5498837cca919c9aec4f836780",
+    "hash": "f985fb6cfcde9bc137f0a531d64a8bfa",
     "packages": [
         {
             "name": "bitwasp/bitcoin-lib",
@@ -910,6 +910,58 @@
                 "schedule"
             ],
             "time": "2013-11-23 19:48:39"
+        },
+        {
+            "name": "nbobtc/bitcoind-php",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/nbobtc/bitcoind-php.git",
+                "reference": "d81380bcbd6cfd71b6eb9b30244c55a235eda87e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/nbobtc/bitcoind-php/zipball/d81380bcbd6cfd71b6eb9b30244c55a235eda87e",
+                "reference": "d81380bcbd6cfd71b6eb9b30244c55a235eda87e",
+                "shasum": ""
+            },
+            "require": {
+                "lib-curl": "*",
+                "php": ">=5.3.0"
+            },
+            "require-dev": {
+                "phing/phing": "*",
+                "phpunit/phpunit": "*",
+                "sami/sami": "*"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-develop": "1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "Nbobtc": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Joshua Estes"
+                }
+            ],
+            "description": "PHP Wrapper for a bitcoind daemon",
+            "homepage": "https://github.com/nbobtc/bitcoind-php",
+            "keywords": [
+                "bitcoin",
+                "bitcoind",
+                "bitcoins"
+            ],
+            "time": "2014-11-04 13:31:07"
         },
         {
             "name": "nc/faye-client",
@@ -2076,6 +2128,48 @@
             "time": "2014-11-20 14:15:04"
         },
         {
+            "name": "tokenly/bitcoin-payer",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tokenly/bitcoin-payer.git",
+                "reference": "e1bfabf1094fcc06525e10bc83e561b3750f009e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/e1bfabf1094fcc06525e10bc83e561b3750f009e",
+                "reference": "e1bfabf1094fcc06525e10bc83e561b3750f009e",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "4.*",
+                "nbobtc/bitcoind-php": "dev-master",
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Tokenly\\BitcoinPayer": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Devon Weller",
+                    "email": "dweller@devonweller.com",
+                    "homepage": "http://devonweller.com"
+                }
+            ],
+            "description": "A bitcoin payment library",
+            "time": "2014-12-20 18:09:42"
+        },
+        {
             "name": "tokenly/counterparty-asset-info-cache",
             "version": "dev-master",
             "source": {
@@ -2121,6 +2215,48 @@
             ],
             "description": "Fetches and caches counterparty asset information",
             "time": "2014-11-21 11:44:08"
+        },
+        {
+            "name": "tokenly/counterparty-sender",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tokenly/counterparty-sender.git",
+                "reference": "19921b3e7fa7a0af69e6357bdb0a338f899551bf"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tokenly/counterparty-sender/zipball/19921b3e7fa7a0af69e6357bdb0a338f899551bf",
+                "reference": "19921b3e7fa7a0af69e6357bdb0a338f899551bf",
+                "shasum": ""
+            },
+            "require": {
+                "nbobtc/bitcoind-php": "dev-master",
+                "php": ">=5.4.0",
+                "tokenly/xcpd-client": "dev-master"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Tokenly\\CounterpartySender": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Devon Weller",
+                    "email": "dweller@devonweller.com",
+                    "homepage": "http://devonweller.com"
+                }
+            ],
+            "description": "A library",
+            "time": "2014-12-20 18:14:46"
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
@@ -3609,6 +3745,8 @@
         "tokenly/insight-client": 20,
         "tokenly/token-generator": 20,
         "nc/faye-client": 20,
+        "tokenly/counterparty-sender": 20,
+        "tokenly/bitcoin-payer": 20,
         "satooshi/php-coveralls": 20
     },
     "prefer-stable": false,

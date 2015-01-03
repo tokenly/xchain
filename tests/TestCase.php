@@ -20,6 +20,9 @@ class TestCase extends Illuminate\Foundation\Testing\TestCase {
 
     public function setUp()
     {
+        // make sure we are using the testing environment
+        putenv('APP_ENV=testing');
+
         parent::setUp();
 
         if($this->useDatabase)

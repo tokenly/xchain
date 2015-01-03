@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\PaymentAddress;
+use App\Models\User;
 use App\Repositories\Contracts\APIResourceRepositoryContract;
 use Illuminate\Database\Eloquent\Model;
 use Rhumsaa\Uuid\Uuid;
@@ -20,7 +21,18 @@ class PaymentAddressRepository implements APIResourceRepositoryContract
         $this->address_generator = $address_generator;
     }
 
+    public function createWithUser(User $user, $attributes) {
+        if (!isset($user['id']) OR !$user['id']) { throw new Exception("User ID is required", 1); }
+        $attributes['user_id'] = $user['id'];
+
+        return $this->create($attributes);
+    }
+
     public function create($attributes) {
+        // require user_id
+        if (!isset($attributes['user_id']) OR !$attributes['user_id']) { throw new Exception("User ID is required", 1); }
+
+        // create a uuid
         if (!isset($attributes['uuid'])) { $attributes['uuid'] = Uuid::uuid4()->toString(); }
 
         // create a token

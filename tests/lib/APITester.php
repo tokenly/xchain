@@ -29,8 +29,8 @@ class APITester
         return $this;
     }
 
-    public function testRequireAuth($method='POST', $url_extension='') {
-        $uri = $this->url_base.$url_extension;
+    public function testRequireAuth($method='POST', $url_extension=null) {
+        $uri = $this->extendURL($this->url_base, $url_extension);
         $parameters = [];
         $cookies = [];
         $files = [];
@@ -41,14 +41,14 @@ class APITester
 
         // expect to get a 403
         $response = $this->app->make('Illuminate\Contracts\Http\Kernel')->handle($request);
-        PHPUnit::assertEquals(403, $response->getStatusCode(), "Expected 403 Unauthenticated response.  Got ".$response->getStatusCode()." instead.");
+        PHPUnit::assertEquals(403, $response->getStatusCode(), "Expected 403 Unauthenticated response.  Got ".$response->getStatusCode()." for $uri instead.");
     }
 
-    public function testAddResource($posted_vars, $expected_created_resource)
+    public function testAddResource($posted_vars, $expected_created_resource, $url_extension=null)
     {
         // call the API
-        $response = $this->callAPIWithAuthentication('POST', $this->url_base, $posted_vars);
-        PHPUnit::assertEquals(200, $response->getStatusCode(), "Response was: ".$response->getContent());
+        $response = $this->callAPIWithAuthentication('POST', $this->extendURL($this->url_base, $url_extension), $posted_vars);
+        PHPUnit::assertEquals(200, $response->getStatusCode(), "Response was: ".$response->getContent()."\n\nfor POST ".$this->extendURL($this->url_base, $url_extension));
         $response_from_api = json_decode($response->getContent(), 1);
 
         // populate the $expected_created_resource
@@ -75,11 +75,11 @@ class APITester
         ]);
     }
 
-    public function testAddErrors($error_scenarios)
+    public function testAddErrors($error_scenarios, $url_path = '')
     {
         return $this->testErrors($error_scenarios, [
             'method'  => 'POST',
-            'urlPath' => '',
+            'urlPath' => $url_path,
         ]);
     }
 
@@ -98,7 +98,7 @@ class APITester
         }
 
         // echo "url:\n".json_encode($this->url_base.$url_extension, 192)."\n";
-        $response = $this->callAPIWithAuthentication('GET', $this->url_base.$url_extension);
+        $response = $this->callAPIWithAuthentication('GET', $this->extendURL($this->url_base, $url_extension));
         PHPUnit::assertEquals(200, $response->getStatusCode(), "Response was: ".$response->getContent());
         $loaded_resources_from_api = json_decode($response->getContent(), 1);
         PHPUnit::assertEquals($expected_created_resources_response, $loaded_resources_from_api);
@@ -177,6 +177,10 @@ class APITester
         }
 
         return $expected_created_resource;
+    }
+
+    protected function extendURL($base_url, $url_extension) {
+        return $base_url.(strlen($url_extension) ? '/'.ltrim($url_extension, '/') : '');
     }
 
 

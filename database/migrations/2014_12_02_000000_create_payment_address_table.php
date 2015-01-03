@@ -18,6 +18,8 @@ class CreatePaymentAddressTable extends Migration {
             $table->char('uuid', 36)->unique();
             $table->char('address', 35)->index();
             $table->char('private_key_token', 40);
+            $table->integer('user_id')->unsigned();
+            $table->foreign('user_id')->references('id')->on('users');
 			$table->timestamps();
 		});
 	}

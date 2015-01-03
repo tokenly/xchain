@@ -23,6 +23,7 @@ class MonitoredAddressRepository implements APIResourceRepositoryContract
     }
 
     public function create($attributes) {
+        if (!isset($attributes['user_id']) OR !$attributes['user_id']) { throw new Exception("User ID is required", 1); }
         if (!isset($attributes['uuid'])) { $attributes['uuid'] = Uuid::uuid4()->toString(); }
         if (!isset($attributes['active'])) { $attributes['active'] = true; }
 

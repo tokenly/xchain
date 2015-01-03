@@ -18,10 +18,10 @@ interface APIResourceRepositoryContract
 
     public function findByUuid($uuid);
 
-    public function deleteByUuid($uuid);
+    // public function deleteByUuid($uuid);
     public function delete(Model $resource);
 
-    public function updateByUuid($uuid, $attributes);
+    // public function updateByUuid($uuid, $attributes);
     public function update(Model $resource, $attributes);
 
 

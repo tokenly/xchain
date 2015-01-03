@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User;
 use App\Repositories\PaymentAddressRepository;
 
 /**
@@ -14,8 +15,8 @@ class PaymentAddressHelper
     }
 
 
-    public function createSamplePaymentAddress($override_vars=[]) {
-        return $this->payment_address_repository->create(array_merge([
+    public function createSamplePaymentAddress(User $user, $override_vars=[]) {
+        return $this->payment_address_repository->createWithUser($user, array_merge([
         ], $override_vars));
     }
 

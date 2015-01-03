@@ -16,8 +16,7 @@ class PaymentAddressAPITest extends TestCase {
     {
         $api_tester = $this->getAPITester();
 
-        $posted_vars = [
-        ];
+        $posted_vars = $this->sendHelper()->samplePostVars();
         $expected_created_resource = [
             'id'          => '{{response.id}}',
             'address'     => '{{response.address}}'
@@ -50,11 +49,12 @@ class PaymentAddressAPITest extends TestCase {
 
     public function testAPIListPaymentAddresses() {
         $api_tester = $this->getAPITester();
+        $user = $this->app->make('\UserHelper')->getSampleUser();
 
         $helper = $this->app->make('\PaymentAddressHelper');
         $created_addresses = [
-            $helper->createSamplePaymentAddress(),
-            $helper->createSamplePaymentAddress(),
+            $helper->createSamplePaymentAddress($user),
+            $helper->createSamplePaymentAddress($user),
         ];
 
         $loaded_addresses_from_api = $api_tester->testListResources($created_addresses);
@@ -66,10 +66,13 @@ class PaymentAddressAPITest extends TestCase {
 
 
     public function testAPIGetPaymentAddress() {
-        $helper = $this->app->make('\PaymentAddressHelper');
-        $created_address = $helper->createSamplePaymentAddress();
-
+        // get api tester first
         $api_tester = $this->getAPITester();
+
+        $user = $this->app->make('\UserHelper')->getSampleUser();
+        $helper = $this->app->make('\PaymentAddressHelper');
+        $created_address = $helper->createSamplePaymentAddress($user);
+
         $loaded_address_from_api = $api_tester->testGetResource($created_address);
         PHPUnit::assertEquals($created_address['address'], $loaded_address_from_api['address']);
     }
@@ -131,5 +134,8 @@ class PaymentAddressAPITest extends TestCase {
         return $api_tester;
     }
 
-
+    protected function sendHelper() {
+        if (!isset($this->sample_sends_helper)) { $this->sample_sends_helper = $this->app->make('SampleSendsHelper'); }
+        return $this->sample_sends_helper;
+    }
 }

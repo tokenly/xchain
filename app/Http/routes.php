@@ -17,6 +17,8 @@ $router->resource('api/v1/monitors', 'API\MonitorController', ['except' => ['cre
 $router->resource('api/v1/addresses', 'API\PaymentAddressController', ['except' => ['create','edit']]);
 $router->get('api/v1/transactions/{addressId}', 'API\TransactionController@index');
 
+// create a send
+$router->post('api/v1/sends/{addressId}', 'API\SendController@create');
 
 /*
 |--------------------------------------------------------------------------

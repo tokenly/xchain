@@ -145,6 +145,7 @@ return [
 		 * Vendor Service Providers...
 		 */
 		'Tokenly\XCPDClient\XCPDClientServiceProvider',
+		'Tokenly\CounterpartySender\Provider\CounterpartySenderServiceProvider',
 		'Tokenly\Insight\InsightServiceProvider',
 		'Tokenly\XChainListener\XChainListenerServiceProvider',
 		'Tokenly\HmacAuth\ServiceProvider\HmacAuthServiceProvider',
