@@ -2132,18 +2132,19 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-payer.git",
-                "reference": "e1bfabf1094fcc06525e10bc83e561b3750f009e"
+                "reference": "68f8d3540ae9ac5de59f0dc35732dac261f3c297"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/e1bfabf1094fcc06525e10bc83e561b3750f009e",
-                "reference": "e1bfabf1094fcc06525e10bc83e561b3750f009e",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/68f8d3540ae9ac5de59f0dc35732dac261f3c297",
+                "reference": "68f8d3540ae9ac5de59f0dc35732dac261f3c297",
                 "shasum": ""
             },
             "require": {
                 "guzzlehttp/guzzle": "4.*",
                 "nbobtc/bitcoind-php": "dev-master",
-                "php": ">=5.4.0"
+                "php": ">=5.4.0",
+                "tokenly/insight-client": "dev-master"
             },
             "require-dev": {
                 "phpunit/phpunit": "~4"
@@ -2166,7 +2167,7 @@
                 }
             ],
             "description": "A bitcoin payment library",
-            "time": "2014-12-20 18:09:42"
+            "time": "2015-01-06 12:26:47"
         },
         {
             "name": "tokenly/counterparty-asset-info-cache",
@@ -2347,12 +2348,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/insight-client.git",
-                "reference": "0928d2ec0919a5fa9a973d88479b5258f40045b8"
+                "reference": "eaa14e80a9962d74afe2b4b7a407181cb404af10"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/insight-client/zipball/0928d2ec0919a5fa9a973d88479b5258f40045b8",
-                "reference": "0928d2ec0919a5fa9a973d88479b5258f40045b8",
+                "url": "https://api.github.com/repos/tokenly/insight-client/zipball/eaa14e80a9962d74afe2b4b7a407181cb404af10",
+                "reference": "eaa14e80a9962d74afe2b4b7a407181cb404af10",
                 "shasum": ""
             },
             "require": {
@@ -2380,7 +2381,7 @@
                 }
             ],
             "description": "A client library for the Bitpay Insight API",
-            "time": "2014-12-13 20:16:50"
+            "time": "2015-01-06 12:25:27"
         },
         {
             "name": "tokenly/token-generator",
