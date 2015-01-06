@@ -64,10 +64,14 @@ class SendAPITest extends TestCase {
 
         $posted_vars = $this->sendHelper()->samplePostVars();
         $expected_created_resource = [
-            'id'      => '{{response.id}}',
-            'address' => '{{response.address}}'
+            'id'          => '{{response.id}}',
+            'destination' => '{{response.destination}}',
+            'asset'       => 'TOKENLY',
+            'sweep'       => '{{response.sweep}}',
+            'quantity'    => '{{response.quantity}}',
         ];
         $loaded_address_model = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
+
     }
 
 

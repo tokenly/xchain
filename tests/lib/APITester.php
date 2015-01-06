@@ -172,7 +172,8 @@ class APITester
     protected function fillExpectedResourceWithAPIRespose($expected_created_resource, $response_from_api) {
         foreach($expected_created_resource as $k => $v) {
             if (preg_match('!\{\{response\.(.*)\}\}!', $v, $matches)) {
-                $expected_created_resource[$k] = $response_from_api[$matches[1]];
+                $value = isset($response_from_api[$matches[1]]) ? $response_from_api[$matches[1]] : '--- NULL ---';
+                $expected_created_resource[$k] = $value;
             }
         }
 

@@ -26,16 +26,22 @@ class SendController extends APIController {
         if (!$user) { throw new Exception("User not found", 1); }
 
         // get the address
-        $monitored_address = $payment_address_respository->findByUuid($id);
-        if (!$monitored_address) { return new JsonResponse(['message' => 'address not found'], 404); }
+        $payment_address = $payment_address_respository->findByUuid($id);
+        if (!$payment_address) { return new JsonResponse(['message' => 'address not found'], 404); }
 
         // make sure this address belongs to this user
-        if ($monitored_address['user_id'] != $user['id']) { return new JsonResponse(['message' => 'Not authorized to send from this address'], 403); }
+        if ($payment_address['user_id'] != $user['id']) { return new JsonResponse(['message' => 'Not authorized to send from this address'], 403); }
 
         // send
         $request_attributes = $request->only(array_keys($request->rules()));
-        $is_sweep = isset($request_attributes['is_sweep']) ? !!$request_attributes['is_sweep'] : false;
-        $txid = $address_sender->send($monitored_address, $request_attributes['destination'], $request_attributes['quantity'], $request_attributes['asset']);
+        $float_fee = isset($request_attributes['fee']) ? $request_attributes['fee'] : null;
+        $multisig_dust_size = isset($request_attributes['multisig_dust_size']) ? $request_attributes['multisig_dust_size'] : null;
+        $is_sweep = isset($request_attributes['sweep']) ? !!$request_attributes['sweep'] : false;
+        if ($is_sweep) {
+            $txid = $address_sender->sweepBTC($payment_address, $request_attributes['destination'], $float_fee);
+        } else {
+            $txid = $address_sender->send($payment_address, $request_attributes['destination'], $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $multisig_dust_size);
+        }
         $quantity_sat = CurrencyUtil::valueToSatoshis($request_attributes['quantity']);
 
         // 'destination' => 'required',
@@ -43,14 +49,16 @@ class SendController extends APIController {
         // 'asset'       => 'require_without:sweep|string',
 
         $attributes = [];
-        $attributes['user_id']              = $user['id'];
-        $attributes['monitored_address_id'] = $monitored_address['id'];
-        $attributes['sent']                 = time();
-        $attributes['destination']          = $request_attributes['destination'];
-        $attributes['quantity_sat']         = $quantity_sat;
-        $attributes['asset']                = $request_attributes['asset'];
-        $attributes['is_sweep']             = $is_sweep;
-        $attributes['txid']                 = $txid;
+        $attributes['user_id']            = $user['id'];
+        $attributes['payment_address_id'] = $payment_address['id'];
+        $attributes['sent']               = time();
+        $attributes['destination']        = $request_attributes['destination'];
+        $attributes['quantity_sat']       = $quantity_sat;
+        $attributes['fee']                = $request_attributes['fee'];
+        $attributes['multisig_dust_size'] = $request_attributes['multisig_dust_size'];
+        $attributes['asset']              = $request_attributes['asset'];
+        $attributes['is_sweep']           = $is_sweep;
+        $attributes['txid']               = $txid;
 
         return $helper->store($send_respository, $attributes);
     }

@@ -9,22 +9,22 @@ use Tokenly\CurrencyLib\CurrencyUtil;
 class SampleSendsHelper
 {
 
-    public function __construct(SendRepository $send_repository, UserHelper $user_helper, MonitoredAddressHelper $monitored_address_helper) {
-        $this->monitored_address_helper = $monitored_address_helper;
-        $this->user_helper              = $user_helper;
-        $this->send_repository          = $send_repository;
+    public function __construct(SendRepository $send_repository, UserHelper $user_helper, PaymentAddressHelper $payment_address_helper) {
+        $this->payment_address_helper = $payment_address_helper;
+        $this->user_helper            = $user_helper;
+        $this->send_repository        = $send_repository;
     }
 
     public function createSampleSend($override_vars=[]) {
         $user = $this->user_helper->createSampleUser();
-        $monitored_address = $this->monitored_address_helper->createSampleMonitoredAddress($user);
-        return $this->createSampleSendWithMonitoredAddress($monitored_address, $override_vars);
+        $payment_address = $this->payment_address_helper->createSamplePaymentAddress($user);
+        return $this->createSampleSendWithPaymentAddress($payment_address, $override_vars);
     }
 
-    public function createSampleSendWithMonitoredAddress($monitored_address, $override_vars=[]) {
+    public function createSampleSendWithPaymentAddress($payment_address, $override_vars=[]) {
         $attributes = $this->sampleVars();
-        $attributes['monitored_address_id'] = $monitored_address['id'];
-        $attributes['user_id'] = $monitored_address['user_id'];
+        $attributes['payment_address_id'] = $payment_address['id'];
+        $attributes['user_id'] = $payment_address['user_id'];
         $attributes = array_merge($attributes, $override_vars);
         return $this->send_repository->create($attributes);
     }

@@ -16,7 +16,7 @@ class SendRepository implements APIResourceRepositoryContract
 
     public function create($attributes) {
         if (!isset($attributes['txid'])) { throw new Exception("TXID is required", 1); }
-        if (!isset($attributes['monitored_address_id'])) { throw new Exception("monitored_address_id is required", 1); }
+        if (!isset($attributes['payment_address_id'])) { throw new Exception("payment_address_id is required", 1); }
         if (!isset($attributes['user_id'])) { throw new Exception("user_id is required", 1); }
 
         if (!isset($attributes['uuid'])) { $attributes['uuid'] = Uuid::uuid4()->toString(); }

@@ -9,14 +9,19 @@ use Illuminate\Support\Facades\Log;
 
 class EventLog {
 
+    var $use_influxdb = false;
+    protected $influxdb = null;
+
     public function __construct() {
-        $this->influxdb_client = new \crodas\InfluxPHP\Client(
-           "localhost",
-           8086,
-           "root",
-           "root"
-        );
-        $this->influxdb = $this->influxdb_client->xchain_logs;
+        if ($this->use_influxdb) {
+            $this->influxdb_client = new \crodas\InfluxPHP\Client(
+               "localhost",
+               8086,
+               "root",
+               "root"
+            );
+            $this->influxdb = $this->influxdb_client->xchain_logs;
+        }
     }
 
     // statsd methods
@@ -45,7 +50,7 @@ class EventLog {
             if ($other_columns !== null) {
                 $row = array_merge($row, $other_columns);
             }
-            $this->influxdb->insert('events', $row);
+            if (isset($this->influxdb)) { $this->influxdb->insert('events', $row); }
 
             // write to laravel log
             Log::debug('event:'.$event." ".str_replace('\n', "\n", json_encode($data, 192)));

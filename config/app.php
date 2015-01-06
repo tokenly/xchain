@@ -145,6 +145,7 @@ return [
 		 * Vendor Service Providers...
 		 */
 		'Tokenly\XCPDClient\XCPDClientServiceProvider',
+		'Tokenly\BitcoinPayer\Provider\BitcoinPayerServiceProvider',
 		'Tokenly\CounterpartySender\Provider\CounterpartySenderServiceProvider',
 		'Tokenly\Insight\InsightServiceProvider',
 		'Tokenly\XChainListener\XChainListenerServiceProvider',

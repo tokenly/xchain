@@ -38,10 +38,12 @@ class CreateSendRequest extends APIRequest {
     public function rules()
     {
         return [
-            'destination' => 'required',
-            'quantity'    => 'required|numeric|notIn:0',
-            'asset'       => 'required|alpha|min:3',
-            'sweep'       => 'required_without:quantity|boolean',
+            'destination'        => 'required',
+            'quantity'           => 'required|numeric|notIn:0',
+            'fee'                => 'numeric',
+            'multisig_dust_size' => 'numeric',
+            'asset'              => 'required|alpha|min:3',
+            'sweep'              => 'required_without:quantity|boolean',
         ];
     }
 
