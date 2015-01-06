@@ -55,7 +55,7 @@ class SendAPITest extends TestCase {
     public function testAPIAddSend()
     {
         // mock the xcp sender
-        $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
         $user = $this->app->make('\UserHelper')->createSampleUser();
         $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user);
@@ -72,6 +72,11 @@ class SendAPITest extends TestCase {
         ];
         $loaded_address_model = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
 
+        // validate that a mock send was triggered
+        PHPUnit::assertEquals($payment_address['address'], $mock_calls['xcpd'][0]['args'][0]['source']);
+        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $mock_calls['xcpd'][0]['args'][0]['destination']);
+        PHPUnit::assertEquals(100, $mock_calls['xcpd'][0]['args'][0]['quantity']);
+        PHPUnit::assertEquals('TOKENLY', $mock_calls['xcpd'][0]['args'][0]['asset']);
     }
 
 
