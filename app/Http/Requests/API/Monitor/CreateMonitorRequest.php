@@ -20,7 +20,8 @@ class CreateMonitorRequest extends APIRequest {
         $validator->after(function () use ($validator)
         {
             // validate address
-            $address = $this->get('address');
+            $address = $this->json('address');
+            Log::info("\$address=$address AddressValidator::isValid($address)=".AddressValidator::isValid($address));
             if (!AddressValidator::isValid($address)) {
                 $validator->errors()->add('address', 'The address was invalid.');
             }

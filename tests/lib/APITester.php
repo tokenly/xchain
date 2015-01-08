@@ -37,7 +37,7 @@ class APITester
         $server = [];
         $content = null;
 
-        $request = Request::create($uri, $method, $parameters, $cookies, $files, $server, $content);
+        $request = $this->createAPIRequest($method, $uri, $parameters, $cookies, $files, $server, $content);
 
         // expect to get a 403
         $response = $this->app->make('Illuminate\Contracts\Http\Kernel')->handle($request);
@@ -151,12 +151,23 @@ class APITester
 
 
     public function callAPIWithAuthentication($method, $uri, $parameters = [], $cookies = [], $files = [], $server = [], $content = null) {
-        $request = Request::create($uri, $method, $parameters, $cookies, $files, $server, $content);
+        $request = $this->createAPIRequest($method, $uri, $parameters, $cookies, $files, $server, $content);
         $generator = new Generator();
         $api_token = 'TESTAPITOKEN';
         $secret = 'TESTAPISECRET';
         $generator->addSignatureToSymfonyRequest($request, $api_token, $secret);
         return $this->app->make('Illuminate\Contracts\Http\Kernel')->handle($request);
+    }
+
+    protected function createAPIRequest($method, $uri, $parameters = [], $cookies = [], $files = [], $server = [], $content = null) {
+        // convert a POST to json
+        if ($parameters AND $method == 'POST') {
+            $content = json_encode($parameters);
+            $server['CONTENT_TYPE'] = 'application/json';
+            $parameters = [];
+        }
+
+        return Request::create($uri, $method, $parameters, $cookies, $files, $server, $content);
     }
 
 

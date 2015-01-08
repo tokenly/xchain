@@ -20,7 +20,7 @@ class CreateSendRequest extends APIRequest {
         $validator->after(function () use ($validator)
         {
             // validate destination
-            $destination = $this->get('destination');
+            $destination = $this->json('destination');
             if (!AddressValidator::isValid($destination)) {
                 $validator->errors()->add('destination', 'The destination was invalid.');
             }
