@@ -33,7 +33,7 @@ class CreateSendTable extends Migration
             $table->bigInteger('multisig_dust_size_sat')->unsigned()->nullable();
             $table->text('asset');
 
-            $table->text('is_sweep')->boolean()->default(false);
+            $table->boolean('is_sweep')->default(false);
 
             $table->char('block_confirmed_hash', 64)->nullable();
             $table->integer('block_confirmed_height')->nullable();

@@ -21,7 +21,7 @@ class APIUserCommand extends Command {
      *
      * @var string
      */
-    protected $description = 'Create new API User';
+    protected $description = 'Create a new API User';
 
 
     /**
@@ -34,6 +34,7 @@ class APIUserCommand extends Command {
         $this
             ->addArgument('email', InputArgument::REQUIRED, 'Email Address')
             ->addOption('password', 'p', InputOption::VALUE_OPTIONAL, 'Password', null)
+            ->addOption('webhook-endpoint', 'u', InputOption::VALUE_OPTIONAL, 'Webhook Endpoint URL', null)
             ->setHelp(<<<EOF
 Create a new user with API Credentials
 EOF
@@ -49,8 +50,9 @@ EOF
     {
         $user_repository = $this->laravel->make('App\Repositories\UserRepository');
         $user_vars = [
-            'email'    => $this->input->getArgument('email'),
-            'password' => $this->input->getOption('password'),
+            'email'            => $this->input->getArgument('email'),
+            'password'         => $this->input->getOption('password'),
+            'webhook_endpoint' => $this->input->getOption('webhook-endpoint'),
 
         ];
         $user_model = $user_repository->create($user_vars);

@@ -46,6 +46,7 @@ EOF
      */
     public function fire()
     {
+
         $user_repository = $this->laravel->make('App\Repositories\UserRepository');
         $email = $this->input->getOption('email');
         if ($email) {
