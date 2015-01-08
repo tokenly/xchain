@@ -61,8 +61,8 @@ class UserRepository implements APIResourceRepositoryContract
         return User::where('apitoken', $api_token)->first();
     }
 
-    public function findWithWebhookEndpoint() {
-        return User::where('webhook_endpoint', '!=', '');
+    public function findWithWebhookEndpoint($columns=['*']) {
+        return User::where('webhook_endpoint', '!=', '')->get($columns);
     }
 
     public function updateByUuid($uuid, $attributes) {

@@ -34,6 +34,21 @@ class UserRepositoryTest extends TestCase {
     }
 
 
+    public function testFindUserWithWebhookEndpoint()
+    {
+        // insert
+        $user_repo = $this->app->make('App\Repositories\UserRepository');
+        $created_user_model = $user_repo->create($this->app->make('\UserHelper')->sampleDBVars());
+
+        // load from repo
+        $users = $user_repo->findWithWebhookEndpoint();
+        PHPUnit::assertNotEmpty($users);
+        PHPUnit::assertCount(1, $users);
+        foreach ($users as $user) { break; }
+        PHPUnit::assertEquals('TESTAPITOKEN', $user['apitoken']);
+    }
+
+
 
     public function testDeleteByUUID()
     {
