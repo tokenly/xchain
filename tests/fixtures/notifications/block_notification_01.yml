@@ -1,0 +1,9 @@
+# block notification
+
+# notificationId: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+event: block
+hash: 000000000000000015f697b296584d9d443d2225c67df9033157a9efe4a8faa0
+height: 333000
+previousblockhash: 000000000000000007ecb6e897b512134dad930fa9298b706bf21042c65d34b2
+# time: 2014-12-05T01:21:00+0000
+

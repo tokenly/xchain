@@ -18,6 +18,13 @@ class SampleBlockHelper
         return $data;
     }
 
+    public function fillFakeBlockData($data) {
+        if (!isset($data['hash'])) { $data['hash'] = str_pad($data['height'], 64, '0', STR_PAD_LEFT); }
+        if (!isset($data['previousblockhash'])) { $data['previousblockhash'] = str_pad($data['height'] - 1, 64, '0', STR_PAD_LEFT); }
+        if (!isset($data['time'])) { $data['time'] = time(); }
+        return $data;
+    }
+
     public function createSampleBlock($filename='default_parsed_block_01.json', $parsed_block_overrides=[]) {
         $parsed_block = $this->loadSampleBlock($filename);
 
@@ -30,5 +37,6 @@ class SampleBlockHelper
         ]);
         return $block_model;
     }
+
 
 }

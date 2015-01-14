@@ -3,25 +3,17 @@
 namespace App\Providers\EventLog;
 
 
-use RuntimeException;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use InfluxDB\Client;
+use RuntimeException;
 
 class EventLog {
 
-    var $use_influxdb = false;
     protected $influxdb = null;
 
-    public function __construct() {
-        if ($this->use_influxdb) {
-            $this->influxdb_client = new \crodas\InfluxPHP\Client(
-               "localhost",
-               8086,
-               "root",
-               "root"
-            );
-            $this->influxdb = $this->influxdb_client->xchain_logs;
-        }
+    public function __construct(Client $influxdb) {
+        $this->influxdb = $influxdb;
     }
 
     // statsd methods
@@ -32,7 +24,10 @@ class EventLog {
         $this->log($metric, ['action' => 'guage', 'value' => $value], null, ['value' => $value]);
     } 
     public function increment($metric) {
-        $this->log($metric, ['action' => 'increment']);
+        if ($this->influxdb) {
+            $this->influxdb->mark('counts', [$metric => 1]);
+        }
+        // $this->log($metric, ['action' => 'increment']);
     } 
 
     public function log($event, $raw_data, $array_keys_only=null, $other_columns=null) {
@@ -46,11 +41,14 @@ class EventLog {
                 $data = $raw_data;
             }
 
-            $row = ['event' => $event, 'data' => json_encode($data)];
-            if ($other_columns !== null) {
-                $row = array_merge($row, $other_columns);
+            if (isset($this->influxdb)) {
+                $row = ['event' => $event, 'data' => json_encode($data)];
+                if ($other_columns !== null) {
+                    $row = array_merge($row, $other_columns);
+                }
+
+                $this->influxdb->mark('events', $row);
             }
-            if (isset($this->influxdb)) { $this->influxdb->insert('events', $row); }
 
             // write to laravel log
             Log::debug('event:'.$event." ".str_replace('\n', "\n", json_encode($data, 192)));

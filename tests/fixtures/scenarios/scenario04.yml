@@ -26,5 +26,9 @@ events:
 notifications:
     # mempool
   - meta: { baseFilename: xcp_mempool_notification_01.yml }
+
+    # block
+  - meta: { baseFilename: block_notification_01.yml }
+
     # 1 confirmation
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }

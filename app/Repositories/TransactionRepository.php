@@ -12,13 +12,14 @@ use \Exception;
 class TransactionRepository
 {
 
-    public function create($parsed_tx) {
+    public function create($parsed_tx, $block_seq=null) {
         return Transaction::create([
             'txid'                 => $parsed_tx['txid'],
             'is_xcp'               => $parsed_tx['isCounterpartyTx'] ? 1 : 0,
             'block_confirmed_hash' => isset($parsed_tx['bitcoinTx']['blockhash']) ? $parsed_tx['bitcoinTx']['blockhash'] : null,
             'is_mempool'           => isset($parsed_tx['bitcoinTx']['blockhash']) ? 0 : 1,
             'parsed_tx'            => $parsed_tx,
+            'block_seq'            => $block_seq,
         ]);
     }
 

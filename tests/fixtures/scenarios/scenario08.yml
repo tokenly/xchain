@@ -42,14 +42,39 @@ events:
 notifications:
     # mempool
   - meta: { baseFilename: xcp_mempool_notification_01.yml }
+
+    # block
+  - meta: { baseFilename: block_notification_01.yml }
+
     # 1 confirmation
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }
+
+    # block
+  - meta: { baseFilename: block_notification_01.yml }
+    hash: BLOCKHASH02
+    previousblockhash: 000000000000000015f697b296584d9d443d2225c67df9033157a9efe4a8faa0
+    height: 333001
+
     # 2 confirmations
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }
     confirmations: 2
+
+    # block
+  - meta: { baseFilename: block_notification_01.yml }
+    hash: BLOCKHASH03
+    previousblockhash: BLOCKHASH02
+    height: 333002
+
     # 3 confirmations
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }
     confirmations: 3
+
+    # block
+  - meta: { baseFilename: block_notification_01.yml }
+    hash: BLOCKHASH04
+    previousblockhash: BLOCKHASH03
+    height: 333003
+
     # 4 confirmations
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }
     confirmations: 4

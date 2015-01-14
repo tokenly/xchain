@@ -80,18 +80,20 @@ class BlockChainStoreTest extends TestCase {
             'height' => 333001,
             'parsed_block' => ['height' => 333001]
         ]);
-        // MISSING BLOCKHASH03
+        // MISSING BLOCKHASH03 and BLOCKHASH04
         $created_block_model_3 = $this->blockHelper()->createSampleBlock('default_parsed_block_01.json', [
-            'hash' => 'BLOCKHASH04',
-            'previousblockhash' => 'BLOCKHASH03',
-            'height' => 333003,
-            'parsed_block' => ['height' => 333003]
+            'hash' => 'BLOCKHASH05',
+            'previousblockhash' => 'BLOCKHASH04',
+            'height' => 333004,
+            'parsed_block' => ['height' => 333004]
         ]);
 
         $blockchain_store = $this->app->make('App\Blockchain\Block\BlockChainStore');
-        $block_events = $blockchain_store->loadMissingBlockEventsFromInsight('BLOCKHASH03', 4);
-        PHPUnit::assertCount(1, $block_events);
-        PHPUnit::assertEquals('BLOCKHASH03', $block_events[0]['hash']);
+        $block_events = $blockchain_store->loadMissingBlockEventsFromInsight('BLOCKHASH04', 4);
+        PHPUnit::assertCount(2, $block_events);
+
+        // make sure they were loaded in the correct order
+        PHPUnit::assertEquals(['BLOCKHASH03','BLOCKHASH04'], [$block_events[0]['hash'], $block_events[1]['hash']]);
     }
 
 

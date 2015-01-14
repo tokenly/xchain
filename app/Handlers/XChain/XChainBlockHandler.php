@@ -52,16 +52,37 @@ class XChainBlockHandler {
         EventLog::log('block', $block_event, ['height', 'hash', 'previousblockhash', 'time']);
 
         // update the block repository
-        $new_block_model = $this->blockchain_store->create([
-            'hash'         => $block_event['hash'],
-            'height'       => $block_event['height'],
-            'parsed_block' => $block_event
-        ]);
+        try {
+            $new_block_model = $this->blockchain_store->create([
+                'hash'         => $block_event['hash'],
+                'height'       => $block_event['height'],
+                'parsed_block' => $block_event
+            ]);
+        } catch (Exception $e) {
+            if (strpos($e->getCode(), '23') === 0) {
+                EventLog::logError('block.duplicate.error', $e, ['hash' => $block_event['hash'], 'height' => $block_event['height'],]);
+                sleep(5);
+                return;
+            } 
 
+            EventLog::logError('block.error', $e);
+            sleep(5);
+            throw $e;
+        }
 
+        // update the block transactions in this block
+        $block_confirmations = $this->updateAllBlockTransactions($block_event);
+        $this->generateAndSendNotifications($block_event, $block_confirmations);
+    }
+
+    public function updateAllBlockTransactions($block_event) {
         // update all transactions that were in this block
+        $block_seq = 0;
+        $tx_count = count($block_event['tx']);
         foreach ($block_event['tx'] as $txid) {
-            $this->wlog("BlockHandler tx: $txid");
+            if ($block_seq % 100 == 1 AND $block_seq < ($tx_count - 1)) {
+                $this->wlog("BlockHandler processed ".($block_seq)." of {$tx_count}");
+            }
 
             // get the cached transaction
             $cached_transaction = $this->transaction_store->getCachedTransaction($txid);
@@ -69,21 +90,22 @@ class XChainBlockHandler {
             if ($cached_transaction) {
                 // check to see if block hash is correct
                 $transaction = $cached_transaction;
-                if (!$transaction['block_confirmed_hash'] OR $transaction['block_confirmed_hash'] != $block_event['hash']) {
+                if (!$transaction['block_confirmed_hash'] OR $transaction['block_confirmed_hash'] != $block_event['hash'] OR $transaction['block_seq'] != $block_seq) {
                     // update the parsed_tx
                     $parsed_tx = $transaction['parsed_tx'];
                     $parsed_tx['bitcoinTx']['blockhash'] = $block_event['hash'];
                     $parsed_tx['bitcoinTx']['blocktime'] = $block_event['time'];
+
+                    // also inject the block height
+                    $parsed_tx['bitcoinTx']['blockheight'] = $block_event['height'];
 
                     // check to see if it was reorganized
                     $was_reorganized = ($transaction['block_confirmed_hash'] AND $transaction['block_confirmed_hash'] != $block_event['hash']);
                     if ($was_reorganized) {
                         // we must reload this transaction from insight
                         // since this transaction was reorganized
-                        $transaction = $this->transaction_store->getParsedTransactionFromInsight($txid);
+                        $transaction = $this->transaction_store->getParsedTransactionFromInsight($txid, $block_seq);
                     }
-
-                    $this->wlog("transaction $txid was confirmed in block: {$transaction['block_confirmed_hash']}");
 
                     // update the transaction
                     if ($transaction['block_confirmed_hash']) {
@@ -101,16 +123,26 @@ class XChainBlockHandler {
                         'block_confirmed_hash' => $parsed_tx['bitcoinTx']['blockhash'],
                         'is_mempool'           => 0,
                         'parsed_tx'            => $parsed_tx,
+                        'block_seq'            => $block_seq,
                     ]);
                 }
             } else {
                 $this->wlog("transaction $txid was not found.  Loading from insight.");
 
                 // no cached transaction - load from Insight
-                $transaction = $this->transaction_store->getParsedTransactionFromInsight($txid);
+                $transaction = $this->transaction_store->getParsedTransactionFromInsight($txid, $block_seq);
                 $confirmations = $transaction['parsed_tx']['bitcoinTx']['confirmations'];
             }
+
+            ++$block_seq;
         }
+        $this->wlog("BlockHandler finished {$block_seq} of $tx_count");
+
+        return $confirmations;
+    }
+
+
+    public function generateAndSendNotifications($block_event, $block_confirmations) {
 
         // send a new block notification
         $notification = [
@@ -124,26 +156,26 @@ class XChainBlockHandler {
         ];
 
 
-
-        // create a notification for each user
+        // send block notifications
+        //   create a block notification for each user
         $notification_vars_for_model = $notification;
         unset($notification_vars_for_model['notificationId']);
         foreach ($this->user_repository->findWithWebhookEndpoint() as $user) {
             $notification_model = $this->notification_repository->createForUser(
                 $user,
                 [
-                    'txid'          => $parsed_tx['txid'],
-                    'confirmations' => $confirmations,
+                    'txid'          => $block_event['hash'],
+                    'confirmations' => $block_confirmations,
                     'notification'  => $notification_vars_for_model,
                 ]
             );
 
             $notification['notificationId'] = $notification_model['uuid'];
-            $notification_json = json_encode($notification);
+            $notification_json_string = json_encode($notification);
 
-            $api_key = $user['apitoken'];
+            $api_token = $user['apitoken'];
             $api_secret = $user['apisecretkey'];
-            $signature = hash_hmac('sha256', $notification_json, $api_secret, false);
+            $signature = hash_hmac('sha256', $notification_json_string, $api_secret, false);
 
 
             $notification_entry = [
@@ -151,15 +183,17 @@ class XChainBlockHandler {
                     'id'        => $notification_model['uuid'],
                     'endpoint'  => $user['webhook_endpoint'],
                     'timestamp' => time(),
-                    'apiKey'    => $api_key,
+                    'apiToken'  => $api_token,
                     'signature' => $signature,
                     'attempt'   => 0,
                 ],
 
-                'payload' => $notification_json,
+                'payload' => $notification_json_string,
             ];
 
             // put notification in the queue
+            $this->wlog('adding to notifications_out: '.substr(json_encode($notification_entry), 0, 500));
+            EventLog::log('notification.out', ['event'=>$notification['event'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
             $this->queue_manager
                 ->connection('notifications_out')
                 ->pushRaw(json_encode($notification_entry), 'notifications_out');
@@ -168,7 +202,7 @@ class XChainBlockHandler {
 
 
 
-        // send notifications
+        // send transaction notifications
         // also update every transaction that needs a new confirmation sent
         //   find all transactions in the last 6 blocks
         //   and send out notifications
@@ -176,10 +210,28 @@ class XChainBlockHandler {
         $blocks = $this->blockchain_store->findAllAsOfHeightEndingWithBlockhash($block_event['height'] - (self::MAX_CONFIRMATIONS_TO_NOTIFY - 1), $block_event['hash']);
         // echo "\$blocks:\n".json_encode($blocks, 192)."\n";
         $block_hashes = [];
-        foreach($blocks as $block) { $block_hashes[] = $block['hash']; }
-        foreach($this->transaction_repository->findAllTransactionsConfirmedInBlockHashes($block_hashes) as $transaction_model) {
-            $confirmations = $this->confirmations_builder->getConfirmationsForBlockHashAsOfHeight($transaction_model['block_confirmed_hash'], $block_event['height']);
-            $this->events->fire('xchain.tx.confirmed', [$transaction_model['parsed_tx'], $confirmations]);
+        $blocks_by_hash = [];
+        foreach($blocks as $block) {
+            $block_hashes[] = $block['hash'];
+            $blocks_by_hash[$block['hash']] = $block;
+        }
+        if ($block_hashes) {
+            foreach($this->transaction_repository->findAllTransactionsConfirmedInBlockHashes($block_hashes) as $transaction_model) {
+                $confirmations = $this->confirmations_builder->getConfirmationsForBlockHashAsOfHeight($transaction_model['block_confirmed_hash'], $block_event['height']);
+
+                // the block height might have changed if the chain was reorganized
+                $parsed_tx = $transaction_model['parsed_tx'];
+                $block = $blocks_by_hash[$transaction_model['block_confirmed_hash']];
+                $confirmation_timestamp = null;
+                if ($block) {
+                    $parsed_tx['bitcoinTx']['blockheight'] = $block['height'];
+                    $confirmation_timestamp = $block['parsed_block']['time'];
+                }
+
+                $this->events->fire('xchain.tx.confirmed', [$parsed_tx, $confirmations, $transaction_model['block_seq'], $confirmation_timestamp]);
+            }
+        } else {
+            EventLog::logError('block.noBlocksFound', ['height' => $block_event['height'], 'hash' => $block_event['hash'], 'previousblockhash' => $block_event['previousblockhash']]);
         }
 
     }

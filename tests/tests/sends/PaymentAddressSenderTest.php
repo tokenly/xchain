@@ -1,5 +1,6 @@
 <?php
 
+use Tokenly\CurrencyLib\CurrencyUtil;
 use \PHPUnit_Framework_Assert as PHPUnit;
 
 class PaymentAddressSenderTest extends TestCase {
@@ -17,11 +18,12 @@ class PaymentAddressSenderTest extends TestCase {
         $sender->send($payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', '100', 'TOKENLY', $float_fee=null, $multisig_dust_size=null, $is_sweep=false);
 
         // check the first sent call
-        PHPUnit::assertEquals($payment_address['address'], $mock_calls['xcpd'][0]['args'][0]['source']);
-        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $mock_calls['xcpd'][0]['args'][0]['destination']);
-        PHPUnit::assertEquals(100, $mock_calls['xcpd'][0]['args'][0]['quantity']);
-        PHPUnit::assertEquals('TOKENLY', $mock_calls['xcpd'][0]['args'][0]['asset']);
-        PHPUnit::assertEquals(0.0001, $mock_calls['xcpd'][0]['args'][0]['fee_per_kb']);
+        $mock_send_call = $mock_calls['xcpd'][1];
+        PHPUnit::assertEquals($payment_address['address'], $mock_send_call['args'][0]['source']);
+        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $mock_send_call['args'][0]['destination']);
+        PHPUnit::assertEquals(100, $mock_send_call['args'][0]['quantity']);
+        PHPUnit::assertEquals('TOKENLY', $mock_send_call['args'][0]['asset']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.0001), $mock_send_call['args'][0]['fee_per_kb']);
 
 
     }

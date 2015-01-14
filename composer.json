@@ -19,7 +19,7 @@
         "nc/faye-client": "dev-master",
         "rhumsaa/uuid": "~2.",
         "linusu/bitcoin-address-validator": "~0",
-        "crodas/influx-php": "~0",
+        "corley/influxdb-sdk": "~0",
         "tokenly/counterparty-sender": "dev-master",
         "tokenly/bitcoin-payer": "dev-master"
     },

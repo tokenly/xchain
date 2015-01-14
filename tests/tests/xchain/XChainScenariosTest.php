@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Log;
 use \PHPUnit_Framework_Assert as PHPUnit;
 
 class XChainScenariosTest extends TestCase {
@@ -11,9 +12,12 @@ class XChainScenariosTest extends TestCase {
         $scenario_number = getenv('SCENARIO');
 
         if ($scenario_number !== false) {
+            $this->drainQueue();
             $this->runScenario($scenario_number);
         }
         // echo "\$scenario_number_vars:\n".json_encode($scenario_number_vars, 192)."\n";
+
+        $this->drainQueue();
     } 
 
     public function testAllXChainScenarios() {
@@ -21,6 +25,7 @@ class XChainScenariosTest extends TestCase {
         $scenario_number_count = count(glob(base_path().'/tests/fixtures/scenarios/*.yml'));
         PHPUnit::assertGreaterThan(0, $scenario_number_count);
         for ($i=1; $i <= $scenario_number_count; $i++) { 
+            Log::debug("BEGIN SCENARIO: $i");
             // clear the db
             if ($i > 1) { $this->resetForScenario(); }
 
@@ -62,10 +67,21 @@ class XChainScenariosTest extends TestCase {
         $this->teardownDb();
         $this->setUpDb();
 
+        // reset the scenario runner
+        $this->scenario_runner = null;
+
+        // drain the notification queue
+        $this->drainQueue();
+    }
+
+    protected function drainQueue() {
+        // make sure scenario runner exists
+        $this->scenarioRunner();
+
         // drain the queue
         $q = $this->app->make('Illuminate\Queue\QueueManager');
-        while ($q->connection('notifications_out')->pop()) {}
-
+        // while ($q->connection('notifications_out')->pop()) {}
+        $q->connection('notifications_out')->drain();
     }
 
 }

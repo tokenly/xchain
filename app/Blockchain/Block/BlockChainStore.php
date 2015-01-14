@@ -87,6 +87,9 @@ class BlockChainStore {
             }
         }
 
+        // now reverse the missing blocks so the oldest one is processed first
+        $missing_block_events = array_reverse($missing_block_events);
+
         return $missing_block_events;
 
     }

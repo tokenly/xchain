@@ -32,7 +32,7 @@ class TransactionStore {
         return $transaction;
     }
 
-    public function getParsedTransactionFromInsight($txid) {
+    public function getParsedTransactionFromInsight($txid, $block_seq=null) {
         EventLog::increment('insight.loadtx');
 
         // load
@@ -42,12 +42,12 @@ class TransactionStore {
         $parsed_transaction_data = $this->buildParsedTransactionDataFromAPIData($api_data);
 
         // and cache
-        $transaction = $this->saveNewTransactionFromParsedTransactionData($parsed_transaction_data);
+        $transaction = $this->saveNewTransactionFromParsedTransactionData($parsed_transaction_data, $block_seq);
 
         return $transaction;
     }
 
-    public function storeParsedTransaction($parsed_tx) {
+    public function storeParsedTransaction($parsed_tx, $block_seq=null) {
         $txid = $parsed_tx['txid'];
         $transaction = $this->fetchTransactionFromRepository($txid);
         if ($transaction) {
@@ -57,7 +57,7 @@ class TransactionStore {
                 'is_mempool'           => isset($parsed_tx['bitcoinTx']['blockhash']) ? 0 : 1,
             ]);
         } else {
-            $transaction = $this->saveNewTransactionFromParsedTransactionData($parsed_tx);
+            $transaction = $this->saveNewTransactionFromParsedTransactionData($parsed_tx, $block_seq);
         }
 
         return $transaction;
@@ -80,8 +80,8 @@ class TransactionStore {
         return $this->transaction_repository->findByTXID($txid);
     }
 
-    protected function saveNewTransactionFromParsedTransactionData($parsed_transaction_data) {
-        $transaction = $this->transaction_repository->create($parsed_transaction_data);
+    protected function saveNewTransactionFromParsedTransactionData($parsed_transaction_data, $block_seq=null) {
+        $transaction = $this->transaction_repository->create($parsed_transaction_data, $block_seq);
         return $transaction;
     }
 

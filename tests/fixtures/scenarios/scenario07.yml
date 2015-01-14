@@ -63,19 +63,47 @@ events:
 
 
 notifications:
+    # block
+  - meta: { baseFilename: block_notification_01.yml }
+    hash: BLOCKHASH01BASE
+    height: 333000
+
     # mempool
   - meta: { baseFilename: xcp_mempool_notification_01.yml }
     txid: 00000000000000000000000000000000000000000000000000000aaaaaaaaaaa
+
+    # block
+  - meta: { baseFilename: block_notification_01.yml }
+    hash: BLOCKHASH01FORKAAA
+    height: 333001
 
     # 1 confirmation
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }
     txid: 00000000000000000000000000000000000000000000000000000aaaaaaaaaaa
     blockhash: BLOCKHASH01FORKAAA
 
+    # block (did not include the tx)
+  - meta: { baseFilename: block_notification_01.yml }
+    hash: BLOCKHASH01FORKBBB
+    previousblockhash: BLOCKHASH01BASE
+    height: 333001
+
+    # block (does include the tx)
+  - meta: { baseFilename: block_notification_01.yml }
+    hash: BLOCKHASH02FORKBBB
+    previousblockhash: BLOCKHASH01FORKBBB
+    height: 333002
+
     # 1 confirmation (again - this time in a separate fork)
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }
     txid: 00000000000000000000000000000000000000000000000000000aaaaaaaaaaa
     blockhash: BLOCKHASH02FORKBBB
+
+    # block (continuing with the tx)
+  - meta: { baseFilename: block_notification_01.yml }
+    hash: BLOCKHASH03FORKBBB
+    previousblockhash: BLOCKHASH02FORKBBB
+    height: 333003
 
     # 2 confirmations
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }

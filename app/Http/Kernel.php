@@ -31,6 +31,7 @@ class Kernel extends HttpKernel {
 
 		// custom middleware
 		'hmacauth'   => 'App\Http\Middleware\XChain\AuthenticateAPI',
+		'apierrors'  => 'App\Http\Middleware\XChain\HandleAPIErrors',
 	];
 
 }

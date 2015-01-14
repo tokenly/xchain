@@ -4,7 +4,7 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "f985fb6cfcde9bc137f0a531d64a8bfa",
+    "hash": "01079c5328264b89aff7ce19a496bf76",
     "packages": [
         {
             "name": "bitwasp/bitcoin-lib",
@@ -96,37 +96,74 @@
             "time": "2014-03-12 00:05:31"
         },
         {
-            "name": "crodas/influx-php",
-            "version": "v0.1.1",
+            "name": "corley/influxdb-sdk",
+            "version": "0.2.4",
             "source": {
                 "type": "git",
-                "url": "https://github.com/crodas/InfluxPHP.git",
-                "reference": "3c0b99efc98c810bdc0dd294574b306583d17446"
+                "url": "https://github.com/corley/influxdb-php-sdk.git",
+                "reference": "dcaf212040733e74444fd53e7ead96216eb82a3b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/crodas/InfluxPHP/zipball/3c0b99efc98c810bdc0dd294574b306583d17446",
-                "reference": "3c0b99efc98c810bdc0dd294574b306583d17446",
+                "url": "https://api.github.com/repos/corley/influxdb-php-sdk/zipball/dcaf212040733e74444fd53e7ead96216eb82a3b",
+                "reference": "dcaf212040733e74444fd53e7ead96216eb82a3b",
                 "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "~4",
+                "zendframework/zend-filter": "~2",
+                "zendframework/zend-servicemanager": "~2",
+                "zendframework/zend-stdlib": "~2"
+            },
+            "require-dev": {
+                "athletic/athletic": "~0.1",
+                "ext-sockets": "*",
+                "phpspec/phpspec": "2.*",
+                "phpunit/phpunit": "4.*"
+            },
+            "suggest": {
+                "fabpot/pimple": "Allows to prepare the client dependencies in order to require an initialized instance",
+                "symfony/dependency-injection": "Prepare a  valid instance via the symfony DiC",
+                "zendframework/zend-servicemanager": "Use a service locator in order to prepare a valid instance"
             },
             "type": "library",
             "autoload": {
-                "classmap": [
-                    "lib/"
-                ]
+                "psr-0": {
+                    "InfluxDB\\": [
+                        "./src/",
+                        "./tests"
+                    ],
+                    "Corley\\": [
+                        "./benchmarks/"
+                    ]
+                }
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
-                "BSD-4-Clause"
+                "MIT"
             ],
             "authors": [
                 {
-                    "name": "César D. Rodas",
-                    "email": "crodas@php.net"
+                    "name": "Gianluca Arbezzano",
+                    "email": "gianluca.arbezzano@corley.it"
+                },
+                {
+                    "name": "Walter Dal Mut",
+                    "email": "walter.dalmut@corley.it"
+                },
+                {
+                    "name": "Gabriele Mittica",
+                    "email": "gabriele.mittica@corley.it"
                 }
             ],
-            "description": "Simple client for InfluxDB",
-            "time": "2014-09-28 22:07:51"
+            "description": "Send your app metrics to InfluxDB",
+            "homepage": "http://www.corley.it/",
+            "keywords": [
+                "influxdb",
+                "sdk",
+                "udp"
+            ],
+            "time": "2014-11-18 13:46:22"
         },
         {
             "name": "d11wtq/boris",
@@ -2566,6 +2603,153 @@
                 "environment"
             ],
             "time": "2014-10-21 21:43:14"
+        },
+        {
+            "name": "zendframework/zend-filter",
+            "version": "dev-develop",
+            "target-dir": "Zend/Filter",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zendframework/Component_ZendFilter.git",
+                "reference": "c878eb757c53057a9cd2c7af391eec69ab4bca61"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zendframework/Component_ZendFilter/zipball/c878eb757c53057a9cd2c7af391eec69ab4bca61",
+                "reference": "c878eb757c53057a9cd2c7af391eec69ab4bca61",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3",
+                "zendframework/zend-stdlib": "self.version"
+            },
+            "require-dev": {
+                "zendframework/zend-crypt": "self.version"
+            },
+            "suggest": {
+                "zendframework/zend-crypt": "Zend\\Crypt component",
+                "zendframework/zend-i18n": "Zend\\I18n component",
+                "zendframework/zend-uri": "Zend\\Uri component for UriNormalize filter",
+                "zendframework/zend-validator": "Zend\\Validator component"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.2-dev",
+                    "dev-develop": "2.3-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "Zend\\Filter\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": "provides a set of commonly needed data filters",
+            "keywords": [
+                "filter",
+                "zf2"
+            ],
+            "time": "2014-03-03 21:00:13"
+        },
+        {
+            "name": "zendframework/zend-servicemanager",
+            "version": "dev-develop",
+            "target-dir": "Zend/ServiceManager",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zendframework/Component_ZendServiceManager.git",
+                "reference": "4911c6c6f58d7058e351e6fe8ecff14666da1259"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zendframework/Component_ZendServiceManager/zipball/4911c6c6f58d7058e351e6fe8ecff14666da1259",
+                "reference": "4911c6c6f58d7058e351e6fe8ecff14666da1259",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "require-dev": {
+                "zendframework/zend-di": "self.version"
+            },
+            "suggest": {
+                "zendframework/zend-di": "Zend\\Di component"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.2-dev",
+                    "dev-develop": "2.3-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "Zend\\ServiceManager\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "keywords": [
+                "servicemanager",
+                "zf2"
+            ],
+            "time": "2014-03-03 21:00:12"
+        },
+        {
+            "name": "zendframework/zend-stdlib",
+            "version": "dev-develop",
+            "target-dir": "Zend/Stdlib",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zendframework/Component_ZendStdlib.git",
+                "reference": "3acce3d524c5c5b7e92c90b0c2763068c1efaf2c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zendframework/Component_ZendStdlib/zipball/3acce3d524c5c5b7e92c90b0c2763068c1efaf2c",
+                "reference": "3acce3d524c5c5b7e92c90b0c2763068c1efaf2c",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.23"
+            },
+            "require-dev": {
+                "zendframework/zend-eventmanager": "self.version",
+                "zendframework/zend-serializer": "self.version",
+                "zendframework/zend-servicemanager": "self.version"
+            },
+            "suggest": {
+                "zendframework/zend-eventmanager": "To support aggregate hydrator usage",
+                "zendframework/zend-serializer": "Zend\\Serializer component",
+                "zendframework/zend-servicemanager": "To support hydrator plugin manager usage"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.2-dev",
+                    "dev-develop": "2.3-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "Zend\\Stdlib\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "keywords": [
+                "stdlib",
+                "zf2"
+            ],
+            "time": "2014-03-13 16:12:22"
         }
     ],
     "packages-dev": [

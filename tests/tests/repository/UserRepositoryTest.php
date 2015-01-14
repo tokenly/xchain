@@ -21,6 +21,21 @@ class UserRepositoryTest extends TestCase {
     }
 
 
+    public function testFindUserByID()
+    {
+        // insert
+        $user_repo = $this->app->make('App\Repositories\UserRepository');
+        $created_user_model = $user_repo->create($this->app->make('\UserHelper')->sampleDBVars());
+
+        // load from repo
+        $id = (string)$created_user_model['id'];
+        $loaded_user_model = $user_repo->findByID($id);
+        PHPUnit::assertNotEmpty($loaded_user_model);
+        PHPUnit::assertEquals('TESTAPITOKEN', $loaded_user_model['apitoken']);
+        PHPUnit::assertEquals($id, $loaded_user_model['id']);
+    }
+
+
     public function testFindByAPIToken()
     {
         // insert

@@ -3,16 +3,19 @@
 namespace App\Handlers\XChain;
 
 use App\Blockchain\Transaction\TransactionStore;
+use App\Providers\EventLog\Facade\EventLog;
 use App\Repositories\MonitoredAddressRepository;
 use App\Repositories\NotificationRepository;
+use App\Repositories\UserRepository;
 use Illuminate\Contracts\Logging\Log;
 use Illuminate\Queue\QueueManager;
 use Nc\FayeClient\Client as FayeClient;
 
 class XChainTransactionHandler {
 
-    public function __construct(MonitoredAddressRepository $monitored_address_repository, NotificationRepository $notification_repository, TransactionStore $transaction_store, QueueManager $queue_manager, Log $log) {
+    public function __construct(MonitoredAddressRepository $monitored_address_repository, UserRepository $user_repository, NotificationRepository $notification_repository, TransactionStore $transaction_store, QueueManager $queue_manager, Log $log) {
         $this->monitored_address_repository = $monitored_address_repository;
+        $this->user_repository              = $user_repository;
         $this->notification_repository      = $notification_repository;
         $this->transaction_store            = $transaction_store;
         $this->queue_manager                = $queue_manager;
@@ -27,25 +30,25 @@ class XChainTransactionHandler {
         return;
     }
 
-    public function sendNotifications($parsed_tx, $confirmations)
+    public function sendNotifications($parsed_tx, $confirmations, $block_seq, $block_confirmation_time)
     {
         // echo "\$parsed_tx:\n".json_encode($parsed_tx, 192)."\n";
-        $this->wlog('sendNotifications txid: '.$parsed_tx['txid'].' $confirmations: '.$confirmations);
+        // $this->wlog('sendNotifications txid: '.$parsed_tx['txid'].' $confirmations: '.$confirmations);
 
         $sources = ($parsed_tx['sources'] ? $parsed_tx['sources'] : []);
         $destinations = ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []);
 
         // get all addresses that we care about
-        $found_addresses = $this->monitored_address_repository->findByAddresses(array_unique(array_merge($sources, $destinations)));
-        if (!$found_addresses->count()) { return; }
+        $monitored_addresses = $this->monitored_address_repository->findByAddresses(array_unique(array_merge($sources, $destinations)));
+        if (!$monitored_addresses->count()) { return; }
 
         $this->wlog("begin loop");
-        foreach($found_addresses->get() as $found_address) {
-            $this->wlog("\$found_address=$found_address");
+        foreach($monitored_addresses->get() as $monitored_address) {
+            $this->wlog("\$monitored_address=$monitored_address");
 
             // see if this is a receiving or sending event
             $event_type = null;
-            switch ($found_address['monitor_type']) {
+            switch ($monitored_address['monitor_type']) {
                 case 'send': $event_type = 'send'; break;
                 case 'receive': $event_type = 'receive'; break;
             }
@@ -53,7 +56,7 @@ class XChainTransactionHandler {
             $notification = [
                 'event'            => $event_type,
                 'notificationId'   => null,
-                'notifiedAddress'  => $found_address['address'],
+                'notifiedAddress'  => $monitored_address['address'],
 
                 'txid'             => $parsed_tx['txid'],
                 'isCounterpartyTx' => $parsed_tx['isCounterpartyTx'],
@@ -70,7 +73,9 @@ class XChainTransactionHandler {
                 // ISO 8601
                 'transactionTime'  => $this->getISO8601Timestamp($parsed_tx['timestamp']),
                 'confirmations'    => $confirmations,
+                'confirmationTime' => $this->getISO8601Timestamp($block_confirmation_time),
                 'confirmed'        => ($confirmations > 0 ? true : false),
+                'blockSeq'         => $block_seq,
             ];
 
 
@@ -78,7 +83,7 @@ class XChainTransactionHandler {
             $notification_vars_for_model = $notification;
             unset($notification_vars_for_model['notificationId']);
             $notification_model = $this->notification_repository->createForMonitoredAddress(
-                $found_address,
+                $monitored_address,
                 [
                     'txid'          => $parsed_tx['txid'],
                     'confirmations' => $confirmations,
@@ -86,25 +91,29 @@ class XChainTransactionHandler {
                 ]
             );
             
-            $api_key = '[none]';
-            $api_secret = '[secret]';
+            // apply user API token and key
+            $user = $this->userByID($monitored_address['user_id']);
+            $api_token = $user['apitoken'];
+            $api_secret = $user['apisecretkey'];
 
+            // update notification
             $notification['notificationId'] = $notification_model['uuid'];
-            $notification_json = json_encode($notification);
+            $notification_json_string = json_encode($notification);
 
-            $signature = hash_hmac('sha256', $notification_json, $api_secret, false);
+            // sign request
+            $signature = hash_hmac('sha256', $notification_json_string, $api_secret, false);
 
             $notification_entry = [
                 'meta' => [
                     'id'        => $notification_model['uuid'],
-                    'endpoint'  => $found_address['webhookEndpoint'],
+                    'endpoint'  => $monitored_address['webhookEndpoint'],
                     'timestamp' => time(),
-                    'apiKey'    => $api_key,
+                    'apiToken'  => $api_token,
                     'signature' => $signature,
                     'attempt'   => 0,
                 ],
 
-                'payload' => $notification_json,
+                'payload' => $notification_json_string,
             ];
             // echo "\$notification_entry:\n".json_encode($notification_entry, 192)."\n";
 
@@ -112,6 +121,7 @@ class XChainTransactionHandler {
             // Queue::push('notification', $notification, 'notifications_out');
             // Queue::pushRaw(['job' => 'notification', 'data' => $notification], 'notifications_out');
             // $this->queue_manager->connection('notifications_out')->push('notification', $notification);
+            EventLog::log('notification.out', ['event'=>$notification['event'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
             $this->queue_manager
                 ->connection('notifications_out')
                 ->pushRaw(json_encode($notification_entry), 'notifications_out');
@@ -130,12 +140,22 @@ class XChainTransactionHandler {
     }
 
     protected function getISO8601Timestamp($timestamp=null) {
+        if ($timestamp === 0) { return ''; }
+
         $_t = new \DateTime('now');
         if ($timestamp !== null) {
             $_t->setTimestamp($timestamp);
         }
         $_t->setTimezone(new \DateTimeZone('UTC'));
         return $_t->format(\DateTime::ISO8601);
+    }
+
+    protected function userByID($id) {
+        if (!isset($this->user_by_id)) { $this->user_by_id = []; }
+        if (!isset($this->user_by_id[$id])) {
+            $this->user_by_id[$id] = $this->user_repository->findByID($id);
+        }
+        return $this->user_by_id[$id];
     }
 
 }

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Queue\SyncQueue;
+use Illuminate\Support\Facades\Log;
 
 /**
 *  TestMemorySyncQueue
@@ -27,5 +28,9 @@ class TestMemorySyncQueue extends SyncQueue
         return isset($this->memory[$queue]) ? array_shift($this->memory[$queue]) : null;
     }
 
+    public function drain($queue = null) {
+        $queue = $queue ?: $this->default;
+        return $this->memory[$queue] = [];
+    }
 
 }

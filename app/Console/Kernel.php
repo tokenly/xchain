@@ -16,6 +16,9 @@ class Kernel extends ConsoleKernel {
 
 		// xchain commands
 		'App\Console\Commands\Development\PopulateNotificationCommand',
+		'App\Console\Commands\Development\SendManualNotificationCommand',
+		'App\Console\Commands\Development\ExportWIFCommand',
+		'App\Console\Commands\Development\TestConfigCommand',
 		'App\Console\Commands\Blocks\LoadMissingBlocksCommand',
 		'App\Console\Commands\APIUser\APIUserCommand',
 		'App\Console\Commands\APIUser\APIListUsersCommand',

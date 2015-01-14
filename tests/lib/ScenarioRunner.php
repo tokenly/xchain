@@ -96,6 +96,10 @@ class ScenarioRunner
         if (isset($scenario_data['transaction_rows'])) { $this->validateTransactionRows($scenario_data['transaction_rows']); }
     }
 
+    public function transactionEventToParsedTransaction($raw_transaction_event) {
+        return $this->normalizeTransactionEvent($raw_transaction_event);
+    }
+
 
     ////////////////////////////////////////////////////////////////////////
     // Validate Notifications
@@ -106,7 +110,12 @@ class ScenarioRunner
             $actual_notification = $this->getActualNotification();
 
             // normalize expected notification
-            $expected_notification = $this->normalizeExpectedNotification($raw_expected_notification, $actual_notification);
+            list($expected_notification, $meta) = $this->resolveExpectedNotificationMeta($raw_expected_notification);
+            if ($expected_notification['event'] == 'block') {
+                $expected_notification = $this->normalizeExpectedBlockNotification($expected_notification, $actual_notification);
+            } else {
+                $expected_notification = $this->normalizeExpectedReceiveNotification($expected_notification, $actual_notification);
+            }
 
             $this->validateNotification($expected_notification, $actual_notification);
         }
@@ -137,9 +146,8 @@ class ScenarioRunner
         return $raw_queue_entry ? json_decode($raw_queue_entry['payload'], true) : [];
     }
 
-    protected function normalizeExpectedNotification($raw_expected_notification, $actual_notification) {
-        $normalized_expected_notification = [];
 
+    protected function resolveExpectedNotificationMeta($raw_expected_notification) {
         // get meta
         $meta = [];
         if (isset($raw_expected_notification['meta'])) {
@@ -156,6 +164,13 @@ class ScenarioRunner
         } else {
             $expected_notification = $raw_expected_notification;
         }
+
+        return [$expected_notification, $meta];
+    }
+
+
+    protected function normalizeExpectedReceiveNotification($expected_notification, $actual_notification) {
+        $normalized_expected_notification = [];
 
 
         if (isset($expected_notification['sources'])) {
@@ -174,7 +189,7 @@ class ScenarioRunner
 
         ///////////////////
         // OPTIONAL
-        foreach (['confirmations','confirmed','counterpartyTx','bitcoinTx','transactionTime','notificationId','webhookEndpoint',] as $field) {
+        foreach (['confirmations','confirmed','counterpartyTx','bitcoinTx','transactionTime','notificationId','webhookEndpoint','blockSeq','confirmationTime',] as $field) {
             if (isset($expected_notification[$field])) { $normalized_expected_notification[$field] = $expected_notification[$field]; }
                 else if (isset($actual_notification[$field])) { $normalized_expected_notification[$field] = $actual_notification[$field]; }
         }
@@ -185,11 +200,42 @@ class ScenarioRunner
         // build satoshis
         $normalized_expected_notification['quantitySat'] = CurrencyUtil::valueToSatoshis($normalized_expected_notification['quantity']);
         // blockhash
-        if (isset($raw_expected_notification['blockhash'])) {
-            $normalized_expected_notification['bitcoinTx']['blockhash'] = $raw_expected_notification['blockhash'];
+        if (isset($expected_notification['blockhash'])) {
+            $normalized_expected_notification['bitcoinTx']['blockhash'] = $expected_notification['blockhash'];
         }
         ///////////////////
 
+
+
+        return $normalized_expected_notification;
+    }
+
+    protected function normalizeExpectedBlockNotification($expected_notification, $actual_notification) {
+        $normalized_expected_notification = [];
+
+
+
+        ///////////////////
+        // EXPECTED
+        foreach (['event','hash','height',] as $field) {
+            if (isset($expected_notification[$field])) { $normalized_expected_notification[$field] = $expected_notification[$field]; }
+        }
+        ///////////////////
+
+        ///////////////////
+        // OPTIONAL
+        foreach (['notificationId','previousblockhash','time',] as $field) {
+            if (isset($expected_notification[$field])) { $normalized_expected_notification[$field] = $expected_notification[$field]; }
+                else if (isset($actual_notification[$field])) { $normalized_expected_notification[$field] = $actual_notification[$field]; }
+        }
+        ///////////////////
+
+        ///////////////////
+        // Special
+        // if (isset($expected_notification['blockhash'])) {
+        //     $normalized_expected_notification['bitcoinTx']['blockhash'] = $expected_notification['blockhash'];
+        // }
+        ///////////////////
 
 
         return $normalized_expected_notification;
@@ -281,7 +327,13 @@ class ScenarioRunner
             $normalized_transaction_event['destinations'] = [$raw_transaction_event['recipient']];
         }
         
-        if (isset($raw_transaction_event['isCounterpartyTx'])) { $normalized_transaction_event['isCounterpartyTx'] = $raw_transaction_event['isCounterpartyTx']; }
+        if (isset($raw_transaction_event['isCounterpartyTx'])) {
+            $normalized_transaction_event['isCounterpartyTx'] = $raw_transaction_event['isCounterpartyTx'];
+            if (!$raw_transaction_event['isCounterpartyTx']) {
+                $normalized_transaction_event['counterPartyTxType'] = false;
+                $normalized_transaction_event['counterpartyTx'] = [];
+            }
+        }
 
 
         if (isset($raw_transaction_event['asset'])) { $normalized_transaction_event['asset'] = $raw_transaction_event['asset']; }
@@ -304,7 +356,9 @@ class ScenarioRunner
     protected function processTransactionEvent($transaction_event) {
         // run the job
         // echo "\$transaction_event:\n".json_encode($transaction_event, 192)."\n";
-        $this->events->fire('xchain.tx.received', [$transaction_event, isset($transaction_event['bitcoinTx']['confirmations']) ? $transaction_event['bitcoinTx']['confirmations'] : 0]);
+        $block_seq = 0;
+        $block_confirmation_time = 0;
+        $this->events->fire('xchain.tx.received', [$transaction_event, (isset($transaction_event['bitcoinTx']['confirmations']) ? $transaction_event['bitcoinTx']['confirmations'] : 0), $block_seq, $block_confirmation_time, ]);
     }
 
     ////////////////////////////////////////////////////////////////////////

@@ -57,6 +57,10 @@ class UserRepository implements APIResourceRepositoryContract
         return User::where('email', $email)->first();
     }
 
+    public function findByID($id) {
+        return User::find($id);
+    }
+
     public function findByAPIToken($api_token) {
         return User::where('apitoken', $api_token)->first();
     }
