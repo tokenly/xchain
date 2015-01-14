@@ -2212,12 +2212,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-asset-info-cache.git",
-                "reference": "34abcf1c90d5161c798592325d47c2517a9fb198"
+                "reference": "aed73b77733123d50c4f90dff55695ae5ea9eaf3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-asset-info-cache/zipball/34abcf1c90d5161c798592325d47c2517a9fb198",
-                "reference": "34abcf1c90d5161c798592325d47c2517a9fb198",
+                "url": "https://api.github.com/repos/tokenly/counterparty-asset-info-cache/zipball/aed73b77733123d50c4f90dff55695ae5ea9eaf3",
+                "reference": "aed73b77733123d50c4f90dff55695ae5ea9eaf3",
                 "shasum": ""
             },
             "require": {
@@ -2251,7 +2251,7 @@
                 }
             ],
             "description": "Fetches and caches counterparty asset information",
-            "time": "2014-11-21 11:44:08"
+            "time": "2015-01-14 17:13:54"
         },
         {
             "name": "tokenly/counterparty-sender",
