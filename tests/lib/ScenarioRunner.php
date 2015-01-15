@@ -189,7 +189,7 @@ class ScenarioRunner
 
         ///////////////////
         // OPTIONAL
-        foreach (['confirmations','confirmed','counterpartyTx','bitcoinTx','transactionTime','notificationId','webhookEndpoint','blockSeq','confirmationTime',] as $field) {
+        foreach (['confirmations','confirmed','counterpartyTx','bitcoinTx','transactionTime','notificationId','notifiedAddressId','webhookEndpoint','blockSeq','confirmationTime',] as $field) {
             if (isset($expected_notification[$field])) { $normalized_expected_notification[$field] = $expected_notification[$field]; }
                 else if (isset($actual_notification[$field])) { $normalized_expected_notification[$field] = $actual_notification[$field]; }
         }
