@@ -345,6 +345,12 @@ class ScenarioRunner
 
         if (isset($raw_transaction_event['confirmations'])) { $normalized_transaction_event['bitcoinTx']['confirmations'] = $raw_transaction_event['confirmations']; }
 
+        // timestamp
+        if (isset($raw_transaction_event['timestamp'])) {
+            $normalized_transaction_event['timestamp'] = $raw_transaction_event['timestamp'];
+            $normalized_transaction_event['bitcoinTx']['timestamp'] = $raw_transaction_event['timestamp'];
+        }
+
 
         // timing
         if (isset($raw_transaction_event['mempool'])) {}
@@ -376,7 +382,7 @@ class ScenarioRunner
 
         ///////////////////
         // OPTIONAL
-        foreach (['hash','tx','height','previousblockhash',] as $field) {
+        foreach (['hash','tx','height','previousblockhash','time',] as $field) {
             if (isset($raw_block_event[$field])) { $normalized_block_event[$field] = $raw_block_event[$field]; }
         }
         ///////////////////
