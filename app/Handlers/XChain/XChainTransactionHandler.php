@@ -9,7 +9,6 @@ use App\Repositories\NotificationRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Contracts\Logging\Log;
 use Illuminate\Queue\QueueManager;
-use Nc\FayeClient\Client as FayeClient;
 
 class XChainTransactionHandler {
 

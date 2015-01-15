@@ -28,6 +28,8 @@ class XChainWebsocketPusherHandler {
         ];
 
         // $this->log->info('sending notification', $notification);
+        $this->faye->send('/tx', $notification);
+
     }
 
     public function subscribe($events) {
