@@ -2,13 +2,13 @@
 
 namespace App\Handlers\XChain;
 
-use Nc\FayeClient\Client as FayeClient;
+use App\Pusher\Client as PusherClient;
 use Illuminate\Contracts\Logging\Log;
 
 class XChainWebsocketPusherHandler {
 
-    public function __construct(FayeClient $faye, Log $log) {
-        $this->faye = $faye;
+    public function __construct(PusherClient $pusher, Log $log) {
+        $this->pusher = $pusher;
         $this->log = $log;
     }
 
@@ -28,7 +28,7 @@ class XChainWebsocketPusherHandler {
         ];
 
         // $this->log->info('sending notification', $notification);
-        $this->faye->send('/tx', $notification);
+        $this->pusher->send('/tx', $notification);
 
     }
 
