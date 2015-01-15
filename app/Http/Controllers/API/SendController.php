@@ -76,6 +76,8 @@ class SendController extends APIController {
         $attributes['txid']               = $txid;
         Log::debug('$attributes='.json_encode($attributes, 192));
 
+        EventLog::log('send.complete', $attributes);
+
         return $helper->store($send_respository, $attributes);
     }
 

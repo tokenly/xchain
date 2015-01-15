@@ -6,6 +6,7 @@ use App\Http\Controllers\API\Base\APIController;
 use App\Http\Controllers\Helpers\APIControllerHelper;
 use App\Http\Requests\API\Monitor\CreateMonitorRequest;
 use App\Http\Requests\API\Monitor\UpdateMonitorRequest;
+use App\Providers\EventLog\Facade\EventLog;
 use App\Repositories\MonitoredAddressRepository;
 use Exception;
 use Illuminate\Contracts\Auth\Guard;
@@ -37,7 +38,9 @@ class MonitorController extends APIController {
         $attributes = $request->only(array_keys($request->rules()));
         $attributes['user_id'] = $user['id'];
 
-        return $helper->store($address_respository, $attributes);
+        $out = $helper->store($address_respository, $attributes);
+        EventLog::log('monitor.created', $out);
+        return $out;
     }
 
     /**

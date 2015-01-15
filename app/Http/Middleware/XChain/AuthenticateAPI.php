@@ -34,7 +34,7 @@ class AuthenticateAPI implements Middleware {
         $this->hmac_validator  = new \Tokenly\HmacAuth\Validator(function($api_token) use ($auth) {
             // lookup the API secrect by $api_token using $this->auth
             $user = $this->user_repository->findByAPIToken($api_token);
-            Log::debug('user: '.json_encode($user, 192));
+            // Log::debug('user: '.json_encode($user, 192));
 
             if (!$user) { return null; }
 

@@ -53,28 +53,29 @@ class XChainTransactionHandler {
             }
 
             $notification = [
-                'event'            => $event_type,
-                'notificationId'   => null,
-                'notifiedAddress'  => $monitored_address['address'],
+                'event'             => $event_type,
+                'notificationId'    => null,
+                'notifiedAddress'   => $monitored_address['address'],
+                'notifiedAddressId' => $monitored_address['uuid'],
 
-                'txid'             => $parsed_tx['txid'],
-                'isCounterpartyTx' => $parsed_tx['isCounterpartyTx'],
-                'quantity'         => $parsed_tx['quantity'],
-                'quantitySat'      => $parsed_tx['quantitySat'],
-                'asset'            => $parsed_tx['asset'],
+                'txid'              => $parsed_tx['txid'],
+                'isCounterpartyTx'  => $parsed_tx['isCounterpartyTx'],
+                'quantity'          => $parsed_tx['quantity'],
+                'quantitySat'       => $parsed_tx['quantitySat'],
+                'asset'             => $parsed_tx['asset'],
 
-                'sources'          => ($parsed_tx['sources'] ? $parsed_tx['sources'] : []),
-                'destinations'     => ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []),
+                'sources'           => ($parsed_tx['sources'] ? $parsed_tx['sources'] : []),
+                'destinations'      => ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []),
 
-                'counterpartyTx'   => $parsed_tx['counterpartyTx'],
-                'bitcoinTx'        => $parsed_tx['bitcoinTx'],
+                'counterpartyTx'    => $parsed_tx['counterpartyTx'],
+                'bitcoinTx'         => $parsed_tx['bitcoinTx'],
 
                 // ISO 8601
-                'transactionTime'  => $this->getISO8601Timestamp($parsed_tx['timestamp']),
-                'confirmations'    => $confirmations,
-                'confirmationTime' => $this->getISO8601Timestamp($block_confirmation_time),
-                'confirmed'        => ($confirmations > 0 ? true : false),
-                'blockSeq'         => $block_seq,
+                'transactionTime'   => $this->getISO8601Timestamp($parsed_tx['timestamp']),
+                'confirmations'     => $confirmations,
+                'confirmationTime'  => $this->getISO8601Timestamp($block_confirmation_time),
+                'confirmed'         => ($confirmations > 0 ? true : false),
+                'blockSeq'          => $block_seq,
             ];
 
 

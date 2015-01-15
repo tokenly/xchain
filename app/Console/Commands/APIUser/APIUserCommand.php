@@ -59,6 +59,10 @@ EOF
         
         // log
         EventLog::log('user.create.cli', $user_model, ['id', 'email', 'apisecretkey']);
+
+        // show the new user
+        $user = clone $user_model;
+        $this->line(json_encode($user, 192));
     }
 
 }
