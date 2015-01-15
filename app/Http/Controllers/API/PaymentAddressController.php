@@ -6,6 +6,7 @@ use App\Http\Controllers\API\Base\APIController;
 use App\Http\Controllers\Helpers\APIControllerHelper;
 use App\Http\Requests\API\PaymentAddress\CreatePaymentAddressRequest;
 use App\Http\Requests\API\PaymentAddress\UpdatePaymentAddressRequest;
+use App\Providers\EventLog\Facade\EventLog;
 use App\Repositories\PaymentAddressRepository;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Support\Facades\Log;
