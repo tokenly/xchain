@@ -55,7 +55,7 @@ return [
 		'mysql' => [
 			'driver'    => 'mysql',
             'host'      => 'mariadb',
-            'database'  => 'tokenly_accounts_prod',
+            'database'  => 'tokenly_xchain_prod',
             'username'  => getenv('DB_USERNAME') ?: 'root',
             'password'  => getenv('DB_PASSWORD') ?: '',
 			'charset'   => 'utf8',
