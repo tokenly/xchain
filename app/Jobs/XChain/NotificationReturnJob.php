@@ -2,6 +2,8 @@
 
 namespace App\Jobs\XChain;
 
+use App\Jobs\XChain\RetryingJob;
+use App\Providers\EventLog\Facade\EventLog;
 use App\Repositories\NotificationRepository;
 use Illuminate\Contracts\Events\Dispatcher;
 use \Exception;
@@ -9,7 +11,7 @@ use \Exception;
 /*
 * NotificationReturnJob
 */
-class NotificationReturnJob
+class NotificationReturnJob extends RetryingJob
 {
     public function __construct(NotificationRepository $notification_repository, Dispatcher $events)
     {
@@ -17,14 +19,7 @@ class NotificationReturnJob
         $this->events                  = $events;
     }
 
-    public function fire($job, $data)
-    {
-        // update the notification
-        // jobData.return = {
-        //     result: success
-        //     err: err
-        //     timestamp: new Date().getTime()
-        // }
+    public function fireJob($job, $data) {
         $this->notification_repository->updateByUuid($data['meta']['id'], [
             'returned' => new \DateTime(),
             'status'   => ($data['return']['success'] ? 'success' : 'failure'),
@@ -34,10 +29,6 @@ class NotificationReturnJob
 
         // fire an event
         $this->events->fire('xchain.notification.returned', [$data]);
-
-        // job successfully handled
-        $job->delete();
-            
     }
 
 

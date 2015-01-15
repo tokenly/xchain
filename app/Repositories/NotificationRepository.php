@@ -59,7 +59,9 @@ class NotificationRepository
 
 
     public function updateByUuid($uuid, $attributes) {
-        return $this->update($this->findByUuid($uuid), $attributes);
+        $model = $this->findByUuid($uuid);
+        if (!$model) { throw new Exception("Unable to find model for uuid $uuid", 1); }
+        return $this->update($model, $attributes);
     }
 
     public function update(Model $address, $attributes) {

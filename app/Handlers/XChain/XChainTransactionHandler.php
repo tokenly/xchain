@@ -78,6 +78,8 @@ class XChainTransactionHandler {
                 'blockSeq'          => $block_seq,
             ];
 
+            $this->wlog("\$parsed_tx['timestamp']={$parsed_tx['timestamp']} transactionTime=".$notification['transactionTime']);
+
 
             // create a notification
             $notification_vars_for_model = $notification;
