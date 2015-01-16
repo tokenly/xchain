@@ -9,6 +9,7 @@ use App\Repositories\NotificationRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Contracts\Logging\Log;
 use Illuminate\Queue\QueueManager;
+use Tokenly\CurrencyLib\CurrencyUtil;
 
 class XChainTransactionHandler {
 
@@ -43,8 +44,6 @@ class XChainTransactionHandler {
 
         $this->wlog("begin loop");
         foreach($monitored_addresses->get() as $monitored_address) {
-            $this->wlog("\$monitored_address=$monitored_address");
-
             // see if this is a receiving or sending event
             $event_type = null;
             switch ($monitored_address['monitor_type']) {
@@ -52,30 +51,50 @@ class XChainTransactionHandler {
                 case 'receive': $event_type = 'receive'; break;
             }
 
+            // filter this out if it is not a send
+            if ($event_type == 'send' AND !in_array($monitored_address['address'], $sources)) {
+                // did not match this address
+                continue;
+            }
+
+            // filter this out if it is not a receive event
+            if ($event_type == 'receive' AND !in_array($monitored_address['address'], $destinations)) {
+                // did not match this address
+                continue;
+            }
+
+            $this->wlog("\$monitored_address={$monitored_address['uuid']}");
+
+            // calculate the quantity
+            //   for BTC transactions, this is different than the total BTC sent
+            $quantity = $this->buildQuantityForEventType($event_type, $parsed_tx, $monitored_address['address']);
+
+
             $notification = [
                 'event'             => $event_type,
-                'notificationId'    => null,
-                'notifiedAddress'   => $monitored_address['address'],
-                'notifiedAddressId' => $monitored_address['uuid'],
-
                 'txid'              => $parsed_tx['txid'],
-                'isCounterpartyTx'  => $parsed_tx['isCounterpartyTx'],
-                'quantity'          => $parsed_tx['quantity'],
-                'quantitySat'       => $parsed_tx['quantitySat'],
+                'notificationId'    => null,
+
                 'asset'             => $parsed_tx['asset'],
+                'quantity'          => $quantity,
+                'quantitySat'       => CurrencyUtil::valueToSatoshis($quantity),
+                'isCounterpartyTx'  => $parsed_tx['isCounterpartyTx'],
 
-                'sources'           => ($parsed_tx['sources'] ? $parsed_tx['sources'] : []),
-                'destinations'      => ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []),
-
-                'counterpartyTx'    => $parsed_tx['counterpartyTx'],
-                'bitcoinTx'         => $parsed_tx['bitcoinTx'],
+                'sources'           => $sources,
+                'destinations'      => $destinations,
 
                 // ISO 8601
                 'transactionTime'   => $this->getISO8601Timestamp($parsed_tx['timestamp']),
-                'confirmations'     => $confirmations,
-                'confirmationTime'  => $this->getISO8601Timestamp($block_confirmation_time),
                 'confirmed'         => ($confirmations > 0 ? true : false),
+                'confirmations'     => $confirmations,
+                'confirmationTime'  => $block_confirmation_time ? $this->getISO8601Timestamp($block_confirmation_time) : '',
                 'blockSeq'          => $block_seq,
+
+                'notifiedAddress'   => $monitored_address['address'],
+                'notifiedAddressId' => $monitored_address['uuid'],
+
+                'counterpartyTx'    => $parsed_tx['counterpartyTx'],
+                'bitcoinTx'         => $parsed_tx['bitcoinTx'],
             ];
 
             $this->wlog("\$parsed_tx['timestamp']={$parsed_tx['timestamp']} transactionTime=".$notification['transactionTime']);
@@ -150,6 +169,27 @@ class XChainTransactionHandler {
         }
         $_t->setTimezone(new \DateTimeZone('UTC'));
         return $_t->format(\DateTime::ISO8601);
+    }
+
+    protected function buildQuantityForEventType($event_type, $parsed_tx, $bitcoin_address) {
+        $quantity = 0;
+
+        if ($event_type == 'send') {
+            // get total sent by
+            //   calculating total of all send values (this doesn't include change)
+            foreach ($parsed_tx['values'] as $dest_address => $value) {
+                $quantity += $value;
+            }
+        } else if ($event_type == 'receive') {
+            // get the receive value only for this address
+            foreach ($parsed_tx['values'] as $dest_address => $value) {
+                if ($dest_address == $bitcoin_address) {
+                    $quantity += $value;
+                }
+            }
+        }
+
+        return $quantity;
     }
 
     protected function userByID($id) {

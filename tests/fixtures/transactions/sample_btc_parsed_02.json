@@ -1,0 +1,87 @@
+{
+    "txid": "7390428cd965d4e179b485811429688973176f664e538fa705e50f8e8806390e",
+    "timestamp": 1421377680,
+    "isCounterpartyTx": false,
+    "counterPartyTxType": false,
+    "sources": [
+        "SENDER01",
+        "SENDER02"
+    ],
+    "destinations": [
+        "RECIPIENT01",
+        "RECIPIENT02"
+    ],
+    "values": {
+        "RECIPIENT01": 0.01071131,
+        "RECIPIENT02": 0.04817785
+    },
+    "asset": "BTC",
+    "bitcoinTx": {
+        "txid": "7390428cd965d4e179b485811429688973176f664e538fa705e50f8e8806390e",
+        "version": 1,
+        "locktime": 0,
+        "vin": [
+            {
+                "txid": "59f2f710af6bce1a3eff0d666824b7b7c5bd24e422efa9a6bcb9db7de1fb1a4f",
+                "vout": 1,
+                "scriptSig": {
+                    "asm": "304402200caae1d5a34cc6e32013461ec56db4d91b4ab3aa57824aca4f6ba35a01410b10022051c5ca34032e9f6df81613c865a1a7471d2a65c028453a8aca5a745bc8387ad901 02cd54a5bcad3335dda2811a2113bfc5b0a18c95f1a8918c34f9448ecc3f42a46c",
+                    "hex": "47304402200caae1d5a34cc6e32013461ec56db4d91b4ab3aa57824aca4f6ba35a01410b10022051c5ca34032e9f6df81613c865a1a7471d2a65c028453a8aca5a745bc8387ad9012102cd54a5bcad3335dda2811a2113bfc5b0a18c95f1a8918c34f9448ecc3f42a46c"
+                },
+                "sequence": 4294967295,
+                "n": 0,
+                "addr": "SENDER01",
+                "valueSat": 1866661,
+                "value": 0.01866661,
+                "doubleSpentTxID": null
+            },
+            {
+                "txid": "7dcbe5f6759658a9c7becbf3af545bff21e9e5c1a43097595d0719c2d222d77e",
+                "vout": 24,
+                "scriptSig": {
+                    "asm": "304402207ef3d184e108bc818b85d1453901d0e29569f8de3a250bb09db0347ca3f07d3e02200abbcdddbe69e364e278f03916dd36d8c391d33fdc50ad04044347c331103cd801 031bcc46a9f28256e56aa4a477b7a29d9ab7073a54d9510b1fc2466a8cae32b475",
+                    "hex": "47304402207ef3d184e108bc818b85d1453901d0e29569f8de3a250bb09db0347ca3f07d3e02200abbcdddbe69e364e278f03916dd36d8c391d33fdc50ad04044347c331103cd80121031bcc46a9f28256e56aa4a477b7a29d9ab7073a54d9510b1fc2466a8cae32b475"
+                },
+                "sequence": 4294967295,
+                "n": 1,
+                "addr": "SENDER02",
+                "valueSat": 4032255,
+                "value": 0.04032255,
+                "doubleSpentTxID": null
+            }
+        ],
+        "vout": [
+            {
+                "value": "0.01071131",
+                "n": 0,
+                "scriptPubKey": {
+                    "asm": "OP_DUP OP_HASH160 92cd002eb3b89c6f4ee0bb10aa3ad30ee714eac5 OP_EQUALVERIFY OP_CHECKSIG",
+                    "hex": "76a91492cd002eb3b89c6f4ee0bb10aa3ad30ee714eac588ac",
+                    "reqSigs": 1,
+                    "type": "pubkeyhash",
+                    "addresses": [
+                        "RECIPIENT01"
+                    ]
+                }
+            },
+            {
+                "value": "0.04817785",
+                "n": 1,
+                "scriptPubKey": {
+                    "asm": "OP_DUP OP_HASH160 b1e654f92bb33bf2b085d0822c495a8b850d3a3f OP_EQUALVERIFY OP_CHECKSIG",
+                    "hex": "76a914b1e654f92bb33bf2b085d0822c495a8b850d3a3f88ac",
+                    "reqSigs": 1,
+                    "type": "pubkeyhash",
+                    "addresses": [
+                        "RECIPIENT02"
+                    ]
+                }
+            }
+        ],
+        "valueOut": 0.05888916,
+        "size": 372,
+        "valueIn": 0.05898916,
+        "fees": 0.0001
+    },
+    "counterpartyTx": []
+}

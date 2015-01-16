@@ -339,8 +339,9 @@ class ScenarioRunner
         if (isset($raw_transaction_event['asset'])) { $normalized_transaction_event['asset'] = $raw_transaction_event['asset']; }
 
         if (isset($raw_transaction_event['quantity'])) {
-            $normalized_transaction_event['quantity'] = $raw_transaction_event['quantity'];
-            $normalized_transaction_event['quantitySat'] = CurrencyUtil::valueToSatoshis($raw_transaction_event['quantity']);
+            // $normalized_transaction_event['quantity'] = $raw_transaction_event['quantity'];
+            // $normalized_transaction_event['quantitySat'] = CurrencyUtil::valueToSatoshis($raw_transaction_event['quantity']);
+            $normalized_transaction_event['values'] = [$normalized_transaction_event['destinations'][0] => $raw_transaction_event['quantity']];
         }
 
         if (isset($raw_transaction_event['confirmations'])) { $normalized_transaction_event['bitcoinTx']['confirmations'] = $raw_transaction_event['confirmations']; }

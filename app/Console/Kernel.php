@@ -19,6 +19,7 @@ class Kernel extends ConsoleKernel {
 		'App\Console\Commands\Development\SendManualNotificationCommand',
 		'App\Console\Commands\Development\ExportWIFCommand',
 		'App\Console\Commands\Development\TestConfigCommand',
+		'App\Console\Commands\Development\ParseTransactionCommand',
 		'App\Console\Commands\Blocks\LoadMissingBlocksCommand',
 		'App\Console\Commands\APIUser\APIUserCommand',
 		'App\Console\Commands\APIUser\APIListUsersCommand',

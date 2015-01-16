@@ -1,6 +1,6 @@
 {
     "txid": "1886737bb2a4be1af89b1d0e5af427ef2a7fc439e2ed10a42d3efeb1f71b69aa",
-    "timestamp": 1416091287,
+    "timestamp": 1421375512,
     "isCounterpartyTx": true,
     "counterPartyTxType": "send",
     "sources": [
@@ -9,8 +9,9 @@
     "destinations": [
         "1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD"
     ],
-    "quantity": 533.83451959,
-    "quantitySat": 53383451959,
+    "values": {
+        "1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD": 533.83451959
+    },
     "asset": "LTBCOIN",
     "bitcoinTx": {
         "fees": 3.5e-5,

@@ -148,7 +148,7 @@ return [
 		'Tokenly\BitcoinPayer\Provider\BitcoinPayerServiceProvider',
 		'Tokenly\CounterpartySender\Provider\CounterpartySenderServiceProvider',
 		'Tokenly\Insight\InsightServiceProvider',
-		'Tokenly\XChainListener\XChainListenerServiceProvider',
+		'App\Listener\XChainListenerServiceProvider',
 		'Tokenly\HmacAuth\ServiceProvider\HmacAuthServiceProvider',
 		'Tokenly\BitcoinAddressLib\BitcoinAddressServiceProvider',
 

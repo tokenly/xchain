@@ -6,7 +6,7 @@ use App\Providers\EventLog\Facade\EventLog;
 use App\Repositories\TransactionRepository;
 use Illuminate\Contracts\Logging\Log;
 use Tokenly\Insight\Client;
-use Tokenly\XChainListener\Builder\ParsedTransactionDataBuilder;
+use App\Listener\Builder\ParsedTransactionDataBuilder;
 
 class TransactionStore {
 

@@ -6,7 +6,7 @@ use App\Repositories\BlockRepository;
 use Exception;
 use Illuminate\Support\Facades\Config;
 use Tokenly\Insight\Client;
-use Tokenly\XChainListener\Builder\BlockEventBuilder;
+use App\Listener\Builder\BlockEventBuilder;
 
 /*
 * BlockChainStore

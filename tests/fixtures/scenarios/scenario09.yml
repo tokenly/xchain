@@ -1,0 +1,63 @@
+# btc transaction with 2 inputs and 2 outputs received
+# monitored by 2 different recipients
+
+monitoredAddresses:
+  - address: RECIPIENT01
+    monitor_type: receive
+  - address: RECIPIENT02
+    monitor_type: receive
+  - address: SENDER01
+    monitor_type: send
+  - address: SENDER02
+    monitor_type: send
+
+events:
+  -
+    type: transaction
+    meta:
+        baseFilename: sample_btc_parsed_02.json
+
+notifications:
+  -
+    txid: 7390428cd965d4e179b485811429688973176f664e538fa705e50f8e8806390e
+    event: receive
+    sources: [SENDER01, SENDER02]
+    destinations: [RECIPIENT01, RECIPIENT02]
+    notifiedAddress: RECIPIENT01
+    quantity: 0.01071131
+    asset: BTC
+    isCounterpartyTx: false
+  -
+    txid: 7390428cd965d4e179b485811429688973176f664e538fa705e50f8e8806390e
+    event: receive
+    sources: [SENDER01, SENDER02]
+    destinations: [RECIPIENT01, RECIPIENT02]
+    notifiedAddress: RECIPIENT02
+    quantity: 0.04817785
+    asset: BTC
+    isCounterpartyTx: false
+
+  -
+    txid: 7390428cd965d4e179b485811429688973176f664e538fa705e50f8e8806390e
+    event: send
+    sources: [SENDER01, SENDER02]
+    destinations: [RECIPIENT01, RECIPIENT02]
+    notifiedAddress: SENDER01
+    quantity: 0.05888916
+    asset: BTC
+    isCounterpartyTx: false
+
+  -
+    txid: 7390428cd965d4e179b485811429688973176f664e538fa705e50f8e8806390e
+    event: send
+    sources: [SENDER01, SENDER02]
+    destinations: [RECIPIENT01, RECIPIENT02]
+    notifiedAddress: SENDER02
+    quantity: 0.05888916
+    asset: BTC
+    isCounterpartyTx: false
+
+
+
+
+

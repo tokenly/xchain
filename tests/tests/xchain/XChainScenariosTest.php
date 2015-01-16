@@ -29,7 +29,12 @@ class XChainScenariosTest extends TestCase {
             // clear the db
             if ($i > 1) { $this->resetForScenario(); }
 
-            $this->runScenario($i);
+            try {
+                $this->runScenario($i);
+            } catch (Exception $e) {
+                echo "\nFailed while running scenario $i\n";
+                throw $e;
+            }
         }
     }
 
