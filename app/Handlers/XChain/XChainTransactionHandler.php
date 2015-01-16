@@ -39,8 +39,11 @@ class XChainTransactionHandler {
         $destinations = ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []);
 
         // get all addresses that we care about
-        $monitored_addresses = $this->monitored_address_repository->findByAddresses(array_unique(array_merge($sources, $destinations)));
-        if (!$monitored_addresses->count()) { return; }
+        $all_addresses = array_unique(array_merge($sources, $destinations));
+        if ($all_addresses) {
+            $monitored_addresses = $this->monitored_address_repository->findByAddresses($all_addresses);
+        }
+        if (!$all_addresses OR !$monitored_addresses->count()) { return; }
 
         $this->wlog("begin loop");
         foreach($monitored_addresses->get() as $monitored_address) {
