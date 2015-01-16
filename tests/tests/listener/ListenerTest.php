@@ -50,11 +50,9 @@ class ListenerTest extends TestCase
 
         // validate tx data
         PHPUnit::assertNotNull($heard_tx_data);
-        PHPUnit::assertEquals(['1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz'], $heard_tx_data['sources']);
+        PHPUnit::assertEquals(['13JhS7J6asCgw3utkp9Uap2tvttLG1obnB'], $heard_tx_data['sources']);
         PHPUnit::assertEquals(['1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD'], $heard_tx_data['destinations']);
-        // PHPUnit::assertEquals(533.83451959, $heard_tx_data['quantity']);
-        // PHPUnit::assertEquals(53383451959, $heard_tx_data['quantitySat']);
-        PHPUnit::assertEquals(['1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD' => 533.83451959], $heard_tx_data['values']);
+        PHPUnit::assertEquals(['1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD' => 1172.3365396900001], $heard_tx_data['values']);
 
         PHPUnit::assertEquals('LTBCOIN', $heard_tx_data['counterpartyTx']['asset']);
     }
@@ -70,15 +68,14 @@ class ListenerTest extends TestCase
             $heard_tx_data = $tx_data;
         });
 
-        $data = $transactions->formatTxAsXstalkerJobData($transactions->getSampleEarlyCounterpartyTransaction());
+        $data = $transactions->formatTxAsXstalkerJobData($transactions->getSampleTopFolderCounterpartyTransaction());
         $this->buildBTCTransactionJob()->fire($this->getQueueJob(), $data);
 
         // validate tx data
         PHPUnit::assertNotNull($heard_tx_data);
-        PHPUnit::assertEquals(['15ra6w1RmFrL7q3VeJniQ55W91QGjehbRW'], $heard_tx_data['sources']);
-        PHPUnit::assertEquals(['1MCEtBB5X4ercRsvq2GmgysZ9ZDsqj8Xh7'], $heard_tx_data['destinations']);
-        // PHPUnit::assertEquals(1, $heard_tx_data['quantity']);
-        PHPUnit::assertEquals(['1MCEtBB5X4ercRsvq2GmgysZ9ZDsqj8Xh7' => 1], $heard_tx_data['values']);
+        PHPUnit::assertEquals(['1NVddDzRUvn8bHZEG9n5W7gfMTLeBeNAHQ'], $heard_tx_data['sources']);
+        PHPUnit::assertEquals(['16cES2Nxv9D5vjsMT5A4HEwhbUPDg3Nnpd'], $heard_tx_data['destinations']);
+        PHPUnit::assertEquals(['16cES2Nxv9D5vjsMT5A4HEwhbUPDg3Nnpd' => 100], $heard_tx_data['values']);
     }
 
 
@@ -117,7 +114,7 @@ class ListenerTest extends TestCase
             $transactions = $this->app->make('App\Listener\Test\Transactions');
             $client = m::mock('Tokenly\XCPDClient\Client');
             $client->shouldReceive('get_asset_info')->with(['assets' => ['LTBCOIN']])->andReturn([$transactions->sampleLTBCoinAssetInfo()]);
-            $client->shouldReceive('get_asset_info')->with(['assets' => ['EARLY']])->andReturn([$transactions->sampleEarlyAssetInfo()]);
+            $client->shouldReceive('get_asset_info')->with(['assets' => ['TOPFOLDER']])->andReturn([$transactions->sampleTopFolderAssetInfo()]);
             return $client;
         });
     }
@@ -127,7 +124,7 @@ class ListenerTest extends TestCase
         $app->bind('Tokenly\CounterpartyAssetInfoCache\Cache', function() {
             $cache = m::mock('Tokenly\CounterpartyAssetInfoCache\Cache');
             $cache->shouldReceive('isDivisible')->with('LTBCOIN')->andReturn(true);
-            $cache->shouldReceive('isDivisible')->with('EARLY')->andReturn(false);
+            $cache->shouldReceive('isDivisible')->with('TOPFOLDER')->andReturn(false);
             return $cache;
         });
     }

@@ -142,7 +142,7 @@ class XChainTransactionHandler {
             // Queue::push('notification', $notification, 'notifications_out');
             // Queue::pushRaw(['job' => 'notification', 'data' => $notification], 'notifications_out');
             // $this->queue_manager->connection('notifications_out')->push('notification', $notification);
-            EventLog::log('notification.out', ['event'=>$notification['event'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
+            EventLog::log('notification.out', ['event'=>$notification['event'], 'asset'=>$notification['asset'], 'quantity'=>$notification['quantity'], 'sources'=>$notification['sources'], 'destinations'=>$notification['destinations'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
             $this->queue_manager
                 ->connection('notifications_out')
                 ->pushRaw(json_encode($notification_entry), 'notifications_out');

@@ -193,7 +193,7 @@ class XChainBlockHandler {
 
             // put notification in the queue
             $this->wlog('adding to notifications_out: '.substr(json_encode($notification_entry), 0, 500));
-            EventLog::log('notification.out', ['event'=>$notification['event'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
+            EventLog::log('notification.out', ['event'=>$notification['event'], 'height'=>$notification['height'], 'hash'=>$notification['hash'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
             $this->queue_manager
                 ->connection('notifications_out')
                 ->pushRaw(json_encode($notification_entry), 'notifications_out');

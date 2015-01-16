@@ -3,6 +3,7 @@
 namespace App\Listener\Builder;
 
 use App\Blockchain\Block\BlockChainStore;
+use Illuminate\Support\Facades\Log;
 use Tokenly\CounterpartyAssetInfoCache\Cache;
 use Tokenly\CounterpartyTransactionParser\Parser;
 use Tokenly\CurrencyLib\CurrencyUtil;
@@ -42,7 +43,7 @@ class ParsedTransactionDataBuilder
                 'counterpartyTx'     => [],
             ];
 
-            $xcp_data = $this->parser->parseBitcoinTransaction($xstalker_data['tx'], 1);
+            $xcp_data = $this->parser->parseBitcoinTransaction($xstalker_data['tx']);
             if ($xcp_data) {
                 // this is a counterparty transaction
                 $parsed_transaction_data['isCounterpartyTx']   = true;
