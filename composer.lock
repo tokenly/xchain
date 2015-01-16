@@ -4,7 +4,7 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "4984f76e591ed44d5d9fe71a70353790",
+    "hash": "34819f9a458963be5ed72c293c98fe98",
     "packages": [
         {
             "name": "bitwasp/bitcoin-lib",
@@ -2212,12 +2212,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-asset-info-cache.git",
-                "reference": "aed73b77733123d50c4f90dff55695ae5ea9eaf3"
+                "reference": "bb4a245fc8de0d5988a021cf1313a9e1bd82de5e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-asset-info-cache/zipball/aed73b77733123d50c4f90dff55695ae5ea9eaf3",
-                "reference": "aed73b77733123d50c4f90dff55695ae5ea9eaf3",
+                "url": "https://api.github.com/repos/tokenly/counterparty-asset-info-cache/zipball/bb4a245fc8de0d5988a021cf1313a9e1bd82de5e",
+                "reference": "bb4a245fc8de0d5988a021cf1313a9e1bd82de5e",
                 "shasum": ""
             },
             "require": {
@@ -2251,7 +2251,7 @@
                 }
             ],
             "description": "Fetches and caches counterparty asset information",
-            "time": "2015-01-14 17:13:54"
+            "time": "2015-01-16 04:28:52"
         },
         {
             "name": "tokenly/counterparty-sender",
@@ -2301,12 +2301,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-parser.git",
-                "reference": "84bb7d1b9f576b86aaa114cd21a10da78c5d2178"
+                "reference": "5735c9cee0e3ebda25f85239298a94376c5bb2c8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/84bb7d1b9f576b86aaa114cd21a10da78c5d2178",
-                "reference": "84bb7d1b9f576b86aaa114cd21a10da78c5d2178",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/5735c9cee0e3ebda25f85239298a94376c5bb2c8",
+                "reference": "5735c9cee0e3ebda25f85239298a94376c5bb2c8",
                 "shasum": ""
             },
             "require": {
@@ -2335,7 +2335,7 @@
                 }
             ],
             "description": "A counterparty transaction parser",
-            "time": "2015-01-14 17:13:37"
+            "time": "2015-01-16 04:04:27"
         },
         {
             "name": "tokenly/hmac-auth",
@@ -2385,12 +2385,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/insight-client.git",
-                "reference": "bcd7664218a5011fa14e6441c0c86d4f10711a73"
+                "reference": "4fea9e8766c858b7235b67dd855a7e3c3de8d202"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/insight-client/zipball/bcd7664218a5011fa14e6441c0c86d4f10711a73",
-                "reference": "bcd7664218a5011fa14e6441c0c86d4f10711a73",
+                "url": "https://api.github.com/repos/tokenly/insight-client/zipball/4fea9e8766c858b7235b67dd855a7e3c3de8d202",
+                "reference": "4fea9e8766c858b7235b67dd855a7e3c3de8d202",
                 "shasum": ""
             },
             "require": {
@@ -2418,7 +2418,7 @@
                 }
             ],
             "description": "A client library for the Bitpay Insight API",
-            "time": "2015-01-14 17:15:33"
+            "time": "2015-01-16 04:28:03"
         },
         {
             "name": "tokenly/token-generator",
@@ -2459,58 +2459,6 @@
             ],
             "description": "A library to generate random strings",
             "time": "2014-12-03 03:55:02"
-        },
-        {
-            "name": "tokenly/xchain-listener",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/tokenly/xchain-listener.git",
-                "reference": "de9315f9e9a5be1b9594d729ce8e9684d56e639a"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/xchain-listener/zipball/de9315f9e9a5be1b9594d729ce8e9684d56e639a",
-                "reference": "de9315f9e9a5be1b9594d729ce8e9684d56e639a",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.5.0",
-                "tokenly/bitcoin-currency-lib": "dev-master",
-                "tokenly/counterparty-asset-info-cache": "dev-master"
-            },
-            "require-dev": {
-                "laravel/framework": "5.0.x-dev@dev",
-                "mockery/mockery": "~0.9",
-                "orchestra/testbench": "3.0.*@dev",
-                "phpunit/phpunit": "~4",
-                "tokenly/counterparty-transaction-parser": "dev-master"
-            },
-            "type": "library",
-            "autoload": {
-                "classmap": [
-                    "test/base/TestCase.php"
-                ],
-                "psr-0": {
-                    "Tokenly\\XChainListener": "src"
-                },
-                "psr-4": {
-                    "Tokenly\\XChainListener\\Test\\": "test/lib"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Devon Weller",
-                    "email": "dweller@devonweller.com",
-                    "homepage": "http://devonweller.com"
-                }
-            ],
-            "description": "A Counterparty transaction library",
-            "time": "2015-01-14 17:14:36"
         },
         {
             "name": "tokenly/xcpd-client",
@@ -3987,7 +3935,6 @@
     "stability-flags": {
         "tokenly/counterparty-transaction-parser": 20,
         "tokenly/counterparty-asset-info-cache": 20,
-        "tokenly/xchain-listener": 20,
         "tokenly/bitcoin-address-lib": 20,
         "tokenly/bitcoin-currency-lib": 20,
         "tokenly/xcpd-client": 20,

@@ -9,7 +9,6 @@
         "pda/pheanstalk": "~3",
         "tokenly/counterparty-transaction-parser": "dev-master@dev",
         "tokenly/counterparty-asset-info-cache": "dev-master@dev",
-        "tokenly/xchain-listener": "dev-master@dev",
         "tokenly/bitcoin-address-lib": "dev-master@dev",
         "tokenly/bitcoin-currency-lib": "dev-master@dev",
         "tokenly/xcpd-client": "dev-master@dev",
