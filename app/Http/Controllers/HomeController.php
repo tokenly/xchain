@@ -19,8 +19,7 @@ class HomeController extends Controller {
 
 	public function index()
 	{
-
-		return view('home', ['pusherUrl' => Config::get('pusher.clientUrl')]);
+		return view('home', ['pusherUrl' => Config::get('pusher-client::pusher.clientUrl')]);
 	}
 
 }
