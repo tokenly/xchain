@@ -31,7 +31,7 @@ class UserRepository implements APIResourceRepositoryContract
             $attributes['apitoken'] = $token_generator->generateToken(16, 'T');
         }
         if (!isset($attributes['apisecretkey'])) {
-            $attributes['apisecretkey'] = $token_generator->generateToken(41, 'K');
+            $attributes['apisecretkey'] = $token_generator->generateToken(40, 'K');
         }
 
         // hash any password
