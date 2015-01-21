@@ -2426,16 +2426,16 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/pusher-client.git",
-                "reference": "2189725f330dfd3db811eefd6880e9d4f5b69808"
+                "reference": "2e71e67e96a23bbbbc037f1ebded81f25b18dfeb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/pusher-client/zipball/2189725f330dfd3db811eefd6880e9d4f5b69808",
-                "reference": "2189725f330dfd3db811eefd6880e9d4f5b69808",
+                "url": "https://api.github.com/repos/tokenly/pusher-client/zipball/2e71e67e96a23bbbbc037f1ebded81f25b18dfeb",
+                "reference": "2e71e67e96a23bbbbc037f1ebded81f25b18dfeb",
                 "shasum": ""
             },
             "require": {
-                "nc/faye-client": "~1.1.1",
+                "nc/faye-client": "~1.1",
                 "php": ">=5.5.0"
             },
             "require-dev": {
@@ -2459,7 +2459,7 @@
                 }
             ],
             "description": "A library",
-            "time": "2015-01-21 12:42:59"
+            "time": "2015-01-21 15:46:57"
         },
         {
             "name": "tokenly/token-generator",
