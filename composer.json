@@ -15,12 +15,12 @@
         "tokenly/hmac-auth": "dev-master@dev",
         "tokenly/insight-client": "dev-master@dev",
         "tokenly/token-generator": "dev-master@dev",
-        "nc/faye-client": "dev-master",
         "rhumsaa/uuid": "~2.",
         "linusu/bitcoin-address-validator": "~0",
         "corley/influxdb-sdk": "~0",
         "tokenly/counterparty-sender": "dev-master",
-        "tokenly/bitcoin-payer": "dev-master"
+        "tokenly/bitcoin-payer": "dev-master",
+        "tokenly/pusher-client": "dev-master"
     },
     "require-dev": {
         "phpunit/phpunit": "~4",

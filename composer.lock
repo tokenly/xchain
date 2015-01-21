@@ -4,7 +4,7 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "34819f9a458963be5ed72c293c98fe98",
+    "hash": "a5168e6d2a3aa0fd48a4d608ff149ad7",
     "packages": [
         {
             "name": "bitwasp/bitcoin-lib",
@@ -1002,7 +1002,7 @@
         },
         {
             "name": "nc/faye-client",
-            "version": "dev-master",
+            "version": "v1.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nchaulet/faye-client.git",
@@ -2419,6 +2419,47 @@
             ],
             "description": "A client library for the Bitpay Insight API",
             "time": "2015-01-16 04:28:03"
+        },
+        {
+            "name": "tokenly/pusher-client",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tokenly/pusher-client.git",
+                "reference": "2189725f330dfd3db811eefd6880e9d4f5b69808"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tokenly/pusher-client/zipball/2189725f330dfd3db811eefd6880e9d4f5b69808",
+                "reference": "2189725f330dfd3db811eefd6880e9d4f5b69808",
+                "shasum": ""
+            },
+            "require": {
+                "nc/faye-client": "~1.1.1",
+                "php": ">=5.5.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Tokenly\\PusherClient": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Devon Weller",
+                    "email": "dweller@devonweller.com",
+                    "homepage": "http://devonweller.com"
+                }
+            ],
+            "description": "A library",
+            "time": "2015-01-21 12:42:59"
         },
         {
             "name": "tokenly/token-generator",
@@ -3941,9 +3982,9 @@
         "tokenly/hmac-auth": 20,
         "tokenly/insight-client": 20,
         "tokenly/token-generator": 20,
-        "nc/faye-client": 20,
         "tokenly/counterparty-sender": 20,
         "tokenly/bitcoin-payer": 20,
+        "tokenly/pusher-client": 20,
         "satooshi/php-coveralls": 20
     },
     "prefer-stable": false,

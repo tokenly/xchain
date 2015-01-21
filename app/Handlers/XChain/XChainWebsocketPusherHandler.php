@@ -2,7 +2,7 @@
 
 namespace App\Handlers\XChain;
 
-use App\Pusher\Client as PusherClient;
+use Tokenly\PusherClient\Client as PusherClient;
 use Illuminate\Contracts\Logging\Log;
 
 class XChainWebsocketPusherHandler {

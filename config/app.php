@@ -151,6 +151,7 @@ return [
 		'App\Listener\XChainListenerServiceProvider',
 		'Tokenly\HmacAuth\ServiceProvider\HmacAuthServiceProvider',
 		'Tokenly\BitcoinAddressLib\BitcoinAddressServiceProvider',
+		'Tokenly\PusherClient\Provider\PusherClientServiceProvider',
 
 		/*
 		 * Local App Service Providers...
