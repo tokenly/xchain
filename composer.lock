@@ -2259,12 +2259,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-sender.git",
-                "reference": "484926d917baeb04c425bb51dca18d241bb893ac"
+                "reference": "c86afffb1d2dd31cf5dda3c2d3f0639c88fd2c2e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-sender/zipball/484926d917baeb04c425bb51dca18d241bb893ac",
-                "reference": "484926d917baeb04c425bb51dca18d241bb893ac",
+                "url": "https://api.github.com/repos/tokenly/counterparty-sender/zipball/c86afffb1d2dd31cf5dda3c2d3f0639c88fd2c2e",
+                "reference": "c86afffb1d2dd31cf5dda3c2d3f0639c88fd2c2e",
                 "shasum": ""
             },
             "require": {
@@ -2293,7 +2293,7 @@
                 }
             ],
             "description": "A library",
-            "time": "2015-01-03 17:51:56"
+            "time": "2015-01-14 17:15:05"
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
