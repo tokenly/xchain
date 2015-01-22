@@ -147,16 +147,7 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
     public function generateAndSendNotifications($block_event, $block_confirmations) {
 
         // send a new block notification
-        $notification = [
-            'event'             => 'block',
-            'notificationId'    => null,
-
-            'hash'              => $block_event['hash'],
-            'height'            => $block_event['height'],
-            'previousblockhash' => $block_event['previousblockhash'],
-            'time'              => DateTimeUtil::ISO8601Date($block_event['time']),
-        ];
-
+        $notification = $this->buildNotification($block_event);
 
         // send block notifications
         //   create a block notification for each user
@@ -247,6 +238,20 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
     }
 
 
+    protected function buildNotification($block_event) {
+        $notification = [
+            'event'             => 'block',
+            'notificationId'    => null,
+
+            'network'           => 'bitcoin',
+            'hash'              => $block_event['hash'],
+            'height'            => $block_event['height'],
+            'previousblockhash' => $block_event['previousblockhash'],
+            'time'              => DateTimeUtil::ISO8601Date($block_event['time']),
+        ];
+
+        return $notification;
+    }
 }
 
 

@@ -217,7 +217,7 @@ class ScenarioRunner
 
         ///////////////////
         // EXPECTED
-        foreach (['event','hash','height',] as $field) {
+        foreach (['event','hash','height','network',] as $field) {
             if (isset($expected_notification[$field])) { $normalized_expected_notification[$field] = $expected_notification[$field]; }
         }
         ///////////////////
