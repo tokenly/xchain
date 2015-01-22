@@ -23,7 +23,11 @@ class SampleTransactionsHelper
 
         $parsed_tx = array_replace_recursive($parsed_tx, $parsed_tx_overrides);
 
-        $transaction_model = $this->transaction_repository->create($parsed_tx);
+        $block_confirmed_hash = isset($parsed_tx['bitcoinTx']['blockhash']) ? $parsed_tx['bitcoinTx']['blockhash'] : null;
+        $is_mempool           = isset($parsed_tx['bitcoinTx']['blockhash']) ? 0 : 1;
+        $block_seq            = null;
+
+        $transaction_model = $this->transaction_repository->create($parsed_tx, $block_confirmed_hash, $is_mempool, $block_seq);
         return $transaction_model;
     }
 

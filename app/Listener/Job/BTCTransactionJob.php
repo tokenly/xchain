@@ -2,8 +2,8 @@
 
 namespace App\Listener\Job;
 
+use App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionEventBuilder;
 use Illuminate\Contracts\Events\Dispatcher;
-use App\Listener\Builder\ParsedTransactionDataBuilder;
 use \Exception;
 
 /*
@@ -11,7 +11,7 @@ use \Exception;
 */
 class BTCTransactionJob
 {
-    public function __construct(ParsedTransactionDataBuilder $transaction_data_builder, Dispatcher $events)
+    public function __construct(BitcoinTransactionEventBuilder $transaction_data_builder, Dispatcher $events)
     {
         $this->transaction_data_builder = $transaction_data_builder;
         $this->events                   = $events;

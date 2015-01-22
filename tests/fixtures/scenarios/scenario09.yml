@@ -26,7 +26,7 @@ notifications:
     notifiedAddress: RECIPIENT01
     quantity: 0.01071131
     asset: BTC
-    isCounterpartyTx: false
+    network: bitcoin
   -
     txid: 7390428cd965d4e179b485811429688973176f664e538fa705e50f8e8806390e
     event: receive
@@ -35,7 +35,7 @@ notifications:
     notifiedAddress: RECIPIENT02
     quantity: 0.04817785
     asset: BTC
-    isCounterpartyTx: false
+    network: bitcoin
 
   -
     txid: 7390428cd965d4e179b485811429688973176f664e538fa705e50f8e8806390e
@@ -45,7 +45,7 @@ notifications:
     notifiedAddress: SENDER01
     quantity: 0.05888916
     asset: BTC
-    isCounterpartyTx: false
+    network: bitcoin
 
   -
     txid: 7390428cd965d4e179b485811429688973176f664e538fa705e50f8e8806390e
@@ -55,7 +55,7 @@ notifications:
     notifiedAddress: SENDER02
     quantity: 0.05888916
     asset: BTC
-    isCounterpartyTx: false
+    network: bitcoin
 
 
 

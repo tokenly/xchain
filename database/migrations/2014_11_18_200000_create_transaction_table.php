@@ -15,9 +15,9 @@ class CreateTransactionTable extends Migration
     {
         Schema::create('transaction', function (Blueprint $table) {
             $table->increments('id');
+            $table->tinyInteger('network')->unsigned()->index();
             $table->char('txid', 64)->index();
             $table->boolean('is_mempool')->index();
-            $table->boolean('is_xcp')->index();
             $table->char('block_confirmed_hash', 64)->index()->nullable();
             $table->integer('block_seq')->index()->nullable();
             $table->longText('parsed_tx');

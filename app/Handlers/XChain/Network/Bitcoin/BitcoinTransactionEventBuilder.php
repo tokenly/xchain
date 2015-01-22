@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Listener\Builder;
+namespace App\Handlers\XChain\Network\Bitcoin;
 
 use App\Blockchain\Block\BlockChainStore;
 use Illuminate\Support\Facades\Log;
@@ -10,9 +10,9 @@ use Tokenly\CurrencyLib\CurrencyUtil;
 use \Exception;
 
 /*
-* ParsedTransactionDataBuilder
+* BitcoinTransactionEventBuilder
 */
-class ParsedTransactionDataBuilder
+class BitcoinTransactionEventBuilder
 {
     public function __construct(Parser $parser, BlockChainStore $blockchain_store, Cache $asset_cache)
     {
@@ -27,16 +27,14 @@ class ParsedTransactionDataBuilder
             $parsed_transaction_data = [];
             $parsed_transaction_data = [
                 'txid'               => $xstalker_data['tx']['txid'],
+                'network'            => 'bitcoin',
                 'timestamp'          => round($xstalker_data['ts'] / 1000),
 
-                'isCounterpartyTx'   => false,
                 'counterPartyTxType' => false,
 
                 'sources'            => [],
                 'destinations'       => [],
                 'values'             => [],
-                // 'quantity'           => 0.0,
-                // 'quantitySat'        => 0,
                 'asset'              => false,
 
                 'bitcoinTx'          => $xstalker_data['tx'],
@@ -46,7 +44,7 @@ class ParsedTransactionDataBuilder
             $xcp_data = $this->parser->parseBitcoinTransaction($xstalker_data['tx']);
             if ($xcp_data) {
                 // this is a counterparty transaction
-                $parsed_transaction_data['isCounterpartyTx']   = true;
+                $parsed_transaction_data['network']            = 'counterparty';
                 $parsed_transaction_data['counterPartyTxType'] = $xcp_data['type'];
 
                 $parsed_transaction_data['sources']            = $xcp_data['sources'];
@@ -59,17 +57,13 @@ class ParsedTransactionDataBuilder
                     if ($is_divisible === null) { $is_divisible = true; }
 
                     if ($is_divisible) {
-
-                        // $quantity_sat = intval($xcp_data['quantity']);
                         $quantity     = CurrencyUtil::satoshisToValue($xcp_data['quantity']);
                     } else {
-                        // $quantity_sat = CurrencyUtil::valueToSatoshis($xcp_data['quantity']);
                         $quantity     = intval($xcp_data['quantity']);
                     }
 
                     $destination = $xcp_data['destinations'][0];
                     $parsed_transaction_data['values']     = [$destination => $quantity];
-                    // $parsed_transaction_data['valuesSat']  = [$destination => $quantity_sat];
                     $parsed_transaction_data['asset']      = $xcp_data['asset'];
                 }
 
@@ -79,11 +73,10 @@ class ParsedTransactionDataBuilder
                 // this is just a bitcoin transaction
                 list($sources, $quantity_by_destination) = $this->extractSourcesAndDestinations($xstalker_data['tx']);
 
-                $parsed_transaction_data['isCounterpartyTx'] = false;
+                $parsed_transaction_data['network']      = 'bitcoin';
                 $parsed_transaction_data['sources']      = $sources;
                 $parsed_transaction_data['destinations'] = array_keys($quantity_by_destination);
-                $parsed_transaction_data['values']        = $quantity_by_destination;
-                // $parsed_transaction_data['valuesSat']     = $quantity_by_destination_sat;
+                $parsed_transaction_data['values']       = $quantity_by_destination;
                 $parsed_transaction_data['asset']        = 'BTC';
             }
 
@@ -126,13 +119,6 @@ class ParsedTransactionDataBuilder
             }
         }
 
-        // // build a version with satoshis
-        // $quantity_by_destination_sat = [];
-        // foreach($quantity_by_destination as $address => $value) {
-        //     $quantity_by_destination_sat[$address] = CurrencyUtil::valueToSatoshis($value);
-        // }
-
-        // return [array_keys($sources_map), $quantity_by_destination, $quantity_by_destination_sat];
         return [array_keys($sources_map), $quantity_by_destination];
     }
 

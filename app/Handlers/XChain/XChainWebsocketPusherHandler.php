@@ -21,14 +21,14 @@ class XChainWebsocketPusherHandler {
         $quantity = isset($tx_event['values'][$destination]) ? $tx_event['values'][$destination] : null;
 
         $notification = [
-            'txid'             => $tx_event['txid'],
-            'isCounterpartyTx' => $tx_event['isCounterpartyTx'],
-            'type'             => $tx_event['isCounterpartyTx'] ? $tx_event['counterPartyTxType'] : 'bitcoin',
+            'txid'        => $tx_event['txid'],
+            'network'     => $tx_event['network'],
+            'type'        => ($tx_event['network'] == 'counterparty') ? $tx_event['counterPartyTxType'] : 'bitcoin',
 
-            'quantity'         => $quantity,
-            'asset'            => $tx_event['asset'],
-            'source'           => $source,
-            'destination'      => $destination,
+            'quantity'    => $quantity,
+            'asset'       => $tx_event['asset'],
+            'source'      => $source,
+            'destination' => $destination,
         ];
 
         // $this->log->info('sending notification', $notification);

@@ -2,10 +2,11 @@
 
 namespace App\Console\Commands\Development;
 
+use App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionEventBuilder;
 use Illuminate\Console\Command;
 use Illuminate\Foundation\Inspiring;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 
 class ParseTransactionCommand extends Command {
 
@@ -61,7 +62,7 @@ EOF
             'tx'  => $insight_tx_data,
         ];
 
-        $parsed_tx = $this->laravel->make('App\Listener\Builder\ParsedTransactionDataBuilder')->buildParsedTransactionData($xstalker_data);
+        $parsed_tx = $this->laravel->make('App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionEventBuilder')->buildParsedTransactionData($xstalker_data);
         echo "\n\$parsed_tx:\n".json_encode($parsed_tx, 192)."\n\n";
 
         $this->comment("done");

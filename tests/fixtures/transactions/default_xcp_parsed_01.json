@@ -1,4 +1,5 @@
 {
+    "network": "counterparty",
     "txid": "1886737bb2a4be1af89b1d0e5af427ef2a7fc439e2ed10a42d3efeb1f71b69aa",
     "timestamp": 1421375512,
     "isCounterpartyTx": true,

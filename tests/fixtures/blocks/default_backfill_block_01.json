@@ -1,4 +1,5 @@
 {
+    "network": "bitcoin",
     "hash": "000000000000000007ecb6e897b512134dad930fa9298b706bf21042c65d34b2",
     "height": 332912,
     "previousblockhash": "0000000000000000015feea45dfcdccd5904484f08976cc61b96ba667df911a8",

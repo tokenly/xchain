@@ -34,6 +34,17 @@ class CounterpartySenderMockBuilder
                 'args'     => $arguments,
                 'response' => $transaction_hex,
             ];
+
+            // return a mock get_balances response
+            if ($name == 'get_balances') {
+                return [
+                    [
+                        'asset'    => 'FOOCOIN',
+                        'quantity' => 100,
+                    ]
+                ];
+            }
+
             return $transaction_hex;
         })); 
         $app->bind('Tokenly\XCPDClient\Client', function() use ($mock) {

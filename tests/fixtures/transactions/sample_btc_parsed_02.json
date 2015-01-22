@@ -1,4 +1,5 @@
 {
+    "network": "bitcoin",
     "txid": "7390428cd965d4e179b485811429688973176f664e538fa705e50f8e8806390e",
     "timestamp": 1421377680,
     "isCounterpartyTx": false,

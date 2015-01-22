@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Listener\Builder;
+namespace App\Handlers\XChain\Network\Bitcoin;
 
 use \Exception;
 
 /*
-* BlockEventBuilder
+* BitcoinBlockEventBuilder
 */
-class BlockEventBuilder
+class BitcoinBlockEventBuilder
 {
     public function __construct()
     {
@@ -21,6 +21,8 @@ class BlockEventBuilder
     public function buildBlockEventFromInsightData($block) {
         try {
             $event_data = [];
+
+            $event_data['network']           = 'bitcoin';
 
             $event_data['hash']              = $block['hash'];
             $event_data['height']            = $block['height'];

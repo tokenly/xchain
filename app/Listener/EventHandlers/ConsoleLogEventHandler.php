@@ -23,7 +23,7 @@ class ConsoleLogEventHandler
         $count = ++$GLOBALS['XCHAIN_GLOBAL_COUNTER'];
 
         $xcp_data = $tx_event['counterpartyTx'];
-        if ($tx_event['isCounterpartyTx']) {
+        if ($tx_event['network'] == 'counterparty') {
             if ($xcp_data['type'] == 'send') {
                 $this->wlog("from: {$xcp_data['sources'][0]} to {$xcp_data['destinations'][0]}: {$xcp_data['quantity']} {$xcp_data['asset']} [{$tx_event['txid']}]");
             } else {

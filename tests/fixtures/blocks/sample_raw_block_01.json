@@ -1,4 +1,5 @@
 {
+    "network": "bitcoin",
     "bits": "181b7b74",
     "chainwork": "0000000000000000000000000000000000000000000326f8ea33036afa4eb816",
     "confirmations": 1,

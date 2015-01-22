@@ -18,7 +18,7 @@ class XChainScenariosTest extends TestCase {
         // echo "\$scenario_number_vars:\n".json_encode($scenario_number_vars, 192)."\n";
 
         $this->drainQueue();
-    } 
+    }
 
     public function testAllXChainScenarios() {
         // do all state tests in directory

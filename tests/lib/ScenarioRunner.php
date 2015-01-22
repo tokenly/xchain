@@ -182,7 +182,7 @@ class ScenarioRunner
 
         ///////////////////
         // EXPECTED
-        foreach (['txid','isCounterpartyTx','quantity','asset','notifiedAddress','event',] as $field) {
+        foreach (['txid','quantity','asset','notifiedAddress','event','network',] as $field) {
             if (isset($expected_notification[$field])) { $normalized_expected_notification[$field] = $expected_notification[$field]; }
         }
         ///////////////////
@@ -327,13 +327,13 @@ class ScenarioRunner
             $normalized_transaction_event['destinations'] = [$raw_transaction_event['recipient']];
         }
         
-        if (isset($raw_transaction_event['isCounterpartyTx'])) {
-            $normalized_transaction_event['isCounterpartyTx'] = $raw_transaction_event['isCounterpartyTx'];
-            if (!$raw_transaction_event['isCounterpartyTx']) {
-                $normalized_transaction_event['counterPartyTxType'] = false;
-                $normalized_transaction_event['counterpartyTx'] = [];
-            }
-        }
+        // if (isset($raw_transaction_event['isCounterpartyTx'])) {
+        //     $normalized_transaction_event['isCounterpartyTx'] = $raw_transaction_event['isCounterpartyTx'];
+        //     if (!$raw_transaction_event['isCounterpartyTx']) {
+        //         $normalized_transaction_event['counterPartyTxType'] = false;
+        //         $normalized_transaction_event['counterpartyTx'] = [];
+        //     }
+        // }
 
 
         if (isset($raw_transaction_event['asset'])) { $normalized_transaction_event['asset'] = $raw_transaction_event['asset']; }

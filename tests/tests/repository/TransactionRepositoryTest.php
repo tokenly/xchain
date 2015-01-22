@@ -16,7 +16,6 @@ class TransactionRepositoryTest extends TestCase {
         $loaded_transaction_model = $tx_repo->findByTXID($transaction_model['txid']);
         PHPUnit::assertNotEmpty($loaded_transaction_model);
         PHPUnit::assertEquals($transaction_model['txid'], $loaded_transaction_model['txid']);
-        PHPUnit::assertEquals(1, $loaded_transaction_model['is_xcp']);
         PHPUnit::assertEquals(0, $loaded_transaction_model['is_mempool']);
         PHPUnit::assertEquals('00000000000000000347e702fdc4d6ed74dca01844857deb5fec560c25b14d51', $loaded_transaction_model['block_confirmed_hash']);
         PHPUnit::assertGreaterThan(0, $loaded_transaction_model['id']);
@@ -33,7 +32,6 @@ class TransactionRepositoryTest extends TestCase {
         $loaded_transaction_model = $tx_repo->findByTXID($parsed_tx['txid']);
         PHPUnit::assertNotEmpty($loaded_transaction_model);
         PHPUnit::assertEquals($parsed_tx['txid'], $loaded_transaction_model['txid']);
-        PHPUnit::assertEquals(0, $loaded_transaction_model['is_xcp']);
         PHPUnit::assertEquals(0, $loaded_transaction_model['is_mempool']);
         PHPUnit::assertEquals('00000000000000003a1e5abc2d7af7f38a614d2fcbafe309b7e8aa147d508a9c', $loaded_transaction_model['block_confirmed_hash']);
         PHPUnit::assertGreaterThan(0, $loaded_transaction_model['id']);

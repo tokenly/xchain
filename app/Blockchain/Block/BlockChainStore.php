@@ -2,11 +2,12 @@
 
 namespace App\Blockchain\Block;
 
+use App\Handlers\XChain\Network\Bitcoin\BitcoinBlockEventBuilder;
 use App\Repositories\BlockRepository;
 use Exception;
 use Illuminate\Support\Facades\Config;
 use Tokenly\Insight\Client;
-use App\Listener\Builder\BlockEventBuilder;
+
 
 /*
 * BlockChainStore
@@ -14,7 +15,7 @@ use App\Listener\Builder\BlockEventBuilder;
 */
 class BlockChainStore {
 
-    public function __construct(BlockRepository $block_repository, Client $insight_client, BlockEventBuilder $block_event_builder) {
+    public function __construct(BlockRepository $block_repository, Client $insight_client, BitcoinBlockEventBuilder $block_event_builder) {
         $this->block_repository    = $block_repository;
         $this->insight_client      = $insight_client;
         $this->block_event_builder = $block_event_builder;
