@@ -30,6 +30,10 @@ class BalancesController extends APIController {
 
         $balances = $xcpd_client->get_balances(['filters' => ['field' => 'address', 'op' => '==', 'value' => $address]]);
 
+        // add BTC balance too
+
+
+
         $out = ['balances' => [], 'balancesSat' => []];
         foreach($balances as $balance) {
             $asset_name = $balance['asset'];
