@@ -3,9 +3,8 @@
 use Closure;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Contracts\Routing\Middleware;
 
-class RedirectIfAuthenticated implements Middleware {
+class RedirectIfAuthenticated {
 
 	/**
 	 * The Guard implementation.
@@ -36,7 +35,7 @@ class RedirectIfAuthenticated implements Middleware {
 	{
 		if ($this->auth->check())
 		{
-			return new RedirectResponse(url('/'));
+			return new RedirectResponse(url('/home'));
 		}
 
 		return $next($request);

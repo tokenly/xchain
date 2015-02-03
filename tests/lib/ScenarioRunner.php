@@ -55,7 +55,7 @@ class ScenarioRunner
 
     public function loadScenario($filename) {
         $filepath = base_path().'/tests/fixtures/scenarios/'.$filename;
-        return Yaml::parse($filepath);
+        return Yaml::parse(file_get_contents($filepath));
     }
 
     public function runScenario($scenario_data) {
@@ -159,7 +159,7 @@ class ScenarioRunner
         if (isset($meta['baseFilename'])) {
             $sample_filename = $meta['baseFilename'];
 
-            $default = Yaml::parse(base_path().'/tests/fixtures/notifications/'.$sample_filename);
+            $default = Yaml::parse(file_get_contents(base_path().'/tests/fixtures/notifications/'.$sample_filename));
             $expected_notification = array_replace_recursive($default, $raw_expected_notification);
         } else {
             $expected_notification = $raw_expected_notification;

@@ -1,12 +1,27 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<phpunit backupGlobals="false" backupStaticAttributes="false" bootstrap="bootstrap/autoload.php" colors="true" convertErrorsToExceptions="true" convertNoticesToExceptions="true" convertWarningsToExceptions="true" processIsolation="false" stopOnFailure="false" syntaxCheck="false">
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit backupGlobals="false"
+         backupStaticAttributes="false"
+         bootstrap="bootstrap/autoload.php"
+         colors="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         processIsolation="false"
+         stopOnFailure="false"
+         syntaxCheck="false">
     <testsuites>
         <testsuite name="Application Test Suite">
             <directory>./tests/</directory>
         </testsuite>
     </testsuites>
     <php>
-        <env name="APP_ENV" value="testing" />
+        <env name="APP_ENV" value="testing"/>
+        <env name="CACHE_DRIVER" value="array"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="BEANSTALK_DRIVER" value="sync"/>
+        <env name="DATABASE_DRIVER" value="testing"/>
+        <env name="QUEUE_DRIVER" value="sync"/>
+        <!-- <env name="DB_DATABASE" value="tokenly_xchain_test"/> -->
     </php>
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">
@@ -16,5 +31,4 @@
             </exclude>
         </whitelist>
     </filter>
-
 </phpunit>

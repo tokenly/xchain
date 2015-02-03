@@ -10,7 +10,8 @@ class EventLogServiceProvider extends ServiceProvider {
 
     public function register() {
         $this->app->bind('eventlog', function($app) {
-            return new EventLog($app->make('InfluxDB\Client'));
+            return new EventLog();
+            // return new EventLog($app->make('InfluxDB\Client'));
         });
 
     }

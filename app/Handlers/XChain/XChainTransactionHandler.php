@@ -12,8 +12,8 @@ class XChainTransactionHandler {
     }
 
     public function storeParsedTransaction($parsed_tx) {
-        $block_handler = $this->network_handler_factory->buildTransactionHandler($parsed_tx['network']);
-        return $block_handler->storeParsedTransaction($parsed_tx);
+        $transaction_handler = $this->network_handler_factory->buildTransactionHandler($parsed_tx['network']);
+        return $transaction_handler->storeParsedTransaction($parsed_tx);
     }
 
     public function sendNotifications($parsed_tx, $confirmations, $block_seq, $block_confirmation_time) {

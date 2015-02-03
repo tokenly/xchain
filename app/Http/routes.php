@@ -34,6 +34,7 @@ $router->get('api/v1/balances/{addressId}', 'API\BalancesController@show');
 |
 */
 
-$router->controller('auth', 'AuthController');
+// $router->controller('auth', 'AuthController');
 
-$router->controller('password', 'PasswordController');
+// $router->controller('password', 'PasswordController');
+

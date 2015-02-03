@@ -12,8 +12,8 @@ class EventLog {
 
     protected $influxdb = null;
 
-    public function __construct(Client $influxdb) {
-        $this->influxdb = $influxdb;
+    public function __construct() {
+        // $this->influxdb = $influxdb;
     }
 
     // statsd methods

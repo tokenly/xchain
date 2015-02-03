@@ -6,8 +6,6 @@ use Illuminate\Support\ServiceProvider;
 
 class XChainHandlerServiceProvider extends ServiceProvider {
 
-    protected $defer = true;
-
     /**
      * Register the service provider.
      *
