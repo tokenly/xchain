@@ -48,7 +48,7 @@ return [
         ],
 
         'notifications_return' => [
-
+            'driver' => env('BEANSTALK_DRIVER', 'blockingbeanstalkd'),
             'host'   => env('BEANSTALK_HOST', '127.0.0.1'),
             'queue'  => 'notifications_return',
             'port'   => env('BEANSTALK_PORT', 11300),

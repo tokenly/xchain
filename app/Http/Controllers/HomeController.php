@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Config;
+
 class HomeController extends Controller {
 
     /*
