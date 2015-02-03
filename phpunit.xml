@@ -28,6 +28,13 @@
             <directory suffix=".php">./app</directory>
             <exclude>
                 <directory>./build</directory>
+
+                <!-- exclude compiled files -->
+                <file>./app/Providers/AppServiceProvider.php</file>
+                <file>./app/Providers/BusServiceProvider.php</file>
+                <file>./app/Providers/ConfigServiceProvider.php</file>
+                <file>./app/Providers/EventServiceProvider.php</file>
+                <file>./app/Providers/RouteServiceProvider.php</file>
             </exclude>
         </whitelist>
     </filter>
