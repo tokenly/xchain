@@ -4,6 +4,7 @@ php:
 script:
   - phpunit --coverage-clover build/logs/clover.xml
 before_script:
+  - composer self-update
   - composer --dev --prefer-source install
 after_script:
   - php vendor/bin/coveralls -v
