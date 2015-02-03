@@ -2287,12 +2287,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-address-lib.git",
-                "reference": "6a39c20b7c44f611771675a4325dfc419c4a9065"
+                "reference": "99a7a7c0821959878d3570eb4996e6588f97cdca"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-address-lib/zipball/6a39c20b7c44f611771675a4325dfc419c4a9065",
-                "reference": "6a39c20b7c44f611771675a4325dfc419c4a9065",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-address-lib/zipball/99a7a7c0821959878d3570eb4996e6588f97cdca",
+                "reference": "99a7a7c0821959878d3570eb4996e6588f97cdca",
                 "shasum": ""
             },
             "require": {
@@ -2320,7 +2320,7 @@
                 }
             ],
             "description": "A bitcoin address helper library",
-            "time": "2015-02-03 04:06:40"
+            "time": "2015-02-03 04:10:21"
         },
         {
             "name": "tokenly/bitcoin-currency-lib",
@@ -2368,12 +2368,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-payer.git",
-                "reference": "8e8a20319db57bcfefbf14ea663a7be2ec8ad4f2"
+                "reference": "8933eed217c8a3c326fd87bd2eb02f3b02d4bc1a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/8e8a20319db57bcfefbf14ea663a7be2ec8ad4f2",
-                "reference": "8e8a20319db57bcfefbf14ea663a7be2ec8ad4f2",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/8933eed217c8a3c326fd87bd2eb02f3b02d4bc1a",
+                "reference": "8933eed217c8a3c326fd87bd2eb02f3b02d4bc1a",
                 "shasum": ""
             },
             "require": {
@@ -2403,7 +2403,7 @@
                 }
             ],
             "description": "A bitcoin payment library",
-            "time": "2015-01-06 12:32:18"
+            "time": "2015-02-03 04:18:52"
         },
         {
             "name": "tokenly/counterparty-asset-info-cache",
@@ -2458,12 +2458,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-sender.git",
-                "reference": "c86afffb1d2dd31cf5dda3c2d3f0639c88fd2c2e"
+                "reference": "ba0448cc58cf85b6801e26861f4c5a631a99d860"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-sender/zipball/c86afffb1d2dd31cf5dda3c2d3f0639c88fd2c2e",
-                "reference": "c86afffb1d2dd31cf5dda3c2d3f0639c88fd2c2e",
+                "url": "https://api.github.com/repos/tokenly/counterparty-sender/zipball/ba0448cc58cf85b6801e26861f4c5a631a99d860",
+                "reference": "ba0448cc58cf85b6801e26861f4c5a631a99d860",
                 "shasum": ""
             },
             "require": {
@@ -2492,7 +2492,7 @@
                 }
             ],
             "description": "A library",
-            "time": "2015-01-14 17:15:05"
+            "time": "2015-02-03 13:47:44"
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
@@ -2542,12 +2542,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/hmac-auth.git",
-                "reference": "5548928adcc25eb0ac5b6809c84a20f18206ea6d"
+                "reference": "454bcebeb3e52bb89f6ff434b3a7226dd1dc4af9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/5548928adcc25eb0ac5b6809c84a20f18206ea6d",
-                "reference": "5548928adcc25eb0ac5b6809c84a20f18206ea6d",
+                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/454bcebeb3e52bb89f6ff434b3a7226dd1dc4af9",
+                "reference": "454bcebeb3e52bb89f6ff434b3a7226dd1dc4af9",
                 "shasum": ""
             },
             "require": {
@@ -2576,7 +2576,7 @@
                 }
             ],
             "description": "A library",
-            "time": "2015-01-30 03:08:31"
+            "time": "2015-02-03 13:48:17"
         },
         {
             "name": "tokenly/insight-client",
@@ -2584,12 +2584,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/insight-client.git",
-                "reference": "4fea9e8766c858b7235b67dd855a7e3c3de8d202"
+                "reference": "b1e5912f32c9fe06827a3fb9bf9c08fe4b7a05a6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/insight-client/zipball/4fea9e8766c858b7235b67dd855a7e3c3de8d202",
-                "reference": "4fea9e8766c858b7235b67dd855a7e3c3de8d202",
+                "url": "https://api.github.com/repos/tokenly/insight-client/zipball/b1e5912f32c9fe06827a3fb9bf9c08fe4b7a05a6",
+                "reference": "b1e5912f32c9fe06827a3fb9bf9c08fe4b7a05a6",
                 "shasum": ""
             },
             "require": {
@@ -2617,7 +2617,7 @@
                 }
             ],
             "description": "A client library for the Bitpay Insight API",
-            "time": "2015-01-16 04:28:03"
+            "time": "2015-02-03 04:25:23"
         },
         {
             "name": "tokenly/pusher-client",
@@ -2706,12 +2706,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/xcpd-client.git",
-                "reference": "03fc9cee209398b050045dadb29bcd1af7aca8f6"
+                "reference": "5f0e219e6fa5ad4cbfb888620b8d38b78bcc40f4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/xcpd-client/zipball/03fc9cee209398b050045dadb29bcd1af7aca8f6",
-                "reference": "03fc9cee209398b050045dadb29bcd1af7aca8f6",
+                "url": "https://api.github.com/repos/tokenly/xcpd-client/zipball/5f0e219e6fa5ad4cbfb888620b8d38b78bcc40f4",
+                "reference": "5f0e219e6fa5ad4cbfb888620b8d38b78bcc40f4",
                 "shasum": ""
             },
             "require": {
@@ -2739,7 +2739,7 @@
                 }
             ],
             "description": "A client library for the counterpartyd API",
-            "time": "2014-12-11 14:51:06"
+            "time": "2015-02-03 04:25:30"
         },
         {
             "name": "vlucas/phpdotenv",
