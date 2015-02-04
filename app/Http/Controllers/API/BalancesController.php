@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use LinusU\Bitcoin\AddressValidator;
+use Tokenly\BitcoinPayer\BitcoinPayer;
 use Tokenly\CounterpartyAssetInfoCache\Cache;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use Tokenly\XCPDClient\Client;
@@ -20,7 +21,7 @@ class BalancesController extends APIController {
      * @param  int  $id
      * @return Response
      */
-    public function show(Client $xcpd_client, Cache $asset_info_cache, $address)
+    public function show(Client $xcpd_client, BitcoinPayer $bitcoin_payer, Cache $asset_info_cache, $address)
     {
         if (!AddressValidator::isValid($address)) {
             $message = "The address $address was not valid";
@@ -30,7 +31,9 @@ class BalancesController extends APIController {
 
         $balances = $xcpd_client->get_balances(['filters' => ['field' => 'address', 'op' => '==', 'value' => $address]]);
 
-        // add BTC balance too
+        // and get BTC balance too
+        $btc_float_balance = $bitcoin_payer->getBalance($address);
+        $balances = array_merge([['asset' => 'BTC', 'quantity' => $btc_float_balance]], $balances);
 
 
 

@@ -20,9 +20,14 @@ class BalancesAPITest extends TestCase {
         $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
         $api_tester = $this->getAPITester();
-        $api_tester->callAPIWithAuthentication('GET', '/api/v1/balances/1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD');
+        $response = json_decode($api_tester->callAPIWithAuthentication('GET', '/api/v1/balances/1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD')->getContent(), true);
 
         PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $mock_calls['xcpd'][0]['args'][0]['filters']['value']);
+        PHPUnit::assertEquals('getUnspentTransactions', $mock_calls['insight']['insight'][0]['method']);
+        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $mock_calls['insight']['insight'][0]['args'][0]);
+
+        PHPUnit::assertEquals(0.235, $response['balances']['BTC']);
+
     }
 
 
