@@ -41,14 +41,21 @@ class BalancesController extends APIController {
         foreach($balances as $balance) {
             $asset_name = $balance['asset'];
 
-            $is_divisible = $asset_info_cache->isDivisible($asset_name);
-            if ($is_divisible) {
-                $quantity_float = CurrencyUtil::satoshisToValue($balance['quantity']);
-                $quantity_sat = intval($balance['quantity']);
-            } else {
-                // non-divisible assets don't use satoshis
+            if ($asset_name == 'BTC') {
+                // BTC quantity is a float
                 $quantity_float = floatval($balance['quantity']);
                 $quantity_sat = CurrencyUtil::valueToSatoshis($balance['quantity']);
+            } else {
+                // determine quantity based on asset info
+                $is_divisible = $asset_info_cache->isDivisible($asset_name);
+                if ($is_divisible) {
+                    $quantity_float = CurrencyUtil::satoshisToValue($balance['quantity']);
+                    $quantity_sat = intval($balance['quantity']);
+                } else {
+                    // non-divisible assets don't use satoshis
+                    $quantity_float = floatval($balance['quantity']);
+                    $quantity_sat = CurrencyUtil::valueToSatoshis($balance['quantity']);
+                }
             }
 
             $out['balances'][$asset_name] = $quantity_float;
