@@ -2542,12 +2542,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/hmac-auth.git",
-                "reference": "454bcebeb3e52bb89f6ff434b3a7226dd1dc4af9"
+                "reference": "79a0dcf742288511a4320b6758ec5878eb1a5529"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/454bcebeb3e52bb89f6ff434b3a7226dd1dc4af9",
-                "reference": "454bcebeb3e52bb89f6ff434b3a7226dd1dc4af9",
+                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/79a0dcf742288511a4320b6758ec5878eb1a5529",
+                "reference": "79a0dcf742288511a4320b6758ec5878eb1a5529",
                 "shasum": ""
             },
             "require": {
@@ -2576,7 +2576,7 @@
                 }
             ],
             "description": "A library",
-            "time": "2015-02-03 13:48:17"
+            "time": "2015-02-04 03:00:03"
         },
         {
             "name": "tokenly/insight-client",
