@@ -2640,12 +2640,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/laravel-api-provider.git",
-                "reference": "293cb5da79711f227eaeb14cccd2b2e9135415e7"
+                "reference": "c86d4a9e5ba7a078014e716f85ef82aa79f016f0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/293cb5da79711f227eaeb14cccd2b2e9135415e7",
-                "reference": "293cb5da79711f227eaeb14cccd2b2e9135415e7",
+                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/c86d4a9e5ba7a078014e716f85ef82aa79f016f0",
+                "reference": "c86d4a9e5ba7a078014e716f85ef82aa79f016f0",
                 "shasum": ""
             },
             "require": {
