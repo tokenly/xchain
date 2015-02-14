@@ -3,7 +3,7 @@
 namespace App\Jobs\XChain;
 
 use App\Jobs\XChain\RetryingJob;
-use App\Providers\EventLog\Facade\EventLog;
+use Tokenly\LaravelEventLog\Facade\EventLog;
 use App\Repositories\NotificationRepository;
 use Illuminate\Contracts\Events\Dispatcher;
 use \Exception;

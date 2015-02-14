@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Blockchain\Block\ConfirmationsBuilder;
 use App\Http\Controllers\API\Base\APIController;
-use App\Http\Controllers\Helpers\APIControllerHelper;
+use Tokenly\LaravelApiProvider\Helpers\APIControllerHelper;
 use App\Repositories\MonitoredAddressRepository;
 use App\Repositories\NotificationRepository;
 use Illuminate\Http\JsonResponse;

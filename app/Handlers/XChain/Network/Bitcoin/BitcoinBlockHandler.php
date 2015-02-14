@@ -6,7 +6,7 @@ use App\Blockchain\Block\BlockChainStore;
 use App\Blockchain\Block\ConfirmationsBuilder;
 use App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionStore;
 use App\Handlers\XChain\Network\Contracts\NetworkBlockHandler;
-use App\Providers\EventLog\Facade\EventLog;
+use Tokenly\LaravelEventLog\Facade\EventLog;
 use App\Repositories\NotificationRepository;
 use App\Repositories\TransactionRepository;
 use App\Repositories\UserRepository;

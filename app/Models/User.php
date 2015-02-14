@@ -4,13 +4,14 @@ namespace App\Models;
 
 use App\Models\Base\APIModel;
 use Illuminate\Auth\Authenticatable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
+use Illuminate\Database\Eloquent\Model;
+use Tokenly\LaravelApiProvider\Contracts\APIUserContract;
 use \Exception;
 
-class User extends APIModel implements AuthenticatableContract, CanResetPasswordContract {
+class User extends APIModel implements AuthenticatableContract, CanResetPasswordContract, APIUserContract {
 
     use Authenticatable, CanResetPassword;
 
@@ -33,5 +34,11 @@ class User extends APIModel implements AuthenticatableContract, CanResetPassword
 
     protected $api_attributes = ['id',];
 
+
+
+    // APIUserContract
+    public function getID() { return $this['id']; }
+    public function getUuid() { return $this['uuid']; }
+    public function getApiSecretKey() { return $this['apisecretkey']; }
 
 }

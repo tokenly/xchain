@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Models\PaymentAddress;
 use App\Models\User;
-use App\Repositories\Contracts\APIResourceRepositoryContract;
+use Tokenly\LaravelApiProvider\Contracts\APIResourceRepositoryContract;
 use Illuminate\Database\Eloquent\Model;
 use Rhumsaa\Uuid\Uuid;
 use Tokenly\BitcoinAddressLib\BitcoinAddressGenerator;

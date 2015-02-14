@@ -2,7 +2,7 @@
 
 namespace App\Jobs\XChain;
 
-use App\Providers\EventLog\Facade\EventLog;
+use Tokenly\LaravelEventLog\Facade\EventLog;
 use \Exception;
 
 /*

@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Send;
-use App\Repositories\Contracts\APIResourceRepositoryContract;
+use Tokenly\LaravelApiProvider\Contracts\APIResourceRepositoryContract;
 use Illuminate\Database\Eloquent\Model;
 use Rhumsaa\Uuid\Uuid;
 use \Exception;
@@ -39,10 +39,13 @@ class SendRepository implements APIResourceRepositoryContract
     public function update(Model $address, $attributes) {
         return $address->update($attributes);
     }
+    public function updateByUuid($uuid, $attributes) { throw new Exception("Sends cannot be updated", 1); }
 
     public function delete(Model $send) {
         return $send->delete();
     }
+    public function deleteByUuid($uuid) { throw new Exception("Sends cannot be deleted", 1); }
+
 
 
 }

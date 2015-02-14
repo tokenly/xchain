@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands\Blocks;
 
-use App\Providers\EventLog\Facade\EventLog;
+use Tokenly\LaravelEventLog\Facade\EventLog;
 use Illuminate\Console\Command;
 use Illuminate\Foundation\Inspiring;
 use Symfony\Component\Console\Input\InputArgument;

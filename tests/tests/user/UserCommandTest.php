@@ -9,7 +9,7 @@ class UserCommandTest extends TestCase {
     public function testCLIAddUser()
     {
         // insert
-        $this->app['Illuminate\Contracts\Console\Kernel']->call('xchain:new-user', ['email' => 'samplecli@tokenly.co']);
+        $this->app['Illuminate\Contracts\Console\Kernel']->call('api:new-user', ['email' => 'samplecli@tokenly.co']);
 
         // load from repo
         $user_repo = $this->app->make('App\Repositories\UserRepository');
@@ -25,10 +25,10 @@ class UserCommandTest extends TestCase {
         $kernel = $this->app['Illuminate\Contracts\Console\Kernel'];
 
         // insert
-        $kernel->call('xchain:new-user', ['email' => 'samplecli@tokenly.co']);
+        $kernel->call('api:new-user', ['email' => 'samplecli@tokenly.co']);
 
         // list
-        $kernel->call('xchain:list-users');
+        $kernel->call('api:list-users');
         $output = $kernel->output();
         
         PHPUnit::assertNotEmpty($output);

@@ -4,9 +4,9 @@ namespace App\Http\Controllers\API;
 
 use App\Blockchain\Sender\PaymentAddressSender;
 use App\Http\Controllers\API\Base\APIController;
-use App\Http\Controllers\Helpers\APIControllerHelper;
+use Tokenly\LaravelApiProvider\Helpers\APIControllerHelper;
 use App\Http\Requests\API\Send\CreateSendRequest;
-use App\Providers\EventLog\Facade\EventLog;
+use Tokenly\LaravelEventLog\Facade\EventLog;
 use App\Repositories\PaymentAddressRepository;
 use App\Repositories\SendRepository;
 use Illuminate\Auth\Guard;

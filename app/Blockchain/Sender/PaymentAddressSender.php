@@ -3,7 +3,7 @@
 namespace App\Blockchain\Sender;
 
 use App\Models\PaymentAddress;
-use App\Providers\EventLog\Facade\EventLog;
+use Tokenly\LaravelEventLog\Facade\EventLog;
 use Tokenly\BitcoinAddressLib\BitcoinAddressGenerator;
 use Tokenly\BitcoinAddressLib\BitcoinKeyUtils;
 use Tokenly\BitcoinPayer\BitcoinPayer;

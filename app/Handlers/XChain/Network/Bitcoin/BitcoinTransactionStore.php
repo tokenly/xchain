@@ -4,7 +4,7 @@ namespace App\Handlers\XChain\Network\Bitcoin;
 
 use App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionEventBuilder;
 use App\Handlers\XChain\Network\Contracts\NetworkTransactionStore;
-use App\Providers\EventLog\Facade\EventLog;
+use Tokenly\LaravelEventLog\Facade\EventLog;
 use App\Repositories\TransactionRepository;
 use Illuminate\Contracts\Logging\Log;
 use Tokenly\Insight\Client;
@@ -34,7 +34,7 @@ class BitcoinTransactionStore implements NetworkTransactionStore {
     }
 
     public function getParsedTransactionFromInsight($txid, $block_seq=null) {
-        EventLog::increment('insight.loadtx');
+        // EventLog::increment('insight.loadtx');
 
         // load
         $insight_data = $this->fetchTransactionFromInsight($txid);

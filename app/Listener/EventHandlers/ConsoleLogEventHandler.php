@@ -2,7 +2,7 @@
 
 namespace App\Listener\EventHandlers;
 
-use App\Providers\EventLog\Facade\EventLog;
+use Tokenly\LaravelEventLog\Facade\EventLog;
 use Carbon\Carbon;
 use Illuminate\Contracts\Logging\Log;
 use \Exception;
@@ -37,7 +37,7 @@ class ConsoleLogEventHandler
             }
         }
 
-        EventLog::increment('tx.received');
+        // EventLog::log('tx.received', []);
 
     }
 

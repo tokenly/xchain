@@ -27,10 +27,6 @@ class Kernel extends HttpKernel {
 		'auth' => 'App\Http\Middleware\Authenticate',
 		'auth.basic' => 'Illuminate\Auth\Middleware\AuthenticateWithBasicAuth',
 		'guest' => 'App\Http\Middleware\RedirectIfAuthenticated',
-
-		// custom middleware
-		'hmacauth'   => 'App\Http\Middleware\XChain\AuthenticateAPI',
-		'apierrors'  => 'App\Http\Middleware\XChain\HandleAPIErrors',
 	];
 
 

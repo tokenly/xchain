@@ -3,18 +3,19 @@
 namespace App\Repositories;
 
 use App\Models\User;
-use App\Repositories\Contracts\APIResourceRepositoryContract;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
 use Rhumsaa\Uuid\Uuid;
 use Tokenly\BitcoinAddressLib\BitcoinAddressGenerator;
+use Tokenly\LaravelApiProvider\Contracts\APIResourceRepositoryContract;
+use Tokenly\LaravelApiProvider\Contracts\APIUserRepositoryContract;
 use Tokenly\TokenGenerator\TokenGenerator;
 use \Exception;
 
 /*
 * UserRepository
 */
-class UserRepository implements APIResourceRepositoryContract
+class UserRepository implements APIResourceRepositoryContract, APIUserRepositoryContract
 {
 
     public function __construct(BitcoinAddressGenerator $address_generator) {

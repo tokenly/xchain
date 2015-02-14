@@ -156,6 +156,8 @@ return [
 		'Tokenly\HmacAuth\ServiceProvider\HmacAuthServiceProvider',
 		'Tokenly\BitcoinAddressLib\BitcoinAddressServiceProvider',
 		'Tokenly\PusherClient\Provider\PusherClientServiceProvider',
+		'Tokenly\LaravelEventLog\EventLogServiceProvider',
+		'Tokenly\LaravelApiProvider\APIServiceProvider',
 
 		/*
 		 * Local App Service Providers...
@@ -164,7 +166,7 @@ return [
 		'App\Providers\XChain\XChainHandlerServiceProvider',
 		// 'App\Providers\InfluxDB\InfluxDBServiceProvider',
 		// 'App\Providers\LogEntries\LogEntriesServiceProvider',
-		'App\Providers\EventLog\EventLogServiceProvider',
+		// 'App\Providers\EventLog\EventLogServiceProvider',
 
 	],
 

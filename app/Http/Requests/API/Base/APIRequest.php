@@ -3,7 +3,7 @@
 namespace App\Http\Requests\API\Base;
 
 use App\Http\Requests\Request;
-use App\Providers\EventLog\Facade\EventLog;
+use Tokenly\LaravelEventLog\Facade\EventLog;
 use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;

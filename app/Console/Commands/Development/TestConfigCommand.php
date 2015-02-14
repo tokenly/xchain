@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands\Development;
 
-use App\Providers\EventLog\Facade\EventLog;
+use Tokenly\LaravelEventLog\Facade\EventLog;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Foundation\Inspiring;
