@@ -5,8 +5,7 @@
 	"license": "MIT",
 	"type": "project",
 	"require": {
-		"laravel/framework": "5.0.*@dev",
-        "corley/influxdb-sdk": "~0",
+		"laravel/framework": "~5.0",
         "linusu/bitcoin-address-validator": "~0",
         "pda/pheanstalk": "~3",
         "rhumsaa/uuid": "~2.",
@@ -20,7 +19,9 @@
         "tokenly/insight-client": "dev-master@dev",
         "tokenly/pusher-client": "dev-master",
         "tokenly/token-generator": "dev-master@dev",
-        "tokenly/xcpd-client": "dev-master@dev"
+        "tokenly/xcpd-client": "dev-master@dev",
+        "tokenly/laravel-api-provider": "dev-master@dev",
+        "tokenly/laravel-event-log": "dev-master@dev"
 	},
 	"require-dev": {
 		"phpunit/phpunit": "~4.0",
@@ -59,7 +60,7 @@
 		]
 	},
 	"config": {
-		"preferred-install": "source"
+		"preferred-install": "auto"
 	},
     "minimum-stability": "dev"
 }
