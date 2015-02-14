@@ -60,7 +60,10 @@
 		]
 	},
 
+    "config": {
+        "preferred-install": "auto"
+    },
+
     "minimum-stability": "dev",
-    "preferred-install": "auto",
     "prefer-stable": true
 }
