@@ -20,6 +20,7 @@ class Kernel extends ConsoleKernel {
 		'App\Console\Commands\Development\TestConfigCommand',
 		'App\Console\Commands\Development\ParseTransactionCommand',
 		'App\Console\Commands\Blocks\LoadMissingBlocksCommand',
+		'App\Console\Commands\Transaction\ResendTransactionNotificationsCommand',
 	];
 
 	/**
