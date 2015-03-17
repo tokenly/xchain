@@ -104,8 +104,9 @@ class BitcoinTransactionEventBuilder
             return $parsed_transaction_data;
 
         } catch (Exception $e) {
-            print "ERROR: ".$e->getMessage()."\n";
-            echo "\$parsed_transaction_data:\n".json_encode($parsed_transaction_data, 192)."\n";
+            Log::warning($e->getMessage());
+            // print "ERROR: ".$e->getMessage()."\n";
+            // echo "\$parsed_transaction_data:\n".json_encode($parsed_transaction_data, 192)."\n";
             throw $e;
         }
 
