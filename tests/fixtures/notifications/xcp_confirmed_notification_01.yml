@@ -9,6 +9,11 @@ destinations: RECIPIENT01
 confirmed: true
 confirmations: 1
 asset: LTBCOIN
-quantity: 500
+quantity: 533.83451959
 blockId: 300000
+counterpartyTx:
+    quantity: 533.83451959
+    quantitySat: 53383451959
+    dustSize: 5.43e-5
+    dustSizeSat: 5430
 

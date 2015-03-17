@@ -71,6 +71,7 @@ notifications:
     # mempool
   - meta: { baseFilename: xcp_mempool_notification_01.yml }
     txid: 00000000000000000000000000000000000000000000000000000aaaaaaaaaaa
+    quantity: 500
 
     # block
   - meta: { baseFilename: block_notification_01.yml }
@@ -81,6 +82,7 @@ notifications:
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }
     txid: 00000000000000000000000000000000000000000000000000000aaaaaaaaaaa
     blockhash: BLOCKHASH01FORKAAA
+    quantity: 500
 
     # block (did not include the tx)
   - meta: { baseFilename: block_notification_01.yml }
@@ -98,6 +100,7 @@ notifications:
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }
     txid: 00000000000000000000000000000000000000000000000000000aaaaaaaaaaa
     blockhash: BLOCKHASH02FORKBBB
+    quantity: 500
 
     # block (continuing with the tx)
   - meta: { baseFilename: block_notification_01.yml }
@@ -110,6 +113,7 @@ notifications:
     txid: 00000000000000000000000000000000000000000000000000000aaaaaaaaaaa
     blockhash: BLOCKHASH02FORKBBB
     confirmations: 2
+    quantity: 500
 
 
 meta:

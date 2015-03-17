@@ -90,6 +90,8 @@
             "1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD"
         ],
         "quantity": 53383451959,
-        "asset": "LTBCOIN"
+        "asset": "LTBCOIN",
+        "dustSize": 0.00005430,
+        "dustSizeSat": 5430
     }
 }

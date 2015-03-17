@@ -135,7 +135,7 @@ class ScenarioRunner
 
     protected function validateNotification($expected_notification, $actual_notification) {
         PHPUnit::assertNotEmpty($actual_notification, "Missing notification ".json_encode($expected_notification, 192));
-        PHPUnit::assertEquals($expected_notification, $actual_notification, "Notification mismatch");
+        PHPUnit::assertEquals($expected_notification, $actual_notification, "Notification mismatch.  Actual notification: ".json_encode($actual_notification, 192));
     }
 
     protected function getActualNotification() {
@@ -190,8 +190,15 @@ class ScenarioRunner
         ///////////////////
         // OPTIONAL
         foreach (['confirmations','confirmed','counterpartyTx','bitcoinTx','transactionTime','notificationId','notifiedAddressId','webhookEndpoint','blockSeq','confirmationTime',] as $field) {
-            if (isset($expected_notification[$field])) { $normalized_expected_notification[$field] = $expected_notification[$field]; }
-                else if (isset($actual_notification[$field])) { $normalized_expected_notification[$field] = $actual_notification[$field]; }
+            if (isset($expected_notification[$field])) {
+                if (is_array($expected_notification[$field])) {
+                    $normalized_expected_notification[$field] = array_replace_recursive(isset($actual_notification[$field]) ? $actual_notification[$field] : [], $expected_notification[$field]);
+                } else {
+                    $normalized_expected_notification[$field] = $expected_notification[$field];
+                }
+            } else if (isset($actual_notification[$field])) {
+                $normalized_expected_notification[$field] = $actual_notification[$field];
+            }
         }
         ///////////////////
 
@@ -202,6 +209,10 @@ class ScenarioRunner
         // blockhash
         if (isset($expected_notification['blockhash'])) {
             $normalized_expected_notification['bitcoinTx']['blockhash'] = $expected_notification['blockhash'];
+        }
+        if (isset($normalized_expected_notification['counterpartyTx']) AND $normalized_expected_notification['counterpartyTx']) {
+            $normalized_expected_notification['counterpartyTx']['quantity'] = $normalized_expected_notification['quantity'];
+            $normalized_expected_notification['counterpartyTx']['quantitySat'] = CurrencyUtil::valueToSatoshis($normalized_expected_notification['quantity']);
         }
         ///////////////////
 
@@ -342,6 +353,8 @@ class ScenarioRunner
             // $normalized_transaction_event['quantity'] = $raw_transaction_event['quantity'];
             // $normalized_transaction_event['quantitySat'] = CurrencyUtil::valueToSatoshis($raw_transaction_event['quantity']);
             $normalized_transaction_event['values'] = [$normalized_transaction_event['destinations'][0] => $raw_transaction_event['quantity']];
+            $normalized_transaction_event['counterpartyTx']['quantity'] = $raw_transaction_event['quantity'];
+            $normalized_transaction_event['counterpartyTx']['quantitySat'] = CurrencyUtil::valueToSatoshis($raw_transaction_event['quantity']);
         }
 
         if (isset($raw_transaction_event['confirmations'])) { $normalized_transaction_event['bitcoinTx']['confirmations'] = $raw_transaction_event['confirmations']; }

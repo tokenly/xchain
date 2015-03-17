@@ -12,7 +12,7 @@ events:
     recipient: RECIPIENT01
     isCounterpartyTx: true
     asset: LTBCOIN
-    quantity: 500
+    quantity: 533.83451959
     blockId: 300000
 
 notifications:

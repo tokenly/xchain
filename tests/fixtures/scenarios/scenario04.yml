@@ -29,6 +29,7 @@ notifications:
     # mempool
   - meta: { baseFilename: xcp_mempool_notification_01.yml }
     transactionTime: 2015-01-14T18:00:00+0000 # 2015-01-14 12:00:00
+    quantity: 500
 
     # block
   - meta: { baseFilename: block_notification_01.yml }
@@ -37,5 +38,6 @@ notifications:
     # 1 confirmation
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }
     confirmationTime: 2015-01-14T19:00:00+0000 # 2015-01-14 13:00:00
+    quantity: 500
 
 

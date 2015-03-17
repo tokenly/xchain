@@ -42,12 +42,14 @@ events:
 notifications:
     # mempool
   - meta: { baseFilename: xcp_mempool_notification_01.yml }
+    quantity: 500
 
     # block
   - meta: { baseFilename: block_notification_01.yml }
 
     # 1 confirmation
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }
+    quantity: 500
 
     # block
   - meta: { baseFilename: block_notification_01.yml }
@@ -58,6 +60,7 @@ notifications:
     # 2 confirmations
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }
     confirmations: 2
+    quantity: 500
 
     # block
   - meta: { baseFilename: block_notification_01.yml }
@@ -68,6 +71,7 @@ notifications:
     # 3 confirmations
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }
     confirmations: 3
+    quantity: 500
 
     # block
   - meta: { baseFilename: block_notification_01.yml }
@@ -78,6 +82,7 @@ notifications:
     # 4 confirmations
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }
     confirmations: 4
+    quantity: 500
 
 meta:
   allowExtraNotifications: false

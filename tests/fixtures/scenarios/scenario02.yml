@@ -18,3 +18,4 @@ events:
 
 notifications:
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }
+    quantity: 500

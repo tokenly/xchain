@@ -57,17 +57,32 @@ class BitcoinTransactionEventBuilder
                     if ($is_divisible === null) { $is_divisible = true; }
 
                     if ($is_divisible) {
-                        $quantity     = CurrencyUtil::satoshisToValue($xcp_data['quantity']);
+                        $quantity_sat   = $xcp_data['quantity'];
+                        $quantity_float = CurrencyUtil::satoshisToValue($xcp_data['quantity']);
                     } else {
-                        $quantity     = intval($xcp_data['quantity']);
+                        $quantity_sat   = CurrencyUtil::valueToSatoshis($xcp_data['quantity']);
+                        $quantity_float = intval($xcp_data['quantity']);
                     }
+                    $xcp_data['quantity']    = $quantity_float;
+                    $xcp_data['quantitySat'] = $quantity_sat;
 
                     $destination = $xcp_data['destinations'][0];
-                    $parsed_transaction_data['values']     = [$destination => $quantity];
+                    $parsed_transaction_data['values']     = [$destination => $quantity_float];
                     $parsed_transaction_data['asset']      = $xcp_data['asset'];
+
+                    // dustSize
+                    // dustSizeSat
+                    list($sources, $quantity_by_destination) = $this->extractSourcesAndDestinations($xstalker_data['tx']);
+                    $dust_size_float = (isset($quantity_by_destination[$destination]) ? $quantity_by_destination[$destination] : 0);
+
+                    $xcp_data['dustSize'] = $dust_size_float;
+                    $xcp_data['dustSizeSat'] = CurrencyUtil::valueToSatoshis($dust_size_float);
                 }
 
-                $parsed_transaction_data['counterpartyTx']     = $xcp_data;
+                // Log::debug("\$xcp_data=".json_encode($xcp_data, 192));
+                $parsed_transaction_data['counterpartyTx'] = $xcp_data;
+
+
 
             } else  {
                 // this is just a bitcoin transaction

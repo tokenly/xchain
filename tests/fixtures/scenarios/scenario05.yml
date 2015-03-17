@@ -32,10 +32,12 @@ events:
 notifications:
     # mempool
   - meta: { baseFilename: xcp_mempool_notification_01.yml }
+    quantity: 500
     # block
   - meta: { baseFilename: block_notification_01.yml }
     # 1 confirmation
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }
+    quantity: 500
     # block
   - meta: { baseFilename: block_notification_01.yml }
     hash: BLOCKHASH02
@@ -44,3 +46,4 @@ notifications:
     # 2 confirmations
   - meta: { baseFilename: xcp_confirmed_notification_01.yml }
     confirmations: 2
+    quantity: 500
