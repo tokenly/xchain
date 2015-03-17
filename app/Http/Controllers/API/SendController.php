@@ -74,7 +74,7 @@ class SendController extends APIController {
         $attributes['asset']              = $request_attributes['asset'];
         $attributes['is_sweep']           = $is_sweep;
         $attributes['txid']               = $txid;
-        Log::debug('$attributes='.json_encode($attributes, 192));
+        // Log::debug('$attributes='.json_encode($attributes, 192));
 
         EventLog::log('send.complete', $attributes);
 
