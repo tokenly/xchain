@@ -9,6 +9,8 @@ class TransactionParserTest extends TestCase {
 
 
     public function testBitcoinTransactionEventBuilder() {
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        
         $builder = app('App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionEventBuilder');
 
         $insight_tx_data = json_decode(file_get_contents(base_path().'/tests/fixtures/transactions/sample_xcp_raw_02.json'), true);
