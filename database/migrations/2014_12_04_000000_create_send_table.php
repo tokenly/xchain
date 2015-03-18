@@ -31,6 +31,7 @@ class CreateSendTable extends Migration
             $table->bigInteger('quantity_sat')->unsigned();
             $table->bigInteger('fee_sat')->unsigned()->nullable();
             $table->bigInteger('multisig_dust_size_sat')->unsigned()->nullable();
+            $table->bigInteger('dust_size_sat')->unsigned()->nullable();
             $table->text('asset');
 
             $table->boolean('is_sweep')->default(false);

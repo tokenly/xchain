@@ -14,7 +14,9 @@ use Tokenly\CurrencyLib\CurrencyUtil;
 class PaymentAddressSender {
 
     const DEFAULT_FEE                = 0.0001;
-    const DEFAULT_MULTISIG_DUST_SIZE = 0.000025;
+
+    const DEFAULT_REGULAR_DUST_SIZE  = 0.00005430;
+    const DEFAULT_MULTISIG_DUST_SIZE = 0.00007800;
 
     public function __construct(CounterpartySender $xcpd_sender, BitcoinPayer $bitcoin_payer, BitcoinAddressGenerator $address_generator, Cache $asset_cache) {
         $this->xcpd_sender       = $xcpd_sender;
@@ -25,11 +27,12 @@ class PaymentAddressSender {
 
     // returns [$transaction_id, $float_balance_sent]
     public function sweepBTC(PaymentAddress $payment_address, $destination, $float_fee=null) {
-        return $this->send($payment_address, $destination, null, 'BTC', $float_fee, null, true);
+        return $this->send($payment_address, $destination, null, 'BTC', $float_fee, null, null, true);
     }
 
-    public function send(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_multisig_dust_size=null, $is_sweep=false) {
-        if ($float_fee === null) { $float_fee = self::DEFAULT_FEE; }
+    public function send(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_regular_dust_size=null, $float_multisig_dust_size=null, $is_sweep=false) {
+        if ($float_fee === null)                { $float_fee                = self::DEFAULT_FEE; }
+        if ($float_regular_dust_size === null)  { $float_regular_dust_size  = self::DEFAULT_REGULAR_DUST_SIZE; }
         if ($float_multisig_dust_size === null) { $float_multisig_dust_size = self::DEFAULT_MULTISIG_DUST_SIZE; }
         $private_key = $this->address_generator->privateKey($payment_address['private_key_token']);
         $public_key = BitcoinKeyUtils::publicKeyFromPrivateKey($private_key);
@@ -55,6 +58,7 @@ class PaymentAddressSender {
 
                 $other_xcp_vars = [
                     'fee_per_kb'               => CurrencyUtil::valueToSatoshis($float_fee),
+                    'regular_dust_size'        => CurrencyUtil::valueToSatoshis($float_regular_dust_size),
                     'multisig_dust_size'       => CurrencyUtil::valueToSatoshis($float_multisig_dust_size),
                     'allow_unconfirmed_inputs' => true,
                 ];

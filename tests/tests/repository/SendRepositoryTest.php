@@ -9,7 +9,7 @@ class SendRepositoryTest extends TestCase {
     public function testAddSend()
     {
         // insert
-        $send_model = $this->sendHelper()->createSampleSend();
+        $send_model = $this->sendHelper()->createSampleSend(['multisig_dust_size' => 0.00001234, 'dust_size' => 0.00002345]);
 
         // load from repo
         $send_repo = $this->app->make('App\Repositories\SendRepository');
@@ -22,6 +22,9 @@ class SendRepositoryTest extends TestCase {
         PHPUnit::assertNotEmpty($loaded_send_model);
         PHPUnit::assertEquals($send_model['txid'], $loaded_send_model['txid']);
         PHPUnit::assertEquals($send_model['uuid'], $loaded_send_model['uuid']);
+
+        PHPUnit::assertEquals(0.00001234, $loaded_send_model['multisig_dust_size']);
+        PHPUnit::assertEquals(0.00002345, $loaded_send_model['dust_size']);
     }
 
 

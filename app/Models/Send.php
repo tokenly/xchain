@@ -38,6 +38,9 @@ class Send extends APIModel
     public function setMultisigDustSizeAttribute($multisig_dust_size) { $this->attributes['multisig_dust_size_sat'] = CurrencyUtil::valueToSatoshis($multisig_dust_size); }
     public function getMultisigDustSizeAttribute() { return CurrencyUtil::satoshisToValue($this->attributes['multisig_dust_size_sat']); }
 
+    public function setDustSizeAttribute($dust_size) { $this->attributes['dust_size_sat'] = CurrencyUtil::valueToSatoshis($dust_size); }
+    public function getDustSizeAttribute() { return CurrencyUtil::satoshisToValue($this->attributes['dust_size_sat']); }
+
 
 
 }

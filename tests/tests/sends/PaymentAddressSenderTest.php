@@ -15,7 +15,9 @@ class PaymentAddressSenderTest extends TestCase {
         $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user);
 
         $sender = $this->app->make('App\Blockchain\Sender\PaymentAddressSender');
-        $sender->send($payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', '100', 'TOKENLY', $float_fee=null, $multisig_dust_size=null, $is_sweep=false);
+        $dust_size = 0.00001234;
+        $multisig_dust_size = 0.00005678;
+        $sender->send($payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', '100', 'TOKENLY', $float_fee=null, $dust_size, $multisig_dust_size, $is_sweep=false);
 
         // check the first sent call
         $mock_send_call = $mock_calls['xcpd'][1];
@@ -25,6 +27,8 @@ class PaymentAddressSenderTest extends TestCase {
         PHPUnit::assertEquals('TOKENLY', $mock_send_call['args'][0]['asset']);
         PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.0001), $mock_send_call['args'][0]['fee_per_kb']);
 
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis($dust_size), $mock_send_call['args'][0]['regular_dust_size']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis($multisig_dust_size), $mock_send_call['args'][0]['multisig_dust_size']);
 
     }
 
@@ -36,7 +40,7 @@ class PaymentAddressSenderTest extends TestCase {
         $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user);
 
         $sender = $this->app->make('App\Blockchain\Sender\PaymentAddressSender');
-        $sender->send($payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', '0.123', 'BTC', $float_fee=null, $multisig_dust_size=null, $is_sweep=false);
+        $sender->send($payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', '0.123', 'BTC', $float_fee=null, $dust_size=null, $multisig_dust_size=null, $is_sweep=false);
 
         // no xcpd calls
         PHPUnit::assertEmpty($mock_calls['xcpd']);
