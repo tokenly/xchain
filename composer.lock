@@ -2382,12 +2382,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-payer.git",
-                "reference": "5291fca83f6d0aa5093de165e8764016aae7dbbf"
+                "reference": "1a87d47edd71ccb1193641550ba86f282f233df3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/5291fca83f6d0aa5093de165e8764016aae7dbbf",
-                "reference": "5291fca83f6d0aa5093de165e8764016aae7dbbf",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/1a87d47edd71ccb1193641550ba86f282f233df3",
+                "reference": "1a87d47edd71ccb1193641550ba86f282f233df3",
                 "shasum": ""
             },
             "require": {
