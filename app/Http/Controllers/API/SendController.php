@@ -55,7 +55,7 @@ class SendController extends APIController {
                 $txid = $address_sender->send($payment_address, $request_attributes['destination'], $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $dust_size, $multisig_dust_size);
                 $quantity_sat = CurrencyUtil::valueToSatoshis($request_attributes['quantity']);
             } catch (PaymentException $e) {
-                EventLog::logError('error.sweep', $e);
+                EventLog::logError('error.pay', $e);
                 return new JsonResponse(['message' => $e->getMessage()], 500); 
             }
         }
