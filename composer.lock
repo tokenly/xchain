@@ -2382,12 +2382,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-payer.git",
-                "reference": "1a87d47edd71ccb1193641550ba86f282f233df3"
+                "reference": "5291fca83f6d0aa5093de165e8764016aae7dbbf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/1a87d47edd71ccb1193641550ba86f282f233df3",
-                "reference": "1a87d47edd71ccb1193641550ba86f282f233df3",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/5291fca83f6d0aa5093de165e8764016aae7dbbf",
+                "reference": "5291fca83f6d0aa5093de165e8764016aae7dbbf",
                 "shasum": ""
             },
             "require": {
@@ -2514,12 +2514,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-parser.git",
-                "reference": "5735c9cee0e3ebda25f85239298a94376c5bb2c8"
+                "reference": "90cd203cd5364922e0be42f66ea1abec3477bd79"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/5735c9cee0e3ebda25f85239298a94376c5bb2c8",
-                "reference": "5735c9cee0e3ebda25f85239298a94376c5bb2c8",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/90cd203cd5364922e0be42f66ea1abec3477bd79",
+                "reference": "90cd203cd5364922e0be42f66ea1abec3477bd79",
                 "shasum": ""
             },
             "require": {
@@ -2548,7 +2548,7 @@
                 }
             ],
             "description": "A counterparty transaction parser",
-            "time": "2015-01-16 04:04:27"
+            "time": "2015-04-09 14:40:45"
         },
         {
             "name": "tokenly/hmac-auth",
