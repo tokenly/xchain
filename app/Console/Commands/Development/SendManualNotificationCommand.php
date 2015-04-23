@@ -59,10 +59,10 @@ EOF
         $block_json_filename = $this->input->getOption('block');
         if ($block_json_filename) {
             $this->handleBlockNotification($block_json_filename);
-        }
-
-        if ($this->input->getOption('transaction')) {
+        } else if ($this->input->getOption('transaction')) {
             $this->sendTransaction();
+        } else {
+            $this->error("Please specify a block (-b) or transaction (-t) notification type.");
         }
 
 
