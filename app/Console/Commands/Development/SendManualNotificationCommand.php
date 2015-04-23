@@ -141,7 +141,8 @@ EOF
         // send notifications
         $tx_handler = $this->laravel->make('App\Handlers\XChain\XChainTransactionHandler');
         $block_seq = 1; # <-- hard-coded for now
-        $tx_handler->sendNotifications($parsed_tx, $confirmations, $block_seq);
+        $block_confirmation_time = null;
+        $tx_handler->sendNotifications($parsed_tx, $confirmations, $block_seq, $block_confirmation_time);
     }
 
 }
