@@ -23,7 +23,7 @@ class PaymentAddressSenderTest extends TestCase {
         $mock_send_call = $mock_calls['xcpd'][1];
         PHPUnit::assertEquals($payment_address['address'], $mock_send_call['args'][0]['source']);
         PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $mock_send_call['args'][0]['destination']);
-        PHPUnit::assertEquals(100, $mock_send_call['args'][0]['quantity']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(100), $mock_send_call['args'][0]['quantity']);
         PHPUnit::assertEquals('TOKENLY', $mock_send_call['args'][0]['asset']);
         PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.0001), $mock_send_call['args'][0]['fee_per_kb']);
 
