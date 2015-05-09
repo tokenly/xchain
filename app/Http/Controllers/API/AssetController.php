@@ -10,6 +10,11 @@ use Tokenly\CounterpartyAssetInfoCache\Cache;
 
 class AssetController extends APIController {
 	
+	/**
+	 * gets info for a counterparty asset
+	 * @param string $asset
+	 * @return Response
+	 * */
 	public function get(Cache $asset_info_cache, $asset)
 	{
 		$asset = $asset_info_cache->get(strtoupper($asset));
