@@ -23,6 +23,9 @@ $router->post('api/v1/sends/{addressId}', 'API\SendController@create');
 // address balance
 $router->get('api/v1/balances/{addressId}', 'API\BalancesController@show');
 
+//get asset info
+$router->get('api/v1/assets/{asset}', 'API\AssetController@get');
+
 /*
 |--------------------------------------------------------------------------
 | Authentication & Password Reset Controllers
