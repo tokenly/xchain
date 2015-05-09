@@ -44,6 +44,22 @@ class CounterpartySenderMockBuilder
                     ]
                 ];
             }
+            // return a mock get_asset_info response
+            //   will accept any asset, but returns the details below
+            if ($name == 'get_asset_info') {
+                $asset = $arguments[0]['assets'][0];
+                return [
+                    0 => [
+                        'issuer'      => "1Hso4cqKAyx9bsan8b5nbPqMTNNce8ZDto",
+                        'description' => "Crypto-Rewards Program http://ltbcoin.com",
+                        'owner'       => "1Hso4cqKAyx9bsan8b5nbPqMTNNce8ZDto",
+                        'locked'      => false,
+                        'asset'       => "$asset",
+                        'supply'      => 29833802457990000,
+                        'divisible'   => true
+                    ],
+                ];
+            }
 
             return $transaction_hex;
         })); 
