@@ -1,0 +1,10 @@
+{
+    "quantity": 50000000000,
+    "block_index": 300000,
+    "tx_hash": "00000000000000000000000000000000000000000000000000000aaaaaaaaaaa",
+    "asset": "LTBCOIN",
+    "destination": "RECIPIENT01",
+    "tx_index": 123456,
+    "source": "SENDER01",
+    "status": "valid"
+}

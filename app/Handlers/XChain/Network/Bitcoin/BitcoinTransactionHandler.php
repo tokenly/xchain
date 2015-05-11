@@ -32,6 +32,11 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         return;
     }
 
+    public function handleConfirmedTransaction($parsed_tx, $confirmations, $block_seq, $block_confirmation_time) {
+        // with bitcoin, we assume the confirmed transaction is valid
+        return $this->sendNotifications($parsed_tx, $confirmations, $block_seq, $block_confirmation_time);
+    }
+
     public function sendNotifications($parsed_tx, $confirmations, $block_seq, $block_confirmation_time)
     {
         // echo "\$parsed_tx:\n".json_encode($parsed_tx, 192)."\n";
@@ -47,14 +52,13 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         }
         if (!$all_addresses OR !$monitored_addresses->count()) { return; }
 
-        $this->wlog("begin loop");
+        // determine matched monitored addresses
+        $matched_monitored_address_ids = [];
+        $this->wlog("begin matching addresses");
         foreach($monitored_addresses->get() as $monitored_address) {
             // see if this is a receiving or sending event
-            $event_type = null;
-            switch ($monitored_address['monitor_type']) {
-                case 'send': $event_type = 'send'; break;
-                case 'receive': $event_type = 'receive'; break;
-            }
+            //   (send, receive)
+            $event_type = $monitored_address['monitor_type'];
 
             // filter this out if it is not a send
             if ($event_type == 'send' AND !in_array($monitored_address['address'], $sources)) {
@@ -68,6 +72,32 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
                 continue;
             }
 
+            $matched_monitored_address_ids[] = $monitored_address['uuid'];
+        }
+
+        if (!$this->preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block_confirmation_time, $matched_monitored_address_ids)) { return; }
+
+        $this->sendNotificationsForMatchedMonitorIDs($parsed_tx, $confirmations, $block_seq, $block_confirmation_time, $matched_monitored_address_ids);
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    
+
+    protected function sendNotificationsForMatchedMonitorIDs($parsed_tx, $confirmations, $block_seq, $block_confirmation_time, $matched_monitored_address_ids) {
+        $this->wlog("begin loop");
+
+        // build sources and destinations
+        $sources = ($parsed_tx['sources'] ? $parsed_tx['sources'] : []);
+        $destinations = ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []);
+
+        // loop through all matched monitored addresses
+        foreach($matched_monitored_address_ids as $monitored_address_uuid) {
+            $monitored_address = $this->monitored_address_repository->findByUuid($monitored_address_uuid);
+            if (!$monitored_address) { continue; }
+
+            $event_type = $monitored_address['monitor_type'];
             $this->wlog("\$monitored_address={$monitored_address['uuid']}");
 
             // calculate the quantity
@@ -126,15 +156,13 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
     }
 
-    public function subscribe($events) {
-        $events->listen('xchain.tx.received', 'App\Handlers\XChain\XChainTransactionHandler@storeParsedTransaction');
-        $events->listen('xchain.tx.received', 'App\Handlers\XChain\XChainTransactionHandler@sendNotifications');
-        $events->listen('xchain.tx.confirmed', 'App\Handlers\XChain\XChainTransactionHandler@sendNotifications');
+    // if this returns false, don't send the notification
+    protected function preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block_confirmation_time, $matched_monitored_address_ids) {
+        // for bitcoin, always send confirmed notifications
+        //   because bitcoind has already validated the confirmed transaction
+        return true;
     }
 
-    ////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////
-    
     protected function buildNotification($event_type, $parsed_tx, $quantity, $sources, $destinations, $confirmations, $block_confirmation_time, $block_seq, $monitored_address) {
         $notification = [
             'event'             => $event_type,

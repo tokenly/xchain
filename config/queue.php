@@ -31,6 +31,15 @@ return [
 
     'connections' => [
 
+        'blockingbeanstalkd' => [
+            'driver' => env('BEANSTALK_DRIVER', 'blockingbeanstalkd'),
+            'host'   => env('BEANSTALK_HOST', '127.0.0.1'),
+            'queue'  => null,
+            'port'   => env('BEANSTALK_PORT', 11300),
+            'ttr'    => 60,
+        ],
+
+
         'btctx' => [
             'driver' => env('BEANSTALK_DRIVER', 'blockingbeanstalkd'),
             'host'   => env('BEANSTALK_HOST', '127.0.0.1'),

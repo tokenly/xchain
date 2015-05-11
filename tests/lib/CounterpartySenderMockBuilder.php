@@ -61,6 +61,14 @@ class CounterpartySenderMockBuilder
                 ];
             }
 
+            if ($name == 'get_sends') {
+                $txid = $asset = $arguments[0]['filters']['value'];
+                $filepath = base_path()."/tests/fixtures/sends/{$txid}.json";
+                if (!file_exists($filepath)) { throw new Exception("Send fixture not found for $txid", 1); }
+                $send = json_decode(file_get_contents($filepath), true);
+                return [$send];
+            }
+
             return $transaction_hex;
         })); 
         $app->bind('Tokenly\XCPDClient\Client', function() use ($mock) {

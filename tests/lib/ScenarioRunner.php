@@ -38,9 +38,16 @@ class ScenarioRunner
             $mock_builder = new \InsightAPIMockBuilder();
             $mock_builder->installMockInsightClient($this->app, $test_case);
 
+            $this->test_case = $test_case;
         }
 
         return $this;
+    }
+
+    public function initXCPDMock() {
+        if (!isset($this->test_case)) { throw new Exception("Test case not found", 1); }
+        $this->xcpd_mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this->test_case);
+
     }
 
     public function runScenarioByNumber($scenario_number) {
@@ -63,6 +70,9 @@ class ScenarioRunner
         if ($auto_backfill) {
             $this->autoBackfillBlock();
         }
+
+        // install mock
+        $this->initXCPDMock();
 
         // set up the scenario
         $this->addMonitoredAddresses($scenario_data['monitoredAddresses']);
