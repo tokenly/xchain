@@ -32,14 +32,14 @@ class XChainWebsocketPusherHandler {
             'destination' => $destination,
         ];
 
+        if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
         $this->pusher->send('/tx', $notification);
+        if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for pushEvent: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
 
     }
 
     public function subscribe($events) {
-        if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
         $events->listen('xchain.tx.received', 'App\Handlers\XChain\XChainWebsocketPusherHandler@pushEvent');
-        if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for pushEvent: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
     }
 
 }
