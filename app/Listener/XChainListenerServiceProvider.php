@@ -11,18 +11,6 @@ use \Exception;
 class XChainListenerServiceProvider extends ServiceProvider
 {
 
-    /**
-     * Indicates if loading of the provider is deferred.
-     *
-     * @var bool
-     */
-    protected $defer = true;
-
-
-    public function boot()
-    {
-    }
-
 
     /**
      * Register the service provider.
@@ -31,8 +19,6 @@ class XChainListenerServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->package('tokenly/xchain-listener', 'xchain-listener', __DIR__.'/');
-
         $this->app->make('events')->subscribe('App\Listener\EventHandlers\ConsoleLogEventHandler');
     }
 

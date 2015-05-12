@@ -2,23 +2,26 @@
 
 namespace App\Listener\EventHandlers;
 
-use Tokenly\LaravelEventLog\Facade\EventLog;
 use Carbon\Carbon;
-use Illuminate\Contracts\Logging\Log;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
+use Tokenly\LaravelEventLog\Facade\EventLog;
 use \Exception;
+use PHP_Timer;
 
 /*
 * ConsoleLogEventHandler
 */
 class ConsoleLogEventHandler
 {
-    public function __construct(Log $log)
+    public function __construct()
     {
-        $this->log = $log;
     }
 
     public function logToConsole($tx_event)
     {
+        if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
+
         if (!isset($GLOBALS['XCHAIN_GLOBAL_COUNTER'])) { $GLOBALS['XCHAIN_GLOBAL_COUNTER'] = 0; }
         $count = ++$GLOBALS['XCHAIN_GLOBAL_COUNTER'];
 
@@ -37,8 +40,7 @@ class ConsoleLogEventHandler
             }
         }
 
-        // EventLog::log('tx.received', []);
-
+        if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for logToConsole: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
     }
 
     public function subscribe($events) {
@@ -46,6 +48,6 @@ class ConsoleLogEventHandler
     }
 
     protected function wlog($text) {
-        $this->log->info($text);
+        Log::info($text);
     }
 }

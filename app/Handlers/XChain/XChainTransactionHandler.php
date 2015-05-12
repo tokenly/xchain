@@ -18,7 +18,7 @@ class XChainTransactionHandler {
 
         if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
         $result = $transaction_handler->storeParsedTransaction($parsed_tx);
-        if ($_debugLogTxTiming) { Log::debug("Time for storeParsedTransaction: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
+        if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for storeParsedTransaction: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
 
         return $result;
     }
@@ -28,7 +28,7 @@ class XChainTransactionHandler {
 
         if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
         $result = $transaction_handler->sendNotifications($parsed_tx, $confirmations, $block_seq, $block_confirmation_time);
-        if ($_debugLogTxTiming) { Log::debug("Time for sendNotifications: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
+        if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for sendNotifications: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
 
         return $result;
     }
