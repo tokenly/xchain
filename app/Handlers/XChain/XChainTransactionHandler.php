@@ -3,7 +3,9 @@
 namespace App\Handlers\XChain;
 
 use App\Handlers\XChain\Network\Factory\NetworkHandlerFactory;
-
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
+use PHP_Timer;
 
 class XChainTransactionHandler {
 
@@ -13,12 +15,22 @@ class XChainTransactionHandler {
 
     public function storeParsedTransaction($parsed_tx) {
         $transaction_handler = $this->network_handler_factory->buildTransactionHandler($parsed_tx['network']);
-        return $transaction_handler->storeParsedTransaction($parsed_tx);
+
+        if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
+        $result = $transaction_handler->storeParsedTransaction($parsed_tx);
+        if ($_debugLogTxTiming) { Log::debug("Time for storeParsedTransaction: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
+
+        return $result;
     }
 
     public function sendNotifications($parsed_tx, $confirmations, $block_seq, $block_confirmation_time) {
         $transaction_handler = $this->network_handler_factory->buildTransactionHandler($parsed_tx['network']);
-        return $transaction_handler->sendNotifications($parsed_tx, $confirmations, $block_seq, $block_confirmation_time);
+
+        if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
+        $result = $transaction_handler->sendNotifications($parsed_tx, $confirmations, $block_seq, $block_confirmation_time);
+        if ($_debugLogTxTiming) { Log::debug("Time for sendNotifications: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
+
+        return $result;
     }
 
     public function handleConfirmedTransaction($parsed_tx, $confirmations, $block_seq, $block_confirmation_time) {

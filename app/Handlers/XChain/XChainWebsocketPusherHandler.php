@@ -2,14 +2,15 @@
 
 namespace App\Handlers\XChain;
 
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
+use PHP_Timer;
 use Tokenly\PusherClient\Client as PusherClient;
-use Illuminate\Contracts\Logging\Log;
 
 class XChainWebsocketPusherHandler {
 
-    public function __construct(PusherClient $pusher, Log $log) {
+    public function __construct(PusherClient $pusher) {
         $this->pusher = $pusher;
-        $this->log = $log;
     }
 
     public function pushEvent($tx_event)
@@ -31,13 +32,14 @@ class XChainWebsocketPusherHandler {
             'destination' => $destination,
         ];
 
-        // $this->log->info('sending notification', $notification);
         $this->pusher->send('/tx', $notification);
 
     }
 
     public function subscribe($events) {
+        if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
         $events->listen('xchain.tx.received', 'App\Handlers\XChain\XChainWebsocketPusherHandler@pushEvent');
+        if ($_debugLogTxTiming) { Log::debug("Time for pushEvent: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
     }
 
 }

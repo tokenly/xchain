@@ -1,10 +1,10 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "46bc38e5a3f64d6425a9189a31cd1a92",
+    "hash": "071cb02322ccdf9a18043292d0ec7124",
     "packages": [
         {
             "name": "bitwasp/bitcoin-lib",
@@ -16,7 +16,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Bit-Wasp/bitcoin-lib-php/zipball/43caee309ce4964833449203eeba26cc6884c8fb",
+                "url": "https://api.github.com/repos/Bit-Wasp/bitcoin-lib-php/zipball/7676f0c4e512a7d273f5404d4b27e0b199df3860",
                 "reference": "43caee309ce4964833449203eeba26cc6884c8fb",
                 "shasum": ""
             },
@@ -1062,7 +1062,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nbobtc/bitcoind-php/zipball/f38ae118fbcf86d226bfdc0c20b9afa432c5e3f4",
+                "url": "https://api.github.com/repos/nbobtc/bitcoind-php/zipball/e682a2d9ebcdafd4998d3c8a5c8f5c787da2a27c",
                 "reference": "f38ae118fbcf86d226bfdc0c20b9afa432c5e3f4",
                 "shasum": ""
             },
@@ -1291,6 +1291,50 @@
                 "beanstalkd"
             ],
             "time": "2014-11-08 20:00:00"
+        },
+        {
+            "name": "phpunit/php-timer",
+            "version": "1.0.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/sebastianbergmann/php-timer.git",
+                "reference": "19689d4354b295ee3d8c54b4f42c3efb69cbc17c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-timer/zipball/19689d4354b295ee3d8c54b4f42c3efb69cbc17c",
+                "reference": "19689d4354b295ee3d8c54b4f42c3efb69cbc17c",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "PHP/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "include-path": [
+                ""
+            ],
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Sebastian Bergmann",
+                    "email": "sb@sebastian-bergmann.de",
+                    "role": "lead"
+                }
+            ],
+            "description": "Utility class for timing",
+            "homepage": "https://github.com/sebastianbergmann/php-timer/",
+            "keywords": [
+                "timer"
+            ],
+            "time": "2013-08-02 07:42:54"
         },
         {
             "name": "psr/log",
@@ -2386,7 +2430,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/5291fca83f6d0aa5093de165e8764016aae7dbbf",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/1a87d47edd71ccb1193641550ba86f282f233df3",
                 "reference": "5291fca83f6d0aa5093de165e8764016aae7dbbf",
                 "shasum": ""
             },
@@ -2518,7 +2562,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/90cd203cd5364922e0be42f66ea1abec3477bd79",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/555a2e6df52999828ee91cd90e2d642b2fc10b5b",
                 "reference": "90cd203cd5364922e0be42f66ea1abec3477bd79",
                 "shasum": ""
             },
@@ -2643,7 +2687,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/c86d4a9e5ba7a078014e716f85ef82aa79f016f0",
+                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/7030b2dd1ff1b1a09a9f77ddd02faf66af5c6606",
                 "reference": "c86d4a9e5ba7a078014e716f85ef82aa79f016f0",
                 "shasum": ""
             },
@@ -2687,7 +2731,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-event-log/zipball/96f6355677620c81016b657538b29cbfae09efaf",
+                "url": "https://api.github.com/repos/tokenly/laravel-event-log/zipball/2b8f4e2c3c98f49e72465cd4a9eee5195ce87cb3",
                 "reference": "96f6355677620c81016b657538b29cbfae09efaf",
                 "shasum": ""
             },
@@ -3362,50 +3406,6 @@
                 "template"
             ],
             "time": "2014-01-30 17:20:04"
-        },
-        {
-            "name": "phpunit/php-timer",
-            "version": "1.0.5",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/sebastianbergmann/php-timer.git",
-                "reference": "19689d4354b295ee3d8c54b4f42c3efb69cbc17c"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-timer/zipball/19689d4354b295ee3d8c54b4f42c3efb69cbc17c",
-                "reference": "19689d4354b295ee3d8c54b4f42c3efb69cbc17c",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.3"
-            },
-            "type": "library",
-            "autoload": {
-                "classmap": [
-                    "PHP/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "include-path": [
-                ""
-            ],
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "authors": [
-                {
-                    "name": "Sebastian Bergmann",
-                    "email": "sb@sebastian-bergmann.de",
-                    "role": "lead"
-                }
-            ],
-            "description": "Utility class for timing",
-            "homepage": "https://github.com/sebastianbergmann/php-timer/",
-            "keywords": [
-                "timer"
-            ],
-            "time": "2013-08-02 07:42:54"
         },
         {
             "name": "phpunit/php-token-stream",
