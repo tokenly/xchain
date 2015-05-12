@@ -152,7 +152,6 @@ return [
 		'Tokenly\BitcoinPayer\Provider\BitcoinPayerServiceProvider',
 		'Tokenly\CounterpartySender\Provider\CounterpartySenderServiceProvider',
 		'Tokenly\Insight\InsightServiceProvider',
-		'App\Listener\XChainListenerServiceProvider',
 		'Tokenly\HmacAuth\ServiceProvider\HmacAuthServiceProvider',
 		'Tokenly\BitcoinAddressLib\BitcoinAddressServiceProvider',
 		'Tokenly\PusherClient\Provider\PusherClientServiceProvider',
@@ -164,9 +163,7 @@ return [
 		 */
 		'App\Providers\BlockingBeanstalkd\BlockingBeanstalkServiceProvider', // <-- must go first
 		'App\Providers\XChain\XChainHandlerServiceProvider',
-		// 'App\Providers\InfluxDB\InfluxDBServiceProvider',
-		// 'App\Providers\LogEntries\LogEntriesServiceProvider',
-		// 'App\Providers\EventLog\EventLogServiceProvider',
+		'App\Listener\XChainListenerServiceProvider',
 
 	],
 
