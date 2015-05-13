@@ -4,23 +4,23 @@ namespace App\Handlers\XChain\Network\Bitcoin;
 
 use App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionStore;
 use App\Handlers\XChain\Network\Contracts\NetworkTransactionHandler;
-use Tokenly\LaravelEventLog\Facade\EventLog;
 use App\Repositories\MonitoredAddressRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\UserRepository;
 use App\Util\DateTimeUtil;
 use Illuminate\Contracts\Logging\Log;
-use Illuminate\Queue\QueueManager;
 use Tokenly\CurrencyLib\CurrencyUtil;
+use Tokenly\LaravelEventLog\Facade\EventLog;
+use Tokenly\XcallerClient\Client;
 
 class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
-    public function __construct(MonitoredAddressRepository $monitored_address_repository, UserRepository $user_repository, NotificationRepository $notification_repository, BitcoinTransactionStore $transaction_store, QueueManager $queue_manager, Log $log) {
+    public function __construct(MonitoredAddressRepository $monitored_address_repository, UserRepository $user_repository, NotificationRepository $notification_repository, BitcoinTransactionStore $transaction_store, Client $xcaller_client, Log $log) {
         $this->monitored_address_repository = $monitored_address_repository;
         $this->user_repository              = $user_repository;
         $this->notification_repository      = $notification_repository;
         $this->transaction_store            = $transaction_store;
-        $this->queue_manager                = $queue_manager;
+        $this->xcaller_client               = $xcaller_client;
         $this->log                          = $log;
     }
 
@@ -124,34 +124,14 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             
             // apply user API token and key
             $user = $this->userByID($monitored_address['user_id']);
-            $api_token = $user['apitoken'];
-            $api_secret = $user['apisecretkey'];
 
             // update notification
             $notification['notificationId'] = $notification_model['uuid'];
-            $notification_json_string = json_encode($notification);
-
-            // sign request
-            $signature = hash_hmac('sha256', $notification_json_string, $api_secret, false);
-
-            $notification_entry = [
-                'meta' => [
-                    'id'        => $notification_model['uuid'],
-                    'endpoint'  => $monitored_address['webhookEndpoint'],
-                    'timestamp' => time(),
-                    'apiToken'  => $api_token,
-                    'signature' => $signature,
-                    'attempt'   => 0,
-                ],
-
-                'payload' => $notification_json_string,
-            ];
 
             // put notification in the queue
             EventLog::log('notification.out', ['event'=>$notification['event'], 'asset'=>$notification['asset'], 'quantity'=>$notification['quantity'], 'sources'=>$notification['sources'], 'destinations'=>$notification['destinations'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
-            $this->queue_manager
-                ->connection('notifications_out')
-                ->pushRaw(json_encode($notification_entry), 'notifications_out');
+
+            $this->xcaller_client->sendWebhook($notification, $user['webhook_endpoint'], $notification_model['uuid'], $user['apitoken'], $user['apisecretkey']);
         }
 
     }

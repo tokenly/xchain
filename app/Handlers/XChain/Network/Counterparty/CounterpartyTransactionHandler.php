@@ -3,6 +3,7 @@
 namespace App\Handlers\XChain\Network\Counterparty;
 
 use App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionHandler;
+use Illuminate\Support\Facades\Queue;
 
 class CounterpartyTransactionHandler extends BitcoinTransactionHandler {
 
@@ -34,8 +35,7 @@ class CounterpartyTransactionHandler extends BitcoinTransactionHandler {
                 'block_seq'                     => $block_seq,
                 'block_confirmation_time'       => $block_confirmation_time,
             ];
-            $this->queue_manager
-                ->connection('blockingbeanstalkd')
+            Queue::connection('blockingbeanstalkd')
                 ->push('App\Jobs\XChain\ValidateConfirmedCounterpartydTxJob', $data, 'validate_counterpartytx');
 
             // return false so the notification isn't sent out without being validated

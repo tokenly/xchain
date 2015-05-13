@@ -157,6 +157,7 @@ return [
 		'Tokenly\PusherClient\Provider\PusherClientServiceProvider',
 		'Tokenly\LaravelEventLog\EventLogServiceProvider',
 		'Tokenly\LaravelApiProvider\APIServiceProvider',
+		'Tokenly\XcallerClient\Provider\XCallerClientServiceProvider',
 
 		/*
 		 * Local App Service Providers...

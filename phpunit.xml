@@ -22,6 +22,7 @@
         <env name="DATABASE_DRIVER" value="testing"/>
         <env name="QUEUE_DRIVER" value="sync"/>
         <env name="BITCOIN_MASTER_KEY" value="testingfoo123"/>
+        <env name="XCALLER_QUEUE_CONNECTION" value="sync"/>
     </php>
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">

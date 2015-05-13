@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "071cb02322ccdf9a18043292d0ec7124",
+    "hash": "d0f4ffc4579cacb34a45f4bf8be29c1a",
     "packages": [
         {
             "name": "bitwasp/bitcoin-lib",
@@ -2843,6 +2843,46 @@
             "time": "2014-12-03 03:55:02"
         },
         {
+            "name": "tokenly/xcaller-client",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tokenly/xcaller-client.git",
+                "reference": "db8dea35848067948402d1db25c316aa7022d4bc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tokenly/xcaller-client/zipball/db8dea35848067948402d1db25c316aa7022d4bc",
+                "reference": "db8dea35848067948402d1db25c316aa7022d4bc",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.5.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Tokenly\\XcallerClient": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Devon Weller",
+                    "email": "devon@tokenly.com",
+                    "homepage": "http://tokenly.com"
+                }
+            ],
+            "description": "A library to push webhook notifications to XCaller",
+            "time": "2015-05-13 01:57:07"
+        },
+        {
             "name": "tokenly/xcpd-client",
             "version": "dev-master",
             "source": {
@@ -4188,6 +4228,7 @@
         "tokenly/xcpd-client": 20,
         "tokenly/laravel-api-provider": 20,
         "tokenly/laravel-event-log": 20,
+        "tokenly/xcaller-client": 20,
         "satooshi/php-coveralls": 20
     },
     "prefer-stable": true,

@@ -6,7 +6,6 @@ use App\Blockchain\Block\BlockChainStore;
 use App\Blockchain\Block\ConfirmationsBuilder;
 use App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionStore;
 use App\Handlers\XChain\Network\Contracts\NetworkBlockHandler;
-use Tokenly\LaravelEventLog\Facade\EventLog;
 use App\Repositories\NotificationRepository;
 use App\Repositories\TransactionRepository;
 use App\Repositories\UserRepository;
@@ -14,7 +13,8 @@ use App\Util\DateTimeUtil;
 use Exception;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Logging\Log;
-use Illuminate\Queue\QueueManager;
+use Tokenly\LaravelEventLog\Facade\EventLog;
+use Tokenly\XcallerClient\Client;
 
 /**
  * This is invoked when a new block is received
@@ -23,14 +23,14 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
 
     const MAX_CONFIRMATIONS_TO_NOTIFY = 6;
 
-    public function __construct(BitcoinTransactionStore $transaction_store, TransactionRepository $transaction_repository, NotificationRepository $notification_repository, UserRepository $user_repository, BlockChainStore $blockchain_store, ConfirmationsBuilder $confirmations_builder, QueueManager $queue_manager, Dispatcher $events, Log $log) {
+    public function __construct(BitcoinTransactionStore $transaction_store, TransactionRepository $transaction_repository, NotificationRepository $notification_repository, UserRepository $user_repository, BlockChainStore $blockchain_store, ConfirmationsBuilder $confirmations_builder, Client $xcaller_client, Dispatcher $events, Log $log) {
         $this->transaction_store       = $transaction_store;
         $this->transaction_repository  = $transaction_repository;
         $this->notification_repository = $notification_repository;
         $this->user_repository         = $user_repository;
         $this->confirmations_builder   = $confirmations_builder;
         $this->blockchain_store        = $blockchain_store;
-        $this->queue_manager           = $queue_manager;
+        $this->xcaller_client          = $xcaller_client;
         $this->events                  = $events;
         $this->log                     = $log;
     }
@@ -163,33 +163,13 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
                 ]
             );
 
+            // add the id
             $notification['notificationId'] = $notification_model['uuid'];
-            $notification_json_string = json_encode($notification);
-
-            $api_token = $user['apitoken'];
-            $api_secret = $user['apisecretkey'];
-            $signature = hash_hmac('sha256', $notification_json_string, $api_secret, false);
-
-
-            $notification_entry = [
-                'meta' => [
-                    'id'        => $notification_model['uuid'],
-                    'endpoint'  => $user['webhook_endpoint'],
-                    'timestamp' => time(),
-                    'apiToken'  => $api_token,
-                    'signature' => $signature,
-                    'attempt'   => 0,
-                ],
-
-                'payload' => $notification_json_string,
-            ];
 
             // put notification in the queue
-            $this->wlog('adding to notifications_out: '.substr(json_encode($notification_entry), 0, 500));
             EventLog::log('notification.out', ['event'=>$notification['event'], 'height'=>$notification['height'], 'hash'=>$notification['hash'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
-            $this->queue_manager
-                ->connection('notifications_out')
-                ->pushRaw(json_encode($notification_entry), 'notifications_out');
+
+            $this->xcaller_client->sendWebhook($notification, $user['webhook_endpoint'], $notification_model['uuid'], $user['apitoken'], $user['apisecretkey']);
         }
         
 

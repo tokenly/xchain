@@ -67,6 +67,7 @@ return [
 
         'sync' => [
             'driver' => 'sync',
+            'queue'  => null,
         ],
 
         'database' => [

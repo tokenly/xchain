@@ -29,6 +29,7 @@ class ScenarioRunner
         {
             return new \TestMemorySyncConnector();
         });
+
     }
 
     public function init($test_case) {
