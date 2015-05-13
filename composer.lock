@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "d0f4ffc4579cacb34a45f4bf8be29c1a",
+    "hash": "06ea436a8eedea995d4e91e38ad91749",
     "packages": [
         {
             "name": "bitwasp/bitcoin-lib",
@@ -2722,6 +2722,46 @@
             "time": "2015-02-14 17:17:28"
         },
         {
+            "name": "tokenly/laravel-blocking-beanstalkd",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tokenly/laravel-blocking-beanstalkd.git",
+                "reference": "a3af6aebd5718409a4cf856e47d5dd1aefd2dd54"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tokenly/laravel-blocking-beanstalkd/zipball/a3af6aebd5718409a4cf856e47d5dd1aefd2dd54",
+                "reference": "a3af6aebd5718409a4cf856e47d5dd1aefd2dd54",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.5.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Tokenly\\LaravelBlockingBeanstalkd": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Devon Weller",
+                    "email": "devon@tokenly.co",
+                    "homepage": "http://devonweller.com"
+                }
+            ],
+            "description": "A library",
+            "time": "2015-04-18 16:25:40"
+        },
+        {
             "name": "tokenly/laravel-event-log",
             "version": "dev-master",
             "source": {
@@ -4229,6 +4269,7 @@
         "tokenly/laravel-api-provider": 20,
         "tokenly/laravel-event-log": 20,
         "tokenly/xcaller-client": 20,
+        "tokenly/laravel-blocking-beanstalkd": 20,
         "satooshi/php-coveralls": 20
     },
     "prefer-stable": true,

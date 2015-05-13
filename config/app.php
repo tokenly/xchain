@@ -158,11 +158,11 @@ return [
 		'Tokenly\LaravelEventLog\EventLogServiceProvider',
 		'Tokenly\LaravelApiProvider\APIServiceProvider',
 		'Tokenly\XcallerClient\Provider\XCallerClientServiceProvider',
+		'Tokenly\LaravelBlockingBeanstalkd\BlockingBeanstalkServiceProvider',
 
 		/*
 		 * Local App Service Providers...
 		 */
-		'App\Providers\BlockingBeanstalkd\BlockingBeanstalkServiceProvider', // <-- must go first
 		'App\Providers\XChain\XChainHandlerServiceProvider',
 		'App\Listener\XChainListenerServiceProvider',
 
