@@ -48,7 +48,9 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         // get all addresses that we care about
         $all_addresses = array_unique(array_merge($sources, $destinations));
         if ($all_addresses) {
-            $monitored_addresses = $this->monitored_address_repository->findByAddresses($all_addresses);
+            // find all monitored address matching those in the sources or destinations
+            //  inactive monitored address are ignored
+            $monitored_addresses = $this->monitored_address_repository->findByAddresses($all_addresses, true);
         }
         if (!$all_addresses OR !$monitored_addresses->count()) { return; }
 

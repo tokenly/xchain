@@ -1,0 +1,21 @@
+# when monitored address is inactive
+#   no notifications are sent
+
+monitoredAddresses:
+  - address: RECIPIENT01
+    monitor_type: receive
+    active: false
+
+events:
+  -
+    type: transaction
+    confirmations: 1
+    txid: cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
+    sender: SENDER01
+    recipient: RECIPIENT01
+    isCounterpartyTx: true
+    asset: LTBCOIN
+    quantity: 500
+    blockId: 300000
+
+notifications: []
