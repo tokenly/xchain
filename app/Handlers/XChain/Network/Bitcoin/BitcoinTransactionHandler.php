@@ -133,7 +133,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             // put notification in the queue
             EventLog::log('notification.out', ['event'=>$notification['event'], 'asset'=>$notification['asset'], 'quantity'=>$notification['quantity'], 'sources'=>$notification['sources'], 'destinations'=>$notification['destinations'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
 
-            $this->xcaller_client->sendWebhook($notification, $user['webhook_endpoint'], $notification_model['uuid'], $user['apitoken'], $user['apisecretkey']);
+            $this->xcaller_client->sendWebhook($notification, $monitored_address['webhookEndpoint'], $notification_model['uuid'], $user['apitoken'], $user['apisecretkey']);
         }
 
     }
