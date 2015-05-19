@@ -60,8 +60,9 @@ class BlockChainStore {
         return null;
     }
 
-    public function loadMissingBlockEventsFromInsight($first_missing_hash, $backfill_max=null) {
-        if ($backfill_max === null) { $backfill_max = Config::get('xchain.backfill_max'); }
+    public function loadMissingBlockEventsFromInsight($first_missing_hash, $raw_backfill_max=null) {
+        if ($raw_backfill_max === null) { $backfill_max = Config::get('xchain.backfill_max'); }
+            else { $backfill_max = $raw_backfill_max; }
 
         $missing_block_events = [];
 
@@ -70,6 +71,15 @@ class BlockChainStore {
         $blocks_found = 0;
 
         while (!$any_found AND $blocks_found < $backfill_max) {
+            if ($raw_backfill_max === null AND $blocks_found === 0) {
+                // if there are no blocks in the database at all, then assume this is an initial run
+                //   and only backfill one block to start
+                if ($this->block_repository->findLatestBlockHeight() === null) {
+                    $backfill_max = 1;
+                }
+            }
+
+
             $block_model = $this->findByHash($working_hash);
             $block = $block_model['parsed_block'];
             ++$blocks_found;
