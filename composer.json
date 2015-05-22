@@ -9,10 +9,11 @@
         "linusu/bitcoin-address-validator": "~0",
         "pda/pheanstalk": "~3",
         "rhumsaa/uuid": "~2.",
+        "nbobtc/bitcoind-php": "1.2.*",
         "tokenly/bitcoin-address-lib": "dev-master@dev",
         "tokenly/bitcoin-currency-lib": "dev-master@dev",
-        "tokenly/bitcoin-payer": "dev-master",
         "tokenly/counterparty-asset-info-cache": "dev-master@dev",
+        "tokenly/bitcoin-payer": "dev-master",
         "tokenly/counterparty-sender": "dev-master",
         "tokenly/counterparty-transaction-parser": "dev-master@dev",
         "tokenly/hmac-auth": "dev-master@dev",
@@ -28,7 +29,7 @@
 		"tokenly/consul-health-daemon": "dev-master"
 	},
 	"require-dev": {
-		"phpunit/phpunit": "~4.0",
+		"phpunit/phpunit": "^4.5",
         "mockery/mockery": "~0.9",
         "satooshi/php-coveralls": "dev-master",
         "psr/log": "~1"
