@@ -24,7 +24,8 @@
         "tokenly/laravel-event-log": "dev-master@dev",
 		"phpunit/php-timer": "1.0.*",
 		"tokenly/xcaller-client": "dev-master",
-		"tokenly/laravel-blocking-beanstalkd": "dev-master"
+		"tokenly/laravel-blocking-beanstalkd": "dev-master",
+		"tokenly/consul-health-daemon": "dev-master"
 	},
 	"require-dev": {
 		"phpunit/phpunit": "~4.0",

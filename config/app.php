@@ -159,6 +159,7 @@ return [
 		'Tokenly\LaravelApiProvider\APIServiceProvider',
 		'Tokenly\XcallerClient\Provider\XCallerClientServiceProvider',
 		'Tokenly\LaravelBlockingBeanstalkd\BlockingBeanstalkServiceProvider',
+		'Tokenly\ConsulHealthDaemon\ServiceProvider\ConsulHealthDaemonServiceProvider',
 
 		/*
 		 * Local App Service Providers...
