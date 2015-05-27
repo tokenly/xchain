@@ -4,62 +4,84 @@ namespace App\Handlers\Monitoring;
 
 use Exception;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Tokenly\ConsulHealthDaemon\ConsulClient;
+use Tokenly\ConsulHealthDaemon\ServicesChecker;
 
 /**
  * This is invoked when a new block is received
  */
 class MonitoringHandler {
 
-    public function __construct(ConsulClient $consul_client) {
-        $this->consul_client = $consul_client;
+    public function __construct(ServicesChecker $services_checker) {
+        $this->services_checker = $services_checker;
     }
 
-    public function handleHealthCheck() {
-        $queue_names = [
-            'btcblock',
-            'btctx',
-            'notifications_return',
-            'validate_counterpartytx',
-        ];
+    public function handleConsoleHealthCheck() {
+        // check all queues
+        $this->services_checker->pushQueueSizeChecks('xchainqueue', [
+            'btcblock'                => 5,
+            'btctx'                   => 50,
+            'notifications_return'    => 50,
+            'validate_counterpartytx' => 50,
+        ]);
 
-        foreach($queue_names as $queue_name) {
-            try {
-                $queue_size = $this->getQueueSize($queue_name);
+        // check MySQL
+        $this->services_checker->checkMySQLConnection();
 
-                $service_id = "xchainqueue_queue_".$queue_name;
-                try {
-                    if ($queue_size < 50) {
-                        $this->consul_client->checkPass($service_id);
-                    } else {
-                        $this->consul_client->checkFail($service_id, "Queue $queue_name was $queue_size");
-                    }
-                } catch (Exception $e) {
-                    Log::error($e->getMessage());
-                }
+        // check pusher
+        $this->services_checker->checkPusherConnection();
 
-            } catch (Exception $e) {
-                try {
-                    $this->consul_client->checkFail($service_id, $e->getMessage());
-                } catch (Exception $e) {
-                    Log::error($e->getMessage());
-                }
-            }
+        // check xcpd
+        $this->services_checker->checkXCPDConnection();
 
+        // check bitcoind
+        $this->services_checker->checkBitcoindConnection();
+    }
+
+    public function handleHTTPHealthCheck($check_type) {
+        $anything_checked = false;
+
+        if ($check_type == 'mysql' OR $check_type == 'all') {
+            // check MySQL
+            $this->services_checker->checkMySQLConnection();
+            $anything_checked = true;
         }
 
-        return;
-    }
+        if ($check_type == 'queue' OR $check_type == 'all') {
+            // check queue
+            $this->services_checker->checkQueueConnection();
+            $anything_checked = true;
+        }
 
-    public function getQueueSize($queue_name) {
-        $pheanstalk = app('queue')->connection('blockingbeanstalkd')->getPheanstalk();
-        $stats = $pheanstalk->statsTube($queue_name);
-        return $stats['current-jobs-urgent'];
+        if ($check_type == 'pusher' OR $check_type == 'all') {
+            // check pusher
+            $this->services_checker->checkPusherConnection();
+            $anything_checked = true;
+        }
+
+        if ($check_type == 'xcpd' OR $check_type == 'all') {
+            // check xcpd
+            $this->services_checker->checkXCPDConnection();
+            $anything_checked = true;
+        }
+
+        if ($check_type == 'bitcoind' OR $check_type == 'all') {
+            // check bitcoind
+            $this->services_checker->checkBitcoindConnection();
+            $anything_checked = true;
+        }
+
+        if (!$anything_checked) { throw new Exception("Nothing checked for type {$check_type}", 1); }
     }
 
     public function subscribe($events) {
-        $events->listen('consul-health.check', 'App\Handlers\Monitoring\MonitoringHandler@handleHealthCheck');
+        $events->listen('consul-health.console.check', 'App\Handlers\Monitoring\MonitoringHandler@handleConsoleHealthCheck');
+        $events->listen('consul-health.http.check', 'App\Handlers\Monitoring\MonitoringHandler@handleHTTPHealthCheck');
     }
 
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    // Checks
+    
 }

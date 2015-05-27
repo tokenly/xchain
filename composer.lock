@@ -2609,12 +2609,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/consul-health-daemon.git",
-                "reference": "8b8b7b464d48049e6650905f088c69d251fa2c76"
+                "reference": "a02700c87734de4e9649e6da4ce712e79e6e8219"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/consul-health-daemon/zipball/8b8b7b464d48049e6650905f088c69d251fa2c76",
-                "reference": "8b8b7b464d48049e6650905f088c69d251fa2c76",
+                "url": "https://api.github.com/repos/tokenly/consul-health-daemon/zipball/a02700c87734de4e9649e6da4ce712e79e6e8219",
+                "reference": "a02700c87734de4e9649e6da4ce712e79e6e8219",
                 "shasum": ""
             },
             "require": {
@@ -2642,7 +2642,7 @@
                 }
             ],
             "description": "A library to monitor services health and report to consul",
-            "time": "2015-05-22 02:06:49"
+            "time": "2015-05-27 13:12:19"
         },
         {
             "name": "tokenly/counterparty-asset-info-cache",

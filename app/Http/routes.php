@@ -26,6 +26,10 @@ $router->get('api/v1/balances/{addressId}', 'API\BalancesController@show');
 //get asset info
 $router->get('api/v1/assets/{asset}', 'API\AssetController@get');
 
+// health check
+$router->get('/_healthcheck/{checkType}', '\Tokenly\ConsulHealthDaemon\HealthController\HealthController@healthcheck');
+
+
 /*
 |--------------------------------------------------------------------------
 | Authentication & Password Reset Controllers
