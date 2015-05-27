@@ -166,6 +166,7 @@ return [
 		 */
 		'App\Providers\XChain\XChainHandlerServiceProvider',
 		'App\Listener\XChainListenerServiceProvider',
+		'App\Providers\Monitoring\MonitoringServiceProvider',
 
 	],
 

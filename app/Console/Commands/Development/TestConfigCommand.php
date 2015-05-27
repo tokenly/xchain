@@ -51,6 +51,8 @@ EOF
         $row = ['foo' => 'bar', 'baz' => 'bar2'];
         EventLog::log('test.event', $row);
 
+        // \Illuminate\Support\Facades\Event::fire('consul-health.check');
+
         $this->comment("done");
 
     }
