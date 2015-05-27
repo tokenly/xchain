@@ -27,7 +27,7 @@ $router->get('api/v1/balances/{addressId}', 'API\BalancesController@show');
 $router->get('api/v1/assets/{asset}', 'API\AssetController@get');
 
 // health check
-$router->get('/_healthcheck/{checkType}', '\Tokenly\ConsulHealthDaemon\HealthController\HealthController@healthcheck');
+$router->get('/healthcheck/{checkType}', '\Tokenly\ConsulHealthDaemon\HealthController\HealthController@healthcheck');
 
 
 /*
