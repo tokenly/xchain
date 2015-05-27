@@ -18,8 +18,16 @@ class MonitoringHandler {
     }
 
     public function handleConsoleHealthCheck() {
+        if (env('PROCESS_NAME', 'xchain') == 'xchainqueue') {
+            $this->handleConsoleHealthCheckForXchainQueue();
+        } else {
+            $this->handleConsoleHealthCheckForXchain();
+        }
+    }
+
+    public function handleConsoleHealthCheckForXchainQueue() {
         // check all queues
-        $this->services_checker->pushQueueSizeChecks('xchainqueue', [
+        $this->services_checker->checkQueueSizes([
             'btcblock'                => 5,
             'btctx'                   => 50,
             'notifications_return'    => 50,
@@ -39,40 +47,21 @@ class MonitoringHandler {
         $this->services_checker->checkBitcoindConnection();
     }
 
-    public function handleHTTPHealthCheck($check_type) {
-        $anything_checked = false;
+    public function handleConsoleHealthCheckForXchain() {
+        // check queue
+        $this->services_checker->checkQueueConnection();
 
-        if ($check_type == 'mysql' OR $check_type == 'all') {
-            // check MySQL
-            $this->services_checker->checkMySQLConnection();
-            $anything_checked = true;
-        }
+        // check MySQL
+        $this->services_checker->checkMySQLConnection();
 
-        if ($check_type == 'queue' OR $check_type == 'all') {
-            // check queue
-            $this->services_checker->checkQueueConnection();
-            $anything_checked = true;
-        }
+        // check pusher
+        $this->services_checker->checkPusherConnection();
 
-        if ($check_type == 'pusher' OR $check_type == 'all') {
-            // check pusher
-            $this->services_checker->checkPusherConnection();
-            $anything_checked = true;
-        }
+        // check xcpd
+        $this->services_checker->checkXCPDConnection();
 
-        if ($check_type == 'xcpd' OR $check_type == 'all') {
-            // check xcpd
-            $this->services_checker->checkXCPDConnection();
-            $anything_checked = true;
-        }
-
-        if ($check_type == 'bitcoind' OR $check_type == 'all') {
-            // check bitcoind
-            $this->services_checker->checkBitcoindConnection();
-            $anything_checked = true;
-        }
-
-        if (!$anything_checked) { throw new Exception("Nothing checked for type {$check_type}", 1); }
+        // check bitcoind
+        $this->services_checker->checkBitcoindConnection();
     }
 
     public function subscribe($events) {

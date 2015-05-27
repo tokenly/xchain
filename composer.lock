@@ -2609,12 +2609,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/consul-health-daemon.git",
-                "reference": "a02700c87734de4e9649e6da4ce712e79e6e8219"
+                "reference": "2882d46e13dd2b75d2c83d4f71b4eb272f417da5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/consul-health-daemon/zipball/a02700c87734de4e9649e6da4ce712e79e6e8219",
-                "reference": "a02700c87734de4e9649e6da4ce712e79e6e8219",
+                "url": "https://api.github.com/repos/tokenly/consul-health-daemon/zipball/2882d46e13dd2b75d2c83d4f71b4eb272f417da5",
+                "reference": "2882d46e13dd2b75d2c83d4f71b4eb272f417da5",
                 "shasum": ""
             },
             "require": {
