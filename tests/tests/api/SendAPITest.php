@@ -107,8 +107,10 @@ class SendAPITest extends TestCase {
         $loaded_address_model = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
 
         // validate that a mock send was triggered
-        PHPUnit::assertEquals('createrawtransaction', $mock_calls['btcd'][0]['method']);
-        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', array_keys($mock_calls['btcd'][0]['args'][1])[0]);
+        PHPUnit::assertCount(7, $mock_calls['btcd']);
+        $create_transaction = $mock_calls['btcd'][4];
+        PHPUnit::assertEquals('createrawtransaction', $create_transaction['method']);
+        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', array_keys($create_transaction['args'][1])[0]);
     }
 
 

@@ -44,7 +44,7 @@ class SendController extends APIController {
         $is_sweep = isset($request_attributes['sweep']) ? !!$request_attributes['sweep'] : false;
         if ($is_sweep) {
             try {
-                list($txid, $float_balance_sent) = $address_sender->sweepBTC($payment_address, $request_attributes['destination'], $float_fee);
+                list($txid, $float_balance_sent) = $address_sender->sweepAllAssets($payment_address, $request_attributes['destination'], $float_fee);
                 $quantity_sat = CurrencyUtil::valueToSatoshis($float_balance_sent);
             } catch (PaymentException $e) {
                 EventLog::logError('error.sweep', $e);

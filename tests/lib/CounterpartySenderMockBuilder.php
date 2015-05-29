@@ -41,7 +41,11 @@ class CounterpartySenderMockBuilder
                     [
                         'asset'    => 'FOOCOIN',
                         'quantity' => 100,
-                    ]
+                    ],
+                    [
+                        'asset'    => 'BARCOIN',
+                        'quantity' => 200,
+                    ],
                 ];
             }
             // return a mock get_asset_info response
@@ -104,7 +108,7 @@ class CounterpartySenderMockBuilder
         })); 
         
         $mock->method('sendrawtransaction')->will($test_case->returnCallback(function($hex, $allowhighfees=false)  use ($mock_calls) {
-            $txid = hash('sha256', json_encode([$hex, $allowhighfees]));
+            $txid = '99999999'.substr(hash('sha256', json_encode([$hex, $allowhighfees])), 8);
             $mock_calls['btcd'][] = [
                 'method'   => 'sendrawtransaction',
                 'args'     => [$hex, $allowhighfees],

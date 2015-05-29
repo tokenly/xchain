@@ -86,5 +86,53 @@ class PaymentAddressSenderTest extends TestCase {
         PHPUnit::assertEquals(0.2349, $mock_calls['btcd'][0]['args'][1][$first_output_address]);
     }
 
+    public function testPaymentAddressSenderForSweepAllAssets() {
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        $insight_mock_calls = $this->buildInsightMockCallsForSweepAllAssets();
+
+        $user = $this->app->make('\UserHelper')->createSampleUser();
+        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user);
+
+        $sender = $this->app->make('App\Blockchain\Sender\PaymentAddressSender');
+        $sender->sweepAllAssets($payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $float_fee=null);
+
+        // 3 xcpd calls
+        //   1 balance check and 2 sends
+        PHPUnit::assertCount(3, $mock_calls['xcpd']);
+        PHPUnit::assertEquals('get_balances', $mock_calls['xcpd'][0]['method']);
+        PHPUnit::assertEquals('FOOCOIN', $mock_calls['xcpd'][1]['args'][0]['asset']);
+        PHPUnit::assertEquals('100', $mock_calls['xcpd'][1]['args'][0]['quantity']);
+        PHPUnit::assertEquals('BARCOIN', $mock_calls['xcpd'][2]['args'][0]['asset']);
+        PHPUnit::assertEquals('200', $mock_calls['xcpd'][2]['args'][0]['quantity']);
+
+        // check insight call
+        PHPUnit::assertCount(2, $insight_mock_calls['insight']);
+
+        // check the sweep BTC calls
+        //   each xcpd send is 2 calls, and the btc sweep is 3 calls
+        PHPUnit::assertCount(7, $mock_calls['btcd']);
+        $btc_create_tx = $mock_calls['btcd'][4];
+        $btc_create_tx_args = $btc_create_tx['args'];
+        PHPUnit::assertEquals('dbfdc2a0d22a8282c4e7be0452d595695f3a39173bed4f48e590877382b112fc', $btc_create_tx_args[0][0]['txid']);
+        PHPUnit::assertArrayHasKey('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $btc_create_tx_args[1]);
+        // check destination and output amount
+        PHPUnit::assertCount(1, $btc_create_tx_args[1]);
+        $first_output_address = array_keys($btc_create_tx_args[1])[0];
+        PHPUnit::assertEquals(0.2349, $btc_create_tx_args[1][$first_output_address]);
+    }
+
+    protected function buildInsightMockCallsForSweepAllAssets() {
+        $builder = app('InsightAPIMockBuilder');
+        $calls_count = 0;
+        $getTransactionCallback = function($txid) use (&$calls_count) {
+            ++$calls_count;
+            if ($calls_count <= 1) { throw new Exception("Not Found", 404); }
+            // echo "Loading tx $txid\n";
+            $filepath = base_path().'/tests/fixtures/api/_tx_000000000000000000000000000000000000000000000000000000000001ba5e.json';
+            $base_tx = json_decode(file_get_contents($filepath), true);
+            return $base_tx;
+        };
+        return $builder->installMockInsightClient($this->app, $this, ['getTransaction' => $getTransactionCallback]);
+    }
 
 }

@@ -11,13 +11,21 @@ class InsightAPIMockBuilder
 
     }
 
-    public function installMockInsightClient($app, $test_case) {
+    public function installMockInsightClient($app, $test_case, $override_functions=null) {
         // $old_client = $app->make('Tokenly\Insight\Client');
         $mock_calls = new \ArrayObject(['insight' => []]);
 
         $mock = $test_case->getMockBuilder('\Tokenly\Insight\Client')->disableOriginalConstructor()->getMock();
-        $mock->method('getTransaction')->will($test_case->returnCallback(function($txid) use ($mock_calls) {
-            $data = $this->loadAPIFixture('_tx_'.$txid.'.json');
+        $mock->method('getTransaction')->will($test_case->returnCallback(function($txid) use ($mock_calls, $override_functions) {
+            if ($override_functions !== null AND isset($override_functions['getTransaction'])) {
+                $data = call_user_func($override_functions['getTransaction'], $txid);
+            } else {
+                if ($this->apiFixtureExists('_tx_'.$txid.'.json')) {
+                    $data = $this->loadAPIFixture('_tx_'.$txid.'.json');
+                } else {
+                    $data = $this->loadAPIFixture('_tx_sample.json');
+                }
+            }
 
             $mock_calls['insight'][] = [
                 'method'   => 'getTransaction',
@@ -28,8 +36,12 @@ class InsightAPIMockBuilder
             return $data;
         })); 
 
-        $mock->method('getBlock')->will($test_case->returnCallback(function($hash) use ($mock_calls) {
-            $data = $this->loadAPIFixture('_block_'.$hash.'.json');
+        $mock->method('getBlock')->will($test_case->returnCallback(function($hash) use ($mock_calls, $override_functions) {
+            if ($override_functions !== null AND isset($override_functions['getBlock'])) {
+                $data = call_user_func($override_functions['getBlock'], $hash);
+            } else {
+                $data = $this->loadAPIFixture('_block_'.$hash.'.json');
+            }
 
             $mock_calls['insight'][] = [
                 'method'   => 'getBlock',
@@ -40,11 +52,15 @@ class InsightAPIMockBuilder
             return $data;
         })); 
 
-        $mock->method('getUnspentTransactions')->will($test_case->returnCallback(function($address) use ($mock_calls) {
-            if ($this->apiFixtureExists('_utxos_'.$address.'.json')) {
-                $data = $this->loadAPIFixture('_utxos_'.$address.'.json');
+        $mock->method('getUnspentTransactions')->will($test_case->returnCallback(function($address) use ($mock_calls, $override_functions) {
+            if ($override_functions !== null AND isset($override_functions['getUnspentTransactions'])) {
+                $data = call_user_func($override_functions['getUnspentTransactions'], $address);
             } else {
-                $data = $this->loadAPIFixture('_utxos_sample.json');
+                if ($this->apiFixtureExists('_utxos_'.$address.'.json')) {
+                    $data = $this->loadAPIFixture('_utxos_'.$address.'.json');
+                } else {
+                    $data = $this->loadAPIFixture('_utxos_sample.json');
+                }
             }
 
             $mock_calls['insight'][] = [
