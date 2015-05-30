@@ -10,6 +10,7 @@ use LinusU\Bitcoin\AddressValidator;
 use Tokenly\BitcoinPayer\BitcoinPayer;
 use Tokenly\CounterpartyAssetInfoCache\Cache;
 use Tokenly\CurrencyLib\CurrencyUtil;
+use Tokenly\LaravelEventLog\Facade\EventLog;
 use Tokenly\XCPDClient\Client;
 
 class BalancesController extends APIController {
