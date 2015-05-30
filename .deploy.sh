@@ -3,7 +3,7 @@
 set -e
 
 # clear the compiled classes
-if [ -f storage/framework/compiled.php] ; then
+if [ -f storage/framework/compiled.php ] ; then
     rm storage/framework/compiled.php
 fi
 
