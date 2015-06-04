@@ -21,6 +21,8 @@ class Kernel extends ConsoleKernel {
 		'App\Console\Commands\Development\ParseTransactionCommand',
 		'App\Console\Commands\Blocks\LoadMissingBlocksCommand',
 		'App\Console\Commands\Transaction\ResendTransactionNotificationsCommand',
+		'App\Console\Commands\Development\PruneTransactionsCommand',
+		'App\Console\Commands\Development\PruneBlocksCommand',
 
 		// vendor commands
 		'Tokenly\ConsulHealthDaemon\Console\ConsulHealthMonitorCommand',
@@ -34,8 +36,8 @@ class Kernel extends ConsoleKernel {
 	 */
 	protected function schedule(Schedule $schedule)
 	{
-		$schedule->command('inspire')
-				 ->hourly();
+		$schedule->command('xchain:prune-transactions')->daily();
+
 	}
 
 }

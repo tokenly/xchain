@@ -1,7 +1,6 @@
 <?php
 
 use Mockery as m;
-use \Exception;
 use \PHPUnit_Framework_Assert as PHPUnit;
 
 /*

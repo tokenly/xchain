@@ -53,4 +53,16 @@ class BlockRepository
         return $block->delete();
     }
 
+    public function deleteAllBlocksExcept($blocks_to_keep) {
+        $height_to_keep = $this->findLatestBlockHeight() - $blocks_to_keep;
+        $affected_rows = Block::where('height', '<', $height_to_keep)->delete();
+        return;
+    }
+
+    public function deleteAll() {
+        return Block::truncate();
+    }
+
+
+
 }

@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Transaction;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use \Exception;
 
@@ -48,6 +49,15 @@ class TransactionRepository
 
     public function delete(Model $transaction) {
         return $transaction->delete();
+    }
+
+    public function deleteOlderThan(Carbon $date) {
+        $affected_rows = Transaction::where('updated_at', '<', $date)->delete();
+        return;
+    }
+
+    public function deleteAll() {
+        return Transaction::truncate();
     }
 
 
