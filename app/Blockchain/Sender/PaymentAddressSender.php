@@ -57,6 +57,10 @@ class PaymentAddressSender {
             $asset        = $balance['asset'];
             $quantity_sat = $balance['quantity'];
 
+            // ignore 0 balances
+            if ($quantity_sat <= 0) { continue; }
+
+            Log::debug("sending $quantity_sat $asset to {$payment_address['address']}");
             $txid = $this->xcpd_sender->send($public_key, $wif_private_key, $payment_address['address'], $destination, $quantity_sat, $asset, $other_xcp_vars);
             $last_txid = $txid;
         }
