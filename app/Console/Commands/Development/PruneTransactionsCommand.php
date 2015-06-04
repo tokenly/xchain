@@ -38,7 +38,7 @@ class PruneTransactionsCommand extends Command {
     protected function getArguments()
     {
         return [
-            ['time', InputArgument::OPTIONAL, 'Time in seconds to prune', 7200],
+            ['time', InputArgument::OPTIONAL, 'Time in seconds to prune', 36000],
         ];
     }
 
