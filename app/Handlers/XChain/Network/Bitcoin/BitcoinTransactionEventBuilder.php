@@ -43,22 +43,22 @@ class BitcoinTransactionEventBuilder
 
             $xcp_data = $this->parser->parseBitcoinTransaction($xstalker_data['tx']);
             if ($xcp_data) {
+                // ensure 1 source and 1 desination
+                if (!isset($xcp_data['sources'][0])) {
+                    $xcp_data['sources'] = ['unknown'];
+                    Log::error("No source found in transaction: ".((isset($xstalker_data['tx']) AND isset($xstalker_data['tx']['txid'])) ? $xstalker_data['tx']['txid'] : "unknown"));
+                }
+                if (!isset($xcp_data['destinations'][0])) {
+                    $xcp_data['destinations'] = ['unknown'];
+                    Log::error("No destination found in transaction: ".((isset($xstalker_data['tx']) AND isset($xstalker_data['tx']['txid'])) ? $xstalker_data['tx']['txid'] : "unknown"));
+                }
+
                 // this is a counterparty transaction
                 $parsed_transaction_data['network']            = 'counterparty';
                 $parsed_transaction_data['counterPartyTxType'] = $xcp_data['type'];
 
                 $parsed_transaction_data['sources']            = $xcp_data['sources'];
                 $parsed_transaction_data['destinations']       = $xcp_data['destinations'];
-
-                // ensure 1 source and 1 desination
-                if (!isset($xcp_data['sources'][0])) {
-                    $parsed_transaction_data['sources'] = ['unknown'];
-                    Log::warning("No source found in transaction: ".((isset($xstalker_data['tx']) AND isset($xstalker_data['tx']['txid'])) ? $xstalker_data['tx']['txid'] : "unknown"));
-                }
-                if (!isset($xcp_data['destinations'][0])) {
-                    $parsed_transaction_data['destinations'] = ['unknown'];
-                    Log::warning("No destination found in transaction: ".((isset($xstalker_data['tx']) AND isset($xstalker_data['tx']['txid'])) ? $xstalker_data['tx']['txid'] : "unknown"));
-                }
 
                 if ($xcp_data['type'] === 'send') {
                     $is_divisible = $this->asset_cache->isDivisible($xcp_data['asset']);
