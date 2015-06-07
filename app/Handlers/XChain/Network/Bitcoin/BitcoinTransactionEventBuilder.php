@@ -50,6 +50,16 @@ class BitcoinTransactionEventBuilder
                 $parsed_transaction_data['sources']            = $xcp_data['sources'];
                 $parsed_transaction_data['destinations']       = $xcp_data['destinations'];
 
+                // ensure 1 source and 1 desination
+                if (!isset($xcp_data['sources'][0])) {
+                    $parsed_transaction_data['sources'] = ['unknown'];
+                    Log::warning("No source found in transaction: ".((isset($xstalker_data['tx']) AND isset($xstalker_data['tx']['txid'])) ? $xstalker_data['tx']['txid'] : "unknown"));
+                }
+                if (!isset($xcp_data['destinations'][0])) {
+                    $parsed_transaction_data['destinations'] = ['unknown'];
+                    Log::warning("No destination found in transaction: ".((isset($xstalker_data['tx']) AND isset($xstalker_data['tx']['txid'])) ? $xstalker_data['tx']['txid'] : "unknown"));
+                }
+
                 if ($xcp_data['type'] === 'send') {
                     $is_divisible = $this->asset_cache->isDivisible($xcp_data['asset']);
 
@@ -104,7 +114,7 @@ class BitcoinTransactionEventBuilder
             return $parsed_transaction_data;
 
         } catch (Exception $e) {
-            Log::warning($e->getMessage());
+            Log::warning("Failed to parse transaction: ".((isset($xstalker_data['tx']) AND isset($xstalker_data['tx']['txid'])) ? $xstalker_data['tx']['txid'] : "unknown")."\n".$e->getMessage());
             // print "ERROR: ".$e->getMessage()."\n";
             // echo "\$parsed_transaction_data:\n".json_encode($parsed_transaction_data, 192)."\n";
             throw $e;
