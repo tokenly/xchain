@@ -34,6 +34,14 @@ class MonitoringHandler {
             'validate_counterpartytx' => 50,
         ]);
 
+        // check all queues
+        $this->services_checker->checkTotalQueueJobsVelocity([
+            'btcblock'             => [1,  '2 hours'],
+            'btctx'                => [10, '1 minute'],
+            'notifications_out'    => [1,  '2 hours'],
+            'notifications_return' => [1,  '2 hours'],
+        ]);
+
         // check MySQL
         $this->services_checker->checkMySQLConnection();
 

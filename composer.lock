@@ -16,7 +16,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Bit-Wasp/bitcoin-lib-php/zipball/7676f0c4e512a7d273f5404d4b27e0b199df3860",
+                "url": "https://api.github.com/repos/Bit-Wasp/bitcoin-lib-php/zipball/b6927ab18ebb3d2f1059694ee458d5d618504d14",
                 "reference": "7676f0c4e512a7d273f5404d4b27e0b199df3860",
                 "shasum": ""
             },
@@ -1553,12 +1553,12 @@
             "version": "2.8.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/ramsey/uuid.git",
+                "url": "https://github.com/ramsey/rhumsaa-uuid.git",
                 "reference": "cca98c652cac412c9c2f109c69e5532f313435fc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ramsey/uuid/zipball/cca98c652cac412c9c2f109c69e5532f313435fc",
+                "url": "https://api.github.com/repos/ramsey/rhumsaa-uuid/zipball/cca98c652cac412c9c2f109c69e5532f313435fc",
                 "reference": "cca98c652cac412c9c2f109c69e5532f313435fc",
                 "shasum": ""
             },
@@ -2549,12 +2549,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/consul-health-daemon.git",
-                "reference": "4ff81d0447245a92314cce16e4a23bb1f67467a4"
+                "reference": "a2ac467fd96e5704172642c01dd2cdd9904a6b5c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/consul-health-daemon/zipball/4ff81d0447245a92314cce16e4a23bb1f67467a4",
-                "reference": "4ff81d0447245a92314cce16e4a23bb1f67467a4",
+                "url": "https://api.github.com/repos/tokenly/consul-health-daemon/zipball/a2ac467fd96e5704172642c01dd2cdd9904a6b5c",
+                "reference": "a2ac467fd96e5704172642c01dd2cdd9904a6b5c",
                 "shasum": ""
             },
             "require": {
@@ -2581,7 +2581,7 @@
                 }
             ],
             "description": "A library to monitor services health and report to consul",
-            "time": "2015-05-28 02:52:54"
+            "time": "2015-06-18 13:29:14"
         },
         {
             "name": "tokenly/counterparty-asset-info-cache",
@@ -2682,7 +2682,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/555a2e6df52999828ee91cd90e2d642b2fc10b5b",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/f8ddab0068c90da80b1e7f2e531ebed57050d22c",
                 "reference": "555a2e6df52999828ee91cd90e2d642b2fc10b5b",
                 "shasum": ""
             },
@@ -2724,7 +2724,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/cd48913038b735b0ebe2d04d535a0e01db6d131d",
+                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/afeb35cadfd0aad269f7eab5b1785b4140b21191",
                 "reference": "cd48913038b735b0ebe2d04d535a0e01db6d131d",
                 "shasum": ""
             },
@@ -2931,7 +2931,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/pusher-client/zipball/8cd40f570f9f162327066dfce1ee0ccbf531e692",
+                "url": "https://api.github.com/repos/tokenly/pusher-client/zipball/7e03273e9268c3e5b9e6786ee764121281ca7941",
                 "reference": "8cd40f570f9f162327066dfce1ee0ccbf531e692",
                 "shasum": ""
             },

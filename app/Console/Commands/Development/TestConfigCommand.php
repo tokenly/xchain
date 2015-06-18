@@ -47,6 +47,19 @@ EOF
      */
     public function fire()
     {
+        // $c = \Carbon\Carbon::parse('-5 minutes');
+        // print "time: $c\n";
+
+        // $now = \Carbon\Carbon::now();
+        // $old_time = \Carbon\Carbon::parse('-2 minutes');
+        // $seconds_ago = $old_time->diffInSeconds($now);
+        // print "seconds_ago: $seconds_ago\n";
+
+        // $sc = app('Tokenly\ConsulHealthDaemon\ServicesChecker');
+        // $sc->checkTotalQueueJobsVelocity([
+        //     'btctx' => [10, '2 minutes'],
+        // ]);
+
 
         $row = ['foo' => 'bar', 'baz' => 'bar2'];
         EventLog::log('test.event', $row);
