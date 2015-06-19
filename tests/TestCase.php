@@ -23,6 +23,10 @@ class TestCase extends Illuminate\Foundation\Testing\TestCase {
         // make sure we are using the testing environment
         parent::setUp();
 
+        // bind pusher client mock
+        app('Tokenly\PusherClient\Mock\MockBuilder')->installPusherMockClient($this);
+
+
         if($this->useDatabase)
         {
             $this->setUpDb();

@@ -2927,12 +2927,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/pusher-client.git",
-                "reference": "8cd40f570f9f162327066dfce1ee0ccbf531e692"
+                "reference": "7e03273e9268c3e5b9e6786ee764121281ca7941"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/tokenly/pusher-client/zipball/7e03273e9268c3e5b9e6786ee764121281ca7941",
-                "reference": "8cd40f570f9f162327066dfce1ee0ccbf531e692",
+                "reference": "7e03273e9268c3e5b9e6786ee764121281ca7941",
                 "shasum": ""
             },
             "require": {
@@ -2960,7 +2960,7 @@
                 }
             ],
             "description": "A library",
-            "time": "2015-02-02 13:32:00"
+            "time": "2015-06-13 16:32:52"
         },
         {
             "name": "tokenly/token-generator",
