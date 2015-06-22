@@ -26,15 +26,16 @@ class MonitoringHandler {
     }
 
     public function handleConsoleHealthCheckForXchainQueue() {
-        // check all queues
+        // check that pending queue sizes aren't too big
         $this->services_checker->checkQueueSizes([
             'btcblock'                => 5,
             'btctx'                   => 50,
-            'notifications_return'    => 50,
-            'validate_counterpartytx' => 50,
+            'notifications_out'       => 25,
+            'notifications_return'    => 25,
+            'validate_counterpartytx' => 25,
         ]);
 
-        // check all queues
+        // check queue velocities
         $this->services_checker->checkTotalQueueJobsVelocity([
             'btcblock'             => [1,  '2 hours'],
             'btctx'                => [10, '1 minute'],
