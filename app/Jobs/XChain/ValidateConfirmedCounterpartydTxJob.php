@@ -4,6 +4,7 @@ namespace App\Jobs\XChain;
 
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Facades\Log;
+use Tokenly\CounterpartyAssetInfoCache\Cache;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 use Tokenly\XCPDClient\Client;
@@ -14,10 +15,11 @@ use \Exception;
 */
 class ValidateConfirmedCounterpartydTxJob
 {
-    public function __construct(Client $xcpd_client, Dispatcher $events)
+    public function __construct(Client $xcpd_client, Dispatcher $events, Cache $asset_cache)
     {
         $this->xcpd_client = $xcpd_client;
         $this->events      = $events;
+        $this->asset_cache = $asset_cache;
     }
 
     public function fire($job, $data) {
@@ -55,13 +57,22 @@ class ValidateConfirmedCounterpartydTxJob
                 try {
                     if ($send['destination'] != $parsed_tx['destinations'][0]) { throw new Exception("mismatched destination: {$send['destination']} (xcpd) != {$parsed_tx['destinations'][0]} (parsed)", 1); }
 
+                    $xcpd_quantity_sat = $send['quantity'];
+
+                    // if token is not divisible, adjust to satoshis
+                    $is_divisible = $this->asset_cache->isDivisible($send['asset']);
+                    if (!$is_divisible) { $xcpd_quantity_sat = CurrencyUtil::valueToSatoshis($xcpd_quantity_sat); }
+
+
                     // compare send quantity
                     $parsed_quantity_sat = CurrencyUtil::valueToSatoshis($parsed_tx['values'][$send['destination']]);
-                    if ($send['quantity'] != $parsed_quantity_sat) { throw new Exception("mismatched quantity: {$send['quantity']} (xcpd) != {$parsed_quantity_sat} (parsed)", 1); }
+                    if ($xcpd_quantity_sat != $parsed_quantity_sat) { throw new Exception("mismatched quantity: {$xcpd_quantity_sat} (xcpd) != {$parsed_quantity_sat} (parsed)", 1); }
 
+
+                    // check asset
                     if ($send['asset'] != $parsed_tx['asset']) { throw new Exception("mismatched asset: {$send['asset']} (xcpd) != {$parsed_tx['asset']} (parsed)", 1); }
 
-                    Log::debug("Send $tx_hash was confirmed by counterpartyd.  {$send['quantity']} {$send['asset']} to {$send['destination']}");
+                    Log::debug("Send $tx_hash was confirmed by counterpartyd.  {$xcpd_quantity_sat} {$send['asset']} to {$send['destination']}");
 
                 } catch (Exception $e) {
                     EventLog::logError('error.counterpartyConfirm', $e, ['txid' => $tx_hash]);
