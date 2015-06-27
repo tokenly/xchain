@@ -7,7 +7,7 @@ use Tokenly\LaravelEventLog\Facade\EventLog;
 use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Validator;
+use Illuminate\Contracts\Validation\Validator;
 
 class APIRequest extends Request {
 

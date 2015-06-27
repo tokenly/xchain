@@ -6,7 +6,7 @@ use App\Http\Requests\API\Base\APIRequest;
 use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Validator;
+use Illuminate\Contracts\Validation\Validator;
 use LinusU\Bitcoin\AddressValidator;
 
 class CreateMonitorRequest extends APIRequest {
