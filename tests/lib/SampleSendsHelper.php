@@ -1,6 +1,7 @@
 <?php
 
 use App\Repositories\SendRepository;
+use Rhumsaa\Uuid\Uuid;
 use Tokenly\CurrencyLib\CurrencyUtil;
 
 /**
@@ -42,11 +43,17 @@ class SampleSendsHelper
             unset($vars['quantity']);
         }
 
+        if (isset($vars['requestId'])) {
+            $vars['request_id'] = CurrencyUtil::valueToSatoshis($vars['requestId']);
+            unset($vars['requestId']);
+        }
+
         return $vars;
     }
 
     public function samplePostVars($override_vars=[]) {
         return array_merge([
+            'requestId'   => Uuid::uuid4()->toString(),
             'destination' => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD',
             'quantity'    => 100,
             'asset'       => 'TOKENLY',

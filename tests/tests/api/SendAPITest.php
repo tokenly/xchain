@@ -51,6 +51,16 @@ class SendAPITest extends TestCase {
                 'expectedErrorString' => 'quantity is invalid',
             ],
 
+            [
+                'postVars' => [
+                    'destination' => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD',
+                    'quantity'    => 1,
+                    'asset'       => 'TOKENLY',
+                    'requestId'   => 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+                ],
+                'expectedErrorString' => 'request id may not be greater than 36 characters.',
+            ],
+
         ], '/'.$payment_address['uuid']);
     }
 
@@ -72,6 +82,7 @@ class SendAPITest extends TestCase {
             'sweep'       => '{{response.sweep}}',
             'quantity'    => '{{response.quantity}}',
             'txid'        => '{{response.txid}}',
+            'requestId'   => '{{response.requestId}}',
         ];
         $loaded_address_model = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
 
@@ -103,6 +114,7 @@ class SendAPITest extends TestCase {
             'sweep'       => '{{response.sweep}}',
             'quantity'    => '{{response.quantity}}',
             'txid'        => '{{response.txid}}',
+            'requestId'   => '{{response.requestId}}',
         ];
         $loaded_address_model = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
 

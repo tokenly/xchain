@@ -21,7 +21,6 @@ class UpdatePaymentAddressRequest extends APIRequest {
     public function rules()
     {
         return [
-            'monitorType' => 'in:send,receive',
             'active'      => 'boolean',
         ];
     }

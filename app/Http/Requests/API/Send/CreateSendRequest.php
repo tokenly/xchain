@@ -45,6 +45,7 @@ class CreateSendRequest extends APIRequest {
             'multisig_dust_size' => 'numeric',
             'asset'              => 'required|alpha|min:3',
             'sweep'              => 'required_without:quantity|boolean',
+            'requestId'          => 'max:36',
         ];
     }
 
