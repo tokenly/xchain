@@ -20,6 +20,10 @@ class BlockRepository
         return Block::all();
     }
 
+    public function findByID($id) {
+        return Block::where('id', $id)->first();
+    }
+
     public function findByHash($hash) {
         return Block::where('hash', $hash)->first();
     }

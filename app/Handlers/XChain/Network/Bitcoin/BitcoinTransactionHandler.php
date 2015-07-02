@@ -4,24 +4,25 @@ namespace App\Handlers\XChain\Network\Bitcoin;
 
 use App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionStore;
 use App\Handlers\XChain\Network\Contracts\NetworkTransactionHandler;
+use App\Models\Block;
 use App\Repositories\MonitoredAddressRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\UserRepository;
 use App\Util\DateTimeUtil;
-use Illuminate\Contracts\Logging\Log;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 use Tokenly\XcallerClient\Client;
 
 class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
-    public function __construct(MonitoredAddressRepository $monitored_address_repository, UserRepository $user_repository, NotificationRepository $notification_repository, BitcoinTransactionStore $transaction_store, Client $xcaller_client, Log $log) {
+    public function __construct(MonitoredAddressRepository $monitored_address_repository, UserRepository $user_repository, NotificationRepository $notification_repository, BitcoinTransactionStore $transaction_store, Client $xcaller_client) {
         $this->monitored_address_repository = $monitored_address_repository;
         $this->user_repository              = $user_repository;
         $this->notification_repository      = $notification_repository;
         $this->transaction_store            = $transaction_store;
         $this->xcaller_client               = $xcaller_client;
-        $this->log                          = $log;
     }
 
     public function storeParsedTransaction($parsed_tx) {
@@ -32,14 +33,14 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         return;
     }
 
-    public function handleConfirmedTransaction($parsed_tx, $confirmations, $block_seq, $block_confirmation_time) {
+    public function handleConfirmedTransaction($parsed_tx, $confirmations, $block_seq, Block $block) {
         // with bitcoin, we assume the confirmed transaction is valid
-        return $this->sendNotifications($parsed_tx, $confirmations, $block_seq, $block_confirmation_time);
+        return $this->sendNotifications($parsed_tx, $confirmations, $block_seq, $block);
     }
 
-    public function sendNotifications($parsed_tx, $confirmations, $block_seq, $block_confirmation_time)
+    public function sendNotifications($parsed_tx, $confirmations, $block_seq, Block $block=null)
     {
-        // echo "\$parsed_tx:\n".json_encode($parsed_tx, 192)."\n";
+        // echo "sendNotifications \$parsed_tx:\n".json_encode($parsed_tx, 192)."\n";
         // $this->wlog('sendNotifications txid: '.$parsed_tx['txid'].' $confirmations: '.$confirmations);
 
         $sources = ($parsed_tx['sources'] ? $parsed_tx['sources'] : []);
@@ -77,9 +78,9 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             $matched_monitored_address_ids[] = $monitored_address['uuid'];
         }
 
-        if (!$this->preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block_confirmation_time, $matched_monitored_address_ids)) { return; }
+        if (!$this->preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids)) { return; }
 
-        $this->sendNotificationsForMatchedMonitorIDs($parsed_tx, $confirmations, $block_seq, $block_confirmation_time, $matched_monitored_address_ids);
+        $this->sendNotificationsForMatchedMonitorIDs($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids);
     }
 
 
@@ -87,7 +88,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
     ////////////////////////////////////////////////////////////////////////
     
 
-    protected function sendNotificationsForMatchedMonitorIDs($parsed_tx, $confirmations, $block_seq, $block_confirmation_time, $matched_monitored_address_ids) {
+    protected function sendNotificationsForMatchedMonitorIDs($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids) {
         $this->wlog("begin loop");
 
         // build sources and destinations
@@ -100,14 +101,13 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             if (!$monitored_address) { continue; }
 
             $event_type = $monitored_address['monitor_type'];
-            $this->wlog("\$monitored_address={$monitored_address['uuid']}");
 
             // calculate the quantity
             //   for BTC transactions, this is different than the total BTC sent
             $quantity = $this->buildQuantityForEventType($event_type, $parsed_tx, $monitored_address['address']);
 
             // build the notification
-            $notification = $this->buildNotification($event_type, $parsed_tx, $quantity, $sources, $destinations, $confirmations, $block_confirmation_time, $block_seq, $monitored_address);
+            $notification = $this->buildNotification($event_type, $parsed_tx, $quantity, $sources, $destinations, $confirmations, $block, $block_seq, $monitored_address);
 
             $this->wlog("\$parsed_tx['timestamp']={$parsed_tx['timestamp']} transactionTime=".$notification['transactionTime']);
 
@@ -115,15 +115,27 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             // create a notification
             $notification_vars_for_model = $notification;
             unset($notification_vars_for_model['notificationId']);
-            $notification_model = $this->notification_repository->createForMonitoredAddress(
-                $monitored_address,
-                [
-                    'txid'          => $parsed_tx['txid'],
-                    'confirmations' => $confirmations,
-                    'notification'  => $notification_vars_for_model,
-                ]
-            );
-            
+
+            try {
+                // Log::debug("creating notification: ".json_encode(['txid' => $parsed_tx['txid'], 'confirmations' => $confirmations, 'block_id' => $block ? $block['id'] : null,], 192));
+                $notification_model = $this->notification_repository->createForMonitoredAddress(
+                    $monitored_address,
+                    [
+                        'txid'          => $parsed_tx['txid'],
+                        'confirmations' => $confirmations,
+                        'notification'  => $notification_vars_for_model,
+                        'block_id'      => $block ? $block['id'] : null,
+                    ]
+                );
+            } catch (QueryException $e) {
+                if ($e->errorInfo[0] == 23000) {
+                    EventLog::logError('notification.duplicate.error', $e, ['txid' => $parsed_tx['txid'], 'monitored_address_id' => $monitored_address['id'],]);
+                    continue;
+                } else {
+                    throw $e;
+                }
+            }
+
             // apply user API token and key
             $user = $this->userByID($monitored_address['user_id']);
 
@@ -139,13 +151,15 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
     }
 
     // if this returns false, don't send the notification
-    protected function preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block_confirmation_time, $matched_monitored_address_ids) {
+    protected function preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids) {
         // for bitcoin, always send confirmed notifications
         //   because bitcoind has already validated the confirmed transaction
         return true;
     }
 
-    protected function buildNotification($event_type, $parsed_tx, $quantity, $sources, $destinations, $confirmations, $block_confirmation_time, $block_seq, $monitored_address) {
+    protected function buildNotification($event_type, $parsed_tx, $quantity, $sources, $destinations, $confirmations, $block, $block_seq, $monitored_address) {
+        $confirmation_timestamp = $block ? $block['parsed_block']['time'] : null;
+
         $notification = [
             'event'             => $event_type,
 
@@ -163,7 +177,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             'transactionTime'   => DateTimeUtil::ISO8601Date($parsed_tx['timestamp']),
             'confirmed'         => ($confirmations > 0 ? true : false),
             'confirmations'     => $confirmations,
-            'confirmationTime'  => $block_confirmation_time ? DateTimeUtil::ISO8601Date($block_confirmation_time) : '',
+            'confirmationTime'  => $confirmation_timestamp ? DateTimeUtil::ISO8601Date($confirmation_timestamp) : '',
             'blockSeq'          => $block_seq,
 
             'notifiedAddress'   => $monitored_address['address'],
@@ -173,12 +187,15 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             'bitcoinTx'         => $parsed_tx['bitcoinTx'],
         ];
 
+        if ($block_seq === null) { unset($notification['blockSeq']); }
+
+
         return $notification;
     }
     
 
     protected function wlog($text) {
-        $this->log->info($text);
+        Log::info($text);
     }
 
     protected function buildQuantityForEventType($event_type, $parsed_tx, $bitcoin_address) {

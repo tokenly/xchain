@@ -42,7 +42,7 @@ class TestCase extends Illuminate\Foundation\Testing\TestCase {
 
     public function teardownDb()
     {
-        $this->app['Illuminate\Contracts\Console\Kernel']->call('migrate:reset');
+        // $this->app['Illuminate\Contracts\Console\Kernel']->call('migrate:reset');
     }
 
 }

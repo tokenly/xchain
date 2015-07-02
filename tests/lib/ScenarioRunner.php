@@ -1,10 +1,13 @@
 <?php
 
+use App\Repositories\BlockRepository;
 use App\Repositories\MonitoredAddressRepository;
 use App\Repositories\TransactionRepository;
+use App\Repositories\UserRepository;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Queue\QueueManager;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\Yaml\Yaml;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use \PHPUnit_Framework_Assert as PHPUnit;
@@ -15,7 +18,7 @@ use \PHPUnit_Framework_Assert as PHPUnit;
 class ScenarioRunner
 {
 
-    function __construct(Application $app, Dispatcher $events, QueueManager $queue_manager, MonitoredAddressRepository $monitored_address_repository, MonitoredAddressHelper $monitored_address_helper, SampleBlockHelper $sample_block_helper, TransactionRepository $transaction_repository, UserHelper $user_helper) {
+    function __construct(Application $app, Dispatcher $events, QueueManager $queue_manager, MonitoredAddressRepository $monitored_address_repository, MonitoredAddressHelper $monitored_address_helper, SampleBlockHelper $sample_block_helper, TransactionRepository $transaction_repository, BlockRepository $block_repository, UserRepository $user_repository, UserHelper $user_helper) {
         $this->app                          = $app;
         $this->events                       = $events;
         $this->queue_manager                = $queue_manager;
@@ -23,6 +26,8 @@ class ScenarioRunner
         $this->monitored_address_helper     = $monitored_address_helper;
         $this->sample_block_helper          = $sample_block_helper;
         $this->transaction_repository       = $transaction_repository;
+        $this->block_repository             = $block_repository;
+        $this->user_repository              = $user_repository;
         $this->user_helper                  = $user_helper;
 
         $this->queue_manager->addConnector('sync', function()
@@ -67,6 +72,9 @@ class ScenarioRunner
     }
 
     public function runScenario($scenario_data) {
+        // clear sample blocks
+        $this->clearDatabasesForScenario();
+
         $auto_backfill = (!isset($scenario_data['meta']['autoBackfill']) OR $scenario_data['meta']['autoBackfill']);
         if ($auto_backfill) {
             $this->autoBackfillBlock();
@@ -387,9 +395,27 @@ class ScenarioRunner
     protected function processTransactionEvent($transaction_event) {
         // run the job
         // echo "\$transaction_event:\n".json_encode($transaction_event, 192)."\n";
-        $block_seq = 0;
-        $block_confirmation_time = 0;
-        $this->events->fire('xchain.tx.received', [$transaction_event, (isset($transaction_event['bitcoinTx']['confirmations']) ? $transaction_event['bitcoinTx']['confirmations'] : 0), $block_seq, $block_confirmation_time, ]);
+
+        $confirmations = (isset($transaction_event['bitcoinTx']['confirmations']) ? $transaction_event['bitcoinTx']['confirmations'] : 0);
+
+        // if this is a confirmed transaction event, then we must supply a block
+        if ($confirmations > 0) {
+            $block_hash = $transaction_event['bitcoinTx']['blockhash'];
+            $block = $this->block_repository->findByHash($block_hash);
+            if (!$block) {
+                // Log::debug("creating sample block $block_hash");
+                $block = $this->sample_block_helper->createSampleBlock('default_parsed_block_01.json', [
+                    'hash' => $block_hash,
+                ]);
+            }
+
+            $block_seq = 0;
+            $this->events->fire('xchain.tx.confirmed', [$transaction_event, $confirmations, $block_seq, $block]);
+
+        } else {
+            // unconfirmed tx
+            $this->events->fire('xchain.tx.received', [$transaction_event, 0, null, null, ]);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -427,6 +453,23 @@ class ScenarioRunner
     }
 
 
+    ////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////
+    // clear blocks
+
+    protected function clearDatabasesForScenario() {
+        \App\Models\Block::truncate();
+        \App\Models\Transaction::truncate();
+        \App\Models\Notification::truncate();
+        \App\Models\MonitoredAddress::truncate();
+        \App\Models\PaymentAddress::truncate();
+        \App\Models\Send::truncate();
+        \App\Models\User::truncate();
+
+        return;
+    }
+    
+    
 
 
 

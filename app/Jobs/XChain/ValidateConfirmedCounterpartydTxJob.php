@@ -2,6 +2,7 @@
 
 namespace App\Jobs\XChain;
 
+use App\Repositories\BlockRepository;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Facades\Log;
 use Tokenly\CounterpartyAssetInfoCache\Cache;
@@ -15,21 +16,22 @@ use \Exception;
 */
 class ValidateConfirmedCounterpartydTxJob
 {
-    public function __construct(Client $xcpd_client, Dispatcher $events, Cache $asset_cache)
+    public function __construct(Client $xcpd_client, Dispatcher $events, Cache $asset_cache, BlockRepository $block_repository)
     {
-        $this->xcpd_client = $xcpd_client;
-        $this->events      = $events;
-        $this->asset_cache = $asset_cache;
+        $this->xcpd_client      = $xcpd_client;
+        $this->events           = $events;
+        $this->asset_cache      = $asset_cache;
+        $this->block_repository = $block_repository;
     }
 
     public function fire($job, $data) {
         Log::debug("ValidateConfirmedCounterpartydTxJob called.\ntxid=".json_encode($data['tx']['txid'], 192));
 
         // $data = [
-        //     'tx'                            => $parsed_tx,
-        //     'confirmations'                 => $confirmations,
-        //     'block_seq'                     => $block_seq,
-        //     'block_confirmation_time'       => $block_confirmation_time,
+        //     'tx'            => $parsed_tx,
+        //     'confirmations' => $confirmations,
+        //     'block_seq'     => $block_seq,
+        //     'block_id'      => $block_id,
         // ];
 
         // {
@@ -116,7 +118,9 @@ class ValidateConfirmedCounterpartydTxJob
             $data['tx']['counterpartyTx']['validated'] = true;
 
             // handle the parsed tx now
-            $this->events->fire('xchain.tx.confirmed', [$data['tx'], $data['confirmations'], $data['block_seq'], $data['block_confirmation_time']]);
+            $block = $this->block_repository->findByID($data['block_id']);
+            if (!$block) { throw new Exception("Block not found: {$data['block_id']}", 1); }
+            $this->events->fire('xchain.tx.confirmed', [$data['tx'], $data['confirmations'], $data['block_seq'], $block]);
 
             // if all went well, delete the job
             $job->delete();

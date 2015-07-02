@@ -22,7 +22,7 @@ class SendManualNotificationCommand extends Command {
      *
      * @var string
      */
-    protected $description = 'Send a manuaul notification (for development)';
+    protected $description = 'Send a manual notification (for development)';
 
 
     /**
@@ -99,10 +99,12 @@ EOF
         if (isset($loaded_block_data['tx'])) { unset($default_block_data['tx']); }
         $block_data = array_replace_recursive($default_block_data, $loaded_block_data);
 
-        $block_handler = $this->laravel->make('App\Handlers\XChain\XChainBlockHandler');
+
+        $block_handler = app('App\Handlers\XChain\Network\Factory\NetworkHandlerFactory')->buildBlockHandler($block_event['network']);
         $block_confirmations = $this->input->getOption('confirmations');
         $this->comment('sending block notification');
-        $block_handler->generateAndSendNotifications($block_data, $block_confirmations);
+        $block = $block_helper->createSampleBlock('default_parsed_block_01.json', $loaded_block_data);
+        $block_handler->generateAndSendNotifications($block_data, $block_confirmations, $block);
     }
 
     protected function sendTransaction() {
@@ -141,8 +143,7 @@ EOF
         // send notifications
         $tx_handler = $this->laravel->make('App\Handlers\XChain\XChainTransactionHandler');
         $block_seq = 1; # <-- hard-coded for now
-        $block_confirmation_time = null;
-        $tx_handler->sendNotifications($parsed_tx, $confirmations, $block_seq, $block_confirmation_time);
+        $tx_handler->sendNotifications($parsed_tx, $confirmations, $block_seq, null);
     }
 
 }

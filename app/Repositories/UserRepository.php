@@ -91,4 +91,9 @@ class UserRepository implements APIResourceRepositoryContract, APIUserRepository
         return $address->delete();
     }
 
+
+    public function deleteAll() {
+        return User::truncate();
+    }
+
 }

@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\Block;
 use App\Models\MonitoredAddress;
 use App\Models\Notification;
 use App\Models\User;
@@ -21,7 +22,7 @@ class NotificationRepository
         $attributes['monitored_address_id'] = $address['id'];
         $attributes['user_id'] = $address['user_id'];
 
-        return self::create($attributes);
+        return $this->create($attributes);
     }
 
     public function createForUser(User $user, $attributes) {
@@ -30,13 +31,14 @@ class NotificationRepository
         $attributes['monitored_address_id'] = null;
         $attributes['user_id'] = $user['id'];
 
-        return self::create($attributes);
+        return $this->create($attributes);
     }
 
 
     public function create($attributes) {
         if (!isset($attributes['txid'])) { throw new Exception("TXID is required", 1); }
         if (!isset($attributes['monitored_address_id']) AND !isset($attributes['user_id'])) { throw new Exception("monitored_address_id or user_id is required", 1); }
+        if (!isset($attributes['confirmations'])) { throw new Exception("confirmations is required", 1); }
 
         if (!isset($attributes['uuid'])) { $attributes['uuid'] = Uuid::uuid4()->toString(); }
         if (!isset($attributes['status'])) { $attributes['status'] = 'new'; }

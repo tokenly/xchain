@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "3407fb34ce80709f73941a5cbec0b5f9",
+    "hash": "c41305a4c25c6d436efe54788366221c",
     "packages": [
         {
             "name": "bitwasp/bitcoin-lib",
@@ -2890,12 +2890,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/laravel-event-log.git",
-                "reference": "2b8f4e2c3c98f49e72465cd4a9eee5195ce87cb3"
+                "reference": "6693bc64c25f698afa959d0325e3db7609954fa4"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/tokenly/laravel-event-log/zipball/6693bc64c25f698afa959d0325e3db7609954fa4",
-                "reference": "2b8f4e2c3c98f49e72465cd4a9eee5195ce87cb3",
+                "reference": "6693bc64c25f698afa959d0325e3db7609954fa4",
                 "shasum": ""
             },
             "require": {
@@ -2922,7 +2922,7 @@
                 }
             ],
             "description": "An event logger provider for Laravel.",
-            "time": "2015-04-25 13:03:59"
+            "time": "2015-07-02 12:20:18"
         },
         {
             "name": "tokenly/laravel-record-lock",

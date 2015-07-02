@@ -37,7 +37,7 @@ class PaymentAddressController extends APIController {
         $attributes['user_id'] = $user['id'];
 
         $out = $helper->store($payment_address_respository, $attributes);
-        EventLog::log('paymentAddress.created', $out);
+        EventLog::log('paymentAddress.created', json_decode($out->getContent(), true));
         return $out;
     }
 

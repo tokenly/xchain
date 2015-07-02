@@ -50,7 +50,10 @@
 	"autoload-dev": {
 		"classmap": [
 			"tests/TestCase.php"
-		]
+		],
+        "files": [
+            "tests/lib/test_helpers.php"
+        ]
 	},
 	"scripts": {
 		"post-install-cmd": [

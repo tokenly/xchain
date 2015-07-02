@@ -85,7 +85,7 @@ EOF
         // fire the event
         $events = app('Illuminate\Contracts\Events\Dispatcher');
         Log::debug('manually sending event: '.json_encode(['tx'=>$parsed_tx, 'confirmations'=>$confirmations, 'seq'=>$transaction_model['block_seq'], 'ts'=>$confirmation_timestamp], 192));
-        $events->fire('xchain.tx.confirmed', [$parsed_tx, $confirmations, $transaction_model['block_seq'], $confirmation_timestamp]);
+        $events->fire('xchain.tx.confirmed', [$parsed_tx, $confirmations, $transaction_model['block_seq'], $block]);
     }
 
 }

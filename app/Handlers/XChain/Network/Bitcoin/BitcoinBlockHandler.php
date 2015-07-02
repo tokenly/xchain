@@ -6,14 +6,15 @@ use App\Blockchain\Block\BlockChainStore;
 use App\Blockchain\Block\ConfirmationsBuilder;
 use App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionStore;
 use App\Handlers\XChain\Network\Contracts\NetworkBlockHandler;
+use App\Models\Block;
 use App\Repositories\NotificationRepository;
 use App\Repositories\TransactionRepository;
 use App\Repositories\UserRepository;
 use App\Util\DateTimeUtil;
 use Exception;
 use Illuminate\Contracts\Events\Dispatcher;
-use Illuminate\Contracts\Logging\Log;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 use Tokenly\XcallerClient\Client;
 
@@ -24,7 +25,7 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
 
     const MAX_CONFIRMATIONS_TO_NOTIFY = 6;
 
-    public function __construct(BitcoinTransactionStore $transaction_store, TransactionRepository $transaction_repository, NotificationRepository $notification_repository, UserRepository $user_repository, BlockChainStore $blockchain_store, ConfirmationsBuilder $confirmations_builder, Client $xcaller_client, Dispatcher $events, Log $log) {
+    public function __construct(BitcoinTransactionStore $transaction_store, TransactionRepository $transaction_repository, NotificationRepository $notification_repository, UserRepository $user_repository, BlockChainStore $blockchain_store, ConfirmationsBuilder $confirmations_builder, Client $xcaller_client, Dispatcher $events) {
         $this->transaction_store       = $transaction_store;
         $this->transaction_repository  = $transaction_repository;
         $this->notification_repository = $notification_repository;
@@ -33,7 +34,6 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
         $this->blockchain_store        = $blockchain_store;
         $this->xcaller_client          = $xcaller_client;
         $this->events                  = $events;
-        $this->log                     = $log;
     }
 
     public function handleNewBlock($block_event) {
@@ -61,10 +61,14 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
                 'height'       => $block_event['height'],
                 'parsed_block' => $block_event
             ]);
+            $block = $new_block_model;
         } catch (QueryException $e) {
-
             if ($e->errorInfo[0] == 23000) {
                 EventLog::logError('block.duplicate.error', $e, ['hash' => $block_event['hash'], 'height' => $block_event['height'],]);
+
+                // load the block instead
+                $block = $this->blockchain_store->findByHash($block_event['hash']);
+
             } else {
                 throw $e;
             }
@@ -76,11 +80,12 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
         }
 
         // update the block transactions in this block
-        $block_confirmations = $this->updateAllBlockTransactions($block_event);
-        $this->generateAndSendNotifications($block_event, $block_confirmations);
+        // Log::debug("\$block=".json_encode($block, 192));
+        $block_confirmations = $this->updateAllBlockTransactions($block_event, $block);
+        $this->generateAndSendNotifications($block_event, $block_confirmations, $block);
     }
 
-    public function updateAllBlockTransactions($block_event) {
+    public function updateAllBlockTransactions($block_event, Block $block) {
         // update all transactions that were in this block
         $block_seq = 0;
         $tx_count = count($block_event['tx']);
@@ -147,7 +152,7 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
     }
 
 
-    public function generateAndSendNotifications($block_event, $block_confirmations) {
+    public function generateAndSendNotifications($block_event, $block_confirmations, Block $current_block) {
 
         // send a new block notification
         $notification = $this->buildNotification($block_event);
@@ -163,6 +168,7 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
                     'txid'          => $block_event['hash'],
                     'confirmations' => $block_confirmations,
                     'notification'  => $notification_vars_for_model,
+                    'block_id'      => $current_block['id'],
                 ]
             );
 
@@ -174,7 +180,6 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
 
             $this->xcaller_client->sendWebhook($notification, $user['webhook_endpoint'], $notification_model['uuid'], $user['apitoken'], $user['apisecretkey']);
         }
-        
 
 
 
@@ -182,14 +187,12 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
         // also update every transaction that needs a new confirmation sent
         //   find all transactions in the last 6 blocks
         //   and send out notifications
-        // echo "\$this->blockchain_store->findAll()->all():\n".json_encode($this->blockchain_store->findAll()->all(), 192)."\n";
         $blocks = $this->blockchain_store->findAllAsOfHeightEndingWithBlockhash($block_event['height'] - (self::MAX_CONFIRMATIONS_TO_NOTIFY - 1), $block_event['hash']);
-        // echo "\$blocks:\n".json_encode($blocks, 192)."\n";
         $block_hashes = [];
         $blocks_by_hash = [];
-        foreach($blocks as $block) {
-            $block_hashes[] = $block['hash'];
-            $blocks_by_hash[$block['hash']] = $block;
+        foreach($blocks as $previous_block) {
+            $block_hashes[] = $previous_block['hash'];
+            $blocks_by_hash[$previous_block['hash']] = $previous_block;
         }
         if ($block_hashes) {
             foreach($this->transaction_repository->findAllTransactionsConfirmedInBlockHashes($block_hashes) as $transaction_model) {
@@ -197,14 +200,14 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
 
                 // the block height might have changed if the chain was reorganized
                 $parsed_tx = $transaction_model['parsed_tx'];
-                $block = $blocks_by_hash[$transaction_model['block_confirmed_hash']];
-                $confirmation_timestamp = null;
-                if ($block) {
-                    $parsed_tx['bitcoinTx']['blockheight'] = $block['height'];
-                    $confirmation_timestamp = $block['parsed_block']['time'];
+                $confirmed_block = $blocks_by_hash[$transaction_model['block_confirmed_hash']];
+                if ($confirmed_block) {
+                    $parsed_tx['bitcoinTx']['blockheight'] = $confirmed_block['height'];
+                    $this->events->fire('xchain.tx.confirmed', [$parsed_tx, $confirmations, $transaction_model['block_seq'], $current_block]);
+                } else {
+                    EventLog::logError('block.blockNotFound', ['hash' => $transaction_model['block_confirmed_hash'], 'txid' => $transaction_model['txid']]);
                 }
 
-                $this->events->fire('xchain.tx.confirmed', [$parsed_tx, $confirmations, $transaction_model['block_seq'], $confirmation_timestamp]);
             }
         } else {
             EventLog::logError('block.noBlocksFound', ['height' => $block_event['height'], 'hash' => $block_event['hash'], 'previousblockhash' => $block_event['previousblockhash']]);
@@ -212,12 +215,8 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
 
     }
 
-    public function subscribe($events) {
-        $events->listen('xchain.block.received', 'App\Handlers\XChain\XChainBlockHandler@handleNewBlock');
-    }
-
     protected function wlog($text) {
-        $this->log->info($text);
+        Log::info($text);
     }
 
 

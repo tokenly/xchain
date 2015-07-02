@@ -32,16 +32,6 @@ class XChainBlockHandler {
         return $block_handler->processBlock($block_event);
     }
 
-    public function updateAllBlockTransactions($block_event) {
-        $block_handler = $this->network_handler_factory->buildBlockHandler($block_event['network']);
-        return $block_handler->updateAllBlockTransactions($block_event);
-    }
-
-    public function generateAndSendNotifications($block_event, $block_confirmations) {
-        $block_handler = $this->network_handler_factory->buildBlockHandler($block_event['network']);
-        return $block_handler->generateAndSendNotifications($block_event, $block_confirmations);
-    }
-
 
     public function subscribe($events) {
         $events->listen('xchain.block.received', 'App\Handlers\XChain\XChainBlockHandler@handleNewBlock');

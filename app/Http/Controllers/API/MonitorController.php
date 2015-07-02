@@ -39,7 +39,7 @@ class MonitorController extends APIController {
         $attributes['user_id'] = $user['id'];
 
         $out = $helper->store($address_respository, $attributes);
-        EventLog::log('monitor.created', $out);
+        EventLog::log('monitor.created', json_decode($out->getContent(), true));
         return $out;
     }
 
