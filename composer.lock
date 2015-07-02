@@ -2685,7 +2685,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/f8ddab0068c90da80b1e7f2e531ebed57050d22c",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/e77a4048008c9388356ba545ad0885e35f19dc72",
                 "reference": "f8ddab0068c90da80b1e7f2e531ebed57050d22c",
                 "shasum": ""
             },
@@ -2723,12 +2723,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/hmac-auth.git",
-                "reference": "1d8e26f6e62d37bce16935bcca658cebc73d3421"
+                "reference": "bd146152a6901acc1eb962f8cd4d3418eb19307f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/1d8e26f6e62d37bce16935bcca658cebc73d3421",
-                "reference": "1d8e26f6e62d37bce16935bcca658cebc73d3421",
+                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/bd146152a6901acc1eb962f8cd4d3418eb19307f",
+                "reference": "bd146152a6901acc1eb962f8cd4d3418eb19307f",
                 "shasum": ""
             },
             "require": {
@@ -2757,7 +2757,7 @@
                 }
             ],
             "description": "A library",
-            "time": "2015-06-27 15:47:57"
+            "time": "2015-07-02 15:35:04"
         },
         {
             "name": "tokenly/insight-client",
@@ -2894,7 +2894,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-event-log/zipball/2b8f4e2c3c98f49e72465cd4a9eee5195ce87cb3",
+                "url": "https://api.github.com/repos/tokenly/laravel-event-log/zipball/6693bc64c25f698afa959d0325e3db7609954fa4",
                 "reference": "2b8f4e2c3c98f49e72465cd4a9eee5195ce87cb3",
                 "shasum": ""
             },
