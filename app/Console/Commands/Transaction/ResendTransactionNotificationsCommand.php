@@ -52,6 +52,14 @@ EOF
 
         $transaction_repository = app('App\Repositories\TransactionRepository');
         $transaction_model = $transaction_repository->findByTXID($txid);
+
+
+        if (!$transaction_model) {
+            $this->comment('Loading transaction '.$txid.' from insight');
+            $transaction_store = app('App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionStore');
+            $transaction_model = $transaction_store->getParsedTransactionFromInsight($txid);
+        }
+
         if (!$transaction_model) {
             $this->error("transaction not found for $txid");
             return;

@@ -13,6 +13,7 @@ use App\Util\DateTimeUtil;
 use Exception;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Logging\Log;
+use Illuminate\Database\QueryException;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 use Tokenly\XcallerClient\Client;
 
@@ -60,12 +61,14 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
                 'height'       => $block_event['height'],
                 'parsed_block' => $block_event
             ]);
-        } catch (Exception $e) {
-            if (strpos($e->getCode(), '23') === 0) {
+        } catch (QueryException $e) {
+
+            if ($e->errorInfo[0] == 23000) {
                 EventLog::logError('block.duplicate.error', $e, ['hash' => $block_event['hash'], 'height' => $block_event['height'],]);
-                sleep(5);
-                return;
-            } 
+            } else {
+                throw $e;
+            }
+        } catch (Exception $e) {
 
             EventLog::logError('block.error', $e);
             sleep(5);
