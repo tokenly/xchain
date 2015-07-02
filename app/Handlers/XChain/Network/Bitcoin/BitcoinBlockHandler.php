@@ -87,6 +87,7 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
 
     public function updateAllBlockTransactions($block_event, Block $block) {
         // update all transactions that were in this block
+        $confirmations = 1;
         $block_seq = 0;
         $tx_count = count($block_event['tx']);
         foreach ($block_event['tx'] as $txid) {
