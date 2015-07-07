@@ -36,7 +36,7 @@ class ResendTransactionNotificationsCommand extends Command {
         $this
             ->addArgument('transaction-id', InputArgument::REQUIRED, 'Transaction ID')
             ->setHelp(<<<EOF
-Backfills any missing blocks
+Re-sends old transaction notifications
 EOF
         );
     }
@@ -71,9 +71,14 @@ EOF
         $confirmations = $confirmations_builder->getConfirmationsForBlockHashAsOfHeight($transaction_model['block_confirmed_hash'], $latest_height);
         // Log::debug("\$transaction_model['block_confirmed_hash']={$transaction_model['block_confirmed_hash']} \$latest_height=$latest_height \$confirmations=$confirmations");
 
+        $all_blocks = $blockchain_store->findAllAsOfHeight($latest_height);
+        $block = null;
+        foreach($all_blocks as $all_block) { $block = $all_block; }
+        if (!$block) { throw new Exception("Could not find latest block", 1); }
+
         // the block height might have changed if the chain was reorganized
         $parsed_tx = $transaction_model['parsed_tx'];
-        $block = $blockchain_store->findByHash($transaction_model['block_confirmed_hash']);
+        // $block = $blockchain_store->findByHash($transaction_model['block_confirmed_hash']);
 
         $confirmation_timestamp = null;
         if ($block) {
@@ -81,6 +86,7 @@ EOF
             $confirmation_timestamp = $block['parsed_block']['time'];
         }
 
+        // $block needs to be the current block, not the block it was confirmed
 
         // fire the event
         $events = app('Illuminate\Contracts\Events\Dispatcher');
