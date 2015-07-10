@@ -19,6 +19,8 @@ use Tokenly\LaravelEventLog\Facade\EventLog;
 
 class SendController extends APIController {
 
+    const SEND_LOCK_TIMEOUT = 3600; // 1 hour
+
     /**
      * Store a newly created resource in storage.
      *
@@ -98,7 +100,7 @@ class SendController extends APIController {
             // update and send response
             $send_respository->update($locked_send, $attributes);
             return $helper->buildJSONResponse($locked_send->serializeForAPI());
-        });
+        }, self::SEND_LOCK_TIMEOUT);
     }
 
     /**

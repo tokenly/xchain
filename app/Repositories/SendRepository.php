@@ -61,9 +61,9 @@ class SendRepository implements APIResourceRepositoryContract
 
     // locks the send, then executes $func inside the lock
     //   does not modify the passed Send
-    public function executeWithLockedSend(Send $send, Callable $func) {
-        return DB::transaction(function() use ($send, $func) {
-            return RecordLock::acquireAndExecute('send'.$send['id'], function() use ($send, $func) {
+    public function executeWithLockedSend(Send $send, Callable $func, $timeout=60) {
+        return DB::transaction(function() use ($send, $func, $timeout) {
+            return RecordLock::acquireAndExecute('xchain.send'.$send['id'], function() use ($send, $func) {
                 $locked_send = Send::where('id', $send['id'])->first();
                 $out = $func($locked_send);
 
@@ -71,14 +71,14 @@ class SendRepository implements APIResourceRepositoryContract
                 $send->setRawAttributes($locked_send->getAttributes());
 
                 return $out;
-            });
+            }, $timeout);
         });
     }
 
     // locks the send, then executes $func inside the lock
     //   does not modify the passed Send
-    public function executeWithNewLockedSendByRequestID($request_id, $create_attributes, Callable $func) {
-        return DB::transaction(function() use ($request_id, $create_attributes, $func) {
+    public function executeWithNewLockedSendByRequestID($request_id, $create_attributes, Callable $func, $timeout=60) {
+        return DB::transaction(function() use ($request_id, $create_attributes, $func, $timeout) {
             try {
                 $create_attributes['request_id'] = $request_id;
                 $locked_send = $this->create($create_attributes);
@@ -91,7 +91,7 @@ class SendRepository implements APIResourceRepositoryContract
                 }
             }
 
-            return $this->executeWithLockedSend($locked_send, $func);
+            return $this->executeWithLockedSend($locked_send, $func, $timeout);
         });
     }
 
