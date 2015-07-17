@@ -2469,12 +2469,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-currency-lib.git",
-                "reference": "cb26b91d9c37ed73a086b7046f45ff596fac42c5"
+                "reference": "e3db1d2af979be4cd5c021a9df4f5f4c60503b8e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-currency-lib/zipball/cb26b91d9c37ed73a086b7046f45ff596fac42c5",
-                "reference": "cb26b91d9c37ed73a086b7046f45ff596fac42c5",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-currency-lib/zipball/e3db1d2af979be4cd5c021a9df4f5f4c60503b8e",
+                "reference": "e3db1d2af979be4cd5c021a9df4f5f4c60503b8e",
                 "shasum": ""
             },
             "require": {
@@ -2501,7 +2501,7 @@
                 }
             ],
             "description": "A simple bitcoin currency library",
-            "time": "2014-11-20 14:15:04"
+            "time": "2015-07-16 00:53:49"
         },
         {
             "name": "tokenly/bitcoin-payer",
@@ -2509,12 +2509,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-payer.git",
-                "reference": "9521cc612f65062f4b83ca10c82c125723c9ed8d"
+                "reference": "943c0c4f14a49538e980e2641a9bac5e9470fb36"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/9521cc612f65062f4b83ca10c82c125723c9ed8d",
-                "reference": "9521cc612f65062f4b83ca10c82c125723c9ed8d",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/943c0c4f14a49538e980e2641a9bac5e9470fb36",
+                "reference": "943c0c4f14a49538e980e2641a9bac5e9470fb36",
                 "shasum": ""
             },
             "require": {
@@ -2539,12 +2539,12 @@
             "authors": [
                 {
                     "name": "Devon Weller",
-                    "email": "dweller@devonweller.com",
-                    "homepage": "http://devonweller.com"
+                    "email": "devon@tokenly.com",
+                    "homepage": "http://tokenly.com"
                 }
             ],
             "description": "A bitcoin payment library",
-            "time": "2015-05-22 12:07:47"
+            "time": "2015-07-17 13:54:32"
         },
         {
             "name": "tokenly/consul-health-daemon",
@@ -2639,12 +2639,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-sender.git",
-                "reference": "c9b70f9bff27304a12f4eb0c16b5fc0de589c07a"
+                "reference": "ac1a30e5fa174f464001dac36ff1adbe61ab29fc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-sender/zipball/c9b70f9bff27304a12f4eb0c16b5fc0de589c07a",
-                "reference": "c9b70f9bff27304a12f4eb0c16b5fc0de589c07a",
+                "url": "https://api.github.com/repos/tokenly/counterparty-sender/zipball/ac1a30e5fa174f464001dac36ff1adbe61ab29fc",
+                "reference": "ac1a30e5fa174f464001dac36ff1adbe61ab29fc",
                 "shasum": ""
             },
             "require": {
@@ -2673,7 +2673,7 @@
                 }
             ],
             "description": "A library",
-            "time": "2015-05-22 12:07:26"
+            "time": "2015-07-17 12:32:29"
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
@@ -2727,7 +2727,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/bd146152a6901acc1eb962f8cd4d3418eb19307f",
+                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/199e5cf7e408020fae6e426215a9c5071f7ce27f",
                 "reference": "bd146152a6901acc1eb962f8cd4d3418eb19307f",
                 "shasum": ""
             },
@@ -2810,7 +2810,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/7030b2dd1ff1b1a09a9f77ddd02faf66af5c6606",
+                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/abe41213654c3bd05ede003f0572d163c8d30d9a",
                 "reference": "7030b2dd1ff1b1a09a9f77ddd02faf66af5c6606",
                 "shasum": ""
             },
@@ -2894,7 +2894,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-event-log/zipball/6693bc64c25f698afa959d0325e3db7609954fa4",
+                "url": "https://api.github.com/repos/tokenly/laravel-event-log/zipball/f689da183dff772708863d79fda0985c06d4730b",
                 "reference": "6693bc64c25f698afa959d0325e3db7609954fa4",
                 "shasum": ""
             },
@@ -3095,7 +3095,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/xcpd-client/zipball/3d6c56ade86bd16474615766e4281961ebd55e13",
+                "url": "https://api.github.com/repos/tokenly/xcpd-client/zipball/bf0f351784fe75458cea1ea7b5e11b7b8e476d23",
                 "reference": "3d6c56ade86bd16474615766e4281961ebd55e13",
                 "shasum": ""
             },
