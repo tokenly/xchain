@@ -117,6 +117,16 @@ class CounterpartySenderMockBuilder
             return $txid;
         })); 
 
+        $mock->method('getrawtransaction')->will($test_case->returnCallback(function($txid, $verbose=false)  use ($mock_calls) {
+            $fake_hex = '000000001';
+            // $mock_calls['btcd'][] = [
+            //     'method'   => 'getrawtransaction',
+            //     'args'     => [$txid, $verbose],
+            //     'response' => $fake_hex,
+            // ];
+            return $fake_hex;
+        })); 
+
         $app->bind('Nbobtc\Bitcoind\Bitcoind', function() use ($mock) {
             return $mock;
         });
