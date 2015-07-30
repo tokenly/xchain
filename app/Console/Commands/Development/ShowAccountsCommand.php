@@ -121,14 +121,13 @@ class ShowAccountsCommand extends Command {
                 $row = [];
 
                 $row['date'] = $entry['created_at']->setTimezone('America/Chicago')->format('Y-m-d H:i:s T');
-                $row['type'] = LedgerEntry::typeIntegerToString($entry['type']);
-                $row['amount'] = CurrencyUtil::satoshisToValue($entry['amount']);
+                $row['amount'] = CurrencyUtil::satoshisToFormattedString($entry['amount']);
                 $row['asset'] = $entry['asset'];
+                $row['type'] = LedgerEntry::typeIntegerToString($entry['type']);
                 $row['txid'] = $entry['txid'];
 
                 $rows[] = $row;
             }
-
 
             $renderer = new ArrayToTextTable($rows);
             $renderer->showHeaders(true);

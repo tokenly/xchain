@@ -36,12 +36,12 @@ class ArrayToTextTable
     /**
      * @var int Max Column Height (returns)
      */
-    private $mH = 2;
+    private $mH = 12;
 
     /**
      * @var int Max Row Width (chars)
      */
-    private $mW = 30;
+    private $mW = 64;
 
     private $head  = false;
     private $pcen  = "+";

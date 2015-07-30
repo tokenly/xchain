@@ -104,8 +104,9 @@ class ReconcileAccountsCommand extends Command {
             $raw_xchain_balances_by_type = $ledger->combinedAccountBalancesByAsset($payment_address, null);
             $combined_xchain_balances = [];
             foreach($raw_xchain_balances_by_type as $type_string => $xchain_balances) {
-                if ($type_string == 'unconfirmed') { continue; }
                 foreach($xchain_balances as $asset => $quantity) {
+                    if ($type_string == 'sending' AND $asset == 'BTC') { continue; }
+                    if ($type_string == 'unconfirmed' AND $asset != 'BTC') { continue; }
                     if (!isset($combined_xchain_balances[$asset])) { $combined_xchain_balances[$asset] = 0.0; }
                     $combined_xchain_balances[$asset] += $quantity;
                 }
@@ -142,10 +143,17 @@ class ReconcileAccountsCommand extends Command {
                 $this->line('');
             } else {
                 Log::debug("no differences for {$payment_address['address']} ({$payment_address['uuid']})");
+
+                if ($payment_address_uuid) {
+                    // only showing one address
+                    $this->comment("No differences found for {$payment_address['address']} ({$payment_address['uuid']})");
+
+                }
             }
 
         }
 
+        $this->info('done');
     }
 
     protected function buildDifferences($xchain_map, $daemon_map) {
@@ -168,7 +176,7 @@ class ReconcileAccountsCommand extends Command {
                 $differences[$xchain_map_key] = ['xchain' => $xchain_map[$xchain_map_key], 'daemon' => '[NULL]'];
                 $any_differences = true;
             } else {
-                if ($daemon_map[$xchain_map_key] !== $xchain_map[$xchain_map_key]) {
+                if (CurrencyUtil::valueToFormattedString($daemon_map[$xchain_map_key]) != CurrencyUtil::valueToFormattedString($xchain_map[$xchain_map_key])) {
                     $differences[$xchain_map_key] = ['xchain' => $xchain_map[$xchain_map_key], 'daemon' => $daemon_map[$xchain_map_key]];
                     $any_differences = true;
                 }
