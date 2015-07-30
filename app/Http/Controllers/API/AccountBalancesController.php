@@ -19,6 +19,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tokenly\LaravelApiProvider\Filter\IndexRequestFilter;
 use Tokenly\LaravelApiProvider\Helpers\APIControllerHelper;
 use Tokenly\LaravelEventLog\Facade\EventLog;
+use Exception;
 
 class AccountBalancesController extends APIController {
 
@@ -86,13 +87,24 @@ class AccountBalancesController extends APIController {
                     $api_call
                 );
             } else {
-                AccountHandler::transfer(
-                    $payment_address, 
-                    $params['from'], $params['to'],
-                    $params['quantity'], $params['asset'], 
-                    isset($params['txid']) ? $params['txid'] : null, 
-                    $api_call
-                );
+                if (isset($params['quantity']) AND isset($params['asset'])) {
+                    AccountHandler::transfer(
+                        $payment_address, 
+                        $params['from'], $params['to'],
+                        $params['quantity'], $params['asset'], 
+                        isset($params['txid']) ? $params['txid'] : null, 
+                        $api_call
+                    );
+                } else {
+                    // transfer all
+                    AccountHandler::transferAllByTIXD(
+                        $payment_address,
+                        $params['from'], $params['to'],
+                        $params['txid'],
+                        $api_call
+                    );
+                }
+
             }
 
             // done

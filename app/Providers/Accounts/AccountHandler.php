@@ -158,6 +158,29 @@ class AccountHandler {
 
 
     // this method assumes the account is already locked
+    public function markAccountFundsAsSending(Account $account, $quantity, $asset, $float_fee, $dust_size, $txid) {
+        $balances_sent = $this->buildSendBalances($quantity, $asset, $float_fee, $dust_size);
+        foreach($balances_sent as $asset_to_send => $confirmed_and_unconfirmed_quantity_to_send) {
+            // try confirmed first
+            $confirmed_quantity_available = $this->ledger_entry_repository->accountBalance($account, $asset_to_send, LedgerEntry::CONFIRMED);
+            $confirmed_quantity_to_send = min($confirmed_quantity_available, $confirmed_and_unconfirmed_quantity_to_send);
+            if ($confirmed_quantity_to_send > 0) {
+                $this->ledger_entry_repository->changeType($confirmed_quantity_to_send, $asset_to_send, $account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, $txid);
+            }
+
+            // if any leftover, then do unconfirmed
+            if ($confirmed_quantity_to_send < $confirmed_and_unconfirmed_quantity_to_send) {
+                $unconfirmed_quantity_to_send = $confirmed_and_unconfirmed_quantity_to_send - $confirmed_quantity_to_send;
+                if ($unconfirmed_quantity_to_send > 0) {
+                    Log::debug("\$unconfirmed_quantity_to_send=".json_encode($unconfirmed_quantity_to_send, 192));
+                    $this->ledger_entry_repository->changeType($unconfirmed_quantity_to_send, $asset_to_send, $account, LedgerEntry::UNCONFIRMED, LedgerEntry::SENDING, $txid);
+                }
+            }
+
+        }
+    }
+
+    // this method assumes the account is already locked
     public function markConfirmedAccountFundsAsSending(Account $account, $quantity, $asset, $float_fee, $dust_size, $txid) {
         $balances_sent = $this->buildSendBalances($quantity, $asset, $float_fee, $dust_size);
         foreach($balances_sent as $sent_asset => $sent_quantity) {
@@ -175,15 +198,7 @@ class AccountHandler {
                 if (!$from_account) { throw new HttpException(404, "unable to find `from` account"); }
 
                 // to account
-                $to_account = $this->account_repository->findByName($to, $payment_address['id']);
-                if (!$to_account) {
-                    // create one
-                    $to_account = $this->account_repository->create([
-                        'name'               => $to,
-                        'payment_address_id' => $payment_address['id'],
-                        'user_id'            => $payment_address['user_id'],
-                    ]);
-                }
+                $to_account = $this->getDestinationAccount($to, $payment_address);
 
                 // get a (valid) type
                 if ($txid === null) {
@@ -207,6 +222,42 @@ class AccountHandler {
 
                 // quantity and asset
                 $this->ledger_entry_repository->transfer($quantity, $asset, $from_account, $to_account, $type, $txid, $api_call);
+
+                // done
+                return;
+            });
+        });
+    }
+
+
+    public function transferAllByTIXD(PaymentAddress $payment_address, $from, $to, $txid, APICall $api_call=null) {
+        return RecordLock::acquireAndExecute($payment_address['uuid'], function() use ($payment_address, $from, $to, $txid, $api_call) {
+            return DB::transaction(function() use ($payment_address, $from, $to, $txid, $api_call) {
+                // from account
+                $from_account = $this->account_repository->findByName($from, $payment_address['id']);
+                if (!$from_account) { throw new HttpException(404, "Unable to find `from` account"); }
+
+                // to account
+                $to_account = $this->getDestinationAccount($to, $payment_address);
+
+                // get a (valid) type
+                $type = $this->determineTypeFromTXID($txid);
+
+                // get all funds for this txid
+                $balances_by_account_id = $this->ledger_entry_repository->accountBalancesByTXID($txid, $type);
+                $any_found = false;
+                if (isset($balances_by_account_id[$from_account['id']])) {
+                    $balances = $balances_by_account_id[$from_account['id']];
+                    foreach($balances as $asset => $quantity) {
+                        // quantity and asset
+                        // Log::debug("Transfer $quantity $asset from {$from_account['name']} to {$to_account['name']}");
+                        $this->ledger_entry_repository->transfer($quantity, $asset, $from_account, $to_account, $type, $txid, $api_call);
+                        $any_found = true;
+                    }
+                }
+
+                // if no balances were transfered, return an error
+                if (!$any_found) { throw new HttpException(404, "No balances in `from` account were found for this transaction ID"); }
 
                 // done
                 return;
@@ -266,6 +317,21 @@ class AccountHandler {
 
     public function accountHasSufficientConfirmedFunds(Account $account, $quantity, $asset, $float_fee, $dust_size) {
         $actual_balances = $this->ledger_entry_repository->accountBalancesByAsset($account, LedgerEntry::CONFIRMED);
+        return $this->hasSufficientFunds($actual_balances, $quantity, $asset, $float_fee, $dust_size);
+    }
+
+    public function accountHasSufficientFunds(Account $account, $quantity, $asset, $float_fee, $dust_size) {
+        $confirmed_actual_balances = $this->ledger_entry_repository->accountBalancesByAsset($account, LedgerEntry::CONFIRMED);
+        $unconfirmed_actual_balances = $this->ledger_entry_repository->accountBalancesByAsset($account, LedgerEntry::UNCONFIRMED);
+        $actual_balances = $confirmed_actual_balances;
+        foreach($unconfirmed_actual_balances as $unconfirmed_asset => $unconfirmed_quantity) {
+            if (!isset($actual_balances[$unconfirmed_asset])) { $actual_balances[$unconfirmed_asset] = 0.0; }
+            $actual_balances[$unconfirmed_asset] += $unconfirmed_quantity;
+        }
+        Log::debug("\$actual_balances=".json_encode($actual_balances, 192));
+        Log::debug("\$unconfirmed_actual_balances=".json_encode($unconfirmed_actual_balances, 192));
+        Log::debug("\$confirmed_actual_balances=".json_encode($confirmed_actual_balances, 192));
+
         return $this->hasSufficientFunds($actual_balances, $quantity, $asset, $float_fee, $dust_size);
     }
 
@@ -330,4 +396,20 @@ class AccountHandler {
         // get the last credit for this txid and use that type
         return $this->ledger_entry_repository->lastEntryTypeByTXID($txid);
     }
+
+
+    protected function getDestinationAccount($name, PaymentAddress $payment_address) {
+        $destination_account = $this->account_repository->findByName($name, $payment_address['id']);
+        if (!$destination_account) {
+            // create one
+            $destination_account = $this->account_repository->create([
+                'name'               => $name,
+                'payment_address_id' => $payment_address['id'],
+                'user_id'            => $payment_address['user_id'],
+            ]);
+        }
+        return $destination_account;
+    }
+
+
 }

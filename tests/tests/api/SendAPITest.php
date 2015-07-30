@@ -156,6 +156,41 @@ class SendAPITest extends TestCase {
 
     }
 
+    public function testAPISendUnconfirmedFromAccount()
+    {
+        // mock the xcp sender
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        list($address, $created_accounts, $api_test_helper) = $this->setupBalancesForTransfer();
+
+        // without unconfirmed fails
+        $api_test_helper->callAPIAndValidateResponse('POST', '/api/v1/sends/'.$address['uuid'], $this->sendHelper()->samplePostVars([
+            'quantity'    => 0.05,
+            'asset'       => 'BTC',
+            'account'     => 'accountthree',
+        ]), 400);
+
+        // with unconfirm succeeds
+        $api_test_helper->callAPIAndValidateResponse('POST', '/api/v1/sends/'.$address['uuid'], $this->sendHelper()->samplePostVars([
+            'quantity'    => 0.05,
+            'asset'       => 'BTC',
+            'account'     => 'accountthree',
+            'unconfirmed' => true,
+        ]));
+
+        // accountone should now have funds moved into sent
+        $ledger_entry_repo = app('App\Repositories\LedgerEntryRepository');
+
+        $account_three_balances = $ledger_entry_repo->accountBalancesByAsset($created_accounts[3], null);
+        PHPUnit::assertEquals([
+            'unconfirmed' => ['BTC' => 19.9599,],
+            'confirmed'   => ['BTC' =>  0.0,],
+            'sending'     => ['BTC' =>  0.0501,],
+        ], $account_three_balances);
+
+
+    }
+
 
     public function testSweepFromAccount()
     {
@@ -271,6 +306,7 @@ class SendAPITest extends TestCase {
         $created_accounts[] = $this->newSampleAccount($address, 'default');
         $created_accounts[] = $this->newSampleAccount($address, 'accountone');
         $created_accounts[] = $this->newSampleAccount($address, 'accounttwo');
+        $created_accounts[] = $this->newSampleAccount($address, 'accountthree');
         $inactive_account = app('AccountHelper')->newSampleAccount($address, ['name' => 'Inactive 1', 'active' => 0]);
 
         // add balances to each
@@ -282,6 +318,9 @@ class SendAPITest extends TestCase {
         $ledger_entry_repo->addCredit(  1, 'BTC', $created_accounts[2], LedgerEntry::CONFIRMED, $txid);
         $ledger_entry_repo->addCredit( 20, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, $txid);
         $ledger_entry_repo->addCredit( 20, 'BTC', $created_accounts[2], LedgerEntry::UNCONFIRMED, $txid);
+
+        $ledger_entry_repo->addCredit(0.01, 'BTC', $created_accounts[3], LedgerEntry::CONFIRMED, $txid);
+        $ledger_entry_repo->addCredit(  20, 'BTC', $created_accounts[3], LedgerEntry::UNCONFIRMED, $txid);
 
 
 

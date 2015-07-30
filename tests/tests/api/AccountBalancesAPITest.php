@@ -98,6 +98,30 @@ class AccountBalancesAPITest extends TestCase {
 
     }
 
+    public function testAPITransferAllUnconfirmedTransaction()
+    {
+        list($address, $created_accounts, $api_test_helper) = $this->setupBalancesForTransfer();
+        list($account_1, $account_2, $account_3) = $created_accounts;
+
+        // transfer 
+        $api_response = $api_test_helper->callAPIAndValidateResponse('POST', '/api/v1/accounts/transfer/'.$address['uuid'], [
+            'from'     => $account_1['name'],
+            'to'       => 'another-account',
+            'txid'     => 'deadbeef00000000000000000000000000000000000000000000000000000002',
+        ], 204);
+
+        $repo = app('App\Repositories\LedgerEntryRepository');
+        $account_repository = app('App\Repositories\AccountRepository');
+        $temp_account = $account_repository->findByName('another-account', $address['id']);
+        $account_1_unconfirmed_balances = $repo->accountBalancesByAsset($account_1, LedgerEntry::UNCONFIRMED);
+        $temp_account_balances = $repo->accountBalancesByAsset($temp_account, LedgerEntry::UNCONFIRMED);
+
+        // check balances
+        PHPUnit::assertEquals(['BTC' => 5], $temp_account_balances);
+        PHPUnit::assertEquals(['BTC' => 15],  $account_1_unconfirmed_balances);
+
+    }
+
     public function testAPICloseAccount() {
         list($address, $created_accounts, $api_test_helper) = $this->setupBalancesForTransfer();
         list($account_1, $account_2, $account_3) = $created_accounts;
@@ -234,7 +258,7 @@ class AccountBalancesAPITest extends TestCase {
         $repo->addCredit(100, 'BTC', $created_accounts[1], LedgerEntry::CONFIRMED, $txid);
         $repo->addDebit(  10, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, $txid);
         $repo->addCredit( 15, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, $txid);
-        $repo->addCredit( 5, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, $txid2);
+        $repo->addCredit(  5, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, $txid2);
         $repo->addCredit( 20, 'BTC', $created_accounts[2], LedgerEntry::UNCONFIRMED, $txid);
 
         return [$address, $created_accounts, $api_test_helper];

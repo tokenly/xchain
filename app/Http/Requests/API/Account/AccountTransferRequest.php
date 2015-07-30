@@ -35,7 +35,18 @@ class AccountTransferRequest extends APIRequest {
                 if ($this->input('quantity')) {
                     $validator->errors()->add('quantity', 'The quantity field is not allowed when closing an account.');
                 }
+            } else {
+                if ($this->input('asset') AND !$this->input('quantity')) {
+                    $validator->errors()->add('quantity', 'The quantity field is required when specifying an asset.');
+                }
+                if ($this->input('quantity') AND !$this->input('asset')) {
+                    $validator->errors()->add('asset', 'The asset field is required when specifying a quantity.');
+                }
+                if (!$this->input('quantity') AND !$this->input('asset') AND !$this->input('txid')) {
+                    $validator->errors()->add('txid', 'Either quantity and asset or a transaction ID is required.');
+                }
             }
+
         });
 
         return $validator;

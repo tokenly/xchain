@@ -106,11 +106,19 @@ class SendController extends APIController {
                     // get lock
                     $lock_acquired = AccountHandler::acquirePaymentAddressLock($payment_address);
 
+                    // whether to spend unconfirmed balances
+                    $allow_unconfirmed = isset($request_attributes['unconfirmed']) ? $request_attributes['unconfirmed'] : false;
+                    Log::debug("\$allow_unconfirmed=".json_encode($allow_unconfirmed, 192));
+
                     // validate that the funds are available
-                    $has_enough_funds = AccountHandler::accountHasSufficientConfirmedFunds($account, $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $dust_size);
+                    if ($allow_unconfirmed) {
+                        $has_enough_funds = AccountHandler::accountHasSufficientFunds($account, $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $dust_size);
+                    } else {
+                        $has_enough_funds = AccountHandler::accountHasSufficientConfirmedFunds($account, $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $dust_size);
+                    }
                     if (!$has_enough_funds) {
                         EventLog::logError('error.send.insufficient', ['address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $request_attributes['quantity'], 'asset' => $request_attributes['asset']]);
-                        return new JsonResponse(['message' => "This account does not have sufficient confirmed funds available."], 400);
+                        return new JsonResponse(['message' => "This account does not have sufficient".($allow_unconfirmed ? '' : ' confirmed')." funds available."], 400);
                     }
 
 
@@ -120,7 +128,11 @@ class SendController extends APIController {
 
 
                     // tag funds as sent with the txid
-                    AccountHandler::markConfirmedAccountFundsAsSending($account, $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $dust_size, $txid);
+                    if ($allow_unconfirmed) {
+                        AccountHandler::markAccountFundsAsSending($account, $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $dust_size, $txid);
+                    } else {
+                        AccountHandler::markConfirmedAccountFundsAsSending($account, $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $dust_size, $txid);
+                    }
 
                     // release the account lock
                     if ($lock_acquired) { AccountHandler::releasePaymentAddressLock($payment_address); }

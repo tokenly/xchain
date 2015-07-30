@@ -46,6 +46,7 @@ class CreateSendRequest extends APIRequest {
             'sweep'              => 'required_without:quantity|boolean',
             'requestId'          => 'max:36',
             'account'            => 'max:127',
+            'unconfirmed'        => 'boolean',
         ];
     }
 
