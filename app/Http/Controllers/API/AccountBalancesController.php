@@ -96,7 +96,7 @@ class AccountBalancesController extends APIController {
             }
 
             // done
-            return new Response('', 204);
+            return $helper->buildJSONResponse([], 204);
 
         } catch (HttpException $e) {
             return $helper->buildJSONResponse(['message' => $e->getMessage()], $e->getStatusCode());

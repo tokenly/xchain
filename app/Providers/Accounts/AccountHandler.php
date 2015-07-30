@@ -179,9 +179,9 @@ class AccountHandler {
                 if (!$to_account) {
                     // create one
                     $to_account = $this->account_repository->create([
-                        'name'                 => $to,
+                        'name'               => $to,
                         'payment_address_id' => $payment_address['id'],
-                        'user_id'              => $payment_address['user_id'],
+                        'user_id'            => $payment_address['user_id'],
                     ]);
                 }
 
