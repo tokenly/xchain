@@ -5,11 +5,13 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\API\Base\APIController;
 use App\Http\Requests\API\Account\AccountTransferRequest;
 use App\Models\LedgerEntry;
+use App\Providers\Accounts\Exception\AccountException;
 use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\APICallRepository;
 use App\Repositories\AccountRepository;
 use App\Repositories\LedgerEntryRepository;
 use App\Repositories\PaymentAddressRepository;
+use Exception;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -19,7 +21,6 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tokenly\LaravelApiProvider\Filter\IndexRequestFilter;
 use Tokenly\LaravelApiProvider\Helpers\APIControllerHelper;
 use Tokenly\LaravelEventLog\Facade\EventLog;
-use Exception;
 
 class AccountBalancesController extends APIController {
 
@@ -109,6 +110,9 @@ class AccountBalancesController extends APIController {
 
             // done
             return $helper->buildJSONResponse([], 204);
+
+        } catch (AccountException $e) {
+            return $helper->buildJSONResponse(['message' => $e->getMessage(), 'errorName' => $e->getErrorName()], $e->getStatusCode());
 
         } catch (HttpException $e) {
             return $helper->buildJSONResponse(['message' => $e->getMessage()], $e->getStatusCode());

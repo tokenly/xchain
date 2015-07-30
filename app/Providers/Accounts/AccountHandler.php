@@ -7,6 +7,7 @@ use App\Models\APICall;
 use App\Models\Account;
 use App\Models\LedgerEntry;
 use App\Models\PaymentAddress;
+use App\Providers\Accounts\Exception\AccountException;
 use App\Repositories\AccountRepository;
 use App\Repositories\LedgerEntryRepository;
 use Exception;
@@ -14,7 +15,6 @@ use Illuminate\Foundation\Bus\DispatchesCommands;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 use Tokenly\RecordLock\Facade\RecordLock;
 
@@ -195,7 +195,7 @@ class AccountHandler {
             return DB::transaction(function() use ($payment_address, $from, $to, $quantity, $asset, $txid, $api_call) {
                 // from account
                 $from_account = $this->account_repository->findByName($from, $payment_address['id']);
-                if (!$from_account) { throw new HttpException(404, "unable to find `from` account"); }
+                if (!$from_account) { throw new AccountException('ERR_FROM_ACCOUNT_NOT_FOUND', 404, "unable to find `from` account"); }
 
                 // to account
                 $to_account = $this->getDestinationAccount($to, $payment_address);
@@ -216,7 +216,7 @@ class AccountHandler {
                         }
                     }
 
-                    if (!$has_sufficient_funds) { throw new HttpException(400, "This account does not have sufficient funds for this transaction id."); }
+                    if (!$has_sufficient_funds) { throw new AccountException('ERR_INSUFFICIENT_FUNDS', 400, "This account does not have sufficient funds for this transaction id."); }
                 }
 
 
@@ -235,7 +235,7 @@ class AccountHandler {
             return DB::transaction(function() use ($payment_address, $from, $to, $txid, $api_call) {
                 // from account
                 $from_account = $this->account_repository->findByName($from, $payment_address['id']);
-                if (!$from_account) { throw new HttpException(404, "Unable to find `from` account"); }
+                if (!$from_account) { throw new AccountException('ERR_FROM_ACCOUNT_NOT_FOUND', 404, "Unable to find `from` account"); }
 
                 // to account
                 $to_account = $this->getDestinationAccount($to, $payment_address);
@@ -257,7 +257,7 @@ class AccountHandler {
                 }
 
                 // if no balances were transfered, return an error
-                if (!$any_found) { throw new HttpException(404, "No balances in `from` account were found for this transaction ID"); }
+                if (!$any_found) { throw new AccountException('ERR_NO_BALANCE', 404, "No balances in `from` account were found for this transaction ID"); }
 
                 // done
                 return;
@@ -271,7 +271,7 @@ class AccountHandler {
             return DB::transaction(function() use ($payment_address, $from, $to, $api_call) {
                 // from account
                 $from_account = $this->account_repository->findByName($from, $payment_address['id']);
-                if (!$from_account) { throw new HttpException(404, "unable to find `from` account"); }
+                if (!$from_account) { throw new AccountException('ERR_FROM_ACCOUNT_NOT_FOUND', 404, "unable to find `from` account"); }
 
                 // to account
                 $to_account = $this->account_repository->findByName($to, $payment_address['id']);
