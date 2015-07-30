@@ -183,6 +183,15 @@ class AccountBalancesAPITest extends TestCase {
                 'expectedErrorString' => 'quantity field is not allowed',
                 'expectedErrorCode'   => 400,
             ],
+            [
+                'postVars' => array_merge($default_vars, [
+                    'quantity' => 15,
+                    'asset'    => 'BTC',
+                    'txid'     => 'deadbeef00000000000000000000000000000000000000000000000000000002'
+                ]),
+                'expectedErrorString' => 'account does not have sufficient funds',
+                'expectedErrorCode'   => 400,
+            ],
         ], $test_default_params);
     }
 
@@ -219,11 +228,13 @@ class AccountBalancesAPITest extends TestCase {
 
         // add balances to each
         $txid = 'deadbeef00000000000000000000000000000000000000000000000000000001';
+        $txid2 = 'deadbeef00000000000000000000000000000000000000000000000000000002';
         $repo = app('App\Repositories\LedgerEntryRepository');
         $repo->addCredit(110, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, $txid);
         $repo->addCredit(100, 'BTC', $created_accounts[1], LedgerEntry::CONFIRMED, $txid);
         $repo->addDebit(  10, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit( 20, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, $txid);
+        $repo->addCredit( 15, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, $txid);
+        $repo->addCredit( 5, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, $txid2);
         $repo->addCredit( 20, 'BTC', $created_accounts[2], LedgerEntry::UNCONFIRMED, $txid);
 
         return [$address, $created_accounts, $api_test_helper];

@@ -190,6 +190,18 @@ class AccountHandler {
                     $type = LedgerEntry::CONFIRMED;
                 } else {
                     $type = $this->determineTypeFromTXID($txid);
+
+                    // ensure sufficient funds for this txid
+                    $balances_by_account_id = $this->ledger_entry_repository->accountBalancesByTXID($txid, $type);
+                    $has_sufficient_funds = false;
+                    if (isset($balances_by_account_id[$from_account['id']])) {
+                        $balances = $balances_by_account_id[$from_account['id']];
+                        if ($balances AND isset($balances[$asset]) AND $balances[$asset] >= $quantity) {
+                            $has_sufficient_funds = true;
+                        }
+                    }
+
+                    if (!$has_sufficient_funds) { throw new HttpException(400, "This account does not have sufficient funds for this transaction id."); }
                 }
 
 
