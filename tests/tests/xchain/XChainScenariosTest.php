@@ -8,23 +8,25 @@ class XChainScenariosTest extends TestCase {
     protected $useDatabase = true;
 
 
-    public function testSingleXChainScenario() {
+    public function testSingleScenario() {
         $scenario_number = getenv('SCENARIO');
 
         if ($scenario_number !== false) {
             $this->drainQueue();
             $this->runScenario($scenario_number);
         }
-        // echo "\$scenario_number_vars:\n".json_encode($scenario_number_vars, 192)."\n";
 
         $this->drainQueue();
     }
 
-    public function testAllXChainScenarios() {
+    public function testAllScenarios() {
+        $starting_scenario_number = getenv('SCENARIO');
+        if (!$starting_scenario_number) { $starting_scenario_number = 1; }
+
         // do all state tests in directory
         $scenario_number_count = count(glob(base_path().'/tests/fixtures/scenarios/*.yml'));
         PHPUnit::assertGreaterThan(0, $scenario_number_count);
-        for ($i=1; $i <= $scenario_number_count; $i++) { 
+        for ($i=$starting_scenario_number; $i <= $scenario_number_count; $i++) { 
             Log::debug("BEGIN SCENARIO: $i");
             // clear the db
             if ($i > 1) { $this->resetForScenario(); }
@@ -37,7 +39,6 @@ class XChainScenariosTest extends TestCase {
             }
         }
     }
-
 
     protected function runScenario($scenario_number) {
         // $this->init();

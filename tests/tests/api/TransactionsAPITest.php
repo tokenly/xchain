@@ -71,7 +71,7 @@ class TransactionsAPITest extends TestCase {
     ////////////////////////////////////////////////////////////////////////
     
     protected function getAPITester() {
-        $api_tester =  $this->app->make('APITester', [$this->app, '/api/v1/transactions', $this->app->make('App\Repositories\TransactionRepository')]);
+        $api_tester =  $this->app->make('SimpleAPITester', [$this->app, '/api/v1/transactions', $this->app->make('App\Repositories\TransactionRepository')]);
         $api_tester->ensureAuthenticatedUser();
         return $api_tester;
     }

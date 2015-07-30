@@ -5,8 +5,10 @@ namespace App\Handlers\XChain\Network\Bitcoin;
 use App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionStore;
 use App\Handlers\XChain\Network\Contracts\NetworkTransactionHandler;
 use App\Models\Block;
+use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\MonitoredAddressRepository;
 use App\Repositories\NotificationRepository;
+use App\Repositories\PaymentAddressRepository;
 use App\Repositories\UserRepository;
 use App\Util\DateTimeUtil;
 use Illuminate\Database\QueryException;
@@ -17,8 +19,9 @@ use Tokenly\XcallerClient\Client;
 
 class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
-    public function __construct(MonitoredAddressRepository $monitored_address_repository, UserRepository $user_repository, NotificationRepository $notification_repository, BitcoinTransactionStore $transaction_store, Client $xcaller_client) {
+    public function __construct(MonitoredAddressRepository $monitored_address_repository, PaymentAddressRepository $payment_address_repository, UserRepository $user_repository, NotificationRepository $notification_repository, BitcoinTransactionStore $transaction_store, Client $xcaller_client) {
         $this->monitored_address_repository = $monitored_address_repository;
+        $this->payment_address_repository   = $payment_address_repository;
         $this->user_repository              = $user_repository;
         $this->notification_repository      = $notification_repository;
         $this->transaction_store            = $transaction_store;
@@ -34,15 +37,12 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
     }
 
     public function handleConfirmedTransaction($parsed_tx, $confirmations, $block_seq, Block $block) {
-        // with bitcoin, we assume the confirmed transaction is valid
-        return $this->sendNotifications($parsed_tx, $confirmations, $block_seq, $block);
+        $this->sendNotifications($parsed_tx, $confirmations, $block_seq, $block);
+        $this->updateAccountBalances($parsed_tx, $confirmations, $block_seq, $block);
     }
 
     public function sendNotifications($parsed_tx, $confirmations, $block_seq, Block $block=null)
     {
-        // echo "sendNotifications \$parsed_tx:\n".json_encode($parsed_tx, 192)."\n";
-        // $this->wlog('sendNotifications txid: '.$parsed_tx['txid'].' $confirmations: '.$confirmations);
-
         $sources = ($parsed_tx['sources'] ? $parsed_tx['sources'] : []);
         $destinations = ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []);
 
@@ -78,9 +78,49 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             $matched_monitored_address_ids[] = $monitored_address['uuid'];
         }
 
-        if (!$this->preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids)) { return; }
+        if ($this->willNeedToPreprocessSendNotification($parsed_tx, $confirmations)) {
+            $this->preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids);
+            return;
+        }
 
         $this->sendNotificationsForMatchedMonitorIDs($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids);
+    }
+
+
+    public function updateAccountBalances($parsed_tx, $confirmations, $block_seq, Block $block=null) {
+        // don't process this now if pre-processing was necessary for the send notification
+        if ($this->willNeedToPreprocessSendNotification($parsed_tx, $confirmations)) {
+            return;
+        }
+
+
+        $sources = ($parsed_tx['sources'] ? $parsed_tx['sources'] : []);
+        $destinations = ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []);
+
+        // get all addresses that we care about
+        $all_addresses = array_unique(array_merge($sources, $destinations));
+        if (!$all_addresses) { return; }
+
+        // find all monitored address matching those in the sources or destinations
+        $payment_addresses = $this->payment_address_repository->findByAddresses($all_addresses);
+
+        // determine matched payment addresses
+        foreach($payment_addresses->get() as $payment_address) {
+            
+            if (in_array($payment_address['address'], $sources)) {
+                // this address sent something
+                $quantity = $this->buildQuantityForEventType('send', $parsed_tx, $payment_address['address']);
+                AccountHandler::send($payment_address, $quantity, $parsed_tx['asset'], $parsed_tx, $confirmations);
+                continue;
+            }
+
+            if (in_array($payment_address['address'], $destinations)) {
+                // this address received something
+                $quantity = $this->buildQuantityForEventType('receive', $parsed_tx, $payment_address['address']);
+                AccountHandler::receive($payment_address, $quantity, $parsed_tx['asset'], $parsed_tx, $confirmations);
+                continue;
+            }
+        }
     }
 
 
@@ -150,11 +190,17 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
     }
 
-    // if this returns false, don't send the notification
+    // if this returns true, then pre-processing is necessary and don't send the notificatoin
+    protected function willNeedToPreprocessSendNotification($parsed_tx, $confirmations) {
+        // bitcoin always sends unconfirmed and confirmed notifications immediately
+        return false;
+    }
+
     protected function preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids) {
         // for bitcoin, always send confirmed notifications
         //   because bitcoind has already validated the confirmed transaction
-        return true;
+
+        // empty for bitcoin
     }
 
     protected function buildNotification($event_type, $parsed_tx, $quantity, $sources, $destinations, $confirmations, $block, $block_seq, $monitored_address) {

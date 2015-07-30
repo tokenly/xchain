@@ -21,7 +21,7 @@ class AssetAPITest extends TestCase {
     }
 
     protected function getAPITester() {
-        return $this->app->make('APITester', [$this->app, '/api/v1/assets', null]);
+        return $this->app->make('SimpleAPITester', [$this->app, '/api/v1/assets', null]);
     }
 
 }

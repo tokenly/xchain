@@ -14,15 +14,19 @@ class Kernel extends ConsoleKernel {
 		'App\Console\Commands\Inspire',
 
 		// xchain commands
+		'App\Console\Commands\Blocks\LoadMissingBlocksCommand',
+		'App\Console\Commands\Transaction\ResendTransactionNotificationsCommand',
+
 		'App\Console\Commands\Development\PopulateNotificationCommand',
 		'App\Console\Commands\Development\SendManualNotificationCommand',
 		'App\Console\Commands\Development\ExportWIFCommand',
-		'App\Console\Commands\Development\TestConfigCommand',
 		'App\Console\Commands\Development\ParseTransactionCommand',
-		'App\Console\Commands\Blocks\LoadMissingBlocksCommand',
-		'App\Console\Commands\Transaction\ResendTransactionNotificationsCommand',
 		'App\Console\Commands\Development\PruneTransactionsCommand',
 		'App\Console\Commands\Development\PruneBlocksCommand',
+		'App\Console\Commands\Development\UpgradeAccountsCommand',
+		'App\Console\Commands\Development\SweepAccountCommand',
+		'App\Console\Commands\Development\ShowAccountsCommand',
+		'App\Console\Commands\Development\ReconcileAccountsCommand',
 
 		// vendor commands
 		'Tokenly\ConsulHealthDaemon\Console\ConsulHealthMonitorCommand',

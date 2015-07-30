@@ -1,0 +1,321 @@
+<?php
+
+namespace App\Providers\Accounts;
+
+use App\Commands\CreateAccount;
+use App\Models\APICall;
+use App\Models\Account;
+use App\Models\LedgerEntry;
+use App\Models\PaymentAddress;
+use App\Repositories\AccountRepository;
+use App\Repositories\LedgerEntryRepository;
+use Exception;
+use Illuminate\Foundation\Bus\DispatchesCommands;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Tokenly\LaravelEventLog\Facade\EventLog;
+use Tokenly\RecordLock\Facade\RecordLock;
+
+class AccountHandler {
+
+    const RECEIVED_CONFIRMATIONS_REQUIRED = 2;
+    const SEND_CONFIRMATIONS_REQUIRED     = 1;
+
+    use DispatchesCommands;
+
+    function __construct(AccountRepository $account_repository, LedgerEntryRepository $ledger_entry_repository) {
+        $this->account_repository = $account_repository;
+        $this->ledger_entry_repository = $ledger_entry_repository;
+    }
+
+    public function createDefaultAccount(PaymentAddress $address) {
+        // also create a default account for this address
+        $this->dispatch(new CreateAccount(['name' => 'default'], $address));
+    }
+
+    public function receive(PaymentAddress $payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
+        // when migrating, we need to ignore the transactions already confirmed
+        if ($confirmations > 0 AND $parsed_tx['bitcoinTx']['blockheight'] < Config::get('xchain.accountsIgnoreBeforeBlockHeight')) {
+            EventLog::log('account.receive.ignored', ['blockheight' => $parsed_tx['bitcoinTx']['blockheight'], 'confirmations' => $confirmations, 'ignoredBefore' => Config::get('xchain.accountsIgnoreBeforeBlockHeight')]);
+            return;
+        }
+
+
+        return RecordLock::acquireAndExecute($payment_address['uuid'], function() use ($payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
+            DB::transaction(function() use ($payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
+                // get the default account
+                $default_account = $this->getAccount($payment_address);
+
+                list($txid, $dust_size) = $this->extractDataFromParsedTransaction($parsed_tx);
+
+                if ($confirmations >= self::RECEIVED_CONFIRMATIONS_REQUIRED) {
+                    $type = LedgerEntry::CONFIRMED;
+
+                    // if there are any confirmed entries for this txid already, then 
+                    //  don't add anything new
+                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, LedgerEntry::CONFIRMED);
+                    if (count($existing_ledger_entries) > 0) { return; }
+
+                    // find the funds and move each one to the confirmed status
+                    $any_unconfirmed_funds_found = false;
+                    $unconfirmed_balances_by_account_id = $this->ledger_entry_repository->accountBalancesByTXID($txid, LedgerEntry::UNCONFIRMED);
+                    foreach($unconfirmed_balances_by_account_id as $account_id => $balances) {
+                        $any_unconfirmed_funds_found = true;
+                        $account = $this->account_repository->findByID($account_id);
+                        foreach($balances as $asset => $quantity) {
+                            if ($quantity > 0) {
+                                $this->ledger_entry_repository->changeType($quantity, $asset, $account, LedgerEntry::UNCONFIRMED, LedgerEntry::CONFIRMED, $txid);
+                            }
+                        }
+                    }
+
+                    // handle a situation where unconfirmed funds were not already added
+                    if (!$any_unconfirmed_funds_found) {
+                        // credit the asset(s) including the BTC dust
+                        foreach ($this->buildReceiveBalances($quantity, $asset, $dust_size) as $asset_received => $quantity_received) {
+                            $this->ledger_entry_repository->addCredit($quantity_received, $asset_received, $default_account, $type, $txid);
+                        }
+                    }
+
+
+                } else {
+                    $type = LedgerEntry::UNCONFIRMED;
+
+                    // if there are any entries for this txid already, then 
+                    //  don't add anything new
+                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid);
+                    if (count($existing_ledger_entries) > 0) {
+                        if ($confirmations == 0) { EventLog::log('account.receive.warning', ['txid' => $txid]); }
+                        return;
+                    }
+
+                    // credit the asset(s) including the BTC dust
+                    foreach ($this->buildReceiveBalances($quantity, $asset, $dust_size) as $asset_received => $quantity_received) {
+                        $this->ledger_entry_repository->addCredit($quantity_received, $asset_received, $default_account, $type, $txid);
+                    }
+                }
+
+
+            });
+        });
+    }
+
+    public function send(PaymentAddress $payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
+        // when migrating, we need to ignore the transactions already confirmed
+        if ($confirmations > 0 AND $parsed_tx['bitcoinTx']['blockheight'] < Config::get('xchain.accountsIgnoreBeforeBlockHeight')) {
+            EventLog::log('account.receive.ignored', ['blockheight' => $parsed_tx['bitcoinTx']['blockheight'], 'confirmations' => $confirmations, 'ignoredBefore' => Config::get('xchain.accountsIgnoreBeforeBlockHeight')]);
+            return;
+        }
+
+        return RecordLock::acquireAndExecute($payment_address['uuid'], function() use ($payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
+            DB::transaction(function() use ($payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
+
+                list($txid, $dust_size, $btc_fees) = $this->extractDataFromParsedTransaction($parsed_tx);
+
+                if ($confirmations >= self::SEND_CONFIRMATIONS_REQUIRED) {
+                    // SENT
+
+                    // find any sending funds and debit them
+                    $any_sending_funds_found = false;
+                    $sent_balances_by_account_id = $this->ledger_entry_repository->accountBalancesByTXID($txid, LedgerEntry::SENDING);
+                    foreach($sent_balances_by_account_id as $account_id => $balances) {
+                        $any_sending_funds_found = true;
+                        $account = $this->account_repository->findByID($account_id);
+                        foreach($balances as $asset => $quantity) {
+                            if ($quantity > 0) {
+                                $this->ledger_entry_repository->addDebit($quantity, $asset, $account, LedgerEntry::SENDING, $txid);
+                            }
+                        }
+                    }
+
+                } else {
+                    // SENDING
+
+                    // get the default account
+                    $default_account = $this->getAccount($payment_address);
+
+                    $type = LedgerEntry::SENDING;
+
+                    // if there are any entries for this txid already, then 
+                    //  don't add anything new
+                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid);
+                    if (count($existing_ledger_entries) > 0) {
+                        if ($confirmations == 0) { EventLog::log('account.send.warning', ['txid' => $txid]); }
+                        return;
+                    }
+
+                    // change type
+                    foreach ($this->buildSendBalances($quantity, $asset, $btc_fees, $dust_size) as $asset_sent => $quantity_sent) {
+                        $this->ledger_entry_repository->changeType($quantity_sent, $asset_sent, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, $txid);
+                    }
+                }
+
+            });
+        });
+    }
+
+
+    // this method assumes the account is already locked
+    public function markConfirmedAccountFundsAsSending(Account $account, $quantity, $asset, $float_fee, $dust_size, $txid) {
+        $balances_sent = $this->buildSendBalances($quantity, $asset, $float_fee, $dust_size);
+        foreach($balances_sent as $sent_asset => $sent_quantity) {
+            // Log::debug("changeType $sent_quantity $sent_asset to SENDING with txid $txid");
+            $this->ledger_entry_repository->changeType($sent_quantity, $sent_asset, $account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, $txid);
+        }
+    }
+
+
+    public function transfer(PaymentAddress $payment_address, $from, $to, $quantity, $asset, $txid=null, APICall $api_call=null) {
+        return RecordLock::acquireAndExecute($payment_address['uuid'], function() use ($payment_address, $from, $to, $quantity, $asset, $txid, $api_call) {
+            return DB::transaction(function() use ($payment_address, $from, $to, $quantity, $asset, $txid, $api_call) {
+                // from account
+                $from_account = $this->account_repository->findByName($from, $payment_address['id']);
+                if (!$from_account) { throw new HttpException(404, "unable to find `from` account"); }
+
+                // to account
+                $to_account = $this->account_repository->findByName($to, $payment_address['id']);
+                if (!$to_account) {
+                    // create one
+                    $to_account = $this->account_repository->create([
+                        'name'                 => $to,
+                        'payment_address_id' => $payment_address['id'],
+                        'user_id'              => $payment_address['user_id'],
+                    ]);
+                }
+
+                // get a (valid) type
+                if ($txid === null) {
+                    $type = LedgerEntry::CONFIRMED;
+                } else {
+                    $type = $this->determineTypeFromTXID($txid);
+                }
+
+
+                // quantity and asset
+                $this->ledger_entry_repository->transfer($quantity, $asset, $from_account, $to_account, $type, $txid, $api_call);
+
+                // done
+                return;
+            });
+        });
+    }
+
+
+    public function close(PaymentAddress $payment_address, $from, $to, APICall $api_call) {
+        RecordLock::acquireAndExecute($payment_address['uuid'], function() use ($payment_address, $from, $to, $api_call) {
+            return DB::transaction(function() use ($payment_address, $from, $to, $api_call) {
+                // from account
+                $from_account = $this->account_repository->findByName($from, $payment_address['id']);
+                if (!$from_account) { throw new HttpException(404, "unable to find `from` account"); }
+
+                // to account
+                $to_account = $this->account_repository->findByName($to, $payment_address['id']);
+                if (!$to_account) {
+                    // create one
+                    $to_account = $this->account_repository->create([
+                        'name'                 => $to,
+                        'payment_address_id' => $payment_address['id'],
+                        'user_id'              => $payment_address['user_id'],
+                    ]);
+                }
+
+                // move all balances
+                //  accountBalancesByTXIDAndAsset
+                $all_balances_by_asset = $this->ledger_entry_repository->accountBalancesByTXIDAndAsset($from_account);
+                foreach($all_balances_by_asset as $type_string => $balances_by_txid) {
+                    $type = LedgerEntry::typeStringToInteger($type_string);
+                    foreach($balances_by_txid as $raw_txid => $balances) {
+                        $txid = ($raw_txid == 'none' ? null : $raw_txid);
+                        foreach($balances as $asset => $quantity) {
+                            $this->ledger_entry_repository->transfer($quantity, $asset, $from_account, $to_account, $type, $txid, $api_call);
+                        }
+                    }
+                }
+
+                // done
+                return;
+            });
+        });
+    }
+
+    public function acquirePaymentAddressLock(PaymentAddress $payment_address, $timeout=1800) {
+        return RecordLock::acquire($payment_address['uuid'], $timeout);
+    }
+
+    public function releasePaymentAddressLock(PaymentAddress $payment_address) {
+        return RecordLock::release($payment_address['uuid']);
+    }
+
+    public function getAccount(PaymentAddress $payment_address, $name='default') {
+        return $this->account_repository->findByName($name, $payment_address['id']);
+    }
+
+    public function accountHasSufficientConfirmedFunds(Account $account, $quantity, $asset, $float_fee, $dust_size) {
+        $actual_balances = $this->ledger_entry_repository->accountBalancesByAsset($account, LedgerEntry::CONFIRMED);
+        return $this->hasSufficientFunds($actual_balances, $quantity, $asset, $float_fee, $dust_size);
+    }
+
+    public function zeroAllBalances(PaymentAddress $payment_address, APICall $api_call) {
+        $txid = null;
+        foreach ($this->account_repository->findByAddressAndUserID($payment_address['id'], $payment_address['user_id']) as $account) {
+            $actual_balances_by_type = $this->ledger_entry_repository->accountBalancesByAsset($account, null);
+            foreach($actual_balances_by_type as $type_string => $actual_balances) {
+                if ($type_string == 'sending') { continue; }
+                foreach($actual_balances as $asset => $quantity) {
+                    $this->ledger_entry_repository->addDebit($quantity, $asset, $account, LedgerEntry::typeStringToInteger($type_string), $txid, $api_call);
+                }
+            }
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+
+    protected function hasSufficientFunds($actual_balances, $quantity, $asset, $float_fee, $dust_size) {
+        // build required balances with fees
+        $balances_required = $this->buildSendBalances($quantity, $asset, $float_fee, $dust_size);
+
+        // check actual balances
+        $has_sufficient_funds = true;
+        foreach($balances_required as $asset_required => $quantity_required) {
+            if (!isset($actual_balances[$asset_required]) OR $actual_balances[$asset_required] < $quantity_required) {
+                $has_sufficient_funds = false;
+            }
+        }
+
+        return $has_sufficient_funds;
+    }
+
+    protected function buildSendBalances($quantity, $asset, $float_fee, $dust_size) {
+        $send_balances = [$asset => $quantity];
+        if ($asset != 'BTC') { $send_balances['BTC'] = $dust_size; }
+        $send_balances['BTC'] = $send_balances['BTC'] + $float_fee;
+        return $send_balances;
+    }
+
+    protected function buildReceiveBalances($quantity, $asset, $dust_size) {
+        $receive_balances = [$asset => $quantity];
+        if ($asset != 'BTC' AND $dust_size > 0) {
+            $receive_balances['BTC'] = $dust_size;
+        }
+        return $receive_balances;
+    }
+
+
+    protected function extractDataFromParsedTransaction($parsed_tx) {
+        $txid = $parsed_tx['txid'];
+        $dust_size = 0;
+        if ($parsed_tx['network'] == 'counterparty') {
+            $dust_size = $parsed_tx['counterpartyTx']['dustSize'];
+        }
+        $fee = $parsed_tx['bitcoinTx']['fees'];
+
+        return [$txid, $dust_size, $fee];
+    }
+
+    protected function determineTypeFromTXID($txid) {
+        // get the last credit for this txid and use that type
+        return $this->ledger_entry_repository->lastEntryTypeByTXID($txid);
+    }
+}

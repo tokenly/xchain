@@ -19,11 +19,11 @@ class CounterpartyTransactionHandler extends BitcoinTransactionHandler {
     }
 
 
-    protected function preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids) {
+    protected function willNeedToPreprocessSendNotification($parsed_tx, $confirmations) {
         // for counterparty, we need to validate all confirmed transactions with counterpartyd
         if ($confirmations == 0) {
             // unconfirmed transactions are forwarded ahead.  They will be validated when they confirm.
-            return true;
+            return false;
         }
 
         // if the parsed transaction has not been verified with counterpartyd, then push it through it into the counterparty verification queue
@@ -31,9 +31,16 @@ class CounterpartyTransactionHandler extends BitcoinTransactionHandler {
 
         if ($is_validated) {
             // if this transactions was already validated
-            return true;
+            return false;
         }
 
+
+        // all other confirmed counterparty transactions must be validated
+        return true;
+    }
+
+
+    protected function preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids) {
         // throw this transaction into the counterpartyd verification queue
         $data = [
             'tx'            => $parsed_tx,
@@ -44,9 +51,6 @@ class CounterpartyTransactionHandler extends BitcoinTransactionHandler {
         // Log::debug("pushing ValidateConfirmedCounterpartydTxJob ".json_encode($data['block_id'], 192));
         Queue::connection('blockingbeanstalkd')
             ->push('App\Jobs\XChain\ValidateConfirmedCounterpartydTxJob', $data, 'validate_counterpartytx');
-
-        // return false so the notification isn't sent out without being validated
-        return false;
     }
 
 }

@@ -4,6 +4,9 @@ monitoredAddresses:
   - address: RECIPIENT01
     monitor_type: receive
 
+paymentAddresses:
+  - address: RECIPIENT01
+
 events:
   -
     type: transaction
@@ -18,5 +21,7 @@ events:
 notifications:
   - meta: { baseFilename: xcp_mempool_notification_01.yml }
 
-
-
+accounts:
+  - meta: { baseFilename: default01.yml }
+    balances:
+      unconfirmed: { LTBCOIN: 533.83451959, BTC: 0.00005430 }

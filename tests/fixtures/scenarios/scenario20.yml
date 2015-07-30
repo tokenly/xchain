@@ -1,0 +1,33 @@
+# test confirm send transaction without a mempool transaction
+#   balances should be gone
+
+monitoredAddresses:
+  - address: RECIPIENT01
+    monitor_type: receive
+
+paymentAddresses:
+  - address: RECIPIENT01
+
+events:
+  -
+    type: transaction
+    meta:
+        baseFilename: default_xcp_parsed_01.json
+    txid: cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
+    sender: SENDER01
+    recipient: RECIPIENT01
+    isCounterpartyTx: true
+    asset: LTBCOIN
+    quantity: 500
+    blockId: 300000
+    confirmations: 2
+    blockhash: 000000000000000015f697b296584d9d443d2225c67df9033157a9efe4a8faa0
+
+
+notifications: ~
+
+
+accounts:
+  - meta: { baseFilename: default01.yml }
+    balances:
+      confirmed: { LTBCOIN: 500, BTC: 0.00005430 }

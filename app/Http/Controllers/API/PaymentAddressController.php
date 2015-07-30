@@ -10,6 +10,7 @@ use Tokenly\LaravelEventLog\Facade\EventLog;
 use App\Repositories\PaymentAddressRepository;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Support\Facades\Log;
+use App\Providers\Accounts\Facade\AccountHandler;
 
 class PaymentAddressController extends APIController {
 
@@ -36,9 +37,13 @@ class PaymentAddressController extends APIController {
         $attributes = $request->only(array_keys($request->rules()));
         $attributes['user_id'] = $user['id'];
 
-        $out = $helper->store($payment_address_respository, $attributes);
-        EventLog::log('paymentAddress.created', json_decode($out->getContent(), true));
-        return $out;
+        $address = $payment_address_respository->create($attributes);
+        EventLog::log('paymentAddress.created', $address->toArray());
+
+        // create a default account
+        AccountHandler::createDefaultAccount($address);
+
+        return $helper->transformResourceForOutput($address);
     }
 
     /**

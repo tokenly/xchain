@@ -13,4 +13,6 @@ interface NetworkTransactionHandler {
 
     public function sendNotifications($parsed_tx, $confirmations, $block_seq, Block $block=null);
 
+    public function updateAccountBalances($parsed_tx, $confirmations, $block_seq, Block $block=null);
+
 }

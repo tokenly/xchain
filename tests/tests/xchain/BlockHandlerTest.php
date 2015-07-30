@@ -72,10 +72,11 @@ class BlockHandlerTest extends TestCase {
         // drain the queue to start
         $queue_manager->connection('notifications_out')->drain();
 
+        // get a single sample user
+        $sample_user = app('UserHelper')->createSampleUser(['webhook_endpoint' => null]);
+
         // add a monitor address for 12iVwKP7jCPnuYy7jbAbyXnZ3FxvgLwvGK
-        $monitored_address_repo = app('App\Repositories\MonitoredAddressRepository');
-        $monitored_address_helper = app('\MonitoredAddressHelper');
-        $created_address = $monitored_address_repo->create($monitored_address_helper->sampleDBVars(['address' => '1KUsjZKrkd7LYRV7pbnNJtofsq1HAiz6MF']));
+        $created_address = app('MonitoredAddressHelper')->createSampleMonitoredAddress($sample_user, ['address' => '1KUsjZKrkd7LYRV7pbnNJtofsq1HAiz6MF']);
 
         // build and process a block event with the same transaction ID
         $block_event = $this->buildBlockEvent([

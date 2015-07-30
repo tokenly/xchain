@@ -1,0 +1,10 @@
+{
+    "quantity": 100000000000,
+    "block_index": 300000,
+    "tx_hash": "a000000000000000000000000000000000000000000000000000000000001111",
+    "asset": "SOUP",
+    "destination": "RECIPIENT01",
+    "tx_index": 123456,
+    "source": "SENDER01",
+    "status": "valid"
+}

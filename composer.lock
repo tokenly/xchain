@@ -2509,12 +2509,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-payer.git",
-                "reference": "943c0c4f14a49538e980e2641a9bac5e9470fb36"
+                "reference": "f960d3ab879e304ec4e740fa3ab2bf63c0ad7084"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/943c0c4f14a49538e980e2641a9bac5e9470fb36",
-                "reference": "943c0c4f14a49538e980e2641a9bac5e9470fb36",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/f960d3ab879e304ec4e740fa3ab2bf63c0ad7084",
+                "reference": "f960d3ab879e304ec4e740fa3ab2bf63c0ad7084",
                 "shasum": ""
             },
             "require": {
@@ -2544,7 +2544,7 @@
                 }
             ],
             "description": "A bitcoin payment library",
-            "time": "2015-07-17 13:54:32"
+            "time": "2015-07-30 02:37:53"
         },
         {
             "name": "tokenly/consul-health-daemon",
@@ -2681,12 +2681,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-parser.git",
-                "reference": "f8ddab0068c90da80b1e7f2e531ebed57050d22c"
+                "reference": "753ab1f7129d6a86231afc9221a7c05d40cc43a5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/e77a4048008c9388356ba545ad0885e35f19dc72",
-                "reference": "f8ddab0068c90da80b1e7f2e531ebed57050d22c",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/753ab1f7129d6a86231afc9221a7c05d40cc43a5",
+                "reference": "753ab1f7129d6a86231afc9221a7c05d40cc43a5",
                 "shasum": ""
             },
             "require": {
@@ -2715,7 +2715,7 @@
                 }
             ],
             "description": "A counterparty transaction parser",
-            "time": "2015-06-10 12:21:17"
+            "time": "2015-07-22 01:26:51"
         },
         {
             "name": "tokenly/hmac-auth",
@@ -2723,12 +2723,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/hmac-auth.git",
-                "reference": "bd146152a6901acc1eb962f8cd4d3418eb19307f"
+                "reference": "6487720477ed1edba36bb0b60deec4234a8bc712"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/199e5cf7e408020fae6e426215a9c5071f7ce27f",
-                "reference": "bd146152a6901acc1eb962f8cd4d3418eb19307f",
+                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/6487720477ed1edba36bb0b60deec4234a8bc712",
+                "reference": "6487720477ed1edba36bb0b60deec4234a8bc712",
                 "shasum": ""
             },
             "require": {
@@ -2752,12 +2752,12 @@
             "authors": [
                 {
                     "name": "Devon Weller",
-                    "email": "dweller@devonweller.com",
-                    "homepage": "http://devonweller.com"
+                    "email": "devon@tokenly.com",
+                    "homepage": "http://tokenly.com"
                 }
             ],
-            "description": "A library",
-            "time": "2015-07-02 15:35:04"
+            "description": "A library for HMAC authentication",
+            "time": "2015-07-30 02:40:50"
         },
         {
             "name": "tokenly/insight-client",
@@ -2806,12 +2806,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/laravel-api-provider.git",
-                "reference": "7030b2dd1ff1b1a09a9f77ddd02faf66af5c6606"
+                "reference": "52b19fe38223762b4c82dd39d2d04ee82f81f47f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/abe41213654c3bd05ede003f0572d163c8d30d9a",
-                "reference": "7030b2dd1ff1b1a09a9f77ddd02faf66af5c6606",
+                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/52b19fe38223762b4c82dd39d2d04ee82f81f47f",
+                "reference": "52b19fe38223762b4c82dd39d2d04ee82f81f47f",
                 "shasum": ""
             },
             "require": {
@@ -2842,7 +2842,7 @@
                 }
             ],
             "description": "An API service provider for Laravel",
-            "time": "2015-04-09 20:46:44"
+            "time": "2015-07-30 02:40:20"
         },
         {
             "name": "tokenly/laravel-blocking-beanstalkd",
@@ -2890,12 +2890,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/laravel-event-log.git",
-                "reference": "6693bc64c25f698afa959d0325e3db7609954fa4"
+                "reference": "f689da183dff772708863d79fda0985c06d4730b"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/tokenly/laravel-event-log/zipball/f689da183dff772708863d79fda0985c06d4730b",
-                "reference": "6693bc64c25f698afa959d0325e3db7609954fa4",
+                "reference": "f689da183dff772708863d79fda0985c06d4730b",
                 "shasum": ""
             },
             "require": {
@@ -2922,7 +2922,7 @@
                 }
             ],
             "description": "An event logger provider for Laravel.",
-            "time": "2015-07-02 12:20:18"
+            "time": "2015-07-02 20:58:07"
         },
         {
             "name": "tokenly/laravel-record-lock",
@@ -3091,12 +3091,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/xcpd-client.git",
-                "reference": "3d6c56ade86bd16474615766e4281961ebd55e13"
+                "reference": "bf0f351784fe75458cea1ea7b5e11b7b8e476d23"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/tokenly/xcpd-client/zipball/bf0f351784fe75458cea1ea7b5e11b7b8e476d23",
-                "reference": "3d6c56ade86bd16474615766e4281961ebd55e13",
+                "reference": "bf0f351784fe75458cea1ea7b5e11b7b8e476d23",
                 "shasum": ""
             },
             "require": {
@@ -3124,7 +3124,7 @@
                 }
             ],
             "description": "A client library for the counterpartyd API",
-            "time": "2015-02-14 16:28:57"
+            "time": "2015-07-11 19:35:43"
         },
         {
             "name": "vlucas/phpdotenv",

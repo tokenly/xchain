@@ -129,7 +129,7 @@ class PaymentAddressAPITest extends TestCase {
     ////////////////////////////////////////////////////////////////////////
     
     protected function getAPITester() {
-        $api_tester = $this->app->make('APITester', [$this->app, '/api/v1/addresses', $this->app->make('App\Repositories\PaymentAddressRepository')]);
+        $api_tester = $this->app->make('SimpleAPITester', [$this->app, '/api/v1/addresses', $this->app->make('App\Repositories\PaymentAddressRepository')]);
         $api_tester->ensureAuthenticatedUser();
         return $api_tester;
     }

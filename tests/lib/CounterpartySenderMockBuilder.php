@@ -81,7 +81,7 @@ class CounterpartySenderMockBuilder
     }
 
     public function installMockBitcoindClient($app, $test_case, $mock_calls) {
-        $mock = $test_case->getMockBuilder('Nbobtc\Bitcoind\Bitcoind')->disableOriginalConstructor()->getMock();
+        $mock = $test_case->getMockBuilder('Nbobtc\Bitcoind\Bitcoind')->disableOriginalConstructor()->disableOriginalClone()->getMock();
         
         $mock->method('createrawtransaction')->will($test_case->returnCallback(function($inputs, $destinations)  use ($mock_calls) {
             $transaction_hex = '5555555555555'.hash('sha256', json_encode([$inputs, $destinations]));
@@ -130,6 +130,7 @@ class CounterpartySenderMockBuilder
         $app->bind('Nbobtc\Bitcoind\Bitcoind', function() use ($mock) {
             return $mock;
         });
+
     }
 
 

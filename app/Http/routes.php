@@ -4,11 +4,6 @@
 |--------------------------------------------------------------------------
 | Application Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register all of the routes for an application.
-| It's a breeze. Simply tell Laravel the URIs it should respond to
-| and give it the Closure to execute when that URI is requested.
-|
 */
 
 $router->get('/', 'HomeController@index');
@@ -23,25 +18,26 @@ $router->post('api/v1/sends/{addressId}', 'API\SendController@create');
 // address balance
 $router->get('api/v1/balances/{addressId}', 'API\BalancesController@show');
 
-//get asset info
+
+// accounts
+$router->post('api/v1/accounts', 'API\AccountController@create');
+$router->match(['post','patch','put'], 'api/v1/accounts/{accountId}', 'API\AccountController@update');
+$router->get('api/v1/accounts/{addressId}', 'API\AccountController@index');
+$router->get('api/v1/account/{accountId}', 'API\AccountController@show');
+
+
+// account balances
+$router->get('api/v1/accounts/balances/{addressId}', 'API\AccountBalancesController@balances');       # combined and by account
+
+
+// transfer
+$router->post('api/v1/accounts/transfer/{addressId}', 'API\AccountBalancesController@transfer');
+
+
+// get asset info
 $router->get('api/v1/assets/{asset}', 'API\AssetController@get');
+
+
 
 // health check
 $router->get('/healthcheck/{checkType}', '\Tokenly\ConsulHealthDaemon\HealthController\HealthController@healthcheck');
-
-
-/*
-|--------------------------------------------------------------------------
-| Authentication & Password Reset Controllers
-|--------------------------------------------------------------------------
-|
-| These two controllers handle the authentication of the users of your
-| application, as well as the functions necessary for resetting the
-| passwords for your users. You may modify or remove these files.
-|
-*/
-
-// $router->controller('auth', 'AuthController');
-
-// $router->controller('password', 'PasswordController');
-

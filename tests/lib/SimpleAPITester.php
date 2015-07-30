@@ -1,14 +1,15 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Tokenly\HmacAuth\Generator;
 use \PHPUnit_Framework_Assert as PHPUnit;
 
 /**
-*  APITester
+*  SimpleAPITester
 *  Test API resource requests
 */
-class APITester
+class SimpleAPITester
 {
 
     function __construct($app, $url_base, $resource_repository) {

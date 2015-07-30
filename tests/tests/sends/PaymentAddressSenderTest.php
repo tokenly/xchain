@@ -12,12 +12,11 @@ class PaymentAddressSenderTest extends TestCase {
         $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
         $user = $this->app->make('\UserHelper')->createSampleUser();
-        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user);
+        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddressWithoutInitialBalances($user);
 
         $sender = $this->app->make('App\Blockchain\Sender\PaymentAddressSender');
         $dust_size = 0.00001234;
-        $multisig_dust_size = 0.00005678;
-        $sender->send($payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', '100', 'TOKENLY', $float_fee=null, $dust_size, $multisig_dust_size, $is_sweep=false);
+        $sender->send($payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', '100', 'TOKENLY', $float_fee=null, $dust_size, $is_sweep=false);
 
         // check the first sent call
         $mock_send_call = $mock_calls['xcpd'][1];
@@ -28,7 +27,6 @@ class PaymentAddressSenderTest extends TestCase {
         PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.0001), $mock_send_call['args'][0]['fee_per_kb']);
 
         PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis($dust_size), $mock_send_call['args'][0]['regular_dust_size']);
-        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis($multisig_dust_size), $mock_send_call['args'][0]['multisig_dust_size']);
 
     }
 
@@ -37,10 +35,10 @@ class PaymentAddressSenderTest extends TestCase {
         $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
         $user = $this->app->make('\UserHelper')->createSampleUser();
-        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user);
+        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddressWithoutInitialBalances($user);
 
         $sender = $this->app->make('App\Blockchain\Sender\PaymentAddressSender');
-        $sender->send($payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', '0.123', 'BTC', $float_fee=null, $dust_size=null, $multisig_dust_size=null, $is_sweep=false);
+        $sender->send($payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', '0.123', 'BTC', $float_fee=null, $dust_size=null, $is_sweep=false);
 
         // no xcpd calls
         PHPUnit::assertEmpty($mock_calls['xcpd']);
@@ -57,7 +55,7 @@ class PaymentAddressSenderTest extends TestCase {
         $first_output_address = array_keys($mock_calls['btcd'][0]['args'][1])[0];
         $second_output_address = array_keys($mock_calls['btcd'][0]['args'][1])[1];
         PHPUnit::assertEquals(0.123, $mock_calls['btcd'][0]['args'][1][$first_output_address]);
-        PHPUnit::assertEquals(0.1119, $mock_calls['btcd'][0]['args'][1][$second_output_address]);
+        PHPUnit::assertEquals(0.1109, $mock_calls['btcd'][0]['args'][1][$second_output_address]);
         // echo "\$mock_calls['btcd'][0]['args'][1]:\n".json_encode($mock_calls['btcd'][0]['args'][1], 192)."\n";
     }
 
@@ -65,7 +63,7 @@ class PaymentAddressSenderTest extends TestCase {
         $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
         $user = $this->app->make('\UserHelper')->createSampleUser();
-        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user);
+        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddressWithoutInitialBalances($user);
 
         $sender = $this->app->make('App\Blockchain\Sender\PaymentAddressSender');
         $sender->sweepBTC($payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $float_fee=null);
@@ -91,7 +89,7 @@ class PaymentAddressSenderTest extends TestCase {
         $insight_mock_calls = $this->buildInsightMockCallsForSweepAllAssets();
 
         $user = $this->app->make('\UserHelper')->createSampleUser();
-        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user);
+        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddressWithoutInitialBalances($user);
 
         $sender = $this->app->make('App\Blockchain\Sender\PaymentAddressSender');
         $sender->sweepAllAssets($payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $float_fee=null);

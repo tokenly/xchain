@@ -57,7 +57,7 @@ class ClientGUIDTest extends TestCase {
     ////////////////////////////////////////////////////////////////////////
 
     protected function getAPITester() {
-        $api_tester =  $this->app->make('APITester', [$this->app, '/api/v1/sends', $this->app->make('App\Repositories\SendRepository')]);
+        $api_tester =  $this->app->make('SimpleAPITester', [$this->app, '/api/v1/sends', $this->app->make('App\Repositories\SendRepository')]);
         $api_tester->ensureAuthenticatedUser();
         return $api_tester;
     }

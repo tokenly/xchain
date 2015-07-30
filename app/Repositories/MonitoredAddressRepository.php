@@ -34,6 +34,10 @@ class MonitoredAddressRepository implements APIResourceRepositoryContract
         return MonitoredAddress::all();
     }
 
+    public function findByID($id) {
+        return MonitoredAddress::find($id);
+    }
+
     public function findByUuid($uuid) {
         return MonitoredAddress::where('uuid', $uuid)->first();
     }

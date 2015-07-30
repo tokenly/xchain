@@ -1,5 +1,6 @@
 <?php
 
+use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\MonitoredAddressRepository;
 
 /**
@@ -14,8 +15,10 @@ class MonitoredAddressHelper
     }
 
 
-    public function createSampleMonitoredAddress($user, $override_vars=[]) {
-        return $this->monitored_address_repository->createWithUser($user, array_merge($this->sampleVars(), $override_vars));
+    public function createSampleMonitoredAddress($user=null, $override_vars=[]) {
+        if ($user === null) { $user = app('UserHelper')->getSampleUser(); }
+        $new_address = $this->monitored_address_repository->createWithUser($user, $this->sampleVars($override_vars));
+        return $new_address;
     }
 
     public function sampleVars($override_vars=[]) {

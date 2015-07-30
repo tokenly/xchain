@@ -35,20 +35,28 @@ class PaymentAddressRepository implements APIResourceRepositoryContract
         // create a uuid
         if (!isset($attributes['uuid'])) { $attributes['uuid'] = Uuid::uuid4()->toString(); }
 
-        // create a token
-        $token_generator = new TokenGenerator();
-        $token = $token_generator->generateToken(40, 'A');
-        $attributes['private_key_token'] = $token;
+        if (!isset($attributes['private_key_token'])) {
+            // create a token
+            $token_generator = new TokenGenerator();
+            $token = $token_generator->generateToken(40, 'A');
+            $attributes['private_key_token'] = $token;
+        }
 
-        // create an address
-        $new_address = $this->address_generator->publicAddress($token);
-        $attributes['address'] = $new_address;
+        if (!isset($attributes['address'])) {
+            // create an address
+            $new_address = $this->address_generator->publicAddress($attributes['private_key_token']);
+            $attributes['address'] = $new_address;
+        }
 
         return PaymentAddress::create($attributes);
     }
 
     public function findAll() {
         return PaymentAddress::all();
+    }
+
+    public function findByID($id) {
+        return PaymentAddress::find($id);
     }
 
     public function findByUuid($uuid) {

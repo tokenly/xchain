@@ -8,4 +8,7 @@ return [
     // should log debug timing
     'debugLogTxTiming' => !!env('DEBUG_LOG_TX_TIMING', false),
 
+    // should log debug timing
+    'accountsIgnoreBeforeBlockHeight' => env('ACCOUNTS_IGNORE_BEFORE_BLOCK', false),
+
 ];

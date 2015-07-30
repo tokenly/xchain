@@ -33,7 +33,7 @@ class PaymentAddressSender {
 
     // returns [$transaction_id, $float_balance_sent]
     public function sweepBTC(PaymentAddress $payment_address, $destination, $float_fee=null, $float_regular_dust_size=null) {
-        return $this->send($payment_address, $destination, null, 'BTC', $float_fee, $float_regular_dust_size, null, true);
+        return $this->send($payment_address, $destination, null, 'BTC', $float_fee, $float_regular_dust_size, true);
     }
 
     public function sweepAllAssets(PaymentAddress $payment_address, $destination, $float_fee=null, $float_regular_dust_size=null) {
@@ -60,7 +60,7 @@ class PaymentAddressSender {
             // ignore 0 balances
             if ($quantity_sat <= 0) { continue; }
 
-            Log::debug("sending $quantity_sat $asset to {$payment_address['address']}");
+            Log::debug("sending $quantity_sat $asset from {$payment_address['address']} to $destination");
             $txid = $this->xcpd_sender->send($public_key, $wif_private_key, $payment_address['address'], $destination, $quantity_sat, $asset, $other_xcp_vars);
             $last_txid = $txid;
         }
@@ -92,13 +92,12 @@ class PaymentAddressSender {
         }
 
         // Lastly, sweep the BTC
-        return $this->send($payment_address, $destination, null, 'BTC', $float_fee, $float_regular_dust_size, null, true);
+        return $this->send($payment_address, $destination, null, 'BTC', $float_fee, $float_regular_dust_size, true);
     }
 
-    public function send(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_regular_dust_size=null, $float_multisig_dust_size=null, $is_sweep=false) {
+    public function send(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_regular_dust_size=null, $is_sweep=false) {
         if ($float_fee === null)                { $float_fee                = self::DEFAULT_FEE; }
         if ($float_regular_dust_size === null)  { $float_regular_dust_size  = self::DEFAULT_REGULAR_DUST_SIZE; }
-        if ($float_multisig_dust_size === null) { $float_multisig_dust_size = self::DEFAULT_MULTISIG_DUST_SIZE; }
         $private_key = $this->address_generator->privateKey($payment_address['private_key_token']);
         $public_key = BitcoinKeyUtils::publicKeyFromPrivateKey($private_key);
         $wif_private_key = BitcoinKeyUtils::WIFFromPrivateKey($private_key);
@@ -124,7 +123,6 @@ class PaymentAddressSender {
                 $other_xcp_vars = [
                     'fee_per_kb'               => CurrencyUtil::valueToSatoshis($float_fee),
                     'regular_dust_size'        => CurrencyUtil::valueToSatoshis($float_regular_dust_size),
-                    'multisig_dust_size'       => CurrencyUtil::valueToSatoshis($float_multisig_dust_size),
                     'allow_unconfirmed_inputs' => true,
                 ];
                 $txid = $this->xcpd_sender->send($public_key, $wif_private_key, $payment_address['address'], $destination, $quantity_for_xcpd, $asset, $other_xcp_vars);

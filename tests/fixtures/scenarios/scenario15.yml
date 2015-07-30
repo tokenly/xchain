@@ -1,0 +1,114 @@
+# test close account with confirmed and unconfirmed funds
+
+monitoredAddresses:
+  - address: RECIPIENT01
+    monitor_type: receive
+
+paymentAddresses:
+  - address: RECIPIENT01
+
+events:
+  - # receive some SOUP
+    type: transaction
+    meta:
+        baseFilename: default_xcp_parsed_mempool_01.json
+    txid: a000000000000000000000000000000000000000000000000000000000001111
+    sender: SENDER01
+    recipient: RECIPIENT01
+    isCounterpartyTx: true
+    asset: SOUP
+    quantity: 1000
+    blockId: 299997
+
+  -
+    type: block
+    hash: BLOCKHASH01
+    tx:
+        - f88d98717dacb985e3ad49ffa66b8562d8194f1885f58425e1c8582ce2ac5b58
+        - a000000000000000000000000000000000000000000000000000000000001111
+    height: 299998
+
+  -
+    type: block
+    hash: BLOCKHASH02
+    previousblockhash: BLOCKHASH01
+    height: 299999
+    tx: ["2c4eb2613c9b12c66f07527d9e58d53cf4bcaeb25fbdc2e44c62bd2a3d165d56"] # one random transaction we don't care about
+
+
+  -
+    type: transaction
+    meta:
+        baseFilename: default_xcp_parsed_mempool_01.json
+    txid: cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
+    sender: SENDER01
+    recipient: RECIPIENT01
+    isCounterpartyTx: true
+    asset: LTBCOIN
+    quantity: 500
+    blockId: 300000
+  -
+    type: block
+    tx:
+        - f88d98717dacb985e3ad49ffa66b8562d8194f1885f58425e1c8582ce2ac5b58
+        - cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
+
+  - # receive some unconfirmed SOUP
+    type: transaction
+    meta:
+        baseFilename: default_xcp_parsed_mempool_01.json
+    txid: a000000000000000000000000000000000000000000000000000000000001112
+    sender: SENDER01
+    recipient: RECIPIENT01
+    isCounterpartyTx: true
+    asset: SOUP
+    quantity: 5
+    blockId: 300001
+
+
+  # ------------------------------------------------------------
+  - # transfer some confirmed SOUP
+    type: transfer
+    from: default
+    to:  account1
+    quantity: 250
+    asset: SOUP
+
+  - # transfer some unconfirmed LTBCOIN
+    type: transfer
+    from: default
+    to:  account1
+    quantity: 100
+    asset: LTBCOIN
+    txid: cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
+
+  - # close the account
+    type: transfer
+    from: account1
+    to:  account2
+    close: true
+  # ------------------------------------------------------------
+
+
+
+notifications: ~
+
+
+accounts:
+  - meta: { baseFilename: default01.yml }
+    name: default
+    balances:
+      unconfirmed: { SOUP: 5, LTBCOIN: 400, BTC: 0.00010860 }
+      confirmed: { SOUP: 750, BTC: 0.00005430 }
+
+  - meta: { baseFilename: default01.yml }
+    name: account1
+    balances:
+      unconfirmed: { LTBCOIN: 0 }
+      confirmed: { SOUP: 0 }
+
+  - meta: { baseFilename: default01.yml }
+    name: account2
+    balances:
+      unconfirmed: { LTBCOIN: 100 }
+      confirmed: { SOUP: 250 }

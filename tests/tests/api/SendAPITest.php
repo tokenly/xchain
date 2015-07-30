@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\LedgerEntry;
+use App\Models\PaymentAddress;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use \PHPUnit_Framework_Assert as PHPUnit;
 
@@ -127,10 +129,95 @@ class SendAPITest extends TestCase {
 
 
 
+    public function testAPISendFromAccount()
+    {
+        // mock the xcp sender
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        list($address, $created_accounts, $api_test_helper) = $this->setupBalancesForTransfer();
+
+        $api_test_helper->callAPIAndValidateResponse('POST', '/api/v1/sends/'.$address['uuid'], $this->sendHelper()->samplePostVars([
+            'quantity' => 0.05,
+            'asset'    => 'BTC',
+            'account'  => 'accountone',
+        ]));
+
+        // accountone should now have funds moved into sent
+        $ledger_entry_repo = app('App\Repositories\LedgerEntryRepository');
+
+        $default_account_balances = $ledger_entry_repo->accountBalancesByAsset($created_accounts[0], null);
+        $account_one_balances = $ledger_entry_repo->accountBalancesByAsset($created_accounts[1], null);
+        PHPUnit::assertEquals([
+            'unconfirmed' => [],
+            'confirmed'   => ['BTC' => 99.9499,],
+            'sending'     => ['BTC' =>  0.0501,],
+        ], $account_one_balances);
+
+
+    }
+
+
+    public function testSweepFromAccount()
+    {
+        // mock the xcp sender
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        list($address, $created_accounts, $api_test_helper) = $this->setupBalancesForTransfer();
+
+        $api_test_helper->callAPIAndValidateResponse('POST', '/api/v1/sends/'.$address['uuid'], $this->sendHelper()->samplePostVars([
+            'sweep'  => True,
+        ]));
+
+        // accountone should now have funds moved into sent
+        $ledger_entry_repo = app('App\Repositories\LedgerEntryRepository');
+
+        $default_account_balances = $ledger_entry_repo->accountBalancesByAsset($created_accounts[0], null);
+        $account_one_balances = $ledger_entry_repo->accountBalancesByAsset($created_accounts[1], null);
+        PHPUnit::assertEquals([
+            'unconfirmed' => [],
+            'confirmed'   => ['BTC' => 0,],
+            'sending'     => [],
+        ], $account_one_balances);
+
+
+    }
+
+    // test send with invalid account name returns 404
+    public function testAPISendFromBadAccount()
+    {
+        // mock the xcp sender
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        list($address, $created_accounts, $api_test_helper) = $this->setupBalancesForTransfer();
+
+        $api_test_helper->callAPIAndValidateResponse('POST', '/api/v1/sends/'.$address['uuid'], $this->sendHelper()->samplePostVars([
+            'quantity' => 0.05,
+            'asset'    => 'BTC',
+            'account'  => 'accountDOESNOTEXIST',
+        ]), 404);
+    }
+
+
+    // test insufficient funds in account
+    public function testAPISendWithInsufficientFunds()
+    {
+        // mock the xcp sender
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        list($address, $created_accounts, $api_test_helper) = $this->setupBalancesForTransfer();
+
+        $api_test_helper->callAPIAndValidateResponse('POST', '/api/v1/sends/'.$address['uuid'], $this->sendHelper()->samplePostVars([
+            'quantity' => 3,
+            'asset'    => 'BTC',
+            'account'  => 'accounttwo',
+        ]), 400);
+    }
+
+
     ////////////////////////////////////////////////////////////////////////
     
     protected function getAPITester() {
-        $api_tester =  $this->app->make('APITester', [$this->app, '/api/v1/sends', $this->app->make('App\Repositories\SendRepository')]);
+        $api_tester =  $this->app->make('SimpleAPITester', [$this->app, '/api/v1/sends', $this->app->make('App\Repositories\SendRepository')]);
         $api_tester->ensureAuthenticatedUser();
         return $api_tester;
     }
@@ -149,6 +236,59 @@ class SendAPITest extends TestCase {
 
     }
 
+    protected function newSampleAccount(PaymentAddress $address, $account_vars_or_name=null) {
+        static $address_name_counter = 0;
+        if ($account_vars_or_name AND !is_array($account_vars_or_name)) { $account_vars = ['name' => $account_vars_or_name]; }
+            else if ($account_vars_or_name === null) { $account_vars = []; }
+            else { $account_vars = $account_vars_or_name; }
 
+        if (!isset($account_vars['name'])) {
+            $account_vars['name'] = "Address ".(++$address_name_counter);
+        }
+
+        return app('AccountHelper')->newSampleAccount($address, $account_vars);
+    }
+
+
+
+    // account1 => [
+    //     unconfirmed => [BTC => 20]
+    //     confirmed   => [BTC => 100]
+    // ]
+    // account2 => [
+    //     confirmed   => [BTC => 100]
+    // ]
+    // account3 => [
+    //     unconfirmed => [BTC => 20]
+    // ]
+    protected function setupBalancesForTransfer() {
+        // setup balances
+        $sample_user = app('UserHelper')->createSampleUser();
+        $address = app('PaymentAddressHelper')->createSamplePaymentAddressWithoutDefaultAccount($sample_user);
+
+        // create models
+        $created_accounts = [];
+        $created_accounts[] = $this->newSampleAccount($address, 'default');
+        $created_accounts[] = $this->newSampleAccount($address, 'accountone');
+        $created_accounts[] = $this->newSampleAccount($address, 'accounttwo');
+        $inactive_account = app('AccountHelper')->newSampleAccount($address, ['name' => 'Inactive 1', 'active' => 0]);
+
+        // add balances to each
+        $txid = 'deadbeef00000000000000000000000000000000000000000000000000000001';
+        $ledger_entry_repo = app('App\Repositories\LedgerEntryRepository');
+        $ledger_entry_repo->addCredit(110, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, $txid);
+        $ledger_entry_repo->addCredit(100, 'BTC', $created_accounts[1], LedgerEntry::CONFIRMED, $txid);
+        $ledger_entry_repo->addDebit(  10, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, $txid);
+        $ledger_entry_repo->addCredit(  1, 'BTC', $created_accounts[2], LedgerEntry::CONFIRMED, $txid);
+        $ledger_entry_repo->addCredit( 20, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, $txid);
+        $ledger_entry_repo->addCredit( 20, 'BTC', $created_accounts[2], LedgerEntry::UNCONFIRMED, $txid);
+
+
+
+        // send from accountone
+        $api_test_helper = app('APITestHelper')->useUserHelper(app('UserHelper'));
+
+        return [$address, $created_accounts, $api_test_helper];
+    }
 
 }

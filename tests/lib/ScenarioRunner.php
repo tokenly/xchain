@@ -1,7 +1,10 @@
 <?php
 
+use App\Models\LedgerEntry;
+use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\BlockRepository;
 use App\Repositories\MonitoredAddressRepository;
+use App\Repositories\PaymentAddressRepository;
 use App\Repositories\TransactionRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Contracts\Events\Dispatcher;
@@ -18,10 +21,12 @@ use \PHPUnit_Framework_Assert as PHPUnit;
 class ScenarioRunner
 {
 
-    function __construct(Application $app, Dispatcher $events, QueueManager $queue_manager, MonitoredAddressRepository $monitored_address_repository, MonitoredAddressHelper $monitored_address_helper, SampleBlockHelper $sample_block_helper, TransactionRepository $transaction_repository, BlockRepository $block_repository, UserRepository $user_repository, UserHelper $user_helper) {
+    function __construct(Application $app, Dispatcher $events, QueueManager $queue_manager, PaymentAddressRepository $payment_address_repository, PaymentAddressHelper $payment_address_helper, MonitoredAddressRepository $monitored_address_repository, MonitoredAddressHelper $monitored_address_helper, SampleBlockHelper $sample_block_helper, TransactionRepository $transaction_repository, BlockRepository $block_repository, UserRepository $user_repository, UserHelper $user_helper) {
         $this->app                          = $app;
         $this->events                       = $events;
         $this->queue_manager                = $queue_manager;
+        $this->payment_address_repository   = $payment_address_repository;
+        $this->payment_address_helper       = $payment_address_helper;
         $this->monitored_address_repository = $monitored_address_repository;
         $this->monitored_address_helper     = $monitored_address_helper;
         $this->sample_block_helper          = $sample_block_helper;
@@ -85,6 +90,7 @@ class ScenarioRunner
 
         // set up the scenario
         $this->addMonitoredAddresses($scenario_data['monitoredAddresses']);
+        $this->addPaymentAddresses(isset($scenario_data['paymentAddresses']) ? $scenario_data['paymentAddresses'] : []);
 
         // process transactions
         foreach ($scenario_data['events'] as $raw_event) {
@@ -102,6 +108,14 @@ class ScenarioRunner
                     $this->processBlockEvent($block_event);
                     break;
                 
+                case 'transfer':
+                    $this->processTransferEvent($event);
+                    break;
+                
+                case 'send':
+                    $this->processSendEvent($event);
+                    break;
+                
                 default:
                     throw new Exception("Unknown event type {$raw_event['type']}", 1);
                     break;
@@ -113,6 +127,7 @@ class ScenarioRunner
         $meta = isset($scenario_data['meta']) ? $scenario_data['meta'] : [];
         if (isset($scenario_data['notifications'])) { $this->validateNotifications($scenario_data['notifications'], $meta); }
         if (isset($scenario_data['transaction_rows'])) { $this->validateTransactionRows($scenario_data['transaction_rows']); }
+        if (isset($scenario_data['accounts'])) { $this->validateAccounts($scenario_data['accounts'], $meta); }
     }
 
     public function transactionEventToParsedTransaction($raw_transaction_event) {
@@ -319,8 +334,35 @@ class ScenarioRunner
     // Monitored Addresses
 
     protected function addMonitoredAddresses($addresses) {
-        foreach($addresses as $attributes) {
-            $this->monitored_address_repository->createWithUser($this->getSampleUser(), $this->monitored_address_helper->sampleDBVars($attributes));
+        foreach($addresses as $raw_attributes) {
+            $attributes = $raw_attributes;
+            $monitored_address = $this->monitored_address_repository->createWithUser($this->getSampleUser(), $this->monitored_address_helper->sampleDBVars($attributes));
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // Payment Addresses
+
+    protected function addPaymentAddresses($addresses) {
+        if (!$addresses) { return; }
+
+        foreach($addresses as $raw_attributes) {
+            $attributes = $raw_attributes;
+            unset($attributes['accountBalances']);
+            $payment_address = $this->payment_address_repository->createWithUser($this->getSampleUser(), $this->payment_address_helper->sampleVars($attributes));
+
+            // create a default account
+            AccountHandler::createDefaultAccount($payment_address);
+
+            if (isset($raw_attributes['accountBalances'])) {
+                $ledger_entry_repository = app('App\Repositories\LedgerEntryRepository');
+                $account_repository = app('App\Repositories\AccountRepository');
+                
+                $default_account = $account_repository->findByName('default', $payment_address['id']);
+                foreach ($raw_attributes['accountBalances'] as $asset => $balance) {
+                    $ledger_entry_repository->addCredit($balance, $asset, $default_account, LedgerEntry::CONFIRMED, 'testtxid');
+                }
+            }
         }
     }
 
@@ -376,7 +418,10 @@ class ScenarioRunner
             $normalized_transaction_event['counterpartyTx']['quantitySat'] = CurrencyUtil::valueToSatoshis($raw_transaction_event['quantity']);
         }
 
+        // confirmations and blockhash
         if (isset($raw_transaction_event['confirmations'])) { $normalized_transaction_event['bitcoinTx']['confirmations'] = $raw_transaction_event['confirmations']; }
+        if (isset($raw_transaction_event['blockhash']))     { $normalized_transaction_event['bitcoinTx']['blockhash']     = $raw_transaction_event['blockhash']; }
+        if (isset($raw_transaction_event['blockId']))       { $normalized_transaction_event['bitcoinTx']['blockheight']   = $raw_transaction_event['blockId']; }
 
         // timestamp
         if (isset($raw_transaction_event['timestamp'])) {
@@ -465,6 +510,9 @@ class ScenarioRunner
         \App\Models\PaymentAddress::truncate();
         \App\Models\Send::truncate();
         \App\Models\User::truncate();
+        \App\Models\Account::truncate();
+        \App\Models\APICall::truncate();
+        \App\Models\LedgerEntry::truncate();
 
         return;
     }
@@ -472,5 +520,161 @@ class ScenarioRunner
     
 
 
+    ////////////////////////////////////////////////////////////////////////
+    // Validate Accounts
 
+    protected function validateAccounts($accounts, $meta) {
+        $actual_accounts = $this->getActualAccounts();
+        
+        foreach ($accounts as $offset => $raw_expected_account) {
+            // get actual account
+            $actual_account = isset($actual_accounts[$offset]) ? $actual_accounts[$offset] : null;
+
+            // normalize expected account
+            $expected_account = $this->normalizeExpectedAccount($raw_expected_account, $actual_account);
+
+            $this->validateAccount($expected_account, $actual_account);
+        }
+
+        // check extra accounts
+        $allow_extra_accounts = isset($meta['allowExtraAccounts']) ? $meta['allowExtraAccounts'] : false;
+        if (!$allow_extra_accounts) {
+            if (count($actual_accounts) > count($accounts)) {
+                throw new Exception("Found ".count($actual_accounts)." unexpected extra account(s): ".substr(rtrim(json_encode($actual_accounts, 192)), 0, 400), 1);
+            }
+        }
+    }
+
+    protected function getActualAccounts() {
+        $actual_accounts = app('App\Repositories\AccountRepository')->findAll();
+        $actual_accounts_out = [];
+        $repo = app('App\Repositories\LedgerEntryRepository');
+        foreach($actual_accounts as $actual_account) {
+            $balances = $repo->accountBalancesByAsset($actual_account, null);
+            $actual_account['balances'] = $balances;
+            $actual_accounts_out[] = $actual_account;
+        }
+        return $actual_accounts_out;
+    }
+
+
+    protected function validateAccount($expected_account, $actual_account) {
+        PHPUnit::assertNotEmpty($actual_account, "Missing account ".json_encode($expected_account, 192));
+        PHPUnit::assertEquals($expected_account, $actual_account->toArray(), "Account mismatch.  Actual account: ".json_encode($actual_account, 192));
+    }
+
+
+    protected function resolveExpectedAccountMeta($raw_expected_account) {
+        // get meta
+        $meta = [];
+        if (isset($raw_expected_account['meta'])) {
+            $meta = $raw_expected_account['meta'];
+            unset($raw_expected_account['meta']);
+        }
+
+        // load from baseFilename
+        if (isset($meta['baseFilename'])) {
+            $sample_filename = $meta['baseFilename'];
+
+            $default = Yaml::parse(file_get_contents(base_path().'/tests/fixtures/accounts/'.$sample_filename));
+            $expected_account = array_replace_recursive($default, $raw_expected_account);
+        } else {
+            $expected_account = $raw_expected_account;
+        }
+
+        return [$expected_account, $meta];
+    }
+
+
+    protected function normalizeExpectedAccount($raw_expected_account, $raw_actual_account) {
+        if (!$raw_actual_account) { return null; }
+        list($expected_account, $meta) = $this->resolveExpectedAccountMeta($raw_expected_account);
+        $actual_account = $raw_actual_account->toArray();
+
+        $normalized_expected_account = [];
+
+        ///////////////////
+        // EXPECTED
+        foreach (['name','balances',] as $field) {
+            if (isset($expected_account[$field])) { $normalized_expected_account[$field] = $expected_account[$field]; }
+        }
+        ///////////////////
+
+        ///////////////////
+        // OPTIONAL
+        foreach (['id','uuid','active','meta','payment_address_id','user_id',] as $field) {
+            if (array_key_exists($field, $expected_account)) {
+                if (is_array($expected_account[$field])) {
+                    $normalized_expected_account[$field] = array_replace_recursive(isset($actual_account[$field]) ? $actual_account[$field] : [], $expected_account[$field]);
+                } else {
+                    $normalized_expected_account[$field] = $expected_account[$field];
+                }
+            } else if (array_key_exists($field, $actual_account)) {
+                $normalized_expected_account[$field] = $actual_account[$field];
+            }
+        }
+        ///////////////////
+
+        ///////////////////
+        // Never
+        foreach (['created_at','updated_at',] as $field) {
+            $normalized_expected_account[$field] = "".$actual_account[$field];
+        }
+        ///////////////////
+
+
+
+        return $normalized_expected_account;
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////
+    // Transfer
+
+    protected function processTransferEvent($event) {
+        // type: transfer
+        // from: default
+        // to:  account1
+        // quantity: 300
+        // asset: LTBCOIN
+        // transferType: unconfirmed
+        // txid: cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
+
+        // get the account (first one)
+        // $account_repository = app('App\Repositories\AccountRepository');
+        $account = app('App\Repositories\AccountRepository')->findAll()->first();
+        $payment_address = app('App\Repositories\PaymentAddressRepository')->findById($account['payment_address_id']);
+        $user = app('App\Repositories\UserRepository')->findById($account['user_id']);
+
+        $txid = isset($event['txid']) ? $event['txid'] : null;
+        $api_call = app('APICallHelper')->newSampleAPICall($user);
+
+        if (isset($event['close']) AND $event['close']) {
+            AccountHandler::close($payment_address, $event['from'], $event['to'], $api_call);
+
+        } else {
+            AccountHandler::transfer($payment_address, $event['from'], $event['to'], $event['quantity'], $event['asset'], $txid, $api_call);
+        }
+    }
+
+
+    ////////////////////////////////////////////////////////////////////////
+    // Send
+
+    protected function processSendEvent($event) {
+        // type: send
+        // destination: RECIPIENT01
+        // asset: BTC
+        // quantity: 0.1
+        // account: sendingaccount1
+        $vars = $event;
+
+        unset($vars['send']);
+
+        // get the first payment address
+        $payment_address = app('App\Repositories\PaymentAddressRepository')->findAll()->first();
+
+        $api_test_helper = app('APITestHelper')->useUserHelper(app('UserHelper'))->setURLBase('/api/v1/sends/');
+        $api_test_helper->callAPIAndValidateResponse('POST', '/api/v1/sends/'.$payment_address['uuid'], app('SampleSendsHelper')->samplePostVars($vars));
+    }
 }

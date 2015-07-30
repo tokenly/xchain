@@ -1,0 +1,63 @@
+# test sending funds from a specific account moves to sending
+
+monitoredAddresses:
+  - address: MYADDRESS01
+    monitor_type: receive
+
+paymentAddresses:
+  - address: MYADDRESS01
+    accountBalances:
+      BTC: 10
+
+events:
+  -
+    type: transfer
+    from: default
+    to:  sendingaccount1
+    quantity: 2
+    asset: BTC
+
+  -
+    type: send
+    destination: 1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD
+    asset: BTC
+    quantity: 0.1
+    account: sendingaccount1
+
+  # -
+  #   type: transaction
+  #   meta:
+  #       baseFilename: sample_btc_parsed_send_03.json
+  #   txid: cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
+  #   sender: MYADDRESS01
+  #   recipient: 1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD
+  #   asset: BTC
+  #   quantity: 0.1
+  #   blockId: 300000
+
+  # -
+  #   type: block
+  #   tx:
+  #       - f88d98717dacb985e3ad49ffa66b8562d8194f1885f58425e1c8582ce2ac5b58
+  #       - cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
+  # -
+  #   type: block
+  #   hash: BLOCKHASH02
+  #   previousblockhash: 000000000000000015f697b296584d9d443d2225c67df9033157a9efe4a8faa0
+  #   height: 333001
+  #   tx: ["2c4eb2613c9b12c66f07527d9e58d53cf4bcaeb25fbdc2e44c62bd2a3d165d56"] # one random transaction we don't care about
+
+
+notifications: ~
+
+
+accounts:
+  - meta: { baseFilename: default01.yml }
+    balances:
+      confirmed: { BTC: 8 }
+
+  - meta: { baseFilename: default01.yml }
+    name: sendingaccount1
+    balances:
+      confirmed: { BTC: 1.8999 }
+      sending: { BTC: 0.1001 }
