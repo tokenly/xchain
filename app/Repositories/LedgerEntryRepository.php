@@ -7,6 +7,7 @@ use App\Models\Account;
 use App\Models\LedgerEntry;
 use App\Models\PaymentAddress;
 use App\Models\User;
+use App\Providers\Accounts\Exception\AccountException;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -57,7 +58,7 @@ class LedgerEntryRepository extends APIRepository
             // ensure sufficient asset balance in account
             $existing_balance = $this->accountBalance($account, $asset, $type, true);
             if ($existing_balance <= 0 OR $existing_balance < CurrencyUtil::valueToSatoshis($float_amount)) {
-                throw new Exception("Balance of ".CurrencyUtil::satoshisToValue($existing_balance)." was insufficient to debit $float_amount (".LedgerEntry::typeIntegerToString($type).") $asset from {$account['name']}", 1);
+                throw new AccountException('ERR_INSUFFICIENT_FUNDS', 400, "Balance of ".CurrencyUtil::satoshisToValue($existing_balance)." was insufficient to debit $float_amount (".LedgerEntry::typeIntegerToString($type).") $asset from {$account['name']}");
             }
 
             return $this->addEntryForAccount(0 - $float_amount, $asset, $account, $type, $txid, $api_call ? $api_call['id'] : null);

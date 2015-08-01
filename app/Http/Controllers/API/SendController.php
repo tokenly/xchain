@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Blockchain\Sender\PaymentAddressSender;
 use App\Http\Controllers\API\Base\APIController;
 use App\Http\Requests\API\Send\CreateSendRequest;
+use App\Providers\Accounts\Exception\AccountException;
 use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\APICallRepository;
 use App\Repositories\PaymentAddressRepository;
@@ -137,6 +138,12 @@ class SendController extends APIController {
                     // release the account lock
                     if ($lock_acquired) { AccountHandler::releasePaymentAddressLock($payment_address); }
 
+                } catch (AccountException $e) {
+                    if ($lock_acquired) { AccountHandler::releasePaymentAddressLock($payment_address); }
+
+                    EventLog::logError('error.pay', $e);
+                    return new JsonResponse(['message' => $e->getMessage(), 'errorName' => $e->getErrorName()], $e->getStatusCode()); 
+                    
                 } catch (PaymentException $e) {
                     if ($lock_acquired) { AccountHandler::releasePaymentAddressLock($payment_address); }
 
