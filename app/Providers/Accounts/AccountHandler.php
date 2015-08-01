@@ -297,6 +297,9 @@ class AccountHandler {
                     }
                 }
 
+                // close the account
+                $this->account_repository->update($from_account, ['active' => false]);
+
                 // done
                 return;
             });
