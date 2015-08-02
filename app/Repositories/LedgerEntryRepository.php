@@ -172,39 +172,6 @@ class LedgerEntryRepository extends APIRepository
         return $sums;
     }
 
-    // if type is not specified:
-    // [
-    //   'unconfirmed' => [
-    //      'a000000000000000000000000000000000000000000000000000000000001111' => [
-    //          BTC => 0.04
-    //      ],
-    //      'none' => [
-    //          BTC => 0.01
-    //      ]
-    //   ],
-    //   'confirmed' => [
-    //      'none' => [
-    //          BTC = 0.12
-    //          SOUP => 10
-    //      ]
-    //   ],
-    //   'sending' => []
-    // ]
-    public function accountBalancesByTXIDAndAsset(Account $account, $in_satoshis=false) {
-        $account_id = $account['id'];
-
-        $query = $this->prototype_model
-            ->where('account_id', $account_id)
-            ->groupBy('asset', 'type', 'txid')
-            ->select('asset', 'type', 'txid', DB::raw('SUM(amount) AS total_amount') );
-
-        $results = $query->get();
-
-        $sums = $this->assembleAccountBalancesWithTXID($results, $in_satoshis);
-
-        return $sums;
-    }
-
 
     public function combinedAccountBalancesByAsset(PaymentAddress $payment_address, $type, $in_satoshis=false) {
         $query = $this->prototype_model

@@ -123,7 +123,7 @@ class AccountBalancesAPITest extends TestCase {
     }
 
     public function testAPICloseAccount() {
-        list($address, $created_accounts, $api_test_helper) = $this->setupBalancesForTransfer();
+        list($address, $created_accounts, $api_test_helper) = $this->setupBalancesForTransfer(false);
         list($account_1, $account_2, $account_3) = $created_accounts;
 
         // close 
@@ -139,9 +139,9 @@ class AccountBalancesAPITest extends TestCase {
 
         // check balances
         $default_balances = ['unconfirmed' => ['BTC' => 0], 'confirmed' => ['BTC' => 0], 'sending' => []];
-        PHPUnit::assertEquals(array_merge($default_balances, []),  $account_1_balances);
+        PHPUnit::assertEquals(array_merge($default_balances, ['unconfirmed' => []]),  $account_1_balances);
         PHPUnit::assertEquals(array_merge($default_balances, [
-            'unconfirmed' => ['BTC' => 40],
+            'unconfirmed' => [],
             'confirmed'   => ['BTC' => 100],
         ]),  $account_3_balances);
     }
@@ -231,7 +231,7 @@ class AccountBalancesAPITest extends TestCase {
     // account3 => [
     //     unconfirmed => [BTC => 20]
     // ]
-    protected function setupBalancesForTransfer() {
+    protected function setupBalancesForTransfer($with_unconfirmed=true) {
         // sample user for Auth
         $sample_user = app('UserHelper')->createSampleUser();
         $address = app('PaymentAddressHelper')->createSamplePaymentAddressWithoutDefaultAccount($sample_user);
@@ -257,9 +257,12 @@ class AccountBalancesAPITest extends TestCase {
         $repo->addCredit(110, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, $txid);
         $repo->addCredit(100, 'BTC', $created_accounts[1], LedgerEntry::CONFIRMED, $txid);
         $repo->addDebit(  10, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit( 15, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, $txid);
-        $repo->addCredit(  5, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, $txid2);
-        $repo->addCredit( 20, 'BTC', $created_accounts[2], LedgerEntry::UNCONFIRMED, $txid);
+
+        if ($with_unconfirmed) {
+            $repo->addCredit( 15, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, $txid);
+            $repo->addCredit(  5, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, $txid2);
+            $repo->addCredit( 20, 'BTC', $created_accounts[2], LedgerEntry::UNCONFIRMED, $txid);
+        }
 
         return [$address, $created_accounts, $api_test_helper];
     }

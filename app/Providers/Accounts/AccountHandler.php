@@ -273,6 +273,19 @@ class AccountHandler {
                 $from_account = $this->account_repository->findByName($from, $payment_address['id']);
                 if (!$from_account) { throw new AccountException('ERR_FROM_ACCOUNT_NOT_FOUND', 404, "unable to find `from` account"); }
 
+                // check for unconfirmed or sending funds
+                $all_balances_by_asset = $this->ledger_entry_repository->accountBalancesByAsset($from_account, null);
+                if (isset($all_balances_by_asset['unconfirmed'])) {
+                    foreach ($all_balances_by_asset['unconfirmed'] as $asset => $quantity) {
+                        if ($quantity > 0) { throw new AccountException('ERR_ACCOUNT_HAS_UNCONFIRMED_FUNDS', 400, "Cannot close an account with unconfirmed funds"); }
+                    }
+                }
+                if (isset($all_balances_by_asset['sending'])) {
+                    foreach ($all_balances_by_asset['sending'] as $asset => $quantity) {
+                        if ($quantity > 0) { throw new AccountException('ERR_ACCOUNT_HAS_SENDING_FUNDS', 400, "Cannot close an account with sending funds"); }
+                    }
+                }
+
                 // to account
                 $to_account = $this->account_repository->findByName($to, $payment_address['id']);
                 if (!$to_account) {
@@ -285,15 +298,12 @@ class AccountHandler {
                 }
 
                 // move all balances
-                //  accountBalancesByTXIDAndAsset
-                $all_balances_by_asset = $this->ledger_entry_repository->accountBalancesByTXIDAndAsset($from_account);
-                foreach($all_balances_by_asset as $type_string => $balances_by_txid) {
+                //  accountBalancesByAsset
+                foreach($all_balances_by_asset as $type_string => $balances) {
                     $type = LedgerEntry::typeStringToInteger($type_string);
-                    foreach($balances_by_txid as $raw_txid => $balances) {
-                        $txid = ($raw_txid == 'none' ? null : $raw_txid);
-                        foreach($balances as $asset => $quantity) {
-                            $this->ledger_entry_repository->transfer($quantity, $asset, $from_account, $to_account, $type, $txid, $api_call);
-                        }
+                    $txid = null;
+                    foreach($balances as $asset => $quantity) {
+                        $this->ledger_entry_repository->transfer($quantity, $asset, $from_account, $to_account, $type, $txid, $api_call);
                     }
                 }
 

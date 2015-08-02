@@ -1,4 +1,4 @@
-# test close account with confirmed and unconfirmed funds
+# test close account with confirmed funds
 
 monitoredAddresses:
   - address: RECIPIENT01
@@ -74,13 +74,13 @@ events:
     quantity: 250
     asset: SOUP
 
-  - # transfer some unconfirmed LTBCOIN
-    type: transfer
-    from: default
-    to:  account1
-    quantity: 100
-    asset: LTBCOIN
-    txid: cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
+  # - # transfer some unconfirmed LTBCOIN
+  #   type: transfer
+  #   from: default
+  #   to:  account1
+  #   quantity: 100
+  #   asset: LTBCOIN
+  #   txid: cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
 
   - # close the account
     type: transfer
@@ -98,17 +98,17 @@ accounts:
   - meta: { baseFilename: default01.yml }
     name: default
     balances:
-      unconfirmed: { SOUP: 5, LTBCOIN: 400, BTC: 0.00010860 }
+      unconfirmed: { SOUP: 5, LTBCOIN: 500, BTC: 0.00010860 }
       confirmed: { SOUP: 750, BTC: 0.00005430 }
 
   - meta: { baseFilename: default01.yml }
     name: account1
     balances:
-      unconfirmed: { LTBCOIN: 0 }
+      unconfirmed: {  }
       confirmed: { SOUP: 0 }
 
   - meta: { baseFilename: default01.yml }
     name: account2
     balances:
-      unconfirmed: { LTBCOIN: 100 }
+      unconfirmed: {  }
       confirmed: { SOUP: 250 }

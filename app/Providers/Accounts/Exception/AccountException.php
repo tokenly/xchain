@@ -10,7 +10,8 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 * ERR_FROM_ACCOUNT_NOT_FOUND
 * ERR_INSUFFICIENT_FUNDS
 * ERR_NO_BALANCE
-* 
+* ERR_ACCOUNT_HAS_UNCONFIRMED_FUNDS
+* ERR_ACCOUNT_HAS_SENDING_FUNDS
 */
 class AccountException extends HttpException
 {
