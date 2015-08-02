@@ -303,7 +303,10 @@ class AccountHandler {
                     $type = LedgerEntry::typeStringToInteger($type_string);
                     $txid = null;
                     foreach($balances as $asset => $quantity) {
-                        $this->ledger_entry_repository->transfer($quantity, $asset, $from_account, $to_account, $type, $txid, $api_call);
+                        if ($quantity < 0) { throw new Exception("Attempt to transfer negative quantity for account {$from_account['name']} ({$from_account['uuid']})", 1); }
+                        if ($quantity > 0) {
+                            $this->ledger_entry_repository->transfer($quantity, $asset, $from_account, $to_account, $type, $txid, $api_call);
+                        }
                     }
                 }
 
