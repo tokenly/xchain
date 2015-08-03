@@ -70,8 +70,6 @@ class ShowAccountsCommand extends Command {
      */
     public function fire()
     {
-        $this->info('Sweeping account');
-
         $payment_address_repo = app('App\Repositories\PaymentAddressRepository');
         $account_repository =   app('App\Repositories\AccountRepository');
         $user_repository =      app('App\Repositories\UserRepository');
@@ -84,6 +82,7 @@ class ShowAccountsCommand extends Command {
         $payment_address = $payment_address_repo->findByUuid($payment_address_uuid);
         if (!$payment_address) { throw new Exception("Payment address not found", 1); }
 
+        $this->info("Showing accounts for payment address {$payment_address['address']} ({$payment_address['uuid']})");
 
         if (strlen($name)) {
             $account = AccountHandler::getAccount($payment_address, $name);
