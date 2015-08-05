@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "277a85ebf61aad220c798999b351ff86",
+    "hash": "17af35a4ef04fd5fc165b59522cb92bc",
     "packages": [
         {
             "name": "bitwasp/bitcoin-lib",
@@ -16,7 +16,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Bit-Wasp/bitcoin-lib-php/zipball/1d858a9c0411ba2309b8a991a1885e31331aa7d2",
+                "url": "https://api.github.com/repos/Bit-Wasp/bitcoin-lib-php/zipball/825b346d442119fb87611645b6e051d200bba0ab",
                 "reference": "1d858a9c0411ba2309b8a991a1885e31331aa7d2",
                 "shasum": ""
             },
@@ -2749,12 +2749,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/laravel-api-provider.git",
-                "reference": "20235ae6cc940ec231aa35827d01f69efdb4f7e5"
+                "reference": "6ed28a1e7fc120105acab8730d443ac45e23efaa"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/20235ae6cc940ec231aa35827d01f69efdb4f7e5",
-                "reference": "20235ae6cc940ec231aa35827d01f69efdb4f7e5",
+                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/6ed28a1e7fc120105acab8730d443ac45e23efaa",
+                "reference": "6ed28a1e7fc120105acab8730d443ac45e23efaa",
                 "shasum": ""
             },
             "require": {
@@ -2785,7 +2785,7 @@
                 }
             ],
             "description": "An API service provider for Laravel",
-            "time": "2015-07-30 14:57:07"
+            "time": "2015-08-05 02:00:38"
         },
         {
             "name": "tokenly/laravel-blocking-beanstalkd",

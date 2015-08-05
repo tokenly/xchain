@@ -53,7 +53,7 @@ class SendController extends APIController {
         $create_attributes['destination']        = $request_attributes['destination'];
         $create_attributes['quantity_sat']       = CurrencyUtil::valueToSatoshis($request_attributes['quantity']);
         $create_attributes['asset']              = $request_attributes['asset'];
-        return $send_respository->executeWithNewLockedSendByRequestID($request_id, $create_attributes, function($locked_send) use ($request_attributes, $payment_address, $user, $helper, $send_respository, $address_sender, $api_call_repository) {
+        return $send_respository->executeWithNewLockedSendByRequestID($request_id, $create_attributes, function($locked_send) use ($request_attributes, $payment_address, $user, $helper, $send_respository, $address_sender, $api_call_repository, $request_id) {
             $api_call = $api_call_repository->create([
                 'user_id' => $user['id'],
                 'details' => [
@@ -109,7 +109,7 @@ class SendController extends APIController {
 
                     // whether to spend unconfirmed balances
                     $allow_unconfirmed = isset($request_attributes['unconfirmed']) ? $request_attributes['unconfirmed'] : false;
-                    Log::debug("\$allow_unconfirmed=".json_encode($allow_unconfirmed, 192));
+                    // Log::debug("\$allow_unconfirmed=".json_encode($allow_unconfirmed, 192));
 
                     // validate that the funds are available
                     if ($allow_unconfirmed) {
@@ -124,7 +124,9 @@ class SendController extends APIController {
 
 
                     // send the funds
+                    EventLog::log('send.begin', ['request_id' => $request_id, 'address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $request_attributes['quantity'], 'asset' => $request_attributes['asset']]);
                     $txid = $address_sender->send($payment_address, $request_attributes['destination'], $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $dust_size);
+                    EventLog::log('send.complete', ['txid' => $txid, 'request_id' => $request_id, 'address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $request_attributes['quantity'], 'asset' => $request_attributes['asset']]);
                     $quantity_sat = CurrencyUtil::valueToSatoshis($request_attributes['quantity']);
 
 
