@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Console\Commands\Development;
+namespace App\Console\Commands\Accounts;
 
+use App\Models\APICall;
 use App\Models\Account;
 use App\Models\LedgerEntry;
 use App\Providers\Accounts\Facade\AccountHandler;
@@ -9,6 +10,7 @@ use App\Util\ArrayToTextTable;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Foundation\Bus\DispatchesCommands;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use LinusU\Bitcoin\AddressValidator;
 use Symfony\Component\Console\Input\InputArgument;
@@ -17,7 +19,7 @@ use Tokenly\CurrencyLib\CurrencyUtil;
 use Tokenly\LaravelApiProvider\Filter\IndexRequestFilter;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 
-class ReconcileAccountsCommand extends Command {
+class ForceSyncAddressAccountsCommand extends Command {
 
     use DispatchesCommands;
 
@@ -26,14 +28,14 @@ class ReconcileAccountsCommand extends Command {
      *
      * @var string
      */
-    protected $name = 'xchain:reconcile-accounts';
+    protected $name = 'xchain:force-sync-accounts';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Reconciles account balances';
+    protected $description = 'Forces account balances to be synced with the bitcoin and counterparty daemons';
 
 
 
@@ -45,7 +47,7 @@ class ReconcileAccountsCommand extends Command {
     protected function getArguments()
     {
         return [
-            ['payment-address-uuid', InputArgument::OPTIONAL, 'Payment Address UUID'],
+            ['payment-address-uuid', InputArgument::REQUIRED, 'Payment Address UUID'],
         ];
     }
 
@@ -69,28 +71,21 @@ class ReconcileAccountsCommand extends Command {
      */
     public function fire()
     {
+        DB::transaction(function() {
 
-        $ledger               = app('App\Repositories\LedgerEntryRepository');
-        $payment_address_repo = app('App\Repositories\PaymentAddressRepository');
-        $account_repository   = app('App\Repositories\AccountRepository');
-        $user_repository      = app('App\Repositories\UserRepository');
-        $xcpd_client          = app('Tokenly\XCPDClient\Client');
-        $bitcoin_payer        = app('Tokenly\BitcoinPayer\BitcoinPayer');
-        $asset_info_cache     = app('Tokenly\CounterpartyAssetInfoCache\Cache');
+            $ledger               = app('App\Repositories\LedgerEntryRepository');
+            $payment_address_repo = app('App\Repositories\PaymentAddressRepository');
+            $account_repository   = app('App\Repositories\AccountRepository');
+            $user_repository      = app('App\Repositories\UserRepository');
+            $xcpd_client          = app('Tokenly\XCPDClient\Client');
+            $bitcoin_payer        = app('Tokenly\BitcoinPayer\BitcoinPayer');
+            $asset_info_cache     = app('Tokenly\CounterpartyAssetInfoCache\Cache');
 
-        $payment_address_uuid = $this->input->getArgument('payment-address-uuid');
-
-        if ($payment_address_uuid) {
+            $payment_address_uuid = $this->input->getArgument('payment-address-uuid');
             $payment_address = $payment_address_repo->findByUuid($payment_address_uuid);
             if (!$payment_address) { throw new Exception("Payment address not found", 1); }
-            $payment_addresses = [$payment_address];
-        } else {
-            $payment_addresses = $payment_address_repo->findAll();
-        }
 
-        foreach($payment_addresses as $payment_address) {
             Log::debug("reconciling accounts for {$payment_address['address']} ({$payment_address['uuid']})");
-
 
             // get XCP balances
             $balances = $xcpd_client->get_balances(['filters' => ['field' => 'address', 'op' => '==', 'value' => $payment_address['address']]]);
@@ -100,7 +95,7 @@ class ReconcileAccountsCommand extends Command {
             $balances = array_merge([['asset' => 'BTC', 'quantity' => $btc_float_balance]], $balances);
 
 
-            // get xchain balances
+            // get confirmed xchain balances
             $raw_xchain_balances_by_type = $ledger->combinedAccountBalancesByAsset($payment_address, null);
             $combined_xchain_balances = [];
             foreach($raw_xchain_balances_by_type as $type_string => $xchain_balances) {
@@ -141,17 +136,33 @@ class ReconcileAccountsCommand extends Command {
                 $this->comment("Differences found for {$payment_address['address']} ({$payment_address['uuid']})");
                 $this->line(json_encode($differences, 192));
                 $this->line('');
+
+                $api_call = app('App\Repositories\APICallRepository')->create([
+                    'user_id' => $this->getConsoleUser()['id'],
+                    'details' => [
+                        'command' => 'xchain:force-sync-accounts',
+                        'args'    => ['payment_address' => $payment_address['uuid'], ],
+                    ],
+                ]);
+
+
+                // start by clearing all unconfirmed balances
+                $this->clearUnconfirmedBalances($payment_address, $api_call);
+
+                // clear sent balances
+                $this->clearSendingBalances($payment_address, $api_call);
+
+                // sync daemon balances
+                $this->syncConfirmedBalances($payment_address, $differences['differences'], $api_call);
+
             } else {
                 Log::debug("no differences for {$payment_address['address']} ({$payment_address['uuid']})");
-
-                if ($payment_address_uuid) {
-                    // only showing one address
-                    $this->comment("No differences found for {$payment_address['address']} ({$payment_address['uuid']})");
-
-                }
+                // only showing one address
+                $this->comment("No differences found for {$payment_address['address']} ({$payment_address['uuid']})");
             }
 
-        }
+
+        });
 
         $this->info('done');
     }
@@ -185,6 +196,83 @@ class ReconcileAccountsCommand extends Command {
         
         // return ['any' => $any_differences, 'add' => $items_to_add, 'updates' => $differences, 'delete' => $items_to_delete];
         return ['any' => $any_differences, 'differences' => $differences,];
+    }
+
+    protected function clearUnconfirmedBalances($payment_address, APICall $api_call) {
+        $ledger               = app('App\Repositories\LedgerEntryRepository');
+        $account_repository   = app('App\Repositories\AccountRepository');
+
+        $all_accounts = $account_repository->findByAddress($payment_address);
+        foreach($all_accounts as $account) {
+            $balances = $ledger->accountBalancesByAsset($account, LedgerEntry::UNCONFIRMED);
+            foreach($balances as $asset => $quantity) {
+                if ($quantity == 0) { continue; }
+
+                // debit the unconfirmed balance
+                $msg = "Clearing unconfirmed $quantity $asset from account {$account['name']}";
+                $this->info($msg);
+                $ledger->addDebit($quantity, $asset, $account, LedgerEntry::UNCONFIRMED, null, $api_call);
+            }
+        }
+    }
+
+    protected function clearSendingBalances($payment_address, APICall $api_call) {
+        $ledger               = app('App\Repositories\LedgerEntryRepository');
+        $account_repository   = app('App\Repositories\AccountRepository');
+
+        $all_accounts = $account_repository->findByAddress($payment_address);
+        foreach($all_accounts as $account) {
+            $balances = $ledger->accountBalancesByAsset($account, LedgerEntry::SENDING);
+            foreach($balances as $asset => $quantity) {
+                if ($quantity == 0) { continue; }
+
+                // debit the sending balance
+                $msg = "Clearing sending $quantity $asset from account {$account['name']}";
+                $this->info($msg);
+                $ledger->addDebit($quantity, $asset, $account, LedgerEntry::SENDING, null, $api_call);
+            }
+        }
+    }
+
+    protected function syncConfirmedBalances($payment_address, $balance_differences, APICall $api_call) {
+        $ledger = app('App\Repositories\LedgerEntryRepository');
+
+        foreach($balance_differences as $asset => $qty_by_type) {
+            $xchain_quantity = $qty_by_type['xchain'];
+            $daemon_quantity = $qty_by_type['daemon'];
+
+            $default_account = AccountHandler::getAccount($payment_address);
+            if ($xchain_quantity > $daemon_quantity) {
+                // debit
+                $quantity = $xchain_quantity - $daemon_quantity;
+                $msg = "Debiting $quantity $asset from account {$default_account['name']}";
+                $this->info($msg);
+                $ledger->addDebit($quantity, $asset, $default_account, LedgerEntry::CONFIRMED, null, $api_call);
+            } else {
+                // credit
+                $quantity = $daemon_quantity - $xchain_quantity;
+                $msg = "Crediting $quantity $asset to account {$default_account['name']}";
+                $this->info($msg);
+                $ledger->addDebit($quantity, $asset, $default_account, LedgerEntry::CONFIRMED, null, $api_call);
+            }
+        }
+    }
+
+
+
+
+    protected function getConsoleUser() {
+        $user_repository = app('App\Repositories\UserRepository');
+        $user = $user_repository->findByEmail('console-user@tokenly.co');
+        if ($user) { return $user; }
+
+        $user_vars = [
+            'email'    => 'console-user@tokenly.co',
+        ];
+        $user = $user_repository->create($user_vars);
+
+
+        return $user;
     }
 
 

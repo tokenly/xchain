@@ -34,7 +34,7 @@ class AccountRepository extends APIRepository
     }
 
 
-    public function findByAddress(PaymentAddress $payment_address, $active=false) {
+    public function findByAddress(PaymentAddress $payment_address, $active=true) {
         $query = $this->prototype_model
             ->where('payment_address_id', $payment_address['id']);
 

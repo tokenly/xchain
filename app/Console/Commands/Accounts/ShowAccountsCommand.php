@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands\Development;
+namespace App\Console\Commands\Accounts;
 
 use App\Models\Account;
 use App\Models\LedgerEntry;

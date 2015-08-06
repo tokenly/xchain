@@ -24,9 +24,11 @@ class Kernel extends ConsoleKernel {
 		'App\Console\Commands\Development\PruneTransactionsCommand',
 		'App\Console\Commands\Development\PruneBlocksCommand',
 		'App\Console\Commands\Development\UpgradeAccountsCommand',
-		'App\Console\Commands\Development\SweepAccountCommand',
-		'App\Console\Commands\Development\ShowAccountsCommand',
-		'App\Console\Commands\Development\ReconcileAccountsCommand',
+		'App\Console\Commands\Accounts\SweepAccountCommand',
+		'App\Console\Commands\Accounts\ShowAccountsCommand',
+		'App\Console\Commands\Accounts\ReconcileAccountsCommand',
+		'App\Console\Commands\Accounts\ForceSyncAddressAccountsCommand',
+		'App\Console\Commands\Accounts\CloseAccountCommand',
 
 		// vendor commands
 		'Tokenly\ConsulHealthDaemon\Console\ConsulHealthMonitorCommand',
