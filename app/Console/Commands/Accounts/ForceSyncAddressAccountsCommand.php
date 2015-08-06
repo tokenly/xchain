@@ -100,8 +100,8 @@ class ForceSyncAddressAccountsCommand extends Command {
             $combined_xchain_balances = [];
             foreach($raw_xchain_balances_by_type as $type_string => $xchain_balances) {
                 foreach($xchain_balances as $asset => $quantity) {
-                    if ($type_string == 'sending' AND $asset == 'BTC') { continue; }
-                    if ($type_string == 'unconfirmed' AND $asset != 'BTC') { continue; }
+                    if ($type_string == 'sending') { continue; }
+                    if ($type_string == 'unconfirmed') { continue; }
                     if (!isset($combined_xchain_balances[$asset])) { $combined_xchain_balances[$asset] = 0.0; }
                     $combined_xchain_balances[$asset] += $quantity;
                 }
