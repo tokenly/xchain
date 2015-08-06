@@ -36,11 +36,6 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         return;
     }
 
-    public function handleConfirmedTransaction($parsed_tx, $confirmations, $block_seq, Block $block) {
-        $this->sendNotifications($parsed_tx, $confirmations, $block_seq, $block);
-        $this->updateAccountBalances($parsed_tx, $confirmations, $block_seq, $block);
-    }
-
     public function sendNotifications($parsed_tx, $confirmations, $block_seq, Block $block=null)
     {
         $sources = ($parsed_tx['sources'] ? $parsed_tx['sources'] : []);
@@ -49,11 +44,31 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         // get all addresses that we care about
         $all_addresses = array_unique(array_merge($sources, $destinations));
         if ($all_addresses) {
-            // find all monitored address matching those in the sources or destinations
+            // find all active monitored address matching those in the sources or destinations
             //  inactive monitored address are ignored
             $monitored_addresses = $this->monitored_address_repository->findByAddresses($all_addresses, true);
         }
-        if (!$all_addresses OR !$monitored_addresses->count()) { return; }
+
+        // if there are no source or detination addresses (?!), then skip the rest
+        if (!$all_addresses) {
+            EventLog::logError('transaction.noAddresses', ['txid' => $parsed_tx['txid'],]);
+            return;
+        }
+
+
+        // check for payment addresses if no monitored addresses were found
+        if (!$monitored_addresses->count()) {
+            // this did not match any active monitored addresses
+            //   but it might match a payment address
+            $payment_addresses = $this->payment_address_repository->findByAddresses($all_addresses);
+
+            if (!$payment_addresses->count()) {
+                // this tx did not match any monitored addresses or payment addresses
+                //   we can safely ignore it
+                return;
+            }
+        }
+
 
         // determine matched monitored addresses
         $matched_monitored_address_ids = [];
@@ -78,12 +93,17 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             $matched_monitored_address_ids[] = $monitored_address['uuid'];
         }
 
+        // Counterparty transactions will need to validate any transfers with counterpartyd first
         if ($this->willNeedToPreprocessSendNotification($parsed_tx, $confirmations)) {
-            $this->preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids);
+            $this->preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block);
             return;
         }
 
-        $this->sendNotificationsForMatchedMonitorIDs($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids);
+
+        // send notifications to monitored addresses
+        if ($matched_monitored_address_ids) {
+            $this->sendNotificationsForMatchedMonitorIDs($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids);
+        }
     }
 
 
@@ -196,7 +216,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         return false;
     }
 
-    protected function preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids) {
+    protected function preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block) {
         // for bitcoin, always send confirmed notifications
         //   because bitcoind has already validated the confirmed transaction
 

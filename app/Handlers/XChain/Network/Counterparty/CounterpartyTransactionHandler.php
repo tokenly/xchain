@@ -40,7 +40,7 @@ class CounterpartyTransactionHandler extends BitcoinTransactionHandler {
     }
 
 
-    protected function preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids) {
+    protected function preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block) {
         // throw this transaction into the counterpartyd verification queue
         $data = [
             'tx'            => $parsed_tx,

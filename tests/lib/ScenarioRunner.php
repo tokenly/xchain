@@ -334,6 +334,7 @@ class ScenarioRunner
     // Monitored Addresses
 
     protected function addMonitoredAddresses($addresses) {
+        if (!$addresses) { return; }
         foreach($addresses as $raw_attributes) {
             $attributes = $raw_attributes;
             $monitored_address = $this->monitored_address_repository->createWithUser($this->getSampleUser(), $this->monitored_address_helper->sampleDBVars($attributes));

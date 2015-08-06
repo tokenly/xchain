@@ -27,7 +27,7 @@ class XChainScenariosTest extends TestCase {
         $scenario_number_count = count(glob(base_path().'/tests/fixtures/scenarios/*.yml'));
         PHPUnit::assertGreaterThan(0, $scenario_number_count);
         for ($i=$starting_scenario_number; $i <= $scenario_number_count; $i++) { 
-            Log::debug("BEGIN SCENARIO: $i");
+            Log::debug("\n".str_repeat('-', 60)."\nBEGIN SCENARIO: $i\n".str_repeat('-', 60));
             // clear the db
             if ($i > 1) { $this->resetForScenario(); }
 
