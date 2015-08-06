@@ -253,7 +253,7 @@ class ForceSyncAddressAccountsCommand extends Command {
                 $quantity = $daemon_quantity - $xchain_quantity;
                 $msg = "Crediting $quantity $asset to account {$default_account['name']}";
                 $this->info($msg);
-                $ledger->addDebit($quantity, $asset, $default_account, LedgerEntry::CONFIRMED, null, $api_call);
+                $ledger->addCredit($quantity, $asset, $default_account, LedgerEntry::CONFIRMED, null, $api_call);
             }
         }
     }
