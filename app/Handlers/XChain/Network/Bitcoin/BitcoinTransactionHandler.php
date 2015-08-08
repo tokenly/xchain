@@ -36,6 +36,42 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         return;
     }
 
+    public function updateAccountBalances($parsed_tx, $confirmations, $block_seq, Block $block=null) {
+        // don't process this now if pre-processing was necessary for the send notification
+        if ($this->willNeedToPreprocessSendNotification($parsed_tx, $confirmations)) {
+            return;
+        }
+
+
+        $sources = ($parsed_tx['sources'] ? $parsed_tx['sources'] : []);
+        $destinations = ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []);
+
+        // get all addresses that we care about
+        $all_addresses = array_unique(array_merge($sources, $destinations));
+        if (!$all_addresses) { return; }
+
+        // find all monitored address matching those in the sources or destinations
+        $payment_addresses = $this->payment_address_repository->findByAddresses($all_addresses);
+
+        // determine matched payment addresses
+        foreach($payment_addresses->get() as $payment_address) {
+            
+            if (in_array($payment_address['address'], $sources)) {
+                // this address sent something
+                $quantity = $this->buildQuantityForEventType('send', $parsed_tx, $payment_address['address']);
+                AccountHandler::send($payment_address, $quantity, $parsed_tx['asset'], $parsed_tx, $confirmations);
+                continue;
+            }
+
+            if (in_array($payment_address['address'], $destinations)) {
+                // this address received something
+                $quantity = $this->buildQuantityForEventType('receive', $parsed_tx, $payment_address['address']);
+                AccountHandler::receive($payment_address, $quantity, $parsed_tx['asset'], $parsed_tx, $confirmations);
+                continue;
+            }
+        }
+    }
+
     public function sendNotifications($parsed_tx, $confirmations, $block_seq, Block $block=null)
     {
         $sources = ($parsed_tx['sources'] ? $parsed_tx['sources'] : []);
@@ -103,43 +139,6 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         // send notifications to monitored addresses
         if ($matched_monitored_address_ids) {
             $this->sendNotificationsForMatchedMonitorIDs($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids);
-        }
-    }
-
-
-    public function updateAccountBalances($parsed_tx, $confirmations, $block_seq, Block $block=null) {
-        // don't process this now if pre-processing was necessary for the send notification
-        if ($this->willNeedToPreprocessSendNotification($parsed_tx, $confirmations)) {
-            return;
-        }
-
-
-        $sources = ($parsed_tx['sources'] ? $parsed_tx['sources'] : []);
-        $destinations = ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []);
-
-        // get all addresses that we care about
-        $all_addresses = array_unique(array_merge($sources, $destinations));
-        if (!$all_addresses) { return; }
-
-        // find all monitored address matching those in the sources or destinations
-        $payment_addresses = $this->payment_address_repository->findByAddresses($all_addresses);
-
-        // determine matched payment addresses
-        foreach($payment_addresses->get() as $payment_address) {
-            
-            if (in_array($payment_address['address'], $sources)) {
-                // this address sent something
-                $quantity = $this->buildQuantityForEventType('send', $parsed_tx, $payment_address['address']);
-                AccountHandler::send($payment_address, $quantity, $parsed_tx['asset'], $parsed_tx, $confirmations);
-                continue;
-            }
-
-            if (in_array($payment_address['address'], $destinations)) {
-                // this address received something
-                $quantity = $this->buildQuantityForEventType('receive', $parsed_tx, $payment_address['address']);
-                AccountHandler::receive($payment_address, $quantity, $parsed_tx['asset'], $parsed_tx, $confirmations);
-                continue;
-            }
         }
     }
 

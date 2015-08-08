@@ -38,16 +38,16 @@ class XChainTransactionHandler {
 
     public function handleConfirmedTransaction($parsed_tx, $confirmations, $block_seq, Block $block) {
         $transaction_handler = $this->network_handler_factory->buildTransactionHandler($parsed_tx['network']);
-        $transaction_handler->sendNotifications($parsed_tx, $confirmations, $block_seq, $block);
         $transaction_handler->updateAccountBalances($parsed_tx, $confirmations, $block_seq, $block);
+        $transaction_handler->sendNotifications($parsed_tx, $confirmations, $block_seq, $block);
         return;
     }
 
 
     public function subscribe($events) {
         $events->listen('xchain.tx.received', 'App\Handlers\XChain\XChainTransactionHandler@storeParsedTransaction');
-        $events->listen('xchain.tx.received', 'App\Handlers\XChain\XChainTransactionHandler@sendNotifications');
         $events->listen('xchain.tx.received', 'App\Handlers\XChain\XChainTransactionHandler@updateAccountBalances');
+        $events->listen('xchain.tx.received', 'App\Handlers\XChain\XChainTransactionHandler@sendNotifications');
         $events->listen('xchain.tx.confirmed', 'App\Handlers\XChain\XChainTransactionHandler@handleConfirmedTransaction');
     }
 
