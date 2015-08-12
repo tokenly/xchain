@@ -243,10 +243,14 @@ class LedgerEntryRepository extends APIRepository
     public function update(Model $model, $attributes) { throw new Exception("Updates are not allowed", 1); }
 
 
-    public function findByTXID($txid, $type=null) {
+    public function findByTXID($txid, $payment_address_id=null, $type=null) {
         $query = $this->prototype_model
             ->where('txid', $txid)
             ->orderBy('id');
+
+        if ($payment_address_id !== null) {
+            $query->where('payment_address_id', $payment_address_id);
+        }
 
         if ($type !== null) {
             // check type

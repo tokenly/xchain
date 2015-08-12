@@ -55,15 +55,19 @@ class AccountHandler {
 
                     // if there are any confirmed entries for this txid already, then 
                     //  don't add anything new
-                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, LedgerEntry::CONFIRMED);
+                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, $payment_address['id'], LedgerEntry::CONFIRMED);
                     if (count($existing_ledger_entries) > 0) { return; }
 
                     // find the funds and move each one to the confirmed status
                     $any_unconfirmed_funds_found = false;
                     $unconfirmed_balances_by_account_id = $this->ledger_entry_repository->accountBalancesByTXID($txid, LedgerEntry::UNCONFIRMED);
                     foreach($unconfirmed_balances_by_account_id as $account_id => $balances) {
-                        $any_unconfirmed_funds_found = true;
                         $account = $this->account_repository->findByID($account_id);
+
+                        // the account must belong to the payment address
+                        if ($account['payment_address_id'] != $payment_address['id']) { continue; }
+
+                        $any_unconfirmed_funds_found = true;
                         foreach($balances as $asset => $quantity) {
                             if ($quantity > 0) {
                                 $this->ledger_entry_repository->changeType($quantity, $asset, $account, LedgerEntry::UNCONFIRMED, LedgerEntry::CONFIRMED, $txid);
@@ -85,7 +89,7 @@ class AccountHandler {
 
                     // if there are any entries for this txid already, then 
                     //  don't add anything new
-                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid);
+                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, $payment_address['id']);
                     if (count($existing_ledger_entries) > 0) {
                         if ($confirmations == 0) { EventLog::log('account.receive.warning', ['txid' => $txid]); }
                         return;
@@ -113,6 +117,7 @@ class AccountHandler {
             DB::transaction(function() use ($payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
 
                 list($txid, $dust_size, $btc_fees) = $this->extractDataFromParsedTransaction($parsed_tx);
+                Log::debug("send: $txid, $dust_size, $btc_fees  \$confirmations=$confirmations");
 
                 if ($confirmations >= self::SEND_CONFIRMATIONS_REQUIRED) {
                     // SENT
@@ -123,6 +128,10 @@ class AccountHandler {
                     foreach($sent_balances_by_account_id as $account_id => $balances) {
                         $any_sending_funds_found = true;
                         $account = $this->account_repository->findByID($account_id);
+
+                        // this account must belong to the payment address
+                        if ($account['payment_address_id'] != $payment_address['id']) { continue; }
+
                         foreach($balances as $asset => $quantity) {
                             if ($quantity > 0) {
                                 $this->ledger_entry_repository->addDebit($quantity, $asset, $account, LedgerEntry::SENDING, $txid);
@@ -138,9 +147,9 @@ class AccountHandler {
 
                     $type = LedgerEntry::SENDING;
 
-                    // if there are any entries for this txid already, then 
+                    // if there are any entries for this txid and payment address already, then 
                     //  don't add anything new
-                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid);
+                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, $payment_address['id']);
                     if (count($existing_ledger_entries) > 0) {
                         if ($confirmations == 0) { EventLog::log('account.send.warning', ['txid' => $txid]); }
                         return;
