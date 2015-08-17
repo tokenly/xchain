@@ -52,6 +52,7 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
 
     public function processBlock($block_event)
     {
+
         EventLog::log('block', $block_event, ['height', 'hash', 'previousblockhash', 'time']);
 
         // update the block repository
@@ -163,23 +164,37 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
         $notification_vars_for_model = $notification;
         unset($notification_vars_for_model['notificationId']);
         foreach ($this->user_repository->findWithWebhookEndpoint() as $user) {
-            $notification_model = $this->notification_repository->createForUser(
-                $user,
-                [
-                    'txid'          => $block_event['hash'],
-                    'confirmations' => $block_confirmations,
-                    'notification'  => $notification_vars_for_model,
-                    'block_id'      => $current_block['id'],
-                ]
-            );
+            try {
+                $notification_model = $this->notification_repository->createForUser(
+                    $user,
+                    [
+                        'txid'          => $block_event['hash'],
+                        'confirmations' => $block_confirmations,
+                        'notification'  => $notification_vars_for_model,
+                        'block_id'      => $current_block['id'],
+                    ]
+                );
 
-            // add the id
-            $notification['notificationId'] = $notification_model['uuid'];
+                // add the id
+                $notification['notificationId'] = $notification_model['uuid'];
 
-            // put notification in the queue
-            EventLog::log('notification.out', ['event'=>$notification['event'], 'height'=>$notification['height'], 'hash'=>$notification['hash'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
+                // put notification in the queue
+                EventLog::log('notification.out', ['event'=>$notification['event'], 'height'=>$notification['height'], 'hash'=>$notification['hash'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
 
-            $this->xcaller_client->sendWebhook($notification, $user['webhook_endpoint'], $notification_model['uuid'], $user['apitoken'], $user['apisecretkey']);
+                $this->xcaller_client->sendWebhook($notification, $user['webhook_endpoint'], $notification_model['uuid'], $user['apitoken'], $user['apisecretkey']);
+            } catch (QueryException $e) {
+                if ($e->errorInfo[0] == 23000) {
+                    EventLog::logError('blockNotification.duplicate.error', $e, ['id' => $notification_model['uuid'], 'height' => $notification['height'], 'hash' => $block_event['hash'], 'user' => $user['id'],]);
+
+                } else {
+                    throw $e;
+                }
+            } catch (Exception $e) {
+
+                EventLog::logError('notification.error', $e);
+                sleep(3);
+                throw $e;
+            }
         }
 
 
