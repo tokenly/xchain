@@ -15,6 +15,7 @@ use Illuminate\Foundation\Bus\DispatchesCommands;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Tokenly\CurrencyLib\CurrencyUtil;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 use Tokenly\RecordLock\Facade\RecordLock;
 
@@ -382,7 +383,7 @@ class AccountHandler {
         // check actual balances
         $has_sufficient_funds = true;
         foreach($balances_required as $asset_required => $quantity_required) {
-            if (!isset($actual_balances[$asset_required]) OR $actual_balances[$asset_required] < $quantity_required) {
+            if (!isset($actual_balances[$asset_required]) OR CurrencyUtil::valueToSatoshis($actual_balances[$asset_required]) < CurrencyUtil::valueToSatoshis($quantity_required)) {
                 $has_sufficient_funds = false;
             }
         }
