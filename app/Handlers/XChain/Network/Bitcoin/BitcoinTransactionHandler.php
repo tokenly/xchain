@@ -55,6 +55,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
         // determine matched payment addresses
         foreach($payment_addresses->get() as $payment_address) {
+            // Log::debug("upating account balances for payment address {$payment_address['address']}.  txid is {$parsed_tx['txid']}");
             
             if (in_array($payment_address['address'], $sources)) {
                 // this address sent something

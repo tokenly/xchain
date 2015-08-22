@@ -350,18 +350,28 @@ class ScenarioRunner
         foreach($addresses as $raw_attributes) {
             $attributes = $raw_attributes;
             unset($attributes['accountBalances']);
+            unset($attributes['rawAccountBalances']);
             $payment_address = $this->payment_address_repository->createWithUser($this->getSampleUser(), $this->payment_address_helper->sampleVars($attributes));
 
             // create a default account
             AccountHandler::createDefaultAccount($payment_address);
 
+
+            // assign balances
+            $ledger_entry_repository = app('App\Repositories\LedgerEntryRepository');
+            $account_repository = app('App\Repositories\AccountRepository');
+            $default_account = $account_repository->findByName('default', $payment_address['id']);
+
             if (isset($raw_attributes['accountBalances'])) {
-                $ledger_entry_repository = app('App\Repositories\LedgerEntryRepository');
-                $account_repository = app('App\Repositories\AccountRepository');
-                
-                $default_account = $account_repository->findByName('default', $payment_address['id']);
                 foreach ($raw_attributes['accountBalances'] as $asset => $balance) {
                     $ledger_entry_repository->addCredit($balance, $asset, $default_account, LedgerEntry::CONFIRMED, 'testtxid');
+                }
+            }
+            if (isset($raw_attributes['rawAccountBalances'])) {
+                foreach ($raw_attributes['rawAccountBalances'] as $type_string => $balances) {
+                    foreach ($balances as $asset => $balance) {
+                        $ledger_entry_repository->addCredit($balance, $asset, $default_account, LedgerEntry::typeStringToInteger($type_string), 'testtxid');
+                    }
                 }
             }
         }
@@ -670,7 +680,7 @@ class ScenarioRunner
         // account: sendingaccount1
         $vars = $event;
 
-        unset($vars['send']);
+        unset($vars['type']);
 
         // get the first payment address
         $payment_address = app('App\Repositories\PaymentAddressRepository')->findAll()->first();

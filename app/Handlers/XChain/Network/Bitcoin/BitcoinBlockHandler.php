@@ -83,6 +83,7 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
         // update the block transactions in this block
         // Log::debug("\$block=".json_encode($block, 192));
         $block_confirmations = $this->updateAllBlockTransactions($block_event, $block);
+
         $this->generateAndSendNotifications($block_event, $block_confirmations, $block);
     }
 
@@ -211,19 +212,27 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
             $blocks_by_hash[$previous_block['hash']] = $previous_block;
         }
         if ($block_hashes) {
+            $_offset = 0;
             foreach($this->transaction_repository->findAllTransactionsConfirmedInBlockHashes($block_hashes) as $transaction_model) {
                 $confirmations = $this->confirmations_builder->getConfirmationsForBlockHashAsOfHeight($transaction_model['block_confirmed_hash'], $block_event['height']);
+                // if ($_offset % 50 === 1) { Log::debug("tx {$_offset} $confirmations confirmations"); }
 
                 // the block height might have changed if the chain was reorganized
                 $parsed_tx = $transaction_model['parsed_tx'];
                 $confirmed_block = $blocks_by_hash[$transaction_model['block_confirmed_hash']];
                 if ($confirmed_block) {
                     $parsed_tx['bitcoinTx']['blockheight'] = $confirmed_block['height'];
-                    $this->events->fire('xchain.tx.confirmed', [$parsed_tx, $confirmations, $transaction_model['block_seq'], $current_block]);
+                    try {
+                        $this->events->fire('xchain.tx.confirmed', [$parsed_tx, $confirmations, $transaction_model['block_seq'], $current_block]);
+                    } catch (Exception $e) {
+                        Log::error("xchain.tx.confirmed FAILED for tx $_offset with txid {$transaction_model['txid']}.  ".$e->getMessage());
+                        throw $e;
+                    }
                 } else {
                     EventLog::logError('block.blockNotFound', ['hash' => $transaction_model['block_confirmed_hash'], 'txid' => $transaction_model['txid']]);
                 }
 
+                ++$_offset;
             }
         } else {
             EventLog::logError('block.noBlocksFound', ['height' => $block_event['height'], 'hash' => $block_event['hash'], 'previousblockhash' => $block_event['previousblockhash']]);

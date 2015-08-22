@@ -61,17 +61,36 @@ class AccountHandler {
 
                     // find the funds and move each one to the confirmed status
                     $any_unconfirmed_funds_found = false;
-                    $unconfirmed_balances_by_account_id = $this->ledger_entry_repository->accountBalancesByTXID($txid, LedgerEntry::UNCONFIRMED);
-                    foreach($unconfirmed_balances_by_account_id as $account_id => $balances) {
+                    $unconfirmed_balances_for_txid_by_account_id = $this->ledger_entry_repository->accountBalancesByTXID($txid, LedgerEntry::UNCONFIRMED);
+                    foreach($unconfirmed_balances_for_txid_by_account_id as $account_id => $balances_for_txid) {
                         $account = $this->account_repository->findByID($account_id);
 
                         // the account must belong to the payment address
                         if ($account['payment_address_id'] != $payment_address['id']) { continue; }
 
+                        // get the full unconfirmed amount (which might be less than the amount by txid)
+                        $unfiltered_unconfirmed_balances = $this->ledger_entry_repository->accountBalancesByAsset($account, LedgerEntry::UNCONFIRMED);
+
                         $any_unconfirmed_funds_found = true;
-                        foreach($balances as $asset => $quantity) {
-                            if ($quantity > 0) {
-                                $this->ledger_entry_repository->changeType($quantity, $asset, $account, LedgerEntry::UNCONFIRMED, LedgerEntry::CONFIRMED, $txid);
+                        foreach($balances_for_txid as $unconfirmed_txid_asset => $unconfirmed_txid_quantity) {
+                            if ($unconfirmed_txid_quantity > 0) {
+                                $unconfirmed_amount_to_move = $unconfirmed_txid_quantity;
+                                $unconfirmed_funds_already_sent = 0;
+                                if (isset($unfiltered_unconfirmed_balances[$unconfirmed_txid_asset])) {
+                                    if ($unconfirmed_amount_to_move > $unfiltered_unconfirmed_balances[$unconfirmed_txid_asset]) {
+                                        $unconfirmed_amount_to_move = $unfiltered_unconfirmed_balances[$unconfirmed_txid_asset];
+                                        // the rest have already been sent
+                                        $unconfirmed_funds_already_sent = $unconfirmed_txid_quantity - $unconfirmed_amount_to_move;
+                                    }
+                                }
+
+                                // start by moving all the unconfirmed funds we can
+                                $this->ledger_entry_repository->changeType($unconfirmed_amount_to_move, $unconfirmed_txid_asset, $account, LedgerEntry::UNCONFIRMED, LedgerEntry::CONFIRMED, $txid);
+
+                                if ($unconfirmed_funds_already_sent > 0) {
+                                    // these funds were already moved from unconfirmed to sent
+                                    EventLog::log('account.receive.unconfirmedAlreadySent', ['address' => $payment_address['uuid'], 'quantity' => $unconfirmed_funds_already_sent, 'asset' => $unconfirmed_txid_asset, 'txid' => $txid, ]);
+                                }
                             }
                         }
                     }
@@ -118,7 +137,7 @@ class AccountHandler {
             DB::transaction(function() use ($payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
 
                 list($txid, $dust_size, $btc_fees) = $this->extractDataFromParsedTransaction($parsed_tx);
-                Log::debug("send: $txid, $dust_size, $btc_fees  \$confirmations=$confirmations");
+                // Log::debug("send: $txid, $dust_size, $btc_fees  \$confirmations=$confirmations");
 
                 if ($confirmations >= self::SEND_CONFIRMATIONS_REQUIRED) {
                     // SENT
@@ -182,7 +201,7 @@ class AccountHandler {
             if ($confirmed_quantity_to_send < $confirmed_and_unconfirmed_quantity_to_send) {
                 $unconfirmed_quantity_to_send = $confirmed_and_unconfirmed_quantity_to_send - $confirmed_quantity_to_send;
                 if ($unconfirmed_quantity_to_send > 0) {
-                    Log::debug("\$unconfirmed_quantity_to_send=".json_encode($unconfirmed_quantity_to_send, 192));
+                    // Log::debug("\$unconfirmed_quantity_to_send=".json_encode($unconfirmed_quantity_to_send, 192));
                     $this->ledger_entry_repository->changeType($unconfirmed_quantity_to_send, $asset_to_send, $account, LedgerEntry::UNCONFIRMED, LedgerEntry::SENDING, $txid);
                 }
             }
@@ -354,9 +373,9 @@ class AccountHandler {
             if (!isset($actual_balances[$unconfirmed_asset])) { $actual_balances[$unconfirmed_asset] = 0.0; }
             $actual_balances[$unconfirmed_asset] += $unconfirmed_quantity;
         }
-        Log::debug("\$actual_balances=".json_encode($actual_balances, 192));
-        Log::debug("\$unconfirmed_actual_balances=".json_encode($unconfirmed_actual_balances, 192));
-        Log::debug("\$confirmed_actual_balances=".json_encode($confirmed_actual_balances, 192));
+        // Log::debug("\$actual_balances=".json_encode($actual_balances, 192));
+        // Log::debug("\$unconfirmed_actual_balances=".json_encode($unconfirmed_actual_balances, 192));
+        // Log::debug("\$confirmed_actual_balances=".json_encode($confirmed_actual_balances, 192));
 
         return $this->hasSufficientFunds($actual_balances, $quantity, $asset, $float_fee, $dust_size);
     }
