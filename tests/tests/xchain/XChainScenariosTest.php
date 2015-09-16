@@ -5,7 +5,7 @@ use \PHPUnit_Framework_Assert as PHPUnit;
 
 class XChainScenariosTest extends TestCase {
 
-    protected $useDatabase = true;
+    protected $useRealSQLiteDatabase = true;
 
 
     public function testSingleScenario() {

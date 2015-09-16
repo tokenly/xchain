@@ -14,7 +14,6 @@ use LinusU\Bitcoin\AddressValidator;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Tokenly\CurrencyLib\CurrencyUtil;
-use Tokenly\LaravelApiProvider\Filter\IndexRequestFilter;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 
 class ReconcileAccountsCommand extends Command {

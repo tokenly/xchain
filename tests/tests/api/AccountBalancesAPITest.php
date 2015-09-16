@@ -9,6 +9,26 @@ class AccountBalancesAPITest extends TestCase {
 
     protected $useDatabase = true;
 
+    public function testAPIGetInactiveBalances()
+    {
+        // sample user for Auth
+        $sample_user = app('UserHelper')->createSampleUser();
+        $address = app('PaymentAddressHelper')->createSamplePaymentAddressWithoutDefaultAccount($sample_user);
+
+        // create 3 models
+        $api_test_helper = $this->getAPITestHelper($address);
+        $created_accounts = [];
+        $created_accounts[] = $api_test_helper->newModel();
+        $created_accounts[] = $api_test_helper->newModel();
+        $inactive_account = app('AccountHelper')->newSampleAccount($address, ['name' => 'Inactive 1', 'active' => 0]);
+
+        // get inactive
+        $api_response = $api_test_helper->callAPIAndValidateResponse('GET', '/api/v1/accounts/balances/'.$address['uuid'].'?active=false');
+        PHPUnit::assertCount(1, $api_response);
+        PHPUnit::assertEquals($inactive_account['uuid'], $api_response[0]['id']);
+    }
+
+
     public function testAPIGetBalances()
     {
         // sample user for Auth

@@ -5,7 +5,7 @@ use \PHPUnit_Framework_Assert as PHPUnit;
 
 class PaymentAddressSenderTest extends TestCase {
 
-    protected $useDatabase = true;
+    protected $useRealSQLiteDatabase = true;
 
     public function testPaymentAddressSenderForCounterpartySend()
     {
@@ -27,8 +27,34 @@ class PaymentAddressSenderTest extends TestCase {
         PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.0001), $mock_send_call['args'][0]['fee_per_kb']);
 
         PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis($dust_size), $mock_send_call['args'][0]['regular_dust_size']);
-
     }
+
+    //  make sure we don't push a duplicate to the network
+    public function testPaymentAddressDuplicateSenderForCounterpartySend() {
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $user = $this->app->make('\UserHelper')->createSampleUser();
+        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddressWithoutInitialBalances($user);
+
+        $sender = $this->app->make('App\Blockchain\Sender\PaymentAddressSender');
+        $dust_size = 0.00001234;
+        $sender->sendByRequestID('request001', $payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', '100', 'TOKENLY', $float_fee=null, $dust_size, $is_sweep=false);
+
+        // check the first sent call
+        PHPUnit::assertCount(2, $mock_calls['xcpd']); // get_asset_info and create_send
+        PHPUnit::assertCount(2, $mock_calls['btcd']); // signrawtransaction and sendrawtransaction
+        PHPUnit::assertEquals('signrawtransaction', $mock_calls['btcd'][0]['method']); // signrawtransaction and sendrawtransaction
+
+        // send the same thing again
+        $sender->sendByRequestID('request001', $payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', '100', 'TOKENLY', $float_fee=null, $dust_size, $is_sweep=false);
+        PHPUnit::assertCount(2, $mock_calls['xcpd']); // get_asset_info and create_send
+        PHPUnit::assertCount(3, $mock_calls['btcd']); // signrawtransaction and sendrawtransaction
+        PHPUnit::assertEquals('signrawtransaction', $mock_calls['btcd'][0]['method']); // signrawtransaction and sendrawtransaction
+        PHPUnit::assertEquals('sendrawtransaction', $mock_calls['btcd'][1]['method']); // sendrawtransaction
+        PHPUnit::assertEquals('sendrawtransaction', $mock_calls['btcd'][2]['method']); // sendrawtransaction
+    }
+
+
 
     public function testPaymentAddressSenderForBTCSend()
     {
@@ -59,6 +85,28 @@ class PaymentAddressSenderTest extends TestCase {
         // echo "\$mock_calls['btcd'][0]['args'][1]:\n".json_encode($mock_calls['btcd'][0]['args'][1], 192)."\n";
     }
 
+    public function testPaymentAddressDuplicateSenderForBTCSend()
+    {
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $user = $this->app->make('\UserHelper')->createSampleUser();
+        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddressWithoutInitialBalances($user);
+        $sender = $this->app->make('App\Blockchain\Sender\PaymentAddressSender');
+        $sender->sendByRequestID('request001', $payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', '0.123', 'BTC', $float_fee=null, $dust_size=null, $is_sweep=false);
+
+        // check the first sent call
+        PHPUnit::assertCount(3, $mock_calls['btcd']); // createrawtransaction, signrawtransaction and sendrawtransaction
+        PHPUnit::assertEquals('signrawtransaction', $mock_calls['btcd'][1]['method']);
+        PHPUnit::assertEquals('sendrawtransaction', $mock_calls['btcd'][2]['method']);
+
+        // send the same thing again
+        $sender->sendByRequestID('request001', $payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', '0.123', 'BTC', $float_fee=null, $dust_size=null, $is_sweep=false);
+        PHPUnit::assertCount(4, $mock_calls['btcd']); // createrawtransaction, signrawtransaction and sendrawtransaction
+        PHPUnit::assertEquals('signrawtransaction', $mock_calls['btcd'][1]['method']);
+        PHPUnit::assertEquals('sendrawtransaction', $mock_calls['btcd'][2]['method']);
+        PHPUnit::assertEquals('sendrawtransaction', $mock_calls['btcd'][3]['method']);
+    }
+
     public function testPaymentAddressSenderForBTCSweep() {
         $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
@@ -82,6 +130,28 @@ class PaymentAddressSenderTest extends TestCase {
         // check output amount
         $first_output_address = array_keys($mock_calls['btcd'][0]['args'][1])[0];
         PHPUnit::assertEquals(0.2349, $mock_calls['btcd'][0]['args'][1][$first_output_address]);
+    }
+
+    public function testPaymentAddressDuplicateSenderForBTCSweep() {
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $user = $this->app->make('\UserHelper')->createSampleUser();
+        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddressWithoutInitialBalances($user);
+
+        $sender = $this->app->make('App\Blockchain\Sender\PaymentAddressSender');
+        $sender->sweepBTCByRequestID('request001', $payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $float_fee=null);
+
+        // check the first sent call
+        PHPUnit::assertCount(3, $mock_calls['btcd']); // createrawtransaction, signrawtransaction and sendrawtransaction
+        PHPUnit::assertEquals('signrawtransaction', $mock_calls['btcd'][1]['method']);
+        PHPUnit::assertEquals('sendrawtransaction', $mock_calls['btcd'][2]['method']);
+
+        // send the same thing again
+        $sender->sweepBTCByRequestID('request001', $payment_address, '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $float_fee=null);
+        PHPUnit::assertCount(4, $mock_calls['btcd']); // createrawtransaction, signrawtransaction and sendrawtransaction
+        PHPUnit::assertEquals('signrawtransaction', $mock_calls['btcd'][1]['method']);
+        PHPUnit::assertEquals('sendrawtransaction', $mock_calls['btcd'][2]['method']);
+        PHPUnit::assertEquals('sendrawtransaction', $mock_calls['btcd'][3]['method']);
     }
 
     public function testPaymentAddressSenderForSweepAllAssets() {
@@ -118,6 +188,8 @@ class PaymentAddressSenderTest extends TestCase {
         $first_output_address = array_keys($btc_create_tx_args[1])[0];
         PHPUnit::assertEquals(0.2349, $btc_create_tx_args[1][$first_output_address]);
     }
+
+
 
     protected function buildInsightMockCallsForSweepAllAssets() {
         $builder = app('InsightAPIMockBuilder');

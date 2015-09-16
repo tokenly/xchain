@@ -125,7 +125,7 @@ class SendController extends APIController {
 
                     // send the funds
                     EventLog::log('send.begin', ['request_id' => $request_id, 'address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $request_attributes['quantity'], 'asset' => $request_attributes['asset']]);
-                    $txid = $address_sender->send($payment_address, $request_attributes['destination'], $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $dust_size);
+                    $txid = $address_sender->sendByRequestID($request_id, $payment_address, $request_attributes['destination'], $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $dust_size);
                     EventLog::log('send.complete', ['txid' => $txid, 'request_id' => $request_id, 'address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $request_attributes['quantity'], 'asset' => $request_attributes['asset']]);
                     $quantity_sat = CurrencyUtil::valueToSatoshis($request_attributes['quantity']);
 

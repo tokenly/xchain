@@ -52,17 +52,11 @@ return [
             'prefix'   => '',
         ],
 
-        'testing_mysql' => [
+        'testing_real_sqlite' => [
             'driver'   => 'sqlite',
-            'database' => ':memory:',
+            'database' => storage_path('testdb.sqlite'),
             'prefix'   => '',
         ],
-
-		'sqlite' => [
-			'driver'   => 'sqlite',
-			'database' => storage_path().'/database.sqlite',
-			'prefix'   => '',
-		],
 
 		'mysql' => [
 			'driver'    => 'mysql',
@@ -76,24 +70,16 @@ return [
 			'strict'    => false,
 		],
 
-		'pgsql' => [
-			'driver'   => 'pgsql',
-			'host'     => env('DB_HOST', 'localhost'),
-			'database' => env('DB_DATABASE', 'forge'),
-			'username' => env('DB_USERNAME', 'forge'),
-			'password' => env('DB_PASSWORD', ''),
-			'charset'  => 'utf8',
-			'prefix'   => '',
-			'schema'   => 'public',
-		],
-
-		'sqlsrv' => [
-			'driver'   => 'sqlsrv',
-			'host'     => env('DB_HOST', 'localhost'),
-			'database' => env('DB_DATABASE', 'forge'),
-			'username' => env('DB_USERNAME', 'forge'),
-			'password' => env('DB_PASSWORD', ''),
-			'prefix'   => '',
+		'untransacted' =>  [
+			'driver'    => 'mysql',
+			'host'      => env('DB_HOST', 'localhost'),
+			'database'  => env('DB_DATABASE', 'forge'),
+			'username'  => env('DB_USERNAME', 'forge'),
+			'password'  => env('DB_PASSWORD', ''),
+			'charset'   => 'utf8',
+			'collation' => 'utf8_unicode_ci',
+			'prefix'    => '',
+			'strict'    => false,
 		],
 
 	],

@@ -4,10 +4,11 @@ namespace App\Repositories;
 
 use App\Models\PaymentAddress;
 use App\Models\User;
-use Tokenly\LaravelApiProvider\Contracts\APIResourceRepositoryContract;
 use Illuminate\Database\Eloquent\Model;
 use Rhumsaa\Uuid\Uuid;
 use Tokenly\BitcoinAddressLib\BitcoinAddressGenerator;
+use Tokenly\LaravelApiProvider\Contracts\APIResourceRepositoryContract;
+use Tokenly\LaravelApiProvider\Filter\RequestFilter;
 use Tokenly\TokenGenerator\TokenGenerator;
 use \Exception;
 
@@ -51,7 +52,7 @@ class PaymentAddressRepository implements APIResourceRepositoryContract
         return PaymentAddress::create($attributes);
     }
 
-    public function findAll() {
+    public function findAll(RequestFilter $filter=null) {
         return PaymentAddress::all();
     }
 

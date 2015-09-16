@@ -5,7 +5,7 @@ use \PHPUnit_Framework_Assert as PHPUnit;
 
 class ClientGUIDTest extends TestCase {
 
-    protected $useDatabase = true;
+    protected $useRealSQLiteDatabase = true;
 
     public function testMultiplePaymentAddressSendsWithSameClientGUID()
     {

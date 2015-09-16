@@ -11,8 +11,6 @@ class Kernel extends ConsoleKernel {
 	 * @var array
 	 */
 	protected $commands = [
-		'App\Console\Commands\Inspire',
-
 		// xchain commands
 		'App\Console\Commands\Blocks\LoadMissingBlocksCommand',
 		'App\Console\Commands\Transaction\ResendTransactionNotificationsCommand',
@@ -32,6 +30,10 @@ class Kernel extends ConsoleKernel {
 
 		// vendor commands
 		'Tokenly\ConsulHealthDaemon\Console\ConsulHealthMonitorCommand',
+
+		// API Provider commands
+		\Tokenly\LaravelApiProvider\Commands\MakeAPIModelCommand::class,
+		\Tokenly\LaravelApiProvider\Commands\MakeAPIRespositoryCommand::class,
 	];
 
 	/**

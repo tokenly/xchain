@@ -3,13 +3,14 @@
 namespace App\Repositories;
 
 use App\Models\Send;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Rhumsaa\Uuid\Uuid;
 use Tokenly\LaravelApiProvider\Contracts\APIResourceRepositoryContract;
+use Tokenly\LaravelApiProvider\Filter\RequestFilter;
 use Tokenly\RecordLock\Facade\RecordLock;
-use Exception;
 
 /*
 * SendRepository
@@ -32,7 +33,7 @@ class SendRepository implements APIResourceRepositoryContract
         return Send::create($attributes);
     }
 
-    public function findAll() {
+    public function findAll(RequestFilter $filter=null) {
         return Send::all();
     }
 

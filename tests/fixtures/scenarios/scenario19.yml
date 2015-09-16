@@ -29,7 +29,7 @@ events:
     type: transaction
     meta:
         baseFilename: sample_btc_parsed_send_03.json
-    txid: 999999991c410dc987337924be3634106ec8f8896910de0bccd59088a00ce702  # <-- magic number from mock bitcoin sender
+    txid: 9999999983f9efe6d9a6c6901b84a225b6302f327b3cb758734cc5a4ddbf3207  # <-- magic number from mock bitcoin sender
     sender: MYADDRESS01
     recipient: 1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD
     asset: BTC
@@ -40,7 +40,7 @@ events:
     type: block
     tx:
         - f88d98717dacb985e3ad49ffa66b8562d8194f1885f58425e1c8582ce2ac5b58
-        - 999999991c410dc987337924be3634106ec8f8896910de0bccd59088a00ce702
+        - 9999999983f9efe6d9a6c6901b84a225b6302f327b3cb758734cc5a4ddbf3207
   -
     type: block
     hash: BLOCKHASH02

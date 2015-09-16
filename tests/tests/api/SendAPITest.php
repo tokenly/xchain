@@ -7,7 +7,7 @@ use \PHPUnit_Framework_Assert as PHPUnit;
 
 class SendAPITest extends TestCase {
 
-    protected $useDatabase = true;
+    protected $useRealSQLiteDatabase = true;
 
     public function testRequireAuthForSends() {
         $user = $this->app->make('\UserHelper')->createSampleUser();

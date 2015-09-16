@@ -5,6 +5,7 @@
         "This file is @generated automatically"
     ],
     "hash": "17af35a4ef04fd5fc165b59522cb92bc",
+    "content-hash": "e70373969baa5f8bf6f235f0668351a6",
     "packages": [
         {
             "name": "bitwasp/bitcoin-lib",
@@ -890,12 +891,12 @@
             "version": "v0.3.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/mdanter/phpecc.git",
+                "url": "https://github.com/phpecc/phpecc.git",
                 "reference": "8b588fc094ba743d8f8c84980bcc6b470c4baed7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mdanter/phpecc/zipball/8b588fc094ba743d8f8c84980bcc6b470c4baed7",
+                "url": "https://api.github.com/repos/phpecc/phpecc/zipball/8b588fc094ba743d8f8c84980bcc6b470c4baed7",
                 "reference": "8b588fc094ba743d8f8c84980bcc6b470c4baed7",
                 "shasum": ""
             },
@@ -2452,12 +2453,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-payer.git",
-                "reference": "f960d3ab879e304ec4e740fa3ab2bf63c0ad7084"
+                "reference": "d3aef0e53aefbc6f07738905d5bb3f0065fef3df"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/f960d3ab879e304ec4e740fa3ab2bf63c0ad7084",
-                "reference": "f960d3ab879e304ec4e740fa3ab2bf63c0ad7084",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/d3aef0e53aefbc6f07738905d5bb3f0065fef3df",
+                "reference": "d3aef0e53aefbc6f07738905d5bb3f0065fef3df",
                 "shasum": ""
             },
             "require": {
@@ -2487,7 +2488,7 @@
                 }
             ],
             "description": "A bitcoin payment library",
-            "time": "2015-07-30 02:37:53"
+            "time": "2015-09-16 02:08:08"
         },
         {
             "name": "tokenly/consul-health-daemon",
@@ -2582,12 +2583,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-sender.git",
-                "reference": "ac1a30e5fa174f464001dac36ff1adbe61ab29fc"
+                "reference": "aad0570f7d23e496cce1b7ea7efe9db071794737"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-sender/zipball/ac1a30e5fa174f464001dac36ff1adbe61ab29fc",
-                "reference": "ac1a30e5fa174f464001dac36ff1adbe61ab29fc",
+                "url": "https://api.github.com/repos/tokenly/counterparty-sender/zipball/aad0570f7d23e496cce1b7ea7efe9db071794737",
+                "reference": "aad0570f7d23e496cce1b7ea7efe9db071794737",
                 "shasum": ""
             },
             "require": {
@@ -2616,7 +2617,7 @@
                 }
             ],
             "description": "A library",
-            "time": "2015-07-17 12:32:29"
+            "time": "2015-09-16 02:07:35"
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
@@ -2749,12 +2750,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/laravel-api-provider.git",
-                "reference": "6ed28a1e7fc120105acab8730d443ac45e23efaa"
+                "reference": "2bea4f2b0711bc730fe0a994a4cf0d2088597f4e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/6ed28a1e7fc120105acab8730d443ac45e23efaa",
-                "reference": "6ed28a1e7fc120105acab8730d443ac45e23efaa",
+                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/2bea4f2b0711bc730fe0a994a4cf0d2088597f4e",
+                "reference": "2bea4f2b0711bc730fe0a994a4cf0d2088597f4e",
                 "shasum": ""
             },
             "require": {
@@ -2785,7 +2786,7 @@
                 }
             ],
             "description": "An API service provider for Laravel",
-            "time": "2015-08-05 02:00:38"
+            "time": "2015-09-15 12:56:01"
         },
         {
             "name": "tokenly/laravel-blocking-beanstalkd",
@@ -2877,7 +2878,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-record-lock/zipball/a408f6d820faf355fe681d9483beb3dec16ef741",
+                "url": "https://api.github.com/repos/tokenly/laravel-record-lock/zipball/8963ccc90674d705d4553c56e82c2c505da38d5f",
                 "reference": "a408f6d820faf355fe681d9483beb3dec16ef741",
                 "shasum": ""
             },

@@ -54,7 +54,7 @@ class AccountRepository extends APIRepository
 
         // allow filter
         if ($filter !== null) {
-            $filter->filter($query);
+            $filter->apply($query);
         }
 
         $query->orderBy('id');

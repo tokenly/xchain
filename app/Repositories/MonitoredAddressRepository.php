@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Rhumsaa\Uuid\Uuid;
 use Tokenly\LaravelApiProvider\Contracts\APIResourceRepositoryContract;
+use Tokenly\LaravelApiProvider\Filter\RequestFilter;
 use \Exception;
 
 /*
@@ -30,7 +31,7 @@ class MonitoredAddressRepository implements APIResourceRepositoryContract
         return MonitoredAddress::create($attributes);
     }
 
-    public function findAll() {
+    public function findAll(RequestFilter $filter=null) {
         return MonitoredAddress::all();
     }
 

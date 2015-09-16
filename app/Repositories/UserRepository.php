@@ -9,6 +9,7 @@ use Rhumsaa\Uuid\Uuid;
 use Tokenly\BitcoinAddressLib\BitcoinAddressGenerator;
 use Tokenly\LaravelApiProvider\Contracts\APIResourceRepositoryContract;
 use Tokenly\LaravelApiProvider\Contracts\APIUserRepositoryContract;
+use Tokenly\LaravelApiProvider\Filter\RequestFilter;
 use Tokenly\TokenGenerator\TokenGenerator;
 use \Exception;
 
@@ -46,7 +47,7 @@ class UserRepository implements APIResourceRepositoryContract, APIUserRepository
         return User::create($attributes);
     }
 
-    public function findAll() {
+    public function findAll(RequestFilter $filter=null) {
         return User::all();
     }
 

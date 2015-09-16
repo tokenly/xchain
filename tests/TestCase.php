@@ -1,10 +1,13 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
+
 class TestCase extends Illuminate\Foundation\Testing\TestCase {
 
     protected $baseUrl = 'http://localhost';
 
-    protected $useDatabase = false;
+    protected $useDatabase           = false;
+    protected $useRealSQLiteDatabase = false;
 
 	/**
 	 * Creates the application.
@@ -33,11 +36,57 @@ class TestCase extends Illuminate\Foundation\Testing\TestCase {
         {
             $this->setUpDb();
         }
+
+        if($this->useRealSQLiteDatabase)
+        {
+            $this->setUpRealSQLiteDb();
+        }
+    }
+
+    public function tearDown() {
+        if($this->useRealSQLiteDatabase)
+        {
+            $this->tearDownRealSQLiteDb();
+        }
+
+        return parent::tearDown();
     }
 
     public function setUpDb()
     {
+        // migrate the database
         $this->app['Illuminate\Contracts\Console\Kernel']->call('migrate');
+    }
+
+    public function setUpRealSQLiteDb()
+    {
+        $app = app();
+
+        // set the untransacted database driver to be a mirror of the default driver
+        $default_driver = 'testing_real_sqlite';
+        DB::setDefaultConnection($default_driver);
+
+        // duplicate the untransacted database driver
+        $connections = $app['config']['database.connections'];
+        config(['database.connections.untransacted' => $connections[$default_driver]]);
+
+        // create the blank db sqlite file (even if it already exists)
+        $path = $connections[$default_driver]['database'];
+        if (is_dir(dirname($path))) { file_put_contents($path, ''); }
+
+        // migrate the database
+        $this->app['Illuminate\Contracts\Console\Kernel']->call('migrate');
+
+        // also migrate the untrasacted in-memory database
+        $this->app['Illuminate\Contracts\Console\Kernel']->call('migrate', ['--database' => 'untransacted']);
+    }
+
+    public function tearDownRealSQLiteDb() {
+        $app = app();
+        $default_driver = 'testing_real_sqlite';
+        $connections = $app['config']['database.connections'];
+        $path = $connections[$default_driver]['database'];
+        if (file_exists($path) && is_dir(dirname($path))) { unlink($path); }
     }
 
     public function teardownDb()
