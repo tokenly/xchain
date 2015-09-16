@@ -1,4 +1,4 @@
 /vendor
 .env
 node_modules
-bin/localdev
+storage/testdb*

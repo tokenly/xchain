@@ -112,8 +112,7 @@ class PaymentAddressSender {
 
         if ($signed_transactions === null) {
             // build the signed transactions
-            $signed_transaction = $this->buildAllSignedTransactions($payment_address, $destination, $float_quantity, $asset, $float_fee, $float_regular_dust_size, $is_sweep);
-            $signed_transactions = [$signed_transaction];
+            $signed_transactions = $this->buildAllSignedTransactions($payment_address, $destination, $float_quantity, $asset, $float_fee, $float_regular_dust_size, $is_sweep);
             $signed_transactions = $this->composed_transaction_repository->storeOrFetchComposedTransactions($request_id, $signed_transactions);
         }
 
