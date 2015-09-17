@@ -49,7 +49,15 @@ class ValidateConfirmedCounterpartydTxJob
         // xcp_command -c get_sends -p '{"filters": {"field": "tx_hash", "op": "==", "value": "address"}}'
         $parsed_tx = $data['tx'];
         $tx_hash = $parsed_tx['txid'];
-        $sends = $this->xcpd_client->get_sends(['filters' => ['field' => 'tx_hash', 'op' => '==', 'value' => $tx_hash]]);
+
+        try {
+            $sends = $this->xcpd_client->get_sends(['filters' => ['field' => 'tx_hash', 'op' => '==', 'value' => $tx_hash]]);
+        } catch (Exception $e) {
+            EventLog::logError('error.counterparty', $e);
+
+            // received no result from counterparty
+            $sends = null;
+        }
 
         $is_valid = null;
         if ($sends) {
