@@ -59,4 +59,13 @@ class ComposedTransactionRepository
         return;
     }
 
+    public function deleteComposedTransactionsByRequestID($request_id) {
+        $result = DB::connection('untransacted')
+            ->table('composed_transactions')
+            ->where(['request_id' => $request_id])
+            ->delete();
+
+        return $result;
+    }
+
 }

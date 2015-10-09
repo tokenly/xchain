@@ -122,7 +122,22 @@ class PaymentAddressSender {
         //   some of these may fail
         $tx_ids = [];
         foreach($signed_transactions as $signed_transaction) {
-            $tx_ids[] = $this->bitcoin_payer->sendSignedTransaction($signed_transaction);
+            try {
+                $tx_ids[] = $this->bitcoin_payer->sendSignedTransaction($signed_transaction);
+            } catch (Exception $e) {
+                if (in_array($e->getCode(), [-25, -26])) {
+                    if (count($signed_transactions) == 1) {
+                        // this transaction was rejected, remove it from the composed transaction repository
+                        //   so it can be created again
+                        $this->composed_transaction_repository->deleteComposedTransactionsByRequestID($request_id);
+
+                        EventLog::log('composedTransaction.removed', compact('request_id', 'destination', 'float_quantity', 'asset'));
+                    }
+                }
+                
+                // throw the exception
+                throw $e;
+            }
         }
 
         if (count($tx_ids) == 1) { return $tx_ids[0]; }

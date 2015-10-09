@@ -63,5 +63,38 @@ class ComposedTransactionRepositoryTest extends TestCase {
         PHPUnit::assertEquals([$transaction_hex], $fetched_transactions);
     }
 
+    public function testDeleteComposedTransaction()
+    {
+        $repository = app('App\Repositories\ComposedTransactionRepository');
+
+        $request_id        = 'reqid01';
+        $transaction_hex   = 'testhex01';
+        $txid              = 'mytxid01';
+        $request_id_2      = 'reqid02';
+        $transaction_hex_2 = 'testhex02';
+        $txid_2            = 'mytxid02';
+        $repository->storeComposedTransactions($request_id, [$transaction_hex], $txid);
+        $repository->storeComposedTransactions($request_id_2, [$transaction_hex_2], $txid_2);
+
+        // load the composed transaction
+        $loaded_transactions = $repository->getComposedTransactionsByRequestID($request_id);
+        PHPUnit::assertEquals([$transaction_hex], $loaded_transactions);
+
+        // delete the composed transaction
+        $count = $repository->deleteComposedTransactionsByRequestID($request_id);
+        PHPUnit::assertEquals(1, $count);
+
+        // composed transaction one is deleted
+        $loaded_transactions = $repository->getComposedTransactionsByRequestID($request_id);
+        PHPUnit::assertEmpty($loaded_transactions);
+
+        // composed transaction two is good
+        $loaded_transactions = $repository->getComposedTransactionsByRequestID($request_id_2);
+        PHPUnit::assertEquals([$transaction_hex_2], $loaded_transactions);
+
+
+
+    }
+
 
 }
