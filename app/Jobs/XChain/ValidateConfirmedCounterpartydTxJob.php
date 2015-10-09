@@ -128,7 +128,14 @@ class ValidateConfirmedCounterpartydTxJob
             // handle the parsed tx now
             $block = $this->block_repository->findByID($data['block_id']);
             if (!$block) { throw new Exception("Block not found: {$data['block_id']}", 1); }
-            $this->events->fire('xchain.tx.confirmed', [$data['tx'], $data['confirmations'], $data['block_seq'], $block]);
+
+            try {
+                $this->events->fire('xchain.tx.confirmed', [$data['tx'], $data['confirmations'], $data['block_seq'], $block]);
+            } catch (Exception $e) {
+                EventLog::logError('error.confirmingTx', $e);
+                usleep(500000); // sleep 0.5 seconds to prevent runaway errors
+                throw $e;
+            }
 
             // if all went well, delete the job
             $job->delete();
