@@ -125,13 +125,16 @@ class PaymentAddressSender {
             try {
                 $tx_ids[] = $this->bitcoin_payer->sendSignedTransaction($signed_transaction);
             } catch (Exception $e) {
-                if (in_array($e->getCode(), [-25, -26])) {
+                if (in_array($e->getCode(), [-25, -26, -27])) {
                     if (count($signed_transactions) == 1) {
                         // this transaction was rejected, remove it from the composed transaction repository
                         //   so it can be created again
                         $this->composed_transaction_repository->deleteComposedTransactionsByRequestID($request_id);
 
-                        EventLog::log('composedTransaction.removed', compact('request_id', 'destination', 'float_quantity', 'asset'));
+                        $error_log_details = compact('request_id', 'destination', 'float_quantity', 'asset');
+                        $error_log_details['errorCode'] = $e->getCode();
+                        $error_log_details['errorMsg'] = $e->getMessage();
+                        EventLog::log('composedTransaction.removed', $error_log_details);
                     }
                 }
                 
