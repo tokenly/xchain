@@ -111,6 +111,10 @@ class BitcoinTransactionEventBuilder
                 $parsed_transaction_data['bitcoinTx']['blockheight'] = $block ? $block['height'] : null;
             }
 
+            // add a transaction fingerprint
+            $parsed_transaction_data['transactionFingerprint'] = $this->buildFingerprint($parsed_transaction_data['bitcoinTx']);
+
+
             return $parsed_transaction_data;
 
         } catch (Exception $e) {
@@ -146,6 +150,79 @@ class BitcoinTransactionEventBuilder
         }
 
         return [array_keys($sources_map), $quantity_by_destination];
+    }
+
+    protected function buildFingerprint($bitcoin_tx) {
+
+        // "vin": [
+        //     {
+        //         "addr": "1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1",
+        //         "doubleSpentTxID": null,
+        //         "n": 0,
+        //         "scriptSig": {
+        //             "asm": "3045022100a37bcfd3087fa4ba9480ce09c7adf02ba3ce2208d6170b42e50b5b2633b91ee6022025d409d3d9dae0a159982c7ab079787948b6b6c5f87fa583d3886ebf1e074c8901 02f4aef682535628a7e0492b2b5db1aa312348c3095e0258e26b275b25b10290e6"
+        //         },
+        //         "sequence": 4294967295,
+        //         "txid": "cc669b824186886407ad7edd46796437e20ad73c89080420c45e5803f917228d",
+        //         "value": 0.00781213,
+        //         "valueSat": 781213,
+        //         "vout": 2
+        //     }
+        // ],
+        // "vout": [
+        //     {
+        //         "n": 0,
+        //         "scriptPubKey": {
+        //             "addresses": [
+        //                 "1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD"
+        //             ],
+        //             "asm": "OP_DUP OP_HASH160 c56cb39f9b289c0ec4ef6943fa107c904820fe09 OP_EQUALVERIFY OP_CHECKSIG",
+        //             "reqSigs": 1,
+        //             "type": "pubkeyhash"
+        //         },
+        //         "spentIndex": 2,
+        //         "spentTs": 1403958484,
+        //         "spentTxId": "e90bc279294d704d09b227ad0e37459f61cccb85008605656dc8b024235eefe8",
+        //         "value": "0.00400000"
+        //     },
+        //     {
+        //         "n": 1,
+        //         "scriptPubKey": {
+        //             "addresses": [
+        //                 "1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1"
+        //             ],
+        //             "asm": "OP_DUP OP_HASH160 6ca4b6b20eac497e9ca94489c545a3372bdd2fa7 OP_EQUALVERIFY OP_CHECKSIG",
+        //             "reqSigs": 1,
+        //             "type": "pubkeyhash"
+        //         },
+        //         "spentIndex": 0,
+        //         "spentTs": 1405081243,
+        //         "spentTxId": "3587bfa8d96c10b6696728651900db2ad6b41321ea44f26693de4f90d2b63526",
+        //         "value": "0.00361213"
+        //     }
+
+
+        $scripts = [];
+        foreach($bitcoin_tx['vin'] as $vin){
+            if (isset($vin['scriptSig']) AND isset($vin['scriptSig']['asm'])) {
+                $scripts[] = $vin['scriptSig']['asm'];
+            } else if (isset($vin['coinbase'])) {
+                $scripts[] = $vin['coinbase'];
+            } else {
+                Log::warning("WARNING: no scriptSig for tx {$bitcoin_tx['txid']}".json_encode($bitcoin_tx, 192));
+                $scripts[] = json_encode($vin);
+            }
+        }
+        foreach($bitcoin_tx['vout'] as $vout){
+            if (isset($vout['scriptPubKey']) AND isset($vout['scriptPubKey']['asm'])) {
+                $scripts[] = $vout['scriptPubKey']['asm'];
+            } else {
+                Log::warning("WARNING: no scriptPubKey for tx {$bitcoin_tx['txid']}".json_encode($bitcoin_tx, 192));
+                $scripts[] = json_encode($vout);
+            }
+        }
+
+        return hash('sha256', implode('|', $scripts));
     }
 
 }

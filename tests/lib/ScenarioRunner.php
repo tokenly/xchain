@@ -223,7 +223,7 @@ class ScenarioRunner
 
         ///////////////////
         // OPTIONAL
-        foreach (['confirmations','confirmed','counterpartyTx','bitcoinTx','transactionTime','notificationId','notifiedAddressId','webhookEndpoint','blockSeq','confirmationTime',] as $field) {
+        foreach (['confirmations','confirmed','counterpartyTx','bitcoinTx','transactionTime','notificationId','notifiedAddressId','webhookEndpoint','blockSeq','confirmationTime','transactionFingerprint',] as $field) {
             if (isset($expected_notification[$field])) {
                 if (is_array($expected_notification[$field])) {
                     $normalized_expected_notification[$field] = array_replace_recursive(isset($actual_notification[$field]) ? $actual_notification[$field] : [], $expected_notification[$field]);

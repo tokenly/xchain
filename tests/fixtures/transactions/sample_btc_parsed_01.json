@@ -78,5 +78,6 @@
         "fees": 0.0002,
         "blockheight": null
     },
-    "counterpartyTx": []
+    "counterpartyTx": [],
+    "transactionFingerprint": "1234567890123456789012345678901234567890123456789012345678901234"
 }

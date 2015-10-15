@@ -84,5 +84,6 @@
         "valueIn": 0.05898916,
         "fees": 0.0001
     },
-    "counterpartyTx": []
+    "counterpartyTx": [],
+    "transactionFingerprint": "1234567890123456789012345678901234567890123456789012345678901234"
 }

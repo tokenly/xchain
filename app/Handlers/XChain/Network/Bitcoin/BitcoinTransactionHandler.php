@@ -282,46 +282,50 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
         if ($event_type === null) {
             $notification = [
-                'network'           => $parsed_tx['network'],
-                'asset'             => $parsed_tx['asset'],
+                'network'                => $parsed_tx['network'],
+                'asset'                  => $parsed_tx['asset'],
 
-                'sources'           => $sources,
-                'destinations'      => $destinations,
+                'sources'                => $sources,
+                'destinations'           => $destinations,
 
-                'notificationId'    => null,
-                'txid'              => $parsed_tx['txid'],
-                'transactionTime'   => DateTimeUtil::ISO8601Date($parsed_tx['timestamp']),
-                'confirmed'         => ($confirmations > 0 ? true : false),
-                'confirmations'     => $confirmations,
-                'confirmationTime'  => $confirmation_timestamp ? DateTimeUtil::ISO8601Date($confirmation_timestamp) : '',
-                'blockSeq'          => $block_seq,
+                'notificationId'         => null,
+                'txid'                   => $parsed_tx['txid'],
+                'transactionTime'        => DateTimeUtil::ISO8601Date($parsed_tx['timestamp']),
+                'confirmed'              => ($confirmations > 0 ? true : false),
+                'confirmations'          => $confirmations,
+                'confirmationTime'       => $confirmation_timestamp ? DateTimeUtil::ISO8601Date($confirmation_timestamp) : '',
+                'blockSeq'               => $block_seq,
 
-                'bitcoinTx'         => $parsed_tx['bitcoinTx'],
+                'bitcoinTx'              => $parsed_tx['bitcoinTx'],
+
+                'transactionFingerprint' => $parsed_tx['transactionFingerprint'],
             ];
         } else {
             $notification = [
-                'event'             => $event_type,
+                'event'                  => $event_type,
 
-                'network'           => $parsed_tx['network'],
-                'asset'             => $parsed_tx['asset'],
-                'quantity'          => $quantity,
-                'quantitySat'       => CurrencyUtil::valueToSatoshis($quantity),
+                'network'                => $parsed_tx['network'],
+                'asset'                  => $parsed_tx['asset'],
+                'quantity'               => $quantity,
+                'quantitySat'            => CurrencyUtil::valueToSatoshis($quantity),
 
-                'sources'           => $sources,
-                'destinations'      => $destinations,
+                'sources'                => $sources,
+                'destinations'           => $destinations,
 
-                'notificationId'    => null,
-                'txid'              => $parsed_tx['txid'],
-                'transactionTime'   => DateTimeUtil::ISO8601Date($parsed_tx['timestamp']),
-                'confirmed'         => ($confirmations > 0 ? true : false),
-                'confirmations'     => $confirmations,
-                'confirmationTime'  => $confirmation_timestamp ? DateTimeUtil::ISO8601Date($confirmation_timestamp) : '',
-                'blockSeq'          => $block_seq,
+                'notificationId'         => null,
+                'txid'                   => $parsed_tx['txid'],
+                'transactionTime'        => DateTimeUtil::ISO8601Date($parsed_tx['timestamp']),
+                'confirmed'              => ($confirmations > 0 ? true : false),
+                'confirmations'          => $confirmations,
+                'confirmationTime'       => $confirmation_timestamp ? DateTimeUtil::ISO8601Date($confirmation_timestamp) : '',
+                'blockSeq'               => $block_seq,
 
-                'notifiedAddress'   => $monitored_address['address'],
-                'notifiedAddressId' => $monitored_address['uuid'],
+                'notifiedAddress'        => $monitored_address['address'],
+                'notifiedAddressId'      => $monitored_address['uuid'],
 
-                'bitcoinTx'         => $parsed_tx['bitcoinTx'],
+                'bitcoinTx'              => $parsed_tx['bitcoinTx'],
+
+                'transactionFingerprint' => $parsed_tx['transactionFingerprint'],
             ];
         }
         if ($block_seq === null) { unset($notification['blockSeq']); }

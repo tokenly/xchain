@@ -86,5 +86,6 @@
         "asset": "LTBCOIN",
         "dustSize": 0.00005430,
         "dustSizeSat": 5430
-    }
+    },
+    "transactionFingerprint": "1234567890123456789012345678901234567890123456789012345678901234"
 }
