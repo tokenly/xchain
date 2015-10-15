@@ -10,6 +10,7 @@ use App\Models\PaymentAddress;
 use App\Providers\Accounts\Exception\AccountException;
 use App\Repositories\AccountRepository;
 use App\Repositories\LedgerEntryRepository;
+use App\Repositories\PaymentAddressRepository;
 use Exception;
 use Illuminate\Foundation\Bus\DispatchesCommands;
 use Illuminate\Support\Facades\Config;
@@ -26,9 +27,10 @@ class AccountHandler {
 
     use DispatchesCommands;
 
-    function __construct(AccountRepository $account_repository, LedgerEntryRepository $ledger_entry_repository) {
-        $this->account_repository = $account_repository;
-        $this->ledger_entry_repository = $ledger_entry_repository;
+    function __construct(PaymentAddressRepository $payment_address_repository, AccountRepository $account_repository, LedgerEntryRepository $ledger_entry_repository) {
+        $this->account_repository         = $account_repository;
+        $this->ledger_entry_repository    = $ledger_entry_repository;
+        $this->payment_address_repository = $payment_address_repository;
     }
 
     public function createDefaultAccount(PaymentAddress $address) {
@@ -182,6 +184,42 @@ class AccountHandler {
                 }
 
             });
+        });
+    }
+
+    public function invalidate($parsed_tx) {
+        DB::transaction(function() use ($parsed_tx) {
+            $txid = $parsed_tx['txid'];
+
+            $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, null, null);
+            if (count($existing_ledger_entries) == 0) { return; }
+
+            // get all payment addresses
+            $payment_addresses_by_id = [];
+            foreach($existing_ledger_entries as $existing_ledger_entry) {
+                $payment_address_id = $existing_ledger_entry['payment_address_id'];
+                if (isset($payment_addresses_by_id[$payment_address_id])) { continue; }
+
+                $payment_addresses_by_id[$payment_address_id] = $this->payment_address_repository->findByID($payment_address_id);
+            }
+            Log::debug("invalidate txid: $txid.  \$payment_addresses_by_id=".count($payment_addresses_by_id));
+
+            // process each payment address in a locked state
+            foreach($payment_addresses_by_id as $payment_address) {
+                RecordLock::acquireAndExecute($payment_address['uuid'], function() use ($payment_address, $txid) {
+                    $locked_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, $payment_address['id'], null);
+
+                    // debit or credit all values back
+                    foreach($locked_ledger_entries as $locked_ledger_entry) {
+                        $account = $this->account_repository->findByID($locked_ledger_entry['account_id']);
+                        if ($locked_ledger_entry['amount'] < 0) {
+                            $this->ledger_entry_repository->addCredit(CurrencyUtil::satoshisToValue($locked_ledger_entry['amount']), $locked_ledger_entry['asset'], $account, $locked_ledger_entry['type'], $txid, null);
+                        } else if ($locked_ledger_entry['amount'] > 0) {
+                            $this->ledger_entry_repository->addDebit(CurrencyUtil::satoshisToValue($locked_ledger_entry['amount']), $locked_ledger_entry['asset'], $account, $locked_ledger_entry['type'], $txid, null);
+                        }
+                    }
+                });
+            }
         });
     }
 

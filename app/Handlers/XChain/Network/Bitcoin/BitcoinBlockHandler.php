@@ -5,6 +5,7 @@ namespace App\Handlers\XChain\Network\Bitcoin;
 use App\Blockchain\Block\BlockChainStore;
 use App\Blockchain\Block\ConfirmationsBuilder;
 use App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionStore;
+use App\Handlers\XChain\Network\Bitcoin\Block\BlockEventContextFactory;
 use App\Handlers\XChain\Network\Contracts\NetworkBlockHandler;
 use App\Models\Block;
 use App\Repositories\NotificationRepository;
@@ -25,15 +26,16 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
 
     const MAX_CONFIRMATIONS_TO_NOTIFY = 6;
 
-    public function __construct(BitcoinTransactionStore $transaction_store, TransactionRepository $transaction_repository, NotificationRepository $notification_repository, UserRepository $user_repository, BlockChainStore $blockchain_store, ConfirmationsBuilder $confirmations_builder, Client $xcaller_client, Dispatcher $events) {
-        $this->transaction_store       = $transaction_store;
-        $this->transaction_repository  = $transaction_repository;
-        $this->notification_repository = $notification_repository;
-        $this->user_repository         = $user_repository;
-        $this->confirmations_builder   = $confirmations_builder;
-        $this->blockchain_store        = $blockchain_store;
-        $this->xcaller_client          = $xcaller_client;
-        $this->events                  = $events;
+    public function __construct(BitcoinTransactionStore $transaction_store, TransactionRepository $transaction_repository, NotificationRepository $notification_repository, UserRepository $user_repository, BlockChainStore $blockchain_store, ConfirmationsBuilder $confirmations_builder, Client $xcaller_client, Dispatcher $events, BlockEventContextFactory $block_event_context_factory) {
+        $this->transaction_store           = $transaction_store;
+        $this->transaction_repository      = $transaction_repository;
+        $this->notification_repository     = $notification_repository;
+        $this->user_repository             = $user_repository;
+        $this->confirmations_builder       = $confirmations_builder;
+        $this->blockchain_store            = $blockchain_store;
+        $this->xcaller_client              = $xcaller_client;
+        $this->events                      = $events;
+        $this->block_event_context_factory = $block_event_context_factory;
     }
 
     public function handleNewBlock($block_event) {
@@ -212,6 +214,7 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
             $blocks_by_hash[$previous_block['hash']] = $previous_block;
         }
         if ($block_hashes) {
+            $block_event_context = $this->block_event_context_factory->newBlockEventContext();
             $_offset = 0;
             foreach($this->transaction_repository->findAllTransactionsConfirmedInBlockHashes($block_hashes) as $transaction_model) {
                 $confirmations = $this->confirmations_builder->getConfirmationsForBlockHashAsOfHeight($transaction_model['block_confirmed_hash'], $block_event['height']);
@@ -223,7 +226,7 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
                 if ($confirmed_block) {
                     $parsed_tx['bitcoinTx']['blockheight'] = $confirmed_block['height'];
                     try {
-                        $this->events->fire('xchain.tx.confirmed', [$parsed_tx, $confirmations, $transaction_model['block_seq'], $current_block]);
+                        $this->events->fire('xchain.tx.confirmed', [$parsed_tx, $confirmations, $transaction_model['block_seq'], $current_block, $block_event_context]);
                     } catch (Exception $e) {
                         Log::error("xchain.tx.confirmed FAILED for tx $_offset with txid {$transaction_model['txid']}.  ".$e->getMessage());
                         throw $e;

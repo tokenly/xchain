@@ -53,7 +53,7 @@ class BitcoinTransactionStore implements NetworkTransactionStore {
         $transaction = $this->fetchTransactionFromRepository($txid);
         if ($transaction) {
             // update
-            $transaction = $this->transaction_repository->update($transaction, [
+            $this->transaction_repository->update($transaction, [
                 'block_confirmed_hash' => isset($parsed_tx['bitcoinTx']['blockhash']) ? $parsed_tx['bitcoinTx']['blockhash'] : null,
                 'is_mempool'           => isset($parsed_tx['bitcoinTx']['blockhash']) ? 0 : 1,
             ]);

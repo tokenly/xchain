@@ -35,6 +35,7 @@ events:
     type: transaction
     meta:
         baseFilename: default_btc_parsed_mempool_01.json
+    vins: [txid: ADIFFERENTTXIDTOAVOIDCOLLISION]
     txid: 9999999928cec8793d41029cb6cfcc44afa4d55c40199738cff0253f8779dba0 # <-- calculated from the send
     sender: ADDR01
     recipient: 1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD

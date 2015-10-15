@@ -15,6 +15,11 @@ class Notification extends Model
     const STATUS_SUCCESS = 2;
     const STATUS_FAILURE = 3;
 
+    const EVENT_SEND         = 1;
+    const EVENT_RECEIVE      = 2;
+    const EVENT_INVALIDATION = 3;
+
+
     /**
      * The database table used by the model.
      *
@@ -27,8 +32,12 @@ class Notification extends Model
     public function setStatusAttribute($type_text) { $this->attributes['status'] = $this->statusTextToStatusID($type_text); }
     public function getStatusAttribute() { return $this->statusIDToStatusText($this->attributes['status']); }
 
+    public function setEventTypeAttribute($type_text) { $this->attributes['event_type'] = $this->eventTypeTextToEventTypeID($type_text); }
+    public function getEventTypeAttribute() { return $this->eventTypeIDToEventTypeText($this->attributes['event_type']); }
+
     public function setNotificationAttribute($notification) { $this->attributes['notification'] = json_encode($notification); }
     public function getNotificationAttribute() { return json_decode($this->attributes['notification'], true); }
+
 
     public function statusTextToStatusID($type_text) {
         switch ($type_text) {
@@ -44,6 +53,25 @@ class Notification extends Model
             case self::STATUS_NEW: return 'new';
             case self::STATUS_SUCCESS: return 'success';
             case self::STATUS_FAILURE: return'failure';
+        }
+        return null;
+    }
+
+
+    public function eventTypeTextToEventTypeID($type_text) {
+        switch ($type_text) {
+            case 'send':         return self::EVENT_SEND;
+            case 'receive':      return self::EVENT_RECEIVE;
+            case 'invalidation': return self::EVENT_INVALIDATION;
+        }
+        return null;
+    }
+
+    public function eventTypeIDToEventTypeText($type_id) {
+        switch ($type_id) {
+            case self::EVENT_SEND:         return 'send';
+            case self::EVENT_RECEIVE:      return 'receive';
+            case self::EVENT_INVALIDATION: return'invalidation';
         }
         return null;
     }

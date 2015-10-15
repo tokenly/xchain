@@ -1,0 +1,16 @@
+{
+    "event": "invalidation",
+
+    "notificationId": "11111111-2222-3333-4444-84b634fa2aba",
+    
+    "notifiedAddress": "1FEbYaghvr7V53B9csjQTefUtBBQTaDFvN",
+    "notifiedAddressId": "de4631dc-e3d8-4408-bf3a-c51ae8f76b00",
+    
+    "invalidTxid": "d800ef4c33542c90bcfe4cd0c2fc2c0d120877ec933ca869177a77eb8b42077e",
+    "replacingTxid": "e82d3d73bf53107f0b7713831f775e8489bd28f6cb6a24cd2a5edf9426ccdce4",
+    
+    "invalidNotification": {},
+    "replacingNotification": {} 
+
+
+}

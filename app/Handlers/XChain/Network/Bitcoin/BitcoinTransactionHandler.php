@@ -3,12 +3,16 @@
 namespace App\Handlers\XChain\Network\Bitcoin;
 
 use App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionStore;
+use App\Handlers\XChain\Network\Bitcoin\Block\BlockEventContextFactory;
+use App\Handlers\XChain\Network\Bitcoin\Block\ProvisionalTransactionInvalidationHandler;
 use App\Handlers\XChain\Network\Contracts\NetworkTransactionHandler;
 use App\Models\Block;
+use App\Models\Transaction;
 use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\MonitoredAddressRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\PaymentAddressRepository;
+use App\Repositories\ProvisionalTransactionRepository;
 use App\Repositories\UserRepository;
 use App\Util\DateTimeUtil;
 use Illuminate\Database\QueryException;
@@ -19,13 +23,18 @@ use Tokenly\XcallerClient\Client;
 
 class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
-    public function __construct(MonitoredAddressRepository $monitored_address_repository, PaymentAddressRepository $payment_address_repository, UserRepository $user_repository, NotificationRepository $notification_repository, BitcoinTransactionStore $transaction_store, Client $xcaller_client) {
-        $this->monitored_address_repository = $monitored_address_repository;
-        $this->payment_address_repository   = $payment_address_repository;
-        $this->user_repository              = $user_repository;
-        $this->notification_repository      = $notification_repository;
-        $this->transaction_store            = $transaction_store;
-        $this->xcaller_client               = $xcaller_client;
+    const CONFIRMATIONS_TO_INVALIDATE_PROVISIONAL_TRANSACTIONS = 2;
+
+    public function __construct(MonitoredAddressRepository $monitored_address_repository, PaymentAddressRepository $payment_address_repository, UserRepository $user_repository, NotificationRepository $notification_repository, BitcoinTransactionStore $transaction_store, ProvisionalTransactionRepository $provisional_transaction_repository, Client $xcaller_client, BlockEventContextFactory $block_event_context_factory, ProvisionalTransactionInvalidationHandler $provisional_transaction_invalidation_handler) {
+        $this->monitored_address_repository                 = $monitored_address_repository;
+        $this->payment_address_repository                   = $payment_address_repository;
+        $this->provisional_transaction_repository           = $provisional_transaction_repository;
+        $this->user_repository                              = $user_repository;
+        $this->notification_repository                      = $notification_repository;
+        $this->transaction_store                            = $transaction_store;
+        $this->xcaller_client                               = $xcaller_client;
+        $this->block_event_context_factory                  = $block_event_context_factory;
+        $this->provisional_transaction_invalidation_handler = $provisional_transaction_invalidation_handler;
     }
 
     public function storeParsedTransaction($parsed_tx) {
@@ -33,28 +42,77 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         unset($parsed_tx['bitcoinTx']['confirmations']);
         $block_seq = null;
         $transaction = $this->transaction_store->storeParsedTransaction($parsed_tx, $block_seq);
-        return;
+        return $transaction;
     }
 
-    public function updateAccountBalances($parsed_tx, $confirmations, $block_seq, Block $block=null) {
+    public function storeProvisionalTransaction(Transaction $transaction, $found_addresses) {
+        try {
+            if (count($found_addresses['payment_addresses']) > 0 OR count($found_addresses['monitored_addresses']) > 0) {
+                return $this->provisional_transaction_repository->create($transaction);
+            }
+        } catch (QueryException $e) {
+            if ($e->errorInfo[0] == 23000) {
+                EventLog::logError('provisionalTransaction.duplicate.error', $e, ['id' => $transaction['id'], 'txid' => $transaction['txid'],]);
+                return $this->provisional_transaction_repository->findByTXID($transaction['txid']);
+            } else {
+                throw $e;
+            }
+        }
+    }
+
+    public function newBlockEventContext() {
+        $block_event_context = $this->block_event_context_factory->newBlockEventContext();
+        return $block_event_context;
+    }
+
+    public function invalidateProvisionalTransactions($found_addresses, $parsed_tx, $confirmations, $block_seq, $block, $block_event_context) {
+        if ($confirmations < self::CONFIRMATIONS_TO_INVALIDATE_PROVISIONAL_TRANSACTIONS) { return; }
+
+        $invalidated_provisional_transactions = $this->provisional_transaction_invalidation_handler->findInvalidatedTransactions($parsed_tx, $block_event_context['provisional_txids_by_utxo']);
+        // Log::debug("\$invalidated_provisional_transactions=".json_encode($invalidated_provisional_transactions, 192));
+        if ($invalidated_provisional_transactions) {
+            foreach($invalidated_provisional_transactions as $invalidated_provisional_transaction) {
+                // send notification
+                $invalidated_parsed_tx = $invalidated_provisional_transaction->transaction['parsed_tx'];
+                $found_addresses = $this->findMonitoredAndPaymentAddressesByParsedTransaction($invalidated_parsed_tx);
+
+                $this->sendNotificationsForInvalidatedProvisionalTransaction($invalidated_parsed_tx, $parsed_tx, $found_addresses, $confirmations, $block_seq, $block);
+
+                // remove the provisional transactions
+                $this->provisional_transaction_repository->delete($invalidated_provisional_transaction);
+
+                // update accounts
+                AccountHandler::invalidate($invalidated_provisional_transaction);
+            }
+        }
+    }
+
+    public function updateProvisionalTransaction($parsed_tx, $found_addresses, $confirmations) {
+        if ($confirmations < self::CONFIRMATIONS_TO_INVALIDATE_PROVISIONAL_TRANSACTIONS) { return; }
+        try {
+            if (count($found_addresses['payment_addresses']) > 0 OR count($found_addresses['monitored_addresses']) > 0) {
+                EventLog::log('provisionalTransaction.cleared', ['txid' => $parsed_tx['txid']]);
+
+                // delete the provisional transaction
+                $this->provisional_transaction_repository->deleteByTXID($parsed_tx['txid']);
+            }
+        } catch (QueryException $e) {
+            EventLog::logError('provisionalTransaction.update.error', $e, ['id' => $transaction['id'], 'txid' => $transaction['txid'],]);
+            throw $e;
+        }
+    }
+
+    public function updateAccountBalances($found_addresses, $parsed_tx, $confirmations, $block_seq, Block $block=null) {
         // don't process this now if pre-processing was necessary for the send notification
         if ($this->willNeedToPreprocessSendNotification($parsed_tx, $confirmations)) {
             return;
         }
 
-
-        $sources = ($parsed_tx['sources'] ? $parsed_tx['sources'] : []);
+        $sources      = ($parsed_tx['sources']      ? $parsed_tx['sources']      : []);
         $destinations = ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []);
 
-        // get all addresses that we care about
-        $all_addresses = array_unique(array_merge($sources, $destinations));
-        if (!$all_addresses) { return; }
-
-        // find all monitored address matching those in the sources or destinations
-        $payment_addresses = $this->payment_address_repository->findByAddresses($all_addresses);
-
         // determine matched payment addresses
-        foreach($payment_addresses->get() as $payment_address) {
+        foreach($found_addresses['payment_addresses'] as $payment_address) {
             // Log::debug("upating account balances for payment address {$payment_address['address']}.  txid is {$parsed_tx['txid']}");
             
             if (in_array($payment_address['address'], $sources)) {
@@ -73,44 +131,15 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         }
     }
 
-    public function sendNotifications($parsed_tx, $confirmations, $block_seq, Block $block=null)
+    public function sendNotifications($found_addresses, $parsed_tx, $confirmations, $block_seq, Block $block=null)
     {
-        $sources = ($parsed_tx['sources'] ? $parsed_tx['sources'] : []);
+        $sources      = ($parsed_tx['sources']      ? $parsed_tx['sources']      : []);
         $destinations = ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []);
-
-        // get all addresses that we care about
-        $all_addresses = array_unique(array_merge($sources, $destinations));
-        if ($all_addresses) {
-            // find all active monitored address matching those in the sources or destinations
-            //  inactive monitored address are ignored
-            $monitored_addresses = $this->monitored_address_repository->findByAddresses($all_addresses, true);
-        }
-
-        // if there are no source or detination addresses (?!), then skip the rest
-        if (!$all_addresses) {
-            EventLog::logError('transaction.noAddresses', ['txid' => $parsed_tx['txid'],]);
-            return;
-        }
-
-
-        // check for payment addresses if no monitored addresses were found
-        if (!$monitored_addresses->count()) {
-            // this did not match any active monitored addresses
-            //   but it might match a payment address
-            $payment_addresses = $this->payment_address_repository->findByAddresses($all_addresses);
-
-            if (!$payment_addresses->count()) {
-                // this tx did not match any monitored addresses or payment addresses
-                //   we can safely ignore it
-                return;
-            }
-        }
 
 
         // determine matched monitored addresses
         $matched_monitored_address_ids = [];
-        $this->wlog("begin matching addresses");
-        foreach($monitored_addresses->get() as $monitored_address) {
+        foreach($found_addresses['monitored_addresses'] as $monitored_address) {
             // see if this is a receiving or sending event
             //   (send, receive)
             $event_type = $monitored_address['monitor_type'];
@@ -144,13 +173,37 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
     }
 
 
+    public function findMonitoredAndPaymentAddressesByParsedTransaction($parsed_tx) {
+        $sources = ($parsed_tx['sources'] ? $parsed_tx['sources'] : []);
+        $destinations = ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []);
+
+        // get monitored addresses that we care about
+        $all_addresses = array_unique(array_merge($sources, $destinations));
+        if ($all_addresses) {
+            // find all active monitored address matching those in the sources or destinations
+            //  inactive monitored address are ignored
+            $monitored_addresses = $this->monitored_address_repository->findByAddresses($all_addresses, true)->get();
+        } else {
+            // there were no source or destination addresses (?!) in this transaction
+            EventLog::logError('transaction.noAddresses', ['txid' => $parsed_tx['txid'],]);
+            $monitored_addresses = [];
+        }
+
+        // find all payment addresses matching those in the sources or destinations
+        $payment_addresses = $this->payment_address_repository->findByAddresses($all_addresses)->get();
+
+        return [
+            'monitored_addresses' => $monitored_addresses,
+            'payment_addresses'   => $payment_addresses,
+        ];
+
+    }
+
     ////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////
     
 
     protected function sendNotificationsForMatchedMonitorIDs($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids) {
-        $this->wlog("begin loop");
-
         // build sources and destinations
         $sources = ($parsed_tx['sources'] ? $parsed_tx['sources'] : []);
         $destinations = ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []);
@@ -185,6 +238,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
                         'confirmations' => $confirmations,
                         'notification'  => $notification_vars_for_model,
                         'block_id'      => $block ? $block['id'] : null,
+                        'event_type'    => $event_type,
                     ]
                 );
             } catch (QueryException $e) {
@@ -203,7 +257,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             $notification['notificationId'] = $notification_model['uuid'];
 
             // put notification in the queue
-            EventLog::log('notification.out', ['event'=>$notification['event'], 'asset'=>$notification['asset'], 'quantity'=>$notification['quantity'], 'sources'=>$notification['sources'], 'destinations'=>$notification['destinations'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
+            EventLog::log('notification.out', ['event'=>$notification['event'], 'txid'=>$notification['txid'], 'asset'=>$notification['asset'], 'quantity'=>$notification['quantity'], 'sources'=>$notification['sources'], 'destinations'=>$notification['destinations'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
 
             $this->xcaller_client->sendWebhook($notification, $monitored_address['webhookEndpoint'], $notification_model['uuid'], $user['apitoken'], $user['apisecretkey']);
         }
@@ -226,33 +280,50 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
     protected function buildNotification($event_type, $parsed_tx, $quantity, $sources, $destinations, $confirmations, $block, $block_seq, $monitored_address) {
         $confirmation_timestamp = $block ? $block['parsed_block']['time'] : null;
 
-        $notification = [
-            'event'             => $event_type,
+        if ($event_type === null) {
+            $notification = [
+                'network'           => $parsed_tx['network'],
+                'asset'             => $parsed_tx['asset'],
 
-            'network'           => $parsed_tx['network'],
-            'asset'             => $parsed_tx['asset'],
-            'quantity'          => $quantity,
-            'quantitySat'       => CurrencyUtil::valueToSatoshis($quantity),
+                'sources'           => $sources,
+                'destinations'      => $destinations,
 
-            'sources'           => $sources,
-            'destinations'      => $destinations,
+                'notificationId'    => null,
+                'txid'              => $parsed_tx['txid'],
+                'transactionTime'   => DateTimeUtil::ISO8601Date($parsed_tx['timestamp']),
+                'confirmed'         => ($confirmations > 0 ? true : false),
+                'confirmations'     => $confirmations,
+                'confirmationTime'  => $confirmation_timestamp ? DateTimeUtil::ISO8601Date($confirmation_timestamp) : '',
+                'blockSeq'          => $block_seq,
 
-            'notificationId'    => null,
-            'txid'              => $parsed_tx['txid'],
-            // ISO 8601
-            'transactionTime'   => DateTimeUtil::ISO8601Date($parsed_tx['timestamp']),
-            'confirmed'         => ($confirmations > 0 ? true : false),
-            'confirmations'     => $confirmations,
-            'confirmationTime'  => $confirmation_timestamp ? DateTimeUtil::ISO8601Date($confirmation_timestamp) : '',
-            'blockSeq'          => $block_seq,
+                'bitcoinTx'         => $parsed_tx['bitcoinTx'],
+            ];
+        } else {
+            $notification = [
+                'event'             => $event_type,
 
-            'notifiedAddress'   => $monitored_address['address'],
-            'notifiedAddressId' => $monitored_address['uuid'],
+                'network'           => $parsed_tx['network'],
+                'asset'             => $parsed_tx['asset'],
+                'quantity'          => $quantity,
+                'quantitySat'       => CurrencyUtil::valueToSatoshis($quantity),
 
-            // 'counterpartyTx'    => $parsed_tx['counterpartyTx'],
-            'bitcoinTx'         => $parsed_tx['bitcoinTx'],
-        ];
+                'sources'           => $sources,
+                'destinations'      => $destinations,
 
+                'notificationId'    => null,
+                'txid'              => $parsed_tx['txid'],
+                'transactionTime'   => DateTimeUtil::ISO8601Date($parsed_tx['timestamp']),
+                'confirmed'         => ($confirmations > 0 ? true : false),
+                'confirmations'     => $confirmations,
+                'confirmationTime'  => $confirmation_timestamp ? DateTimeUtil::ISO8601Date($confirmation_timestamp) : '',
+                'blockSeq'          => $block_seq,
+
+                'notifiedAddress'   => $monitored_address['address'],
+                'notifiedAddressId' => $monitored_address['uuid'],
+
+                'bitcoinTx'         => $parsed_tx['bitcoinTx'],
+            ];
+        }
         if ($block_seq === null) { unset($notification['blockSeq']); }
 
 
@@ -291,6 +362,85 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             $this->user_by_id[$id] = $this->user_repository->findByID($id);
         }
         return $this->user_by_id[$id];
+    }
+
+    // ------------------------------------------------------------------------
+    
+    protected function sendNotificationsForInvalidatedProvisionalTransaction($invalidated_parsed_tx, $replacing_parsed_tx, $found_addresses, $confirmations, $block_seq, $block) {
+        // build sources and destinations
+        $sources = ($invalidated_parsed_tx['sources'] ? $invalidated_parsed_tx['sources'] : []);
+        $destinations = ($invalidated_parsed_tx['destinations'] ? $invalidated_parsed_tx['destinations'] : []);
+
+        $matched_monitored_address_ids = [];
+
+        // loop through all matched monitored addresses
+        foreach($found_addresses['monitored_addresses'] as $monitored_address) {
+            // build the notification
+            $notification = $this->buildInvalidatedNotification($invalidated_parsed_tx, $replacing_parsed_tx, $sources, $destinations, $confirmations, $block_seq, $block, $monitored_address);
+            $this->wlog("\$invalidated_parsed_tx['timestamp']={$invalidated_parsed_tx['timestamp']}");
+
+
+            // create a notification
+            $notification_vars_for_model = $notification;
+            unset($notification_vars_for_model['notificationId']);
+
+            try {
+                // Log::debug("creating notification: ".json_encode(['txid' => $invalidated_parsed_tx['txid'], 'confirmations' => $confirmations, 'block_id' => $block ? $block['id'] : null,], 192));
+                $notification_model = $this->notification_repository->createForMonitoredAddress(
+                    $monitored_address,
+                    [
+                        'txid'          => $invalidated_parsed_tx['txid'],
+                        'confirmations' => $confirmations,
+                        'notification'  => $notification_vars_for_model,
+                        'block_id'      => $block ? $block['id'] : null,
+                        'event_type'    => 'invalidation',
+                    ]
+                );
+            } catch (QueryException $e) {
+                if ($e->errorInfo[0] == 23000) {
+                    EventLog::logError('notification.duplicate.error', $e, ['txid' => $invalidated_parsed_tx['txid'], 'monitored_address_id' => $monitored_address['id'],]);
+                    continue;
+                } else {
+                    throw $e;
+                }
+            }
+
+            // apply user API token and key
+            $user = $this->userByID($monitored_address['user_id']);
+
+            // update notification
+            $notification['notificationId'] = $notification_model['uuid'];
+
+            // put notification in the queue
+            EventLog::log('notification.out', ['event'=>$notification['event'], 'invalidTxid'=>$notification['invalidTxid'], 'replacingTxid'=>$notification['replacingTxid'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
+
+            $this->xcaller_client->sendWebhook($notification, $monitored_address['webhookEndpoint'], $notification_model['uuid'], $user['apitoken'], $user['apisecretkey']);
+        }
+    }
+
+    protected function buildInvalidatedNotification($invalidated_parsed_tx, $replacing_parsed_tx, $sources, $destinations, $confirmations, $block_seq, $block, $monitored_address) {
+        $quantity = $this->buildQuantityForEventType($monitored_address['monitor_type'], $invalidated_parsed_tx, $monitored_address['address']);
+        $invalid_notificaton = $this->buildNotification($monitored_address['monitor_type'], $invalidated_parsed_tx, $quantity, $sources, $destinations, $confirmations, $block, $block_seq, $monitored_address);
+
+        // build a generic notification for the new transaction
+        $replacing_notification = $this->buildNotification(null, $replacing_parsed_tx, null, $sources, $destinations, $confirmations, $block, $block_seq, null);
+
+        $notification = [
+            'event'                 => 'invalidation',
+
+            'notificationId'        => null,
+
+            'notifiedAddress'       => $monitored_address['address'],
+            'notifiedAddressId'     => $monitored_address['uuid'],
+
+            'invalidTxid'           => $invalidated_parsed_tx['txid'],
+            'replacingTxid'         => $replacing_parsed_tx['txid'],
+
+            'invalidNotification'   => $invalid_notificaton,
+            'replacingNotification' => $replacing_notification,
+        ];
+
+        return $notification;
     }
 
 }

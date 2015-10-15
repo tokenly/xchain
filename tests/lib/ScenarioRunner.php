@@ -440,10 +440,19 @@ class ScenarioRunner
             $normalized_transaction_event['bitcoinTx']['timestamp'] = $raw_transaction_event['timestamp'];
         }
 
+        // vins
+        if (isset($raw_transaction_event['vins'])) {
+            foreach ($raw_transaction_event['vins'] as $offset => $vin) {
+                $normalized_transaction_event['bitcoinTx']['vin'][$offset] = array_replace_recursive($normalized_transaction_event['bitcoinTx']['vin'][$offset], $vin);
+            }
+        }
+
 
         // timing
         if (isset($raw_transaction_event['mempool'])) {}
         if (isset($raw_transaction_event['blockId'])) {}
+
+        
 
         return $normalized_transaction_event;
     }
