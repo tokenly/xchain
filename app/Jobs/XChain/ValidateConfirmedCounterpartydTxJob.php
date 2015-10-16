@@ -95,7 +95,7 @@ class ValidateConfirmedCounterpartydTxJob
             // no response from conterpartyd
             if ($job->attempts() > 240) {
                 // permanent failure
-                EventLog::logError('job.failed.permanent', ['txid' => $tx_hash, 'confirmations' => $confirmations, ]);
+                EventLog::logError('job.failed.permanent', ['txid' => $tx_hash,]);
                 $job->delete();
 
             } else {
