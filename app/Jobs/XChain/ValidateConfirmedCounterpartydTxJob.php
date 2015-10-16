@@ -52,14 +52,17 @@ class ValidateConfirmedCounterpartydTxJob
 
         try {
             $sends = $this->xcpd_client->get_sends(['filters' => ['field' => 'tx_hash', 'op' => '==', 'value' => $tx_hash]]);
+
+            // not valid by default
+            $is_valid = false;
         } catch (Exception $e) {
             EventLog::logError('error.counterparty', $e);
 
             // received no result from counterparty
             $sends = null;
+            $is_valid = null;
         }
 
-        $is_valid = null;
         if ($sends) {
             $send = $sends[0];
             if ($send) {
@@ -115,7 +118,7 @@ class ValidateConfirmedCounterpartydTxJob
                 }
 
                 // put it back in the queue
-                Log::debug("Send $tx_hash was not confirmed by counterpartyd yet.  putting it back in the queue for $release_time seconds.");
+                Log::debug("Send $tx_hash was not confirmed by counterpartyd yet.  putting it back in the queue for $release_time seconds.  \$sends=".json_encode($sends, 192));
                 $job->release($release_time);
             }
 
