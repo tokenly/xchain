@@ -203,13 +203,13 @@ class BitcoinTransactionEventBuilder
 
 
         $scripts = [];
-        foreach($bitcoin_tx['vin'] as $vin){
-            if (isset($vin['scriptSig']) AND isset($vin['scriptSig']['asm'])) {
-                $scripts[] = $vin['scriptSig']['asm'];
+        foreach($bitcoin_tx['vin'] as $vin_offset => $vin){
+            if (isset($vin['txid']) AND isset($vin['vout'])) {
+                $scripts[] = $vin['txid'].':'.$vin['vout'];
             } else if (isset($vin['coinbase'])) {
                 $scripts[] = $vin['coinbase'];
             } else {
-                Log::warning("WARNING: no scriptSig for tx {$bitcoin_tx['txid']}".json_encode($bitcoin_tx, 192));
+                Log::warning("WARNING: no txid or vout for vin {$vin_offset} in transaction {$bitcoin_tx['txid']}".json_encode($bitcoin_tx, 192));
                 $scripts[] = json_encode($vin);
             }
         }
