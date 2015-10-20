@@ -205,19 +205,10 @@ class AccountHandler {
             Log::debug("invalidate txid: $txid.  \$payment_addresses_by_id=".count($payment_addresses_by_id));
 
             // process each payment address in a locked state
+            //   and delete all ledger entries for this txid
             foreach($payment_addresses_by_id as $payment_address) {
                 RecordLock::acquireAndExecute($payment_address['uuid'], function() use ($payment_address, $txid) {
-                    $locked_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, $payment_address['id'], null);
-
-                    // debit or credit all values back
-                    foreach($locked_ledger_entries as $locked_ledger_entry) {
-                        $account = $this->account_repository->findByID($locked_ledger_entry['account_id']);
-                        if ($locked_ledger_entry['amount'] < 0) {
-                            $this->ledger_entry_repository->addCredit(CurrencyUtil::satoshisToValue($locked_ledger_entry['amount']), $locked_ledger_entry['asset'], $account, $locked_ledger_entry['type'], $txid, null);
-                        } else if ($locked_ledger_entry['amount'] > 0) {
-                            $this->ledger_entry_repository->addDebit(CurrencyUtil::satoshisToValue($locked_ledger_entry['amount']), $locked_ledger_entry['asset'], $account, $locked_ledger_entry['type'], $txid, null);
-                        }
-                    }
+                    $this->ledger_entry_repository->deleteByTXID($txid, $payment_address['id']);
                 });
             }
         });

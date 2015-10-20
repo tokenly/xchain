@@ -260,6 +260,22 @@ class LedgerEntryRepository extends APIRepository
         return $query->get();
     }
 
+    public function deleteByTXID($txid, $payment_address_id=null, $type=null) {
+        $query = $this->prototype_model
+            ->where('txid', $txid);
+
+        if ($payment_address_id !== null) {
+            $query->where('payment_address_id', $payment_address_id);
+        }
+
+        if ($type !== null) {
+            // check type
+            $query->where('type', LedgerEntry::validateTypeInteger($type));
+        }
+
+        return $query->delete();
+    }
+
     ////////////////////////////////////////////////////////////////////////
     
     protected function addEntryForAccount($float_amount, $asset, Account $account, $type, $txid=null, $api_call_id=null) {

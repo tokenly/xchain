@@ -101,7 +101,7 @@ class ProvisionalTransactionsTest extends TestCase {
         // check for invalidation notification
         $balance = $ledger_entry_repository->accountBalancesByAsset($account_one, null);
         PHPUnit::assertEquals(0.004, $balance['confirmed']['BTC']);
-        PHPUnit::assertEquals(0, $balance['unconfirmed']['BTC']);
+        PHPUnit::assertArrayNotHasKey('BTC', $balance['unconfirmed']);
     }
 
 
