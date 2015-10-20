@@ -298,7 +298,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
                 'bitcoinTx'              => $parsed_tx['bitcoinTx'],
 
-                'transactionFingerprint' => $parsed_tx['transactionFingerprint'],
+                'transactionFingerprint' => isset($parsed_tx['transactionFingerprint']) ? $parsed_tx['transactionFingerprint'] : null,
             ];
         } else {
             $notification = [
@@ -325,7 +325,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
                 'bitcoinTx'              => $parsed_tx['bitcoinTx'],
 
-                'transactionFingerprint' => $parsed_tx['transactionFingerprint'],
+                'transactionFingerprint' => isset($parsed_tx['transactionFingerprint']) ? $parsed_tx['transactionFingerprint'] : null,
             ];
         }
         if ($block_seq === null) { unset($notification['blockSeq']); }
