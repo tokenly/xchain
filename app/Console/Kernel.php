@@ -11,25 +11,29 @@ class Kernel extends ConsoleKernel {
 	 * @var array
 	 */
 	protected $commands = [
-		// xchain commands
-		'App\Console\Commands\Blocks\LoadMissingBlocksCommand',
-		'App\Console\Commands\Transaction\ResendTransactionNotificationsCommand',
+		// core xchain commands
+		\App\Console\Commands\Blocks\LoadMissingBlocksCommand::class,
+		\App\Console\Commands\Transaction\ResendTransactionNotificationsCommand::class,
 
-		'App\Console\Commands\Development\PopulateNotificationCommand',
-		'App\Console\Commands\Development\SendManualNotificationCommand',
-		'App\Console\Commands\Development\ExportWIFCommand',
-		'App\Console\Commands\Development\ParseTransactionCommand',
-		'App\Console\Commands\Development\PruneTransactionsCommand',
-		'App\Console\Commands\Development\PruneBlocksCommand',
-		'App\Console\Commands\Development\UpgradeAccountsCommand',
-		'App\Console\Commands\Accounts\SweepAccountCommand',
-		'App\Console\Commands\Accounts\ShowAccountsCommand',
-		'App\Console\Commands\Accounts\ReconcileAccountsCommand',
-		'App\Console\Commands\Accounts\ForceSyncAddressAccountsCommand',
-		'App\Console\Commands\Accounts\CloseAccountCommand',
+		// development
+		\App\Console\Commands\Development\PopulateNotificationCommand::class,
+		\App\Console\Commands\Development\SendManualNotificationCommand::class,
+		\App\Console\Commands\Development\ExportWIFCommand::class,
+		\App\Console\Commands\Development\ParseTransactionCommand::class,
+		\App\Console\Commands\Development\PruneTransactionsCommand::class,
+		\App\Console\Commands\Development\PruneBlocksCommand::class,
+		\App\Console\Commands\Development\UpgradeAccountsCommand::class,
+
+		// accounts
+		\App\Console\Commands\Accounts\SweepAccountCommand::class,
+		\App\Console\Commands\Accounts\ShowAccountsCommand::class,
+		\App\Console\Commands\Accounts\ReconcileAccountsCommand::class,
+		\App\Console\Commands\Accounts\ForceSyncAddressAccountsCommand::class,
+		\App\Console\Commands\Accounts\CloseAccountCommand::class,
+		\App\Console\Commands\Accounts\BalanceLedgerCommand::class,
 
 		// vendor commands
-		'Tokenly\ConsulHealthDaemon\Console\ConsulHealthMonitorCommand',
+		\Tokenly\ConsulHealthDaemon\Console\ConsulHealthMonitorCommand::class,
 
 		// API Provider commands
 		\Tokenly\LaravelApiProvider\Commands\MakeAPIModelCommand::class,
