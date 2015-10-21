@@ -65,26 +65,6 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         return $block_event_context;
     }
 
-    public function invalidateProvisionalTransactions($found_addresses, $parsed_tx, $confirmations, $block_seq, $block, $block_event_context) {
-        if ($confirmations < self::CONFIRMATIONS_TO_INVALIDATE_PROVISIONAL_TRANSACTIONS) { return; }
-
-        $invalidated_provisional_transactions = $this->provisional_transaction_invalidation_handler->findInvalidatedTransactions($parsed_tx, $block_event_context['provisional_txids_by_utxo']);
-        if ($invalidated_provisional_transactions) {
-            foreach($invalidated_provisional_transactions as $invalidated_provisional_transaction) {
-                // send notification
-                $invalidated_parsed_tx = $invalidated_provisional_transaction->transaction['parsed_tx'];
-                $found_addresses = $this->findMonitoredAndPaymentAddressesByParsedTransaction($invalidated_parsed_tx);
-
-                $this->sendNotificationsForInvalidatedProvisionalTransaction($invalidated_parsed_tx, $parsed_tx, $found_addresses, $confirmations, $block_seq, $block);
-
-                // remove the provisional transactions
-                $this->provisional_transaction_repository->delete($invalidated_provisional_transaction);
-
-                // update accounts
-                AccountHandler::invalidate($invalidated_provisional_transaction);
-            }
-        }
-    }
 
     public function updateProvisionalTransaction($parsed_tx, $found_addresses, $confirmations) {
         if ($confirmations < self::CONFIRMATIONS_TO_INVALIDATE_PROVISIONAL_TRANSACTIONS) { return; }
@@ -98,6 +78,27 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         } catch (QueryException $e) {
             EventLog::logError('provisionalTransaction.update.error', $e, ['id' => $transaction['id'], 'txid' => $transaction['txid'],]);
             throw $e;
+        }
+    }
+
+    public function invalidateProvisionalTransactions($found_addresses, $parsed_tx, $confirmations, $block_seq, $block, $block_event_context) {
+        if ($confirmations < self::CONFIRMATIONS_TO_INVALIDATE_PROVISIONAL_TRANSACTIONS) { return; }
+
+        $invalidated_provisional_transactions = $this->provisional_transaction_invalidation_handler->findInvalidatedTransactions($parsed_tx, $block_event_context['provisional_txids_by_utxo']);
+        if ($invalidated_provisional_transactions) {
+            foreach($invalidated_provisional_transactions as $invalidated_provisional_transaction) {
+                // send notification
+                $invalidated_parsed_tx = $invalidated_provisional_transaction->transaction['parsed_tx'];
+                $invalidated_found_addresses = $this->findMonitoredAndPaymentAddressesByParsedTransaction($invalidated_parsed_tx);
+
+                $this->sendNotificationsForInvalidatedProvisionalTransaction($invalidated_parsed_tx, $parsed_tx, $invalidated_found_addresses, $confirmations, $block_seq, $block);
+
+                // remove the provisional transactions
+                $this->provisional_transaction_repository->delete($invalidated_provisional_transaction);
+
+                // update accounts
+                AccountHandler::invalidate($invalidated_provisional_transaction);
+            }
         }
     }
 
@@ -132,32 +133,6 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
     public function sendNotifications($found_addresses, $parsed_tx, $confirmations, $block_seq, Block $block=null)
     {
-        $sources      = ($parsed_tx['sources']      ? $parsed_tx['sources']      : []);
-        $destinations = ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []);
-
-
-        // determine matched monitored addresses
-        $matched_monitored_address_ids = [];
-        foreach($found_addresses['monitored_addresses'] as $monitored_address) {
-            // see if this is a receiving or sending event
-            //   (send, receive)
-            $event_type = $monitored_address['monitor_type'];
-
-            // filter this out if it is not a send
-            if ($event_type == 'send' AND !in_array($monitored_address['address'], $sources)) {
-                // did not match this address
-                continue;
-            }
-
-            // filter this out if it is not a receive event
-            if ($event_type == 'receive' AND !in_array($monitored_address['address'], $destinations)) {
-                // did not match this address
-                continue;
-            }
-
-            $matched_monitored_address_ids[] = $monitored_address['uuid'];
-        }
-
         // Counterparty transactions will need to validate any transfers with counterpartyd first
         if ($this->willNeedToPreprocessSendNotification($parsed_tx, $confirmations)) {
             $this->preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block);
@@ -166,8 +141,8 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
 
         // send notifications to monitored addresses
-        if ($matched_monitored_address_ids) {
-            $this->sendNotificationsForMatchedMonitorIDs($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids);
+        if ($found_addresses['matched_monitored_addresses']) {
+            $this->sendNotificationsForMatchedMonitorAddresses($parsed_tx, $confirmations, $block_seq, $block, $found_addresses['matched_monitored_addresses']);
         }
     }
 
@@ -188,12 +163,33 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             $monitored_addresses = [];
         }
 
+        // determine the matched monitored addresses based on the monitor type
+        $matched_monitored_addresses = [];
+        foreach($monitored_addresses as $monitored_address) {
+            // see if this is a receiving or sending monitor
+            $monitor_type = $monitored_address['monitor_type'];
+
+            // for send monitors, the address must be in the sources
+            if ($monitor_type == 'send' AND !in_array($monitored_address['address'], $sources)) {
+                continue;
+            }
+
+            // for receive monitors, the address must be in the destinations
+            if ($monitor_type == 'receive' AND !in_array($monitored_address['address'], $destinations)) {
+                continue;
+            }
+
+            $matched_monitored_addresses[] = $monitored_address;
+        }
+
+
         // find all payment addresses matching those in the sources or destinations
         $payment_addresses = $this->payment_address_repository->findByAddresses($all_addresses)->get();
 
         return [
-            'monitored_addresses' => $monitored_addresses,
-            'payment_addresses'   => $payment_addresses,
+            'monitored_addresses'         => $monitored_addresses,
+            'matched_monitored_addresses' => $matched_monitored_addresses,
+            'payment_addresses'           => $payment_addresses,
         ];
 
     }
@@ -202,16 +198,13 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
     ////////////////////////////////////////////////////////////////////////
     
 
-    protected function sendNotificationsForMatchedMonitorIDs($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_address_ids) {
+    protected function sendNotificationsForMatchedMonitorAddresses($parsed_tx, $confirmations, $block_seq, $block, $matched_monitored_addresses) {
         // build sources and destinations
         $sources = ($parsed_tx['sources'] ? $parsed_tx['sources'] : []);
         $destinations = ($parsed_tx['destinations'] ? $parsed_tx['destinations'] : []);
 
         // loop through all matched monitored addresses
-        foreach($matched_monitored_address_ids as $monitored_address_uuid) {
-            $monitored_address = $this->monitored_address_repository->findByUuid($monitored_address_uuid);
-            if (!$monitored_address) { continue; }
-
+        foreach($matched_monitored_addresses as $monitored_address) {
             $event_type = $monitored_address['monitor_type'];
 
             // calculate the quantity
@@ -377,7 +370,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         $matched_monitored_address_ids = [];
 
         // loop through all matched monitored addresses
-        foreach($found_addresses['monitored_addresses'] as $monitored_address) {
+        foreach($found_addresses['matched_monitored_addresses'] as $monitored_address) {
             // build the notification
             $notification = $this->buildInvalidatedNotification($invalidated_parsed_tx, $replacing_parsed_tx, $sources, $destinations, $confirmations, $block_seq, $block, $monitored_address);
             $this->wlog("\$invalidated_parsed_tx['timestamp']={$invalidated_parsed_tx['timestamp']}");
