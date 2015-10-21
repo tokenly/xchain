@@ -461,7 +461,12 @@ class AccountHandler {
         if ($parsed_tx['network'] == 'counterparty') {
             $dust_size = $parsed_tx['counterpartyTx']['dustSize'];
         }
-        $fee = $parsed_tx['bitcoinTx']['fees'];
+        if (isset($parsed_tx['bitcoinTx']['fees'])) {
+            $fee = $parsed_tx['bitcoinTx']['fees'];
+        } else {
+            Log::warning("no fees found in bitcoinTx for parsed tx: ".json_encode($parsed_tx, 192));
+            $fee = 0;
+        }
 
         return [$txid, $dust_size, $fee];
     }

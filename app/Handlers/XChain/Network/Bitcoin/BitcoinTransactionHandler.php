@@ -69,7 +69,6 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         if ($confirmations < self::CONFIRMATIONS_TO_INVALIDATE_PROVISIONAL_TRANSACTIONS) { return; }
 
         $invalidated_provisional_transactions = $this->provisional_transaction_invalidation_handler->findInvalidatedTransactions($parsed_tx, $block_event_context['provisional_txids_by_utxo']);
-        // Log::debug("\$invalidated_provisional_transactions=".json_encode($invalidated_provisional_transactions, 192));
         if ($invalidated_provisional_transactions) {
             foreach($invalidated_provisional_transactions as $invalidated_provisional_transaction) {
                 // send notification
@@ -243,7 +242,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
                 );
             } catch (QueryException $e) {
                 if ($e->errorInfo[0] == 23000) {
-                    EventLog::logError('notification.duplicate.error', $e, ['txid' => $parsed_tx['txid'], 'monitored_address_id' => $monitored_address['id'],]);
+                    EventLog::logError('notification.duplicate.error', $e, ['txid' => $parsed_tx['txid'], 'monitored_address_id' => $monitored_address['id'], 'confirmations' => $confirmations, 'event_type' => $event_type]);
                     continue;
                 } else {
                     throw $e;
@@ -257,7 +256,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             $notification['notificationId'] = $notification_model['uuid'];
 
             // put notification in the queue
-            EventLog::log('notification.out', ['event'=>$notification['event'], 'txid'=>$notification['txid'], 'asset'=>$notification['asset'], 'quantity'=>$notification['quantity'], 'sources'=>$notification['sources'], 'destinations'=>$notification['destinations'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
+            EventLog::log('notification.out', ['event'=>$notification['event'], 'txid'=>$notification['txid'], 'confirmations' => $confirmations, 'asset'=>$notification['asset'], 'quantity'=>$notification['quantity'], 'sources'=>$notification['sources'], 'destinations'=>$notification['destinations'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
 
             $this->xcaller_client->sendWebhook($notification, $monitored_address['webhookEndpoint'], $notification_model['uuid'], $user['apitoken'], $user['apisecretkey']);
         }
@@ -390,6 +389,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
             try {
                 // Log::debug("creating notification: ".json_encode(['txid' => $invalidated_parsed_tx['txid'], 'confirmations' => $confirmations, 'block_id' => $block ? $block['id'] : null,], 192));
+                // Log::debug("sendNotificationsForInvalidatedProvisionalTransaction inserting new notification: ".json_encode(['txid' => $invalidated_parsed_tx['txid'], 'monitored_address_id' => $monitored_address['id'], 'confirmations' => $confirmations, 'event_type' => 'invalidation',], 192));
                 $notification_model = $this->notification_repository->createForMonitoredAddress(
                     $monitored_address,
                     [
@@ -402,7 +402,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
                 );
             } catch (QueryException $e) {
                 if ($e->errorInfo[0] == 23000) {
-                    EventLog::logError('notification.duplicate.error', $e, ['txid' => $invalidated_parsed_tx['txid'], 'monitored_address_id' => $monitored_address['id'],]);
+                    EventLog::logError('notification.duplicate.error', $e, ['txid' => $invalidated_parsed_tx['txid'], 'monitored_address_id' => $monitored_address['id'], 'confirmations' => $confirmations, 'event_type' => 'invalidation',]);
                     continue;
                 } else {
                     throw $e;

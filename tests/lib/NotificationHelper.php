@@ -2,6 +2,7 @@
 
 use App\Models\Block;
 use App\Repositories\NotificationRepository;
+use Illuminate\Queue\QueueManager;
 
 /**
 *  NotificationHelper
@@ -9,9 +10,10 @@ use App\Repositories\NotificationRepository;
 class NotificationHelper
 {
 
-    function __construct(NotificationRepository $notification_repository, \MonitoredAddressHelper $monitored_address_helper) {
+    function __construct(NotificationRepository $notification_repository, \MonitoredAddressHelper $monitored_address_helper, QueueManager $queue_manager) {
         $this->notification_repository  = $notification_repository;
         $this->monitored_address_helper = $monitored_address_helper;
+        $this->queue_manager            = $queue_manager;
     }
 
 
@@ -38,6 +40,44 @@ class NotificationHelper
 
     public function sampleDBVars($override_vars=[]) {
         return $this->sampleVars($override_vars);
+    }
+
+    public function recordNotifications() {
+        $this->queue_manager->addConnector('sync', function() {
+            return new \TestMemorySyncConnector();
+        });
+
+        // clear the queue
+        $this->getAllNotifications();
+
+        return $this;
+    }
+
+    public function getAllNotifications() {
+        $all_notifications = [];
+
+        while (true) {
+            $raw_queue_entry = $this->queue_manager->connection('notifications_out')->pop();
+            if (!$raw_queue_entry) { break; }
+
+            $raw_notification_entry = json_decode($raw_queue_entry, true);
+            if (!$raw_notification_entry) { throw new Exception("Empty notification found", 1); }
+
+            $notification = json_decode($raw_notification_entry['payload'], true);
+            $all_notifications[] = $notification;
+        }
+
+        return $all_notifications;
+    }
+
+    public function countNotificationsByEventType($notifications, $event) {
+        $count = 0;
+        foreach($notifications as $notification) {
+            if ($notification['event'] == $event) {
+                ++$count;
+            }
+        }
+        return $count;
     }
 
 }
