@@ -25,6 +25,8 @@ class AccountHandler {
     const RECEIVED_CONFIRMATIONS_REQUIRED = 2;
     const SEND_CONFIRMATIONS_REQUIRED     = 1;
 
+    const SEND_LOCK_TIMEOUT = 300; // 5 minutes
+
     use DispatchesCommands;
 
     function __construct(PaymentAddressRepository $payment_address_repository, AccountRepository $account_repository, LedgerEntryRepository $ledger_entry_repository) {
@@ -125,7 +127,7 @@ class AccountHandler {
 
 
             });
-        });
+        }, self::SEND_LOCK_TIMEOUT);
     }
 
     public function send(PaymentAddress $payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
@@ -167,13 +169,11 @@ class AccountHandler {
                     // get the default account
                     $default_account = $this->getAccount($payment_address);
 
-                    $type = LedgerEntry::SENDING;
-
                     // if there are any entries for this txid and payment address already, then 
                     //  don't add anything new
                     $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, $payment_address['id']);
                     if (count($existing_ledger_entries) > 0) {
-                        if ($confirmations == 0) { EventLog::log('account.send.warning', ['txid' => $txid]); }
+                        if ($confirmations == 0) { EventLog::log('account.send.alreadyRecorded', ['txid' => $txid]); }
                         return;
                     }
 
@@ -184,7 +184,7 @@ class AccountHandler {
                 }
 
             });
-        });
+        }, self::SEND_LOCK_TIMEOUT);
     }
 
     public function invalidate($parsed_tx) {
@@ -209,7 +209,7 @@ class AccountHandler {
             foreach($payment_addresses_by_id as $payment_address) {
                 RecordLock::acquireAndExecute($payment_address['uuid'], function() use ($payment_address, $txid) {
                     $this->ledger_entry_repository->deleteByTXID($txid, $payment_address['id']);
-                });
+                }, self::SEND_LOCK_TIMEOUT);
             }
         });
     }
@@ -284,7 +284,7 @@ class AccountHandler {
                 // done
                 return;
             });
-        });
+        }, self::SEND_LOCK_TIMEOUT);
     }
 
 
@@ -320,7 +320,7 @@ class AccountHandler {
                 // done
                 return;
             });
-        });
+        }, self::SEND_LOCK_TIMEOUT);
     }
 
 
@@ -374,7 +374,7 @@ class AccountHandler {
                 // done
                 return;
             });
-        });
+        }, self::SEND_LOCK_TIMEOUT);
     }
 
     public function acquirePaymentAddressLock(PaymentAddress $payment_address, $timeout=1800) {

@@ -19,6 +19,7 @@ use Tokenly\CounterpartySender\CounterpartySender;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use Tokenly\LaravelApiProvider\Helpers\APIControllerHelper;
 use Tokenly\LaravelEventLog\Facade\EventLog;
+use Exception;
 
 class SendController extends APIController {
 
@@ -53,7 +54,13 @@ class SendController extends APIController {
         $create_attributes['destination']        = $request_attributes['destination'];
         $create_attributes['quantity_sat']       = CurrencyUtil::valueToSatoshis($request_attributes['quantity']);
         $create_attributes['asset']              = $request_attributes['asset'];
-        return $send_respository->executeWithNewLockedSendByRequestID($request_id, $create_attributes, function($locked_send) use ($request_attributes, $payment_address, $user, $helper, $send_respository, $address_sender, $api_call_repository, $request_id) {
+
+        // the transaction must be committed before the lock is release and not after
+        //   therefore we must release the lock after this closure completes
+        $lock_must_be_released = false;
+        $lock_must_be_released_with_delay = false;
+
+        $send_result = $send_respository->executeWithNewLockedSendByRequestID($request_id, $create_attributes, function($locked_send) use ($request_attributes, $payment_address, $user, $helper, $send_respository, $address_sender, $api_call_repository, $request_id, &$lock_must_be_released, &$lock_must_be_released_with_delay) {
             $api_call = $api_call_repository->create([
                 'user_id' => $user['id'],
                 'details' => [
@@ -78,6 +85,7 @@ class SendController extends APIController {
                 try {
                     // get lock
                     $lock_acquired = AccountHandler::acquirePaymentAddressLock($payment_address);
+                    if ($lock_acquired) { $lock_must_be_released = true; }
 
                     list($txid, $float_balance_sent) = $address_sender->sweepAllAssets($payment_address, $request_attributes['destination'], $float_fee);
                     $quantity_sat = CurrencyUtil::valueToSatoshis($float_balance_sent);
@@ -85,13 +93,14 @@ class SendController extends APIController {
                     // clear all balances from all accounts
                     AccountHandler::zeroAllBalances($payment_address, $api_call);
 
-                    // release the account lock
-                    if ($lock_acquired) { AccountHandler::releasePaymentAddressLock($payment_address); }
+                    // release the account lock with a slight delay
+                    if ($lock_acquired) { $lock_must_be_released_with_delay = true; }
                 } catch (PaymentException $e) {
-                    if ($lock_acquired) { AccountHandler::releasePaymentAddressLock($payment_address); }
-
                     EventLog::logError('error.sweep', $e);
                     return new JsonResponse(['message' => $e->getMessage()], 500); 
+                } catch (Exception $e) {
+                    EventLog::logError('error.sweep', $e);
+                    return new JsonResponse(['message' => 'Unable to complete this request'], 500); 
                 }
             } else {
                 try {
@@ -102,10 +111,11 @@ class SendController extends APIController {
                         EventLog::logError('error.send.accountMissing', ['address_id' => $payment_address['id'], 'account' => $account_name]);
                         return new JsonResponse(['message' => "This account did not exist."], 404);
                     }
-                    Log::debug("\$account=".json_encode($account, 192));
+                    // Log::debug("\$account=".json_encode($account, 192));
 
                     // get lock
                     $lock_acquired = AccountHandler::acquirePaymentAddressLock($payment_address);
+                    if ($lock_acquired) { $lock_must_be_released = true; }
 
                     // whether to spend unconfirmed balances
                     $allow_unconfirmed = isset($request_attributes['unconfirmed']) ? $request_attributes['unconfirmed'] : false;
@@ -138,19 +148,19 @@ class SendController extends APIController {
                     }
 
                     // release the account lock
-                    if ($lock_acquired) { AccountHandler::releasePaymentAddressLock($payment_address); }
+                    if ($lock_acquired) { $lock_must_be_released_with_delay = true; }
+
 
                 } catch (AccountException $e) {
-                    if ($lock_acquired) { AccountHandler::releasePaymentAddressLock($payment_address); }
-
                     EventLog::logError('error.pay', $e);
                     return new JsonResponse(['message' => $e->getMessage(), 'errorName' => $e->getErrorName()], $e->getStatusCode()); 
                     
                 } catch (PaymentException $e) {
-                    if ($lock_acquired) { AccountHandler::releasePaymentAddressLock($payment_address); }
-
                     EventLog::logError('error.pay', $e);
                     return new JsonResponse(['message' => $e->getMessage()], 500); 
+                } catch (Exception $e) {
+                    EventLog::logError('error.pay', $e);
+                    return new JsonResponse(['message' => 'Unable to complete this request'], 500); 
                 }
             }
 
@@ -172,6 +182,15 @@ class SendController extends APIController {
             $send_respository->update($locked_send, $attributes);
             return $helper->buildJSONResponse($locked_send->serializeForAPI());
         }, self::SEND_LOCK_TIMEOUT);
+
+        // make sure to release the lock
+        if ($lock_must_be_released_with_delay) {
+            $this->releasePaymentAddressLockWithDelay($payment_address);
+        } else if ($lock_must_be_released) {
+            AccountHandler::releasePaymentAddressLock($payment_address);
+        }
+
+        return $send_result;
     }
 
     /**
@@ -186,5 +205,14 @@ class SendController extends APIController {
     }
 
 
+    protected function releasePaymentAddressLockWithDelay($payment_address) {
+        if (app()->environment() != 'testing') {
+            $delay = 750000;
+            Log::debug("delaying for ".($delay/1000)." ms before releasing payment address lock");
+            usleep($delay);
+        }
+
+        AccountHandler::releasePaymentAddressLock($payment_address);
+    }
 
 }
