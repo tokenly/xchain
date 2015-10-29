@@ -207,7 +207,7 @@ class SendController extends APIController {
 
     protected function releasePaymentAddressLockWithDelay($payment_address) {
         if (app()->environment() != 'testing') {
-            $delay = 750000;
+            $delay = 1500000;
             Log::debug("delaying for ".($delay/1000)." ms before releasing payment address lock");
             usleep($delay);
         }
