@@ -34,6 +34,12 @@ class TXORepository
             ->get();
     }
 
+    public function findByPaymentAddress(PaymentAddress $payment_address) {
+        return $this->prototype_model
+            ->where(['payment_address_id' => $payment_address['id']])
+            ->get();
+    }
+
     public function findByTXIDAndOffset($txid, $offset) {
         return $this->prototype_model
             ->where(['txid' => $txid, 'n' => $offset])

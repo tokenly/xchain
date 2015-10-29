@@ -32,6 +32,11 @@ class TXORepositoryTest extends TestCase {
         PHPUnit::assertEquals($sample_txo->toArray(), $txo_repository->findByTXIDAndOffset($txid, 0)->toArray());
         PHPUnit::assertEquals($sample_txo_2->toArray(), $txo_repository->findByTXIDAndOffset($txid, 1)->toArray());
         PHPUnit::assertEquals($sample_txo_3->toArray(), $txo_repository->findByTXIDAndOffset($txid_2, 0)->toArray());
+
+        // get all txos by payment_address
+        $reloaded_txos = $txo_repository->findByPaymentAddress($payment_address);
+        PHPUnit::assertCount(3, $reloaded_txos);
+
     }
 
     public function testUpdateOrCreateTXOs()

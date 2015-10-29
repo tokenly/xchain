@@ -18,6 +18,7 @@ class CreateTxosTable extends Migration {
 
             $table->char('txid', 64)->index();
             $table->integer('n')->unsigned();
+            $table->integer('amount')->unsigned()->default(0);
 
             $table->integer('type')->unsigned()->default(1);
             $table->boolean('spent')->default(false);

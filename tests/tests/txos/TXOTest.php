@@ -24,6 +24,7 @@ class TXOTest extends TestCase {
         PHPUnit::assertEquals('0000000000000000000000000000000000000000000000000000000000000001', $loaded_txo['txid']);
         PHPUnit::assertEquals(0, $loaded_txo['n']);
         PHPUnit::assertEquals(TXO::UNCONFIRMED, $loaded_txo['type']);
+        PHPUnit::assertEquals(400000, $loaded_txo['amount']);
 
         // confirm the transactions (1)
         $this->sendConfirmationEvents(1, $parsed_txs);
@@ -58,6 +59,7 @@ class TXOTest extends TestCase {
         // confirm SENDING
         $loaded_txo = $txo_repository->findByTXIDAndOffset($txid, 0);
         PHPUnit::assertEquals(TXO::SENDING, $loaded_txo['type'], 'Unexpected type of '.TXO::typeIntegerToString($loaded_txo['type']));
+        PHPUnit::assertEquals(781213, $loaded_txo['amount']);
         PHPUnit::assertTrue($loaded_txo['spent']);
 
         // confirm a transaction (1)
@@ -98,7 +100,7 @@ class TXOTest extends TestCase {
 
         // find the change UTXO
         $loaded_change_txo = $txo_repository->findByTXIDAndOffset($sending_tx['txid'], 1);
-        // echo "\$loaded_change_txo: ".json_encode($loaded_change_txo, 192)."\n";
+        PHPUnit::assertEquals(361213, $loaded_change_txo['amount']);
         PHPUnit::assertNotEmpty($loaded_change_txo);
 
 
@@ -135,6 +137,33 @@ class TXOTest extends TestCase {
         PHPUnit::assertEquals(0, $loaded_txo['n']);
         PHPUnit::assertEquals(TXO::UNCONFIRMED, $loaded_txo['type']);
     }
+
+
+    public function testInvalidatedReceivedTXOs()
+    {
+        // receiving a transaction adds TXOs
+        $txo_repository = $this->app->make('App\Repositories\TXORepository');
+
+        // setup monitors
+        $payment_address_helper = app('PaymentAddressHelper');
+        $receiving_address_one = $payment_address_helper->createSamplePaymentAddressWithoutInitialBalances(null, ['address' => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD']);
+
+        // receive unconfirmed transactions
+        $parsed_txs = $this->receiveUnconfirmedTransactions(1);
+        $loaded_txos = $txo_repository->findAll();
+
+        // confirm a transaction that invalidates the unconfirmed UTXOs
+        $parsed_txs[0]['txid'] = str_repeat('9', 63).sprintf('%04d', 101);
+        // confirm the transactions (1+2)
+        $this->sendConfirmationEvents(1, $parsed_txs);
+        $this->sendConfirmationEvents(2, $parsed_txs);
+        $all_txos = $txo_repository->findAll();
+        PHPUnit::assertCount(1, $all_txos);
+        $loaded_txo = $all_txos[0];
+        PHPUnit::assertEquals(TXO::CONFIRMED, $loaded_txo['type']);
+        PHPUnit::assertEquals($parsed_txs[0]['txid'], $loaded_txo['txid']);
+    }
+
 
     // ------------------------------------------------------------------------
     

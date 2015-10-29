@@ -8,7 +8,9 @@ use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\TXORepository;
 use Exception;
 use Illuminate\Foundation\Bus\DispatchesCommands;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Tokenly\CurrencyLib\CurrencyUtil;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 
 class TXOHandler {
@@ -49,7 +51,12 @@ class TXOHandler {
                 $vout_bitcoin_address = (isset($vout['scriptPubKey']) AND isset($vout['scriptPubKey']['addresses'])) ? $vout['scriptPubKey']['addresses'][0] : null;
                 if ($vout_bitcoin_address AND $vout_bitcoin_address == $bitcoin_address) {
                     $type = ($is_confirmed ? TXO::CONFIRMED : TXO::UNCONFIRMED);
-                    $this->txo_repository->updateOrCreate(['txid' => $parsed_tx['txid'], 'n' => $vout['n'], 'type' => $type], $payment_address, $account);
+                    $this->txo_repository->updateOrCreate([
+                        'txid'   => $parsed_tx['txid'],
+                        'n'      => $vout['n'],
+                        'type'   => $type,
+                        'amount' => CurrencyUtil::valueToSatoshis($vout['value']),
+                    ], $payment_address, $account);
                 }
             }
         }
@@ -80,11 +87,32 @@ class TXOHandler {
                     $spent = true;
 
                     // spend the utxo
-                    $this->txo_repository->updateOrCreate(['txid' => $spent_txid, 'n' => $spent_n, 'type' => $type, 'spent' => $spent], $payment_address, $account);
+                    $this->txo_repository->updateOrCreate([
+                        'txid'  => $spent_txid,
+                        'n'     => $spent_n,
+                        'type'  => $type,
+                        'spent' => $spent,
+                        'amount' => CurrencyUtil::valueToSatoshis($vin['value'])
+                    ], $payment_address, $account);
                 }
             }
         }
     }
+
+    public function invalidate($parsed_tx) {
+        DB::transaction(function() use ($parsed_tx) {
+            $txid = $parsed_tx['txid'];
+
+            $existing_txos = $this->txo_repository->findByTXID($txid);
+            if (count($existing_txos) == 0) { return; }
+
+            // delete each txo
+            foreach($existing_txos as $existing_txo) {
+                $this->txo_repository->delete($existing_txo);
+            }
+        });
+    }
+
 
     public function extractAllDestinationsFromVouts($parsed_tx) {
         $all_destinations = [];

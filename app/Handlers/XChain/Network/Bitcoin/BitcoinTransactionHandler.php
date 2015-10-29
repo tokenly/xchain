@@ -99,6 +99,14 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
                 // update accounts
                 AccountHandler::invalidate($invalidated_provisional_transaction);
+
+                try {
+                    TXOHandler::invalidate($invalidated_provisional_transaction);
+                } catch (Exception $e) {
+                    EventLog::logError('utxo.send.error', $e, ['txid' => $parsed_tx['txid'], 'confirmations' => $confirmations, ]);
+                    throw $e;
+                }
+
             }
         }
     }

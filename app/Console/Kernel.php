@@ -33,6 +33,9 @@ class Kernel extends ConsoleKernel {
         \App\Console\Commands\Accounts\CloseAccountCommand::class,
         \App\Console\Commands\Accounts\BalanceLedgerCommand::class,
 
+        // TXOs
+        \App\Console\Commands\TXO\ReconcileTXOsCommand::class,
+
         // vendor commands
         \Tokenly\ConsulHealthDaemon\Console\ConsulHealthMonitorCommand::class,
 

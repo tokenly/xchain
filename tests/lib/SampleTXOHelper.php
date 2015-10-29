@@ -24,10 +24,11 @@ class SampleTXOHelper
         $account = AccountHandler::getAccount($payment_address, 'default');
 
         $attributes = array_merge([
-            'txid'  => $this->nextTXID(),
-            'n'     => 0,
-            'type'  => TXO::CONFIRMED,
-            'spent' => false,
+            'txid'   => $this->nextTXID(),
+            'n'      => 0,
+            'amount' => 54321,
+            'type'   => TXO::CONFIRMED,
+            'spent'  => false,
         ], $overrides);
         $txo_model = $this->txo_repository->create($payment_address, $account, $attributes);
         return $txo_model;
