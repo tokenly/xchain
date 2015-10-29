@@ -18,4 +18,6 @@ interface NetworkTransactionHandler {
 
     public function updateAccountBalances($found_addresses, $parsed_tx, $confirmations, $block_seq, Block $block=null);
 
+    public function updateUTXOs($found_addresses, $parsed_tx, $confirmations, $block_seq, Block $block=null);
+
 }

@@ -166,10 +166,11 @@ return [
 		/*
 		 * Local App Service Providers...
 		 */
-		'App\Providers\XChain\XChainHandlerServiceProvider',
-		'App\Listener\XChainListenerServiceProvider',
-		'App\Providers\Monitoring\MonitoringServiceProvider',
-		'App\Providers\Accounts\Provider\AccountHandlerServiceProvider',
+		App\Providers\XChain\XChainHandlerServiceProvider::class,
+		App\Listener\XChainListenerServiceProvider::class,
+		App\Providers\Monitoring\MonitoringServiceProvider::class,
+		App\Providers\Accounts\Provider\AccountHandlerServiceProvider::class,
+		App\Providers\TXO\Provider\TXOHandlerServiceProvider::class,
 
 	],
 

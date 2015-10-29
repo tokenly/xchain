@@ -101,7 +101,7 @@ class ReconcileAccountsCommand extends Command {
 
             // get xchain balances
             $raw_xchain_balances_by_type = $ledger->combinedAccountBalancesByAsset($payment_address, null);
-            echo "\$raw_xchain_balances_by_type: ".json_encode($raw_xchain_balances_by_type, 192)."\n";
+            // echo "\$raw_xchain_balances_by_type: ".json_encode($raw_xchain_balances_by_type, 192)."\n";
             $combined_xchain_balances = [];
             foreach($raw_xchain_balances_by_type as $type_string => $xchain_balances) {
                 foreach($xchain_balances as $asset => $quantity) {

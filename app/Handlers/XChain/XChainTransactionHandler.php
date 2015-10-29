@@ -21,6 +21,7 @@ class XChainTransactionHandler {
 
         $found_addresses = $transaction_handler->findMonitoredAndPaymentAddressesByParsedTransaction($parsed_tx);
         $transaction_handler->storeProvisionalTransaction($transaction, $found_addresses);
+        $transaction_handler->updateUTXOs($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
         $transaction_handler->updateAccountBalances($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
         $transaction_handler->sendNotifications($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
 
@@ -38,6 +39,7 @@ class XChainTransactionHandler {
 
         $transaction_handler->updateProvisionalTransaction($parsed_tx, $found_addresses, $confirmations);
         $transaction_handler->invalidateProvisionalTransactions($found_addresses, $parsed_tx, $confirmations, $block_seq, $block, $block_event_context);
+        $transaction_handler->updateUTXOs($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
         $transaction_handler->updateAccountBalances($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
         $transaction_handler->sendNotifications($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
 

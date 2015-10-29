@@ -9,6 +9,7 @@ use App\Handlers\XChain\Network\Contracts\NetworkTransactionHandler;
 use App\Models\Block;
 use App\Models\Transaction;
 use App\Providers\Accounts\Facade\AccountHandler;
+use App\Providers\TXO\Facade\TXOHandler;
 use App\Repositories\MonitoredAddressRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\PaymentAddressRepository;
@@ -130,6 +131,40 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             }
         }
     }
+
+    public function updateUTXOs($found_addresses, $parsed_tx, $confirmations, $block_seq, Block $block=null) {
+        $sources      = ($parsed_tx['sources'] ? $parsed_tx['sources'] : []);
+        // get all destinations, including change addresses
+        $destinations = TXOHandler::extractAllDestinationsFromVouts($parsed_tx);
+
+
+        // determine matched payment addresses
+        foreach($found_addresses['payment_addresses'] as $payment_address) {
+            // Log::debug("upating account balances for payment address {$payment_address['address']}.  txid is {$parsed_tx['txid']}");
+
+            if (in_array($payment_address['address'], $sources)) {
+                // this address sent some UTXOs
+                try {
+                    TXOHandler::send($payment_address, $parsed_tx, $confirmations);
+                } catch (Exception $e) {
+                    EventLog::logError('utxo.send.error', $e, ['txid' => $parsed_tx['txid'], 'confirmations' => $confirmations, ]);
+                    throw $e;
+                }
+            }
+
+            if (in_array($payment_address['address'], $destinations)) {
+                // this address received some UTXOs
+                try {
+                    TXOHandler::receive($payment_address, $parsed_tx, $confirmations);
+                } catch (Exception $e) {
+                    EventLog::logError('utxo.send.error', $e, ['txid' => $parsed_tx['txid'], 'confirmations' => $confirmations, ]);
+                    throw $e;
+                }
+            }
+
+        }
+    }
+
 
     public function sendNotifications($found_addresses, $parsed_tx, $confirmations, $block_seq, Block $block=null)
     {
