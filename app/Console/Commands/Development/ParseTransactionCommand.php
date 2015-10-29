@@ -15,7 +15,7 @@ class ParseTransactionCommand extends Command {
      *
      * @var string
      */
-    protected $name = 'xchain:parse-transaction';
+    protected $name = 'dev-xchain:parse-transaction';
 
     /**
      * The console command description.

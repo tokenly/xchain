@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Console\Commands\Development;
+namespace App\Console\Commands\Prune;
 
-use App\Commands\PruneBlocks;
+use App\Commands\PruneTransactions;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Foundation\Bus\DispatchesCommands;
@@ -10,7 +10,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 
-class PruneBlocksCommand extends Command {
+class PruneTransactionsCommand extends Command {
 
     use DispatchesCommands;
 
@@ -19,14 +19,14 @@ class PruneBlocksCommand extends Command {
      *
      * @var string
      */
-    protected $name = 'xchain:prune-blocks';
+    protected $name = 'xchain:prune-transactions';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Prunes old blocks';
+    protected $description = 'Prunes old transactions';
 
 
 
@@ -38,7 +38,7 @@ class PruneBlocksCommand extends Command {
     protected function getArguments()
     {
         return [
-            ['blocks', InputArgument::OPTIONAL, 'Number of blocks to keep', 300],
+            ['time', InputArgument::OPTIONAL, 'Time in seconds to prune', 36000],
         ];
     }
 
@@ -62,13 +62,13 @@ class PruneBlocksCommand extends Command {
      */
     public function fire()
     {
-        $blocks = intval($this->input->getArgument('blocks'));
-        if ($blocks == 0) {
-            $this->comment('Pruning all blocks.');
+        $seconds = intval($this->input->getArgument('time'));
+        if ($seconds == 0) {
+            $this->comment('Pruning all transactions.');
         } else {
-            $this->comment('Pruning all but the last '.$blocks.' blocks.');
+            $this->comment('Pruning all transactions except those in the last '.$seconds.' seconds.');
         }
-        $this->dispatch(new PruneBlocks($blocks));
+        $this->dispatch(new PruneTransactions($seconds));
         $this->comment('done');
     }
 

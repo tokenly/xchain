@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Console\Commands\Development;
+namespace App\Console\Commands\Prune;
 
-use App\Commands\PruneTransactions;
+use App\Commands\PruneBlocks;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Foundation\Bus\DispatchesCommands;
@@ -10,7 +10,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 
-class PruneTransactionsCommand extends Command {
+class PruneBlocksCommand extends Command {
 
     use DispatchesCommands;
 
@@ -19,14 +19,14 @@ class PruneTransactionsCommand extends Command {
      *
      * @var string
      */
-    protected $name = 'xchain:prune-transactions';
+    protected $name = 'xchain:prune-blocks';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Prunes old transactions';
+    protected $description = 'Prunes old blocks';
 
 
 
@@ -38,7 +38,7 @@ class PruneTransactionsCommand extends Command {
     protected function getArguments()
     {
         return [
-            ['time', InputArgument::OPTIONAL, 'Time in seconds to prune', 36000],
+            ['blocks', InputArgument::OPTIONAL, 'Number of blocks to keep', 300],
         ];
     }
 
@@ -62,13 +62,13 @@ class PruneTransactionsCommand extends Command {
      */
     public function fire()
     {
-        $seconds = intval($this->input->getArgument('time'));
-        if ($seconds == 0) {
-            $this->comment('Pruning all transactions.');
+        $blocks = intval($this->input->getArgument('blocks'));
+        if ($blocks == 0) {
+            $this->comment('Pruning all blocks.');
         } else {
-            $this->comment('Pruning all transactions except those in the last '.$seconds.' seconds.');
+            $this->comment('Pruning all but the last '.$blocks.' blocks.');
         }
-        $this->dispatch(new PruneTransactions($seconds));
+        $this->dispatch(new PruneBlocks($blocks));
         $this->comment('done');
     }
 
