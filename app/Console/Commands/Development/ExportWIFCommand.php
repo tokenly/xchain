@@ -15,7 +15,7 @@ class ExportWIFCommand extends Command {
      *
      * @var string
      */
-    protected $name = 'xchain:export-wif';
+    protected $name = 'dev-xchain:export-wif';
 
     /**
      * The console command description.

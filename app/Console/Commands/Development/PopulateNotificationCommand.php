@@ -14,7 +14,7 @@ class PopulateNotificationCommand extends Command {
      *
      * @var string
      */
-    protected $name = 'xchain:populate-notification';
+    protected $name = 'dev-xchain:populate-notification';
 
     /**
      * The console command description.

@@ -15,7 +15,7 @@ class SendManualNotificationCommand extends Command {
      *
      * @var string
      */
-    protected $name = 'xchain:send-notification';
+    protected $name = 'dev-xchain:send-notification';
 
     /**
      * The console command description.
