@@ -47,15 +47,19 @@ class TXORepository
             ->first();
     }
 
-    public function deleteOlderThan(Carbon $date) {
+    public function deleteSpentOlderThan(Carbon $date) {
         $affected_rows = $this->prototype_model
             ->where('updated_at', '<', $date)
+            ->where('spent', '1')
             ->delete();
         return $affected_rows;
     }
 
     public function deleteAll() {
-        return $this->prototype_model->truncate();
+        $affected_rows = $this->prototype_model
+            ->where('spent', '1')
+            ->delete();
+        return $affected_rows;
     }
 
     public function delete(TXO $model) {

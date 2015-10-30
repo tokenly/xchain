@@ -74,7 +74,7 @@ class PruneSpentUTXOs extends Command {
 
         if ($keep_seconds > 0) {
             $keep_date = Carbon::now()->subSeconds($keep_seconds);
-            $txo_repository->deleteOlderThan($keep_date);
+            $txo_repository->deleteSpentOlderThan($keep_date);
         } else {
             $txo_repository->deleteAll();
         }

@@ -97,6 +97,7 @@ class ReconcileTXOsCommand extends Command {
             $all_utxos = $bitcoin_payer->getAllUTXOs($payment_address['address']);
             if ($all_utxos) {
                 foreach($all_utxos as $utxo) {
+                    if (!isset($utxo['confirmations']) OR $utxo['confirmations'] == 0) { continue; }
                     $filtered_utxo = ['txid' => $utxo['txid'], 'n' => $utxo['vout'], 'amount' => CurrencyUtil::valueToSatoshis($utxo['amount']),];
                     $daemon_utxos_map[$utxo['txid'].':'.$utxo['vout']] = $filtered_utxo;
                 }
