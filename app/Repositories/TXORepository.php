@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\Account;
 use App\Models\PaymentAddress;
 use App\Models\TXO;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -44,6 +45,17 @@ class TXORepository
         return $this->prototype_model
             ->where(['txid' => $txid, 'n' => $offset])
             ->first();
+    }
+
+    public function deleteOlderThan(Carbon $date) {
+        $affected_rows = $this->prototype_model
+            ->where('updated_at', '<', $date)
+            ->delete();
+        return $affected_rows;
+    }
+
+    public function deleteAll() {
+        return $this->prototype_model->truncate();
     }
 
     public function delete(TXO $model) {

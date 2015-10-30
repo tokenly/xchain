@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\TXO;
 
+use App\Models\TXO;
 use App\Providers\Accounts\Facade\AccountHandler;
 use Exception;
 use Illuminate\Console\Command;
@@ -86,6 +87,7 @@ class ReconcileTXOsCommand extends Command {
             $xchain_utxos_map = [];
             $db_txos = $txo_repository->findByPaymentAddress($payment_address);
             foreach($db_txos as $db_txo) {
+                if ($db_txo['type'] != TXO::CONFIRMED) { continue; }
                 $filtered_utxo = ['txid' => $db_txo['txid'], 'n' => $db_txo['n'], 'amount' => $db_txo['amount'],];
                 $xchain_utxos_map[$filtered_utxo['txid'].':'.$filtered_utxo['n']] = $filtered_utxo;
             }
