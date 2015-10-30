@@ -81,7 +81,7 @@ class TXOHandler {
 
             if ($is_spendable) {
                 $spent_txid = (isset($vin['txid'])) ? $vin['txid'] : null;
-                $spent_n    = (isset($vin['n'])) ? $vin['n'] : null;
+                $spent_n    = (isset($vin['vout'])) ? $vin['vout'] : null;
                 if ($spent_txid AND $spent_n !== null) {
                     $type = ($is_confirmed ? TXO::SENT : TXO::SENDING);
                     $spent = true;
