@@ -41,6 +41,18 @@ class TXORepository
             ->get();
     }
 
+    public function findByAccount(Account $account, $unspent=null) {
+        $query = $this->prototype_model
+            ->where(['account_id' => $account['id']]);
+
+        // unspent filter
+        if ($unspent !== null) {
+            $query->where('spent', $unspent ? '0' : '1');
+        }
+
+        return $query->get();
+    }
+
     public function findByTXIDAndOffset($txid, $offset) {
         return $this->prototype_model
             ->where(['txid' => $txid, 'n' => $offset])
@@ -81,6 +93,7 @@ class TXORepository
         if (!isset($create_vars['n'])) { throw new Exception("n is required", 1); }
         if (!isset($create_vars['type'])) { $create_vars['type'] = TXO::CONFIRMED; }
         if (!isset($create_vars['spent'])) { $create_vars['spent'] = false; }
+        if (!isset($create_vars['script'])) { $create_vars['script'] = ''; }
 
         return $this->prototype_model->create($create_vars);
     }
@@ -97,6 +110,16 @@ class TXORepository
         }
 
         return null;
+    }
+
+    public function transferAccounts(TXO $model, Account $from, Account $to, $allowed_types=null) {
+        if ($allowed_types === null) { $allowed_types = [TXO::UNCONFIRMED, TXO::CONFIRMED]; }
+
+        return $model
+            ->where('id', '=', $model['id'])
+            ->where('account_id', '=', $from['id'])
+            ->whereIn('type', $allowed_types)
+            ->update(['account_id' => $to['id']]);
     }
 
     public function updateOrCreate($update_vars, PaymentAddress $payment_address, Account $account) {

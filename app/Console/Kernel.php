@@ -21,6 +21,9 @@ class Kernel extends ConsoleKernel {
         \App\Console\Commands\Development\ExportWIFCommand::class,
         \App\Console\Commands\Development\ParseTransactionCommand::class,
 
+        // Other
+        \App\Console\Commands\Experiment\ExperimentCommand::class,
+
         // prune
         \App\Console\Commands\Prune\PruneTransactionsCommand::class,
         \App\Console\Commands\Prune\PruneBlocksCommand::class,
@@ -43,6 +46,7 @@ class Kernel extends ConsoleKernel {
         // API Provider commands
         \Tokenly\LaravelApiProvider\Commands\MakeAPIModelCommand::class,
         \Tokenly\LaravelApiProvider\Commands\MakeAPIRespositoryCommand::class,
+
     ];
 
     /**

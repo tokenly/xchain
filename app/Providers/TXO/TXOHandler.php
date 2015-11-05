@@ -2,6 +2,7 @@
 
 namespace App\Providers\TXO;
 
+use App\Models\Account;
 use App\Models\PaymentAddress;
 use App\Models\TXO;
 use App\Providers\Accounts\Facade\AccountHandler;
@@ -55,6 +56,7 @@ class TXOHandler {
                     $this->txo_repository->updateOrCreate([
                         'txid'   => $parsed_tx['txid'],
                         'n'      => $vout['n'],
+                        'script' => $vout['scriptPubKey']['hex'],
                         'type'   => $type,
                         'amount' => CurrencyUtil::valueToSatoshis($vout['value']),
                     ], $payment_address, $account);
@@ -77,23 +79,23 @@ class TXOHandler {
         $account = AccountHandler::getAccount($payment_address);
 
         foreach ($parsed_tx['bitcoinTx']['vin'] as $vin) {
-            // create the UTXO record
+            // update the UTXO record
             $is_spendable = true;
 
             if ($is_spendable) {
-                $spent_txid = (isset($vin['txid'])) ? $vin['txid'] : null;
-                $spent_n    = (isset($vin['vout'])) ? $vin['vout'] : null;
+                $spent_txid   = (isset($vin['txid'])) ? $vin['txid'] : null;
+                $spent_n      = (isset($vin['vout'])) ? $vin['vout'] : null;
                 if ($spent_txid AND $spent_n !== null) {
                     $type = ($is_confirmed ? TXO::SENT : TXO::SENDING);
                     $spent = true;
 
-                    // spend the utxo
+                    // spend the utxo (updates an existing utxo)
                     Log::debug("send TXO: {$spent_txid}:{$spent_n}/".CurrencyUtil::valueToSatoshis($vin['value'])." ".TXO::typeIntegerToString($type)." to ".$payment_address['uuid']);
                     $this->txo_repository->updateOrCreate([
-                        'txid'  => $spent_txid,
-                        'n'     => $spent_n,
-                        'type'  => $type,
-                        'spent' => $spent,
+                        'txid'   => $spent_txid,
+                        'n'      => $spent_n,
+                        'type'   => $type,
+                        'spent'  => $spent,
                         'amount' => CurrencyUtil::valueToSatoshis($vin['value'])
                     ], $payment_address, $account);
                 }
@@ -112,6 +114,15 @@ class TXOHandler {
             foreach($existing_txos as $existing_txo) {
                 Log::debug("invalidate TXO: {$existing_txo['txid']}:{$existing_txo['n']}/".CurrencyUtil::valueToSatoshis($existing_txo['amount'])." ".TXO::typeIntegerToString($existing_txo['type'])." from ".$existing_txo['payment_address_id']);
                 $this->txo_repository->delete($existing_txo);
+            }
+        });
+    }
+
+    public function moveAccounts($utxos, Account $from, Account $to) {
+        DB::transaction(function() use ($utxos, $from, $to) {
+            foreach($utxos as $utxo) {
+                $updated = $this->txo_repository->transferAccounts($utxo, $from, $to);
+                if (!$updated) { throw new Exception("Failed to transfer utxo between accounts", 1); }
             }
         });
     }

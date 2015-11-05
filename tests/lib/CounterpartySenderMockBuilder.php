@@ -11,11 +11,11 @@ class CounterpartySenderMockBuilder
 
     }
 
-    public function installMockCounterpartySenderDependencies($app, $test_case) {
+    public function installMockCounterpartySenderDependencies($app, $test_case, $override_functions=null) {
         $mock_calls = new \ArrayObject(['xcpd' => [], 'btcd' => [], 'insight' => []]);
 
         $this->installMockXCPDClient($app, $test_case, $mock_calls);
-        $this->installMockBitcoindClient($app, $test_case, $mock_calls);
+        $this->installMockBitcoindClient($app, $test_case, $mock_calls, $override_functions);
 
         $insight_mock_calls = $app->make('InsightAPIMockBuilder')->installMockInsightClient($app, $test_case);
         $mock_calls['insight'] = $insight_mock_calls;
@@ -80,7 +80,7 @@ class CounterpartySenderMockBuilder
         });
     }
 
-    public function installMockBitcoindClient($app, $test_case, $mock_calls) {
+    public function installMockBitcoindClient($app, $test_case, $mock_calls, $override_functions=null) {
         $mock = $test_case->getMockBuilder('Nbobtc\Bitcoind\Bitcoind')->disableOriginalConstructor()->disableOriginalClone()->getMock();
         
         $mock->method('createrawtransaction')->will($test_case->returnCallback(function($inputs, $destinations)  use ($mock_calls) {
@@ -131,6 +131,61 @@ class CounterpartySenderMockBuilder
             return $mock;
         });
 
+
+        // also catch calls direction to the rpc client
+        $mock_client = $test_case->getMockBuilder('Nbobtc\Bitcoind\Client')->disableOriginalConstructor()->disableOriginalClone()->getMock();
+        $mock_client->method('execute')->will($test_case->returnCallback(function($method, $args) use ($mock_calls, $override_functions) {
+            if ($method == 'searchrawtransactions') {
+                $address = $args[0];
+                if ($override_functions !== null AND isset($override_functions['searchrawtransactions'])) {
+                    $data = call_user_func($override_functions['searchrawtransactions'], $address);
+                } else {
+                    if ($this->apiFixtureExists('_searchrawtransactions_'.$address.'.json')) {
+                        $data = $this->loadAPIFixture('_searchrawtransactions_'.$address.'.json');
+                    } else {
+                        $data = $this->loadAPIFixture('_searchrawtransactions_sample.json');
+                    }
+
+                    // replace the data with the correct address
+                    $filtered_data = $data;
+                    foreach($data as $offset => $utxo) {
+                        foreach($utxo['vout'] as $vout_offset => $vout) {
+                            $vout['scriptPubKey']['addresses'] = [$address];
+                            $filtered_data[$offset]['vout'][$vout_offset] = $vout;
+                        }
+
+                    }
+                    $data = $filtered_data;
+                }
+
+                $mock_calls['btcd'][] = [
+                    'method'   => 'searchrawtransactions',
+                    'args'     => $args,
+                    'response' => $data,
+                ];
+
+                // return as an object
+                return (object) ['result' => $data];
+            }
+
+            throw new Exception("Unknown method: $method", 1);
+        })); 
+
+        $app->bind('Nbobtc\Bitcoind\Client', function() use ($mock_client) {
+            return $mock_client;
+        });
+
+    }
+
+
+    public function loadAPIFixture($filename) {
+        $filepath = base_path().'/tests/fixtures/api/'.$filename;
+        return json_decode(file_get_contents($filepath), true);
+    }
+
+    public function apiFixtureExists($filename) {
+        $filepath = base_path().'/tests/fixtures/api/'.$filename;
+        return file_exists($filepath);
     }
 
 

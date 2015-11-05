@@ -35,9 +35,15 @@ class AccountHandler {
         $this->payment_address_repository = $payment_address_repository;
     }
 
-    public function createDefaultAccount(PaymentAddress $address) {
+    public function createDefaultAccount(PaymentAddress $payment_address) {
+        $this->createAccount($payment_address, 'default');
+    }
+
+    public function createAccount(PaymentAddress $payment_address, $name) {
         // also create a default account for this address
-        $this->dispatch(new CreateAccount(['name' => 'default'], $address));
+        $this->dispatch(new CreateAccount(['name' => $name], $payment_address));
+
+        return $this->getAccount($payment_address, $name);
     }
 
     public function receive(PaymentAddress $payment_address, $quantity, $asset, $parsed_tx, $confirmations) {

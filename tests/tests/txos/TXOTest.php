@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\TXO;
+use App\Providers\Accounts\Facade\AccountHandler;
+use App\Providers\TXO\Facade\TXOHandler;
 use \PHPUnit_Framework_Assert as PHPUnit;
 
 class TXOTest extends TestCase {
@@ -162,6 +164,45 @@ class TXOTest extends TestCase {
         $loaded_txo = $all_txos[0];
         PHPUnit::assertEquals(TXO::CONFIRMED, $loaded_txo['type']);
         PHPUnit::assertEquals($parsed_txs[0]['txid'], $loaded_txo['txid']);
+    }
+
+
+    public function testMoveAccounts()
+    {
+        // receiving a transaction adds TXOs
+        $txo_repository = $this->app->make('App\Repositories\TXORepository');
+
+        // setup monitors
+        $payment_address_helper = app('PaymentAddressHelper');
+        $receiving_address_one = $payment_address_helper->createSamplePaymentAddressWithoutInitialBalances(null, ['address' => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD']);
+
+        // create a second account
+        $default_account = AccountHandler::getAccount($receiving_address_one);
+        $account_1 = AccountHandler::createAccount($receiving_address_one, 'account1');
+
+        // receive unconfirmed transactions
+        $parsed_txs = $this->receiveUnconfirmedTransactions(1);
+        $loaded_txos = $txo_repository->findAll();
+
+        // check that it is in the default account
+        $all_txos = $txo_repository->findAll();
+        $loaded_txo = $all_txos[0];
+        PHPUnit::assertEquals($default_account['id'], $loaded_txo['account_id']);
+
+        // move the utxo to account 1
+        TXOHandler::moveAccounts([$loaded_txo], $default_account, $account_1);
+        $all_txos = $txo_repository->findAll();
+        PHPUnit::assertCount(1, $all_txos);
+        $loaded_txo = $all_txos[0];
+        PHPUnit::assertEquals($account_1['id'], $loaded_txo['account_id']);
+
+        // check findByAccount
+        $loaded_txos = $txo_repository->findByAccount($default_account, true);
+        PHPUnit::assertCount(0, $loaded_txos);
+        $loaded_txos = $txo_repository->findByAccount($account_1, true);
+        PHPUnit::assertCount(1, $loaded_txos);
+        $loaded_txos = $txo_repository->findByAccount($account_1, false);
+        PHPUnit::assertCount(0, $loaded_txos);
     }
 
 

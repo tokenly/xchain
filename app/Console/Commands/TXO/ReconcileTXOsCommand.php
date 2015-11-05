@@ -88,7 +88,7 @@ class ReconcileTXOsCommand extends Command {
             $db_txos = $txo_repository->findByPaymentAddress($payment_address);
             foreach($db_txos as $db_txo) {
                 if ($db_txo['type'] != TXO::CONFIRMED) { continue; }
-                $filtered_utxo = ['txid' => $db_txo['txid'], 'n' => $db_txo['n'], 'amount' => $db_txo['amount'],];
+                $filtered_utxo = ['txid' => $db_txo['txid'], 'n' => $db_txo['n'], 'script' => $db_txo['script'], 'amount' => $db_txo['amount'],];
                 $xchain_utxos_map[$filtered_utxo['txid'].':'.$filtered_utxo['n']] = $filtered_utxo;
             }
 
@@ -98,7 +98,7 @@ class ReconcileTXOsCommand extends Command {
             if ($all_utxos) {
                 foreach($all_utxos as $utxo) {
                     if (!isset($utxo['confirmations']) OR $utxo['confirmations'] == 0) { continue; }
-                    $filtered_utxo = ['txid' => $utxo['txid'], 'n' => $utxo['vout'], 'amount' => CurrencyUtil::valueToSatoshis($utxo['amount']),];
+                    $filtered_utxo = ['txid' => $utxo['txid'], 'n' => $utxo['vout'], 'script' => $utxo['script'], 'amount' => CurrencyUtil::valueToSatoshis($utxo['amount']),];
                     $daemon_utxos_map[$utxo['txid'].':'.$utxo['vout']] = $filtered_utxo;
                 }
             }
@@ -134,6 +134,7 @@ class ReconcileTXOsCommand extends Command {
                             $txo_repository->create($payment_address, $account, [
                                 'txid'   => $utxo['txid'],
                                 'n'      => $utxo['n'],
+                                'script' => $utxo['script'],
                                 'amount' => $utxo['amount'],
                             ]);
                         }

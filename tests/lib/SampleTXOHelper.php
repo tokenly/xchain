@@ -26,6 +26,7 @@ class SampleTXOHelper
         $attributes = array_merge([
             'txid'   => $this->nextTXID(),
             'n'      => 0,
+            'script' => 'deadbeef0000000001',
             'amount' => 54321,
             'type'   => TXO::CONFIRMED,
             'spent'  => false,

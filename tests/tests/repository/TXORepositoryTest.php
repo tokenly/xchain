@@ -50,10 +50,11 @@ class TXORepositoryTest extends TestCase {
 
         // create...
         $attributes = [
-            'txid'  => $txid,
-            'n'     => 0,
-            'type'  => TXO::CONFIRMED,
-            'spent' => false,
+            'txid'   => $txid,
+            'n'      => 0,
+            'type'   => TXO::CONFIRMED,
+            'script' => 'testscript',
+            'spent'  => false,
         ];
         $txo_model = $txo_repository->updateOrCreate($attributes, $payment_address, $default_account);
 
