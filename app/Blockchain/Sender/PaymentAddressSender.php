@@ -162,7 +162,8 @@ class PaymentAddressSender {
 
         if ($composed_transaction_model === null) {
             // build the signed transactions
-            $built_transaction_to_send = $this->buildSignedTransactionToSend($payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep);
+            $change_address_collection = null;
+            $built_transaction_to_send = $this->buildSignedTransactionToSend($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep);
 
             // get the utxo identifiers
             $utxo_identifiers = $this->buildUTXOIdentifiersFromUTXOs($built_transaction_to_send->getInputUtxos());
@@ -185,8 +186,8 @@ class PaymentAddressSender {
                 }
 
                 // create new UTXO
-                $destination = AddressFactory::fromOutputScript(ScriptFactory::fromHex($output_utxo['script']))->getAddress();
-                list($found_payment_address, $found_account) = $this->loadPaymentAddressInfo($destination);
+                $utxo_destination_address = AddressFactory::fromOutputScript(ScriptFactory::fromHex($output_utxo['script']))->getAddress();
+                list($found_payment_address, $found_account) = $this->loadPaymentAddressInfo($utxo_destination_address);
                 if ($found_payment_address) {
     
                     $this->txo_repository->create($found_payment_address, $found_account, [
@@ -207,22 +208,22 @@ class PaymentAddressSender {
     }
 
     protected function clearPaymentAddressInfoCache() { $this->payment_address_info_cache = []; }
-    protected function loadPaymentAddressInfo($destination) {
+    protected function loadPaymentAddressInfo($address) {
         if (!isset($this->payment_address_info_cache)) { $this->payment_address_info_cache = []; }
 
-        if (!isset($this->payment_address_info_cache[$destination])) {
-            $found_payment_address = $this->payment_address_repository->findByAddress($destination)->first();
+        if (!isset($this->payment_address_info_cache[$address])) {
+            $found_payment_address = $this->payment_address_repository->findByAddress($address)->first();
             if ($found_payment_address) {
-                $this->payment_address_info_cache[$destination] = [$found_payment_address, AccountHandler::getAccount($found_payment_address)];
+                $this->payment_address_info_cache[$address] = [$found_payment_address, AccountHandler::getAccount($found_payment_address)];
             } else {
-                $this->payment_address_info_cache[$destination] = [null, null];
+                $this->payment_address_info_cache[$address] = [null, null];
             }
         }
 
-        return $this->payment_address_info_cache[$destination];
+        return $this->payment_address_info_cache[$address];
     }
 
-    protected function buildSignedTransactionToSend(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false) {
+    protected function buildSignedTransactionToSend(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $change_address_collection=null, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false) {
         $signed_transaction = null;
 
         if ($float_fee === null)            { $float_fee            = self::DEFAULT_FEE; }
@@ -244,7 +245,7 @@ class PaymentAddressSender {
                 $chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_quantity, $float_fee);
 
                 // $signed_transaction = $this->bitcoin_payer->buildSignedTransactionHexToSendBTC($payment_address['address'], $destination, $float_quantity, $wif_private_key, $float_fee);
-                $change_address_collection = $payment_address['address'];
+                if ($change_address_collection === null) { $change_address_collection = $payment_address['address']; }
                 $composed_transaction = $this->transaction_composer->composeSend('BTC', $float_quantity, $destination, $wif_private_key, $chosen_txos, $change_address_collection, $float_fee);
 
             } else {
@@ -256,7 +257,7 @@ class PaymentAddressSender {
                 $chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_btc_dust_size, $float_fee);
 
                 // build the change
-                $change_address_collection = $payment_address['address'];
+                if ($change_address_collection === null) { $change_address_collection = $payment_address['address']; }
 
                 $composed_transaction = $this->transaction_composer->composeSend($asset, $quantity, $destination, $wif_private_key, $chosen_txos, $change_address_collection, $float_fee, $float_btc_dust_size);
 

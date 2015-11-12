@@ -24,7 +24,9 @@ class SendRepository implements APIResourceRepositoryContract
         }
         if (!isset($attributes['payment_address_id'])) { throw new Exception("payment_address_id is required", 1); }
         if (!isset($attributes['user_id'])) { throw new Exception("user_id is required", 1); }
-        if (!isset($attributes['destination'])) { throw new Exception("destination is required", 1); }
+        if (!isset($attributes['destination']) AND !isset($attributes['destinations'])) {
+            throw new Exception("destination is required", 1);
+        }
         if (!isset($attributes['quantity_sat'])) { throw new Exception("quantity_sat is required", 1); }
         if (!isset($attributes['asset'])) { throw new Exception("asset is required", 1); }
 

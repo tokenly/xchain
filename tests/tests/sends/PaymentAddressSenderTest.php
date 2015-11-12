@@ -246,6 +246,50 @@ class PaymentAddressSenderTest extends TestCase {
         PHPUnit::assertCount(7, $txo_repository->findByPaymentAddress($payment_address, [TXO::CONFIRMED], true));
     }
 
+
+
+    public function testPaymentAddressSenderForBTCMultiSend()
+    {
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $user = $this->app->make('\UserHelper')->createSampleUser();
+        list($payment_address, $input_utxos) = $this->makeAddressAndSampleTXOs($user);
+
+        $sender = app('App\Blockchain\Sender\PaymentAddressSender');
+        $destinations = [
+            ['1ATEST111XXXXXXXXXXXXXXXXXXXXwLHDB', 0.0001],
+            ['1ATEST222XXXXXXXXXXXXXXXXXXXYzLVeV', 0.0001],
+            ['1ATEST333XXXXXXXXXXXXXXXXXXXatH8WE', 0.1000],
+        ];
+
+
+        $sender->send($payment_address, $destinations, '0.1002', 'BTC', $float_fee=null, $dust_size=null, $is_sweep=false);
+
+        // check the first sent call to bitcoind
+        $btcd_send_call = $mock_calls['btcd'][0];
+        PHPUnit::assertEquals('sendrawtransaction', $btcd_send_call['method']); // sendrawtransaction
+        $send_details = app('TransactionComposerHelper')->parseBTCTransaction($btcd_send_call['args'][0]);
+        PHPUnit::assertEquals('1ATEST111XXXXXXXXXXXXXXXXXXXXwLHDB', $send_details['destination']);
+
+        // check output amounts
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.0001), $send_details['btc_amount']);
+        $change_amount_satoshis = 50000000 - 10000 - CurrencyUtil::valueToSatoshis(0.123);
+        
+        // 3 change addresses
+        PHPUnit::assertCount(3, $send_details['change']);
+
+        PHPUnit::assertEquals('1ATEST222XXXXXXXXXXXXXXXXXXXYzLVeV', $send_details['change'][0][0]);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.0001), $send_details['change'][0][1]);
+        PHPUnit::assertEquals('1ATEST333XXXXXXXXXXXXXXXXXXXatH8WE', $send_details['change'][1][0]);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.100),  $send_details['change'][1][1]);
+
+        // check that the change utxo exists and is green
+        $txo_repository = app('App\Repositories\TXORepository');
+        $txo = $txo_repository->findByTXIDAndOffset($send_details['txid'], 3);
+        PHPUnit::assertTrue($txo['green']);
+
+    }
+
     // ------------------------------------------------------------------------
     
     protected function buildInsightMockCallsForSweepAllAssets() {

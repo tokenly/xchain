@@ -2,6 +2,7 @@
 
 use App\Models\LedgerEntry;
 use App\Models\PaymentAddress;
+use App\Providers\Accounts\Facade\AccountHandler;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use \PHPUnit_Framework_Assert as PHPUnit;
 
@@ -66,6 +67,70 @@ class SendAPITest extends TestCase {
         ], '/'.$payment_address['uuid']);
     }
 
+    public function testAPIErrorsForMultisend()
+    {
+        // mock the xcp sender
+        $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $user = $this->app->make('\UserHelper')->createSampleUser();
+        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user);
+
+        $api_tester = $this->getAPITester('/api/v1/multisends');
+
+        $api_tester->testAddErrors([
+
+            [
+                'postVars' => [
+                    'fee'    => 0.0001,
+                ],
+                'expectedErrorString' => 'destinations field is required.',
+            ],
+            [
+                'postVars' => [
+                    'destinations'    => 'bad',
+                ],
+                'expectedErrorString' => 'destinations were invalid',
+            ],
+            [
+                'postVars' => [
+                    'destinations'    => [['address' => 'badaddress1', 'amount' => 100]],
+                ],
+                'expectedErrorString' => 'address for destination 1 was invalid',
+            ],
+            [
+                'postVars' => [
+                    'destinations'    => [['address' => '1ATEST111XXXXXXXXXXXXXXXXXXXXwLHDB', 'amount' => 0]],
+                ],
+                'expectedErrorString' => 'amount for destination 1 was invalid',
+            ],
+            [
+                'postVars' => [
+                    'destinations'    => [['address' => '1ATEST111XXXXXXXXXXXXXXXXXXXXwLHDB', 'amount' => -0.2]],
+                ],
+                'expectedErrorString' => 'amount for destination 1 was invalid',
+            ],
+            [
+                'postVars' => [
+                    'destinations'    => [['address' => '1ATEST111XXXXXXXXXXXXXXXXXXXXwLHDB', 'amount' => 'blahblahblah']],
+                ],
+                'expectedErrorString' => 'amount for destination 1 was invalid',
+            ],
+            [
+                'postVars' => [
+                    'destinations'    => [['address' => '1ATEST111XXXXXXXXXXXXXXXXXXXXwLHDB',]],
+                ],
+                'expectedErrorString' => 'address or amount for destination',
+            ],
+            [
+                'postVars' => [
+                    'destinations'    => [['amount' => 1,]],
+                ],
+                'expectedErrorString' => 'address or amount for destination',
+            ],
+
+        ], '/'.$payment_address['uuid']);
+    }
+
     public function testAPIAddSend()
     {
         // mock the xcp sender
@@ -78,13 +143,14 @@ class SendAPITest extends TestCase {
 
         $posted_vars = $this->sendHelper()->samplePostVars();
         $expected_created_resource = [
-            'id'          => '{{response.id}}',
-            'destination' => '{{response.destination}}',
-            'asset'       => 'TOKENLY',
-            'sweep'       => '{{response.sweep}}',
-            'quantity'    => '{{response.quantity}}',
-            'txid'        => '{{response.txid}}',
-            'requestId'   => '{{response.requestId}}',
+            'id'           => '{{response.id}}',
+            'destination'  => '{{response.destination}}',
+            'destinations' => '',
+            'asset'        => 'TOKENLY',
+            'sweep'        => '{{response.sweep}}',
+            'quantity'     => '{{response.quantity}}',
+            'txid'         => '{{response.txid}}',
+            'requestId'    => '{{response.requestId}}',
         ];
         $api_response = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
 
@@ -111,13 +177,14 @@ class SendAPITest extends TestCase {
         unset($posted_vars['quantity']);
         $posted_vars['sweep'] = true;
         $expected_created_resource = [
-            'id'          => '{{response.id}}',
-            'destination' => '{{response.destination}}',
-            'asset'       => 'TOKENLY',
-            'sweep'       => '{{response.sweep}}',
-            'quantity'    => '{{response.quantity}}',
-            'txid'        => '{{response.txid}}',
-            'requestId'   => '{{response.requestId}}',
+            'id'           => '{{response.id}}',
+            'destination'  => '{{response.destination}}',
+            'destinations' => '',
+            'asset'        => 'TOKENLY',
+            'sweep'        => '{{response.sweep}}',
+            'quantity'     => '{{response.quantity}}',
+            'txid'         => '{{response.txid}}',
+            'requestId'    => '{{response.requestId}}',
         ];
         $api_response = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
 
@@ -256,10 +323,54 @@ class SendAPITest extends TestCase {
     }
 
 
+
+    public function testAPIAddMultisend()
+    {
+        // mock the xcp sender
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $user = $this->app->make('\UserHelper')->createSampleUser();
+        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user);
+
+        $api_tester = $this->getAPITester('/api/v1/multisends');
+
+        $posted_vars = $this->sendHelper()->sampleMultisendPostVars();
+        $expected_created_resource = [
+            'id'           => '{{response.id}}',
+            'destination'  => '',
+            'destinations' => '{{response.destinations}}',
+            'asset'        => 'BTC',
+            'txid'         => '{{response.txid}}',
+            'requestId'    => '{{response.requestId}}',
+            'sweep'        => '{{response.sweep}}',
+            'quantity'     => 0.006,
+        ];
+        $api_response = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
+
+        // validate the send details
+        $transaction_composer_helper = app('TransactionComposerHelper');
+
+        PHPUnit::assertCount(1, $mock_calls['btcd']);
+        $send_details = $transaction_composer_helper->parseBTCTransaction($mock_calls['btcd'][0]['args'][0]);
+
+        // primary send
+        PHPUnit::assertEquals('1ATEST111XXXXXXXXXXXXXXXXXXXXwLHDB', $send_details['destination']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.001), $send_details['btc_amount']);
+
+        // other change...
+        PHPUnit::assertEquals('1ATEST222XXXXXXXXXXXXXXXXXXXYzLVeV', $send_details['change'][0][0]);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.002), $send_details['change'][0][1]);
+        PHPUnit::assertEquals('1ATEST333XXXXXXXXXXXXXXXXXXXatH8WE', $send_details['change'][1][0]);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.003), $send_details['change'][1][1]);
+        PHPUnit::assertEquals($payment_address['address'], $send_details['change'][2][0]);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(1 - 0.006 - 0.0001), $send_details['change'][2][1]);
+    }
+
+
     ////////////////////////////////////////////////////////////////////////
     
-    protected function getAPITester() {
-        $api_tester =  $this->app->make('SimpleAPITester', [$this->app, '/api/v1/sends', $this->app->make('App\Repositories\SendRepository')]);
+    protected function getAPITester($url='/api/v1/sends') {
+        $api_tester =  $this->app->make('SimpleAPITester', [$this->app, $url, $this->app->make('App\Repositories\SendRepository')]);
         $api_tester->ensureAuthenticatedUser();
         return $api_tester;
     }

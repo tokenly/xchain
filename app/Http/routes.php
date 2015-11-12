@@ -14,6 +14,7 @@ $router->get('api/v1/transactions/{addressId}', 'API\TransactionController@index
 
 // create a send
 $router->post('api/v1/sends/{addressId}', 'API\SendController@create');
+$router->post('api/v1/multisends/{addressId}', 'API\SendController@createMultisend');
 
 // address balance
 $router->get('api/v1/balances/{addressId}', 'API\BalancesController@show');

@@ -12,6 +12,11 @@ use \Exception;
 class Send extends APIModel
 {
 
+
+    protected $casts = [
+        'destinations' => 'json',
+    ];
+
     /**
      * The database table used by the model.
      *
@@ -21,7 +26,7 @@ class Send extends APIModel
 
     protected static $unguarded = true;
 
-    protected $api_attributes = ['id', 'destination', 'quantity', 'asset', 'sweep', 'txid', 'request_id', ];
+    protected $api_attributes = ['id', 'destination', 'destinations', 'quantity', 'asset', 'sweep', 'txid', 'request_id', ];
 
     public function setSendDataAttribute($send_data) { $this->attributes['send_data'] = json_encode($send_data); }
     public function getSendDataAttribute() { return json_decode($this->attributes['send_data'], true); }

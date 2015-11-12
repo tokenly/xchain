@@ -92,11 +92,20 @@ class ShowTXOsCommand extends Command {
 
         // build a table
         $bool = function($val) { return $val ? '<info>true</info>' : '<comment>false</comment>'; };
-        $headers = ['address', 'txid', 'n', 'amount', 'spent', 'green'];
+        $headers = ['address', 'txid', 'n', 'amount', 'type', 'spent', 'green', 'created'];
         $rows = [];
         foreach($xchain_utxos_map as $identifier => $txo) {
             $address = $payment_address_repo->findById($txo['payment_address_id']);
-            $rows[] = [$address['address'], $txo['txid'], $txo['n'], CurrencyUtil::satoshisToValue($txo['amount']), $bool($txo['spent']), $bool($txo['green'])];
+            $pieces = explode('.', CurrencyUtil::satoshisToFormattedString($txo['amount']));
+            if (count($pieces) == 2) {
+                $amount = $pieces[0].".".str_pad($pieces[1], 8, '0', STR_PAD_RIGHT);
+            } else {
+                $amount = $amount.".00000000";
+            }
+
+            $created = $txo['created_at']->setTimezone('America/Chicago')->format("Y-m-d h:i:s A");
+            $type = TXO::typeIntegerToString($txo['type']);
+            $rows[] = [$address['address'], $txo['txid'], $txo['n'], $amount, $type, $bool($txo['spent']), $bool($txo['green']), $created];
         }
         $this->table($headers, $rows);
 

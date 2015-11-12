@@ -60,6 +60,18 @@ class SampleSendsHelper
         ], $override_vars);
     }
 
+
+    public function sampleMultisendPostVars($override_vars=[]) {
+        return array_merge([
+            'requestId'   => Uuid::uuid4()->toString(),
+            'destinations' => [
+                ['address' => '1ATEST111XXXXXXXXXXXXXXXXXXXXwLHDB', 'amount' => '0.001', ],
+                ['address' => '1ATEST222XXXXXXXXXXXXXXXXXXXYzLVeV', 'amount' => '0.002', ],
+                ['address' => '1ATEST333XXXXXXXXXXXXXXXXXXXatH8WE', 'amount' => '0.003', ],
+            ],
+        ], $override_vars);
+    }
+
     public function sampleDBVars($override_vars=[]) {
         return $this->sampleVars($override_vars);
     }

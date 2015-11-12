@@ -20,13 +20,14 @@ class ClientGUIDTest extends TestCase {
         $posted_vars = $this->sendHelper()->samplePostVars();
         $posted_vars['requestId'] = 'request001';
         $expected_created_resource = [
-            'id'          => '{{response.id}}',
-            'destination' => '{{response.destination}}',
-            'asset'       => 'TOKENLY',
-            'sweep'       => '{{response.sweep}}',
-            'quantity'    => '{{response.quantity}}',
-            'txid'        => '{{response.txid}}',
-            'requestId'  => 'request001',
+            'id'           => '{{response.id}}',
+            'destination'  => '{{response.destination}}',
+            'destinations' => '',
+            'asset'        => 'TOKENLY',
+            'sweep'        => '{{response.sweep}}',
+            'quantity'     => '{{response.quantity}}',
+            'txid'         => '{{response.txid}}',
+            'requestId'    => 'request001',
         ];
         $loaded_resource_model = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
 

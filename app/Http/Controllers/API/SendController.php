@@ -4,14 +4,17 @@ namespace App\Http\Controllers\API;
 
 use App\Blockchain\Sender\PaymentAddressSender;
 use App\Http\Controllers\API\Base\APIController;
+use App\Http\Requests\API\Send\CreateMultiSendRequest;
 use App\Http\Requests\API\Send\CreateSendRequest;
 use App\Providers\Accounts\Exception\AccountException;
 use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\APICallRepository;
 use App\Repositories\PaymentAddressRepository;
 use App\Repositories\SendRepository;
+use Exception;
 use Illuminate\Auth\Guard;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Rhumsaa\Uuid\Uuid;
 use Tokenly\BitcoinPayer\Exception\PaymentException;
@@ -19,7 +22,6 @@ use Tokenly\CounterpartySender\CounterpartySender;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use Tokenly\LaravelApiProvider\Helpers\APIControllerHelper;
 use Tokenly\LaravelEventLog\Facade\EventLog;
-use Exception;
 
 class SendController extends APIController {
 
@@ -30,8 +32,15 @@ class SendController extends APIController {
      *
      * @return Response
      */
-    public function create(APIControllerHelper $helper, CreateSendRequest $request, PaymentAddressRepository $payment_address_respository, SendRepository $send_respository, PaymentAddressSender $address_sender, Guard $auth, APICallRepository $api_call_repository, $id)
-    {
+    public function create(APIControllerHelper $helper, CreateSendRequest $request, PaymentAddressRepository $payment_address_respository, SendRepository $send_respository, PaymentAddressSender $address_sender, Guard $auth, APICallRepository $api_call_repository, $id) {
+        return $this->executeSend($helper, $request, $payment_address_respository, $send_respository, $address_sender, $auth, $api_call_repository, $id);
+    }
+
+    public function createMultisend(APIControllerHelper $helper, CreateMultiSendRequest $request, PaymentAddressRepository $payment_address_respository, SendRepository $send_respository, PaymentAddressSender $address_sender, Guard $auth, APICallRepository $api_call_repository, $id) {
+        return $this->executeSend($helper, $request, $payment_address_respository, $send_respository, $address_sender, $auth, $api_call_repository, $id);
+    }
+    
+    protected function executeSend(APIControllerHelper $helper, Request $request, PaymentAddressRepository $payment_address_respository, SendRepository $send_respository, PaymentAddressSender $address_sender, Guard $auth, APICallRepository $api_call_repository, $id) {
         $user = $auth->getUser();
         if (!$user) { throw new Exception("User not found", 1); }
 
@@ -45,22 +54,49 @@ class SendController extends APIController {
         // attributes
         $request_attributes = $request->only(array_keys($request->rules()));
 
-        // create a send and lock it immediately
-        $request_id = isset($request_attributes['requestId']) ? $request_attributes['requestId'] : Uuid::uuid4()->toString();
 
+        // determine if this is a multisend
+        $is_multisend = (isset($request_attributes['destinations']) AND $request_attributes['destinations']);
+        $is_regular_send = !$is_multisend;
+
+        // normalize destinations
+        $destinations = $is_multisend ? $this->normalizeDestinations($request_attributes['destinations']) : '';
+        $destination = $is_regular_send ? $request_attributes['destination'] : '';
+
+        // determine variables
+        $quantity_sat = CurrencyUtil::valueToSatoshis($is_multisend ? $this->sumMultisendQuantity($destinations) : $request_attributes['quantity']);
+        $asset        = $is_regular_send ? $request_attributes['asset'] : 'BTC';
+        $is_sweep     = isset($request_attributes['sweep']) ? !!$request_attributes['sweep'] : false;
+        $float_fee    = isset($request_attributes['fee']) ? $request_attributes['fee'] : PaymentAddressSender::DEFAULT_FEE;
+        $dust_size    = isset($request_attributes['dust_size']) ? $request_attributes['dust_size'] : PaymentAddressSender::DEFAULT_REGULAR_DUST_SIZE;
+        $request_id   = isset($request_attributes['requestId']) ? $request_attributes['requestId'] : Uuid::uuid4()->toString();
+
+        // create attibutes
         $create_attributes = [];
         $create_attributes['user_id']            = $user['id'];
         $create_attributes['payment_address_id'] = $payment_address['id'];
-        $create_attributes['destination']        = $request_attributes['destination'];
-        $create_attributes['quantity_sat']       = CurrencyUtil::valueToSatoshis($request_attributes['quantity']);
-        $create_attributes['asset']              = $request_attributes['asset'];
+        $create_attributes['destination']        = $destination;
+        $create_attributes['quantity_sat']       = $quantity_sat;
+        $create_attributes['asset']              = $asset;
+        $create_attributes['is_sweep']           = $is_sweep;
+        $create_attributes['fee']                = $float_fee;
+        $create_attributes['dust_size']          = $dust_size;
+
+        // for multisends
+        $create_attributes['destinations']       = $destinations;
 
         // the transaction must be committed before the lock is release and not after
         //   therefore we must release the lock after this closure completes
         $lock_must_be_released = false;
         $lock_must_be_released_with_delay = false;
 
-        $send_result = $send_respository->executeWithNewLockedSendByRequestID($request_id, $create_attributes, function($locked_send) use ($request_attributes, $payment_address, $user, $helper, $send_respository, $address_sender, $api_call_repository, $request_id, &$lock_must_be_released, &$lock_must_be_released_with_delay) {
+        // create a send and lock it immediately
+        $send_result = $send_respository->executeWithNewLockedSendByRequestID($request_id, $create_attributes, function($locked_send) 
+            use (
+                $request_attributes, $create_attributes, $payment_address, $user, $helper, $send_respository, $address_sender, $api_call_repository, $request_id, 
+                $is_multisend, $is_regular_send, $quantity_sat, $asset, $destination, $destinations, $is_sweep, $float_fee, $dust_size, 
+                &$lock_must_be_released, &$lock_must_be_released_with_delay
+            ) {
             $api_call = $api_call_repository->create([
                 'user_id' => $user['id'],
                 'details' => [
@@ -76,11 +112,10 @@ class SendController extends APIController {
                 return $helper->transformResourceForOutput($locked_send);
             }
 
+            $float_quantity = CurrencyUtil::satoshisToValue($quantity_sat);
+
             // send
-            EventLog::log('send.requested', $request_attributes);
-            $float_fee = isset($request_attributes['fee']) ? $request_attributes['fee'] : PaymentAddressSender::DEFAULT_FEE;
-            $dust_size = isset($request_attributes['dust_size']) ? $request_attributes['dust_size'] : PaymentAddressSender::DEFAULT_REGULAR_DUST_SIZE;
-            $is_sweep = isset($request_attributes['sweep']) ? !!$request_attributes['sweep'] : false;
+            EventLog::log('send.requested', array_merge($request_attributes, $create_attributes));
             if ($is_sweep) {
                 try {
                     // get lock
@@ -88,7 +123,7 @@ class SendController extends APIController {
                     if ($lock_acquired) { $lock_must_be_released = true; }
 
                     list($txid, $float_balance_sent) = $address_sender->sweepAllAssets($payment_address, $request_attributes['destination'], $float_fee);
-                    $quantity_sat = CurrencyUtil::valueToSatoshis($float_balance_sent);
+                    $quantity_sat_sent = CurrencyUtil::valueToSatoshis($float_balance_sent);
 
                     // clear all balances from all accounts
                     AccountHandler::zeroAllBalances($payment_address, $api_call);
@@ -123,28 +158,27 @@ class SendController extends APIController {
 
                     // validate that the funds are available
                     if ($allow_unconfirmed) {
-                        $has_enough_funds = AccountHandler::accountHasSufficientFunds($account, $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $dust_size);
+                        $has_enough_funds = AccountHandler::accountHasSufficientFunds($account, $float_quantity, $asset, $float_fee, $dust_size);
                     } else {
-                        $has_enough_funds = AccountHandler::accountHasSufficientConfirmedFunds($account, $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $dust_size);
+                        $has_enough_funds = AccountHandler::accountHasSufficientConfirmedFunds($account, $float_quantity, $asset, $float_fee, $dust_size);
                     }
                     if (!$has_enough_funds) {
-                        EventLog::logError('error.send.insufficient', ['address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $request_attributes['quantity'], 'asset' => $request_attributes['asset']]);
+                        EventLog::logError('error.send.insufficient', ['address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset]);
                         return new JsonResponse(['message' => "This account does not have sufficient".($allow_unconfirmed ? '' : ' confirmed')." funds available."], 400);
                     }
 
 
                     // send the funds
-                    EventLog::log('send.begin', ['request_id' => $request_id, 'address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $request_attributes['quantity'], 'asset' => $request_attributes['asset']]);
-                    $txid = $address_sender->sendByRequestID($request_id, $payment_address, $request_attributes['destination'], $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $dust_size);
-                    EventLog::log('send.complete', ['txid' => $txid, 'request_id' => $request_id, 'address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $request_attributes['quantity'], 'asset' => $request_attributes['asset']]);
-                    $quantity_sat = CurrencyUtil::valueToSatoshis($request_attributes['quantity']);
+                    EventLog::log('send.begin', ['request_id' => $request_id, 'address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset, 'destination' => ($is_multisend ? $destinations : $destination)]);
+                    $txid = $address_sender->sendByRequestID($request_id, $payment_address, ($is_multisend ? $destinations : $destination), $float_quantity, $asset, $float_fee, $dust_size);
+                    EventLog::log('send.complete', ['txid' => $txid, 'request_id' => $request_id, 'address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset, 'destination' => ($is_multisend ? $destinations : $destination)]);
 
 
                     // tag funds as sent with the txid
                     if ($allow_unconfirmed) {
-                        AccountHandler::markAccountFundsAsSending($account, $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $dust_size, $txid);
+                        AccountHandler::markAccountFundsAsSending($account, $float_quantity, $asset, $float_fee, $dust_size, $txid);
                     } else {
-                        AccountHandler::markConfirmedAccountFundsAsSending($account, $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $dust_size, $txid);
+                        AccountHandler::markConfirmedAccountFundsAsSending($account, $float_quantity, $asset, $float_fee, $dust_size, $txid);
                         // Log::debug("After marking confirmed funds as sent, all accounts for ${account['name']}: ".json_encode(app('App\Repositories\LedgerEntryRepository')->accountBalancesByAsset($account, null), 192));
                         // Log::debug("After marking confirmed funds as sent, all accounts for default: ".json_encode(app('App\Repositories\LedgerEntryRepository')->accountBalancesByAsset(AccountHandler::getAccount($payment_address), null), 192));
                     }
@@ -159,7 +193,8 @@ class SendController extends APIController {
                     
                 } catch (PaymentException $e) {
                     EventLog::logError('error.pay', $e);
-                    return new JsonResponse(['message' => $e->getMessage()], 500); 
+                    return new JsonResponse(['message' => $e->getMessage()], 500);
+
                 } catch (Exception $e) {
                     EventLog::logError('error.pay', $e);
                     return new JsonResponse(['message' => 'Unable to complete this request'], 500); 
@@ -167,15 +202,7 @@ class SendController extends APIController {
             }
 
             $attributes = [];
-            $attributes['user_id']            = $user['id'];
-            $attributes['payment_address_id'] = $payment_address['id'];
             $attributes['sent']               = time();
-            $attributes['destination']        = $request_attributes['destination'];
-            $attributes['quantity_sat']       = $quantity_sat;
-            $attributes['fee']                = $request_attributes['fee'];
-            $attributes['dust_size']          = $request_attributes['dust_size'];
-            $attributes['asset']              = $request_attributes['asset'];
-            $attributes['is_sweep']           = $is_sweep;
             $attributes['txid']               = $txid;
 
             EventLog::log('send.complete', $attributes);
@@ -217,4 +244,20 @@ class SendController extends APIController {
         AccountHandler::releasePaymentAddressLock($payment_address);
     }
 
+    protected function normalizeDestinations($raw_destinations) {
+        $destinations = [];
+        foreach($raw_destinations as $raw_destination) {
+            $destinations[] = [$raw_destination['address'], $raw_destination['amount']];
+        }
+        return $destinations;
+    }
+
+    // returns float
+    protected function sumMultisendQuantity($destinations) {
+        $sum = 0;
+        foreach($destinations as $destination) {
+            $sum += $destination[1];
+        }
+        return $sum;
+    }
 }

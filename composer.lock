@@ -3578,12 +3578,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-composer.git",
-                "reference": "093da1de401951bba89ec7df308ce2a08b999560"
+                "reference": "c4029df5c7e19a3671c9c8b4536a3de2f3d09f26"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/093da1de401951bba89ec7df308ce2a08b999560",
-                "reference": "093da1de401951bba89ec7df308ce2a08b999560",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/c4029df5c7e19a3671c9c8b4536a3de2f3d09f26",
+                "reference": "c4029df5c7e19a3671c9c8b4536a3de2f3d09f26",
                 "shasum": ""
             },
             "require": {
@@ -3615,7 +3615,7 @@
                 }
             ],
             "description": "Composes counterparty and bitcoin transactions",
-            "time": "2015-11-12 02:14:45"
+            "time": "2015-11-12 16:17:59"
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
