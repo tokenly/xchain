@@ -2,11 +2,11 @@
 #   removes account balances
 
 monitoredAddresses:
-  - address: MYADDRESS01
+  - address: 1MYADDRESS11111XXXXXXXXXXXXXaks53q
     monitor_type: receive
 
 paymentAddresses:
-  - address: MYADDRESS01
+  - address: 1MYADDRESS11111XXXXXXXXXXXXXaks53q
     accountBalances:
       BTC: 10
 
@@ -16,7 +16,7 @@ events:
     meta:
         baseFilename: sample_btc_parsed_send_03.json
     txid: cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
-    sender: MYADDRESS01
+    sender: 1MYADDRESS11111XXXXXXXXXXXXXaks53q
     recipient: RECIPIENT01
     asset: BTC
     quantity: 0.1
@@ -28,7 +28,7 @@ events:
     meta:
         baseFilename: sample_btc_parsed_send_03.json
     txid: cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
-    sender: MYADDRESS01
+    sender: 1MYADDRESS11111XXXXXXXXXXXXXaks53q
     recipient: RECIPIENT01
     asset: BTC
     quantity: 0.1

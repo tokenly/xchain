@@ -3,7 +3,7 @@
 monitoredAddresses: ~
 
 paymentAddresses:
-  - address: SENDER01
+  - address: 1ASENDER11111XXXXXXXXXXXXXXXRzjMat
     accountBalances:
       LTBCOIN: 1500
       BTC: 1
@@ -15,7 +15,7 @@ events:
     meta:
         baseFilename: default_xcp_parsed_mempool_01.json
     txid: cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
-    sender: SENDER01
+    sender: 1ASENDER11111XXXXXXXXXXXXXXXRzjMat
     recipient: RECIPIENT01
     isCounterpartyTx: true
     asset: LTBCOIN

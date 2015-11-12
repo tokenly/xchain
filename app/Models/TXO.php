@@ -19,6 +19,7 @@ class TXO extends Model {
 
     protected $casts = [
         'spent' => 'boolean',
+        'green' => 'boolean',
     ];
 
     public static function allTypeStrings() {

@@ -85,7 +85,7 @@ class ReconcileTXOsCommand extends Command {
 
             // get xchain utxos
             $xchain_utxos_map = [];
-            $db_txos = $txo_repository->findByPaymentAddress($payment_address);
+            $db_txos = $txo_repository->findByPaymentAddress($payment_address, null, true); // unspent only
             foreach($db_txos as $db_txo) {
                 if ($db_txo['type'] != TXO::CONFIRMED) { continue; }
                 $filtered_utxo = ['txid' => $db_txo['txid'], 'n' => $db_txo['n'], 'script' => $db_txo['script'], 'amount' => $db_txo['amount'],];

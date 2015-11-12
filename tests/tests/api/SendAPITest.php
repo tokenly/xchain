@@ -86,14 +86,15 @@ class SendAPITest extends TestCase {
             'txid'        => '{{response.txid}}',
             'requestId'   => '{{response.requestId}}',
         ];
-        $loaded_address_model = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
+        $api_response = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
 
         // validate that a mock send was triggered
-        $mock_send_call = $mock_calls['xcpd'][1];
-        PHPUnit::assertEquals($payment_address['address'], $mock_send_call['args'][0]['source']);
-        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $mock_send_call['args'][0]['destination']);
-        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(100), $mock_send_call['args'][0]['quantity']);
-        PHPUnit::assertEquals('TOKENLY', $mock_send_call['args'][0]['asset']);
+        $transaction_composer_helper = app('TransactionComposerHelper');
+        $send_details = $transaction_composer_helper->parseCounterpartyTransaction($mock_calls['btcd'][0]['args'][0]);
+        PHPUnit::assertEquals($payment_address['address'], $send_details['change'][0][0]);
+        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $send_details['destination']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(100), $send_details['quantity']);
+        PHPUnit::assertEquals('TOKENLY', $send_details['asset']);
     }
 
     public function testAPISweep()
@@ -118,13 +119,19 @@ class SendAPITest extends TestCase {
             'txid'        => '{{response.txid}}',
             'requestId'   => '{{response.requestId}}',
         ];
-        $loaded_address_model = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
+        $api_response = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
 
-        // validate that a mock send was triggered
-        PHPUnit::assertCount(8, $mock_calls['btcd']);
-        $create_transaction = $mock_calls['btcd'][5];
-        PHPUnit::assertEquals('createrawtransaction', $create_transaction['method']);
-        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', array_keys($create_transaction['args'][1])[0]);
+        // validate the sweep
+        PHPUnit::assertCount(2, $mock_calls['btcd']);
+        $transaction_composer_helper = app('TransactionComposerHelper');
+        $send_details = $transaction_composer_helper->parseCounterpartyTransaction($mock_calls['btcd'][0]['args'][0]);
+        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $send_details['destination']);
+        PHPUnit::assertEquals('TOKENLY', $send_details['asset']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.00005430), $send_details['btc_amount']);
+
+        $send_details = $transaction_composer_helper->parseBTCTransaction($mock_calls['btcd'][1]['args'][0]);
+        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $send_details['destination']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(1 - 0.0001 - 0.0001 - 0.00005430), $send_details['btc_amount']);
     }
 
 
@@ -322,9 +329,10 @@ class SendAPITest extends TestCase {
         $ledger_entry_repo->addCredit(0.01, 'BTC', $created_accounts[3], LedgerEntry::CONFIRMED, $txid);
         $ledger_entry_repo->addCredit(  20, 'BTC', $created_accounts[3], LedgerEntry::UNCONFIRMED, $txid);
 
+        // add UTXOs
+        $float_btc_balance = 110 + 100 - 10 + 20 + 20 + 0.01 + 20;
+        app('PaymentAddressHelper')->addUTXOToPaymentAddress($float_btc_balance, $address);
 
-
-        // send from accountone
         $api_test_helper = app('APITestHelper')->useUserHelper(app('UserHelper'));
 
         return [$address, $created_accounts, $api_test_helper];

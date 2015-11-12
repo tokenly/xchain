@@ -23,6 +23,7 @@ class CreateTxosTable extends Migration {
 
             $table->integer('type')->unsigned()->default(1);
             $table->boolean('spent')->default(false);
+            $table->boolean('green')->default(false);
 
             $table->integer('payment_address_id')->unsigned();
             $table->foreign('payment_address_id')->references('id')->on('payment_address');

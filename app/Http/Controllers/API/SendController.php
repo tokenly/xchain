@@ -145,6 +145,8 @@ class SendController extends APIController {
                         AccountHandler::markAccountFundsAsSending($account, $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $dust_size, $txid);
                     } else {
                         AccountHandler::markConfirmedAccountFundsAsSending($account, $request_attributes['quantity'], $request_attributes['asset'], $float_fee, $dust_size, $txid);
+                        // Log::debug("After marking confirmed funds as sent, all accounts for ${account['name']}: ".json_encode(app('App\Repositories\LedgerEntryRepository')->accountBalancesByAsset($account, null), 192));
+                        // Log::debug("After marking confirmed funds as sent, all accounts for default: ".json_encode(app('App\Repositories\LedgerEntryRepository')->accountBalancesByAsset(AccountHandler::getAccount($payment_address), null), 192));
                     }
 
                     // release the account lock

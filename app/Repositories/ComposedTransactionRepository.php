@@ -13,26 +13,30 @@ use Illuminate\Support\Facades\DB;
 class ComposedTransactionRepository
 {
 
-    public function getComposedTransactionsByRequestID($request_id) {
+    public function getComposedTransactionByRequestID($request_id) {
         $loaded_object = DB::connection('untransacted')
             ->table('composed_transactions')
-            ->select('transactions')
             ->where(['request_id' => $request_id])
             ->first();
         if (!$loaded_object) { return null; }
 
-        return json_decode($loaded_object->transactions, true);
+        return [
+            'txid'         => $loaded_object->txid,
+            'transaction'  => $loaded_object->transaction,
+            'utxos'        => json_decode($loaded_object->utxos, true),
+            'request_id'   => $loaded_object->request_id,
+        ];
     }
 
-    public function storeOrFetchComposedTransactions($request_id, Array $transaction_hexes) {
+    public function storeOrFetchComposedTransaction($request_id, $txid, $transaction_hex, Array $utxos) {
 
         try {
-            $this->storeComposedTransactions($request_id, $transaction_hexes);
+            $this->storeComposedTransaction($request_id, $txid, $transaction_hex, $utxos);
         } catch (QueryException $e) {
             if ($e->errorInfo[0] == 23000) {
                 try {
                     // fetch the existing one instead of adding a duplicate
-                    return $this->getComposedTransactionsByRequestID($request_id);
+                    return $this->getComposedTransactionByRequestID($request_id);
                 } catch (Exception $e) {
                     
                 }
@@ -42,17 +46,24 @@ class ComposedTransactionRepository
             throw $e;
         }
 
-        return $transaction_hexes;
+        return [
+            'txid'         => $txid,
+            'transaction'  => $transaction_hex,
+            'utxos'        => $utxos,
+            'request_id'   => $request_id,
+        ];
     }
 
-    public function storeComposedTransactions($request_id, Array $transaction_hexes) {
+    public function storeComposedTransaction($request_id, $txid, $transaction_hex, Array $utxos) {
         $created_at = Carbon::now();
 
         $row = DB::connection('untransacted')
             ->table('composed_transactions')
             ->insert([
+                'txid'         => $txid,
                 'request_id'   => $request_id,
-                'transactions' => json_encode($transaction_hexes),
+                'transaction'  => $transaction_hex,
+                'utxos'        => json_encode($utxos),
                 'created_at'   => $created_at,
             ]);
 

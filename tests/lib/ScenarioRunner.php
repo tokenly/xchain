@@ -21,6 +21,8 @@ use \PHPUnit_Framework_Assert as PHPUnit;
 class ScenarioRunner
 {
 
+    protected $last_send_txid = null;
+
     function __construct(Application $app, Dispatcher $events, QueueManager $queue_manager, PaymentAddressRepository $payment_address_repository, PaymentAddressHelper $payment_address_helper, MonitoredAddressRepository $monitored_address_repository, MonitoredAddressHelper $monitored_address_helper, SampleBlockHelper $sample_block_helper, TransactionRepository $transaction_repository, BlockRepository $block_repository, UserRepository $user_repository, UserHelper $user_helper) {
         $this->app                          = $app;
         $this->events                       = $events;
@@ -362,17 +364,28 @@ class ScenarioRunner
             $account_repository = app('App\Repositories\AccountRepository');
             $default_account = $account_repository->findByName('default', $payment_address['id']);
 
+            $btc_balance = 0;
+
             if (isset($raw_attributes['accountBalances'])) {
                 foreach ($raw_attributes['accountBalances'] as $asset => $balance) {
                     $ledger_entry_repository->addCredit($balance, $asset, $default_account, LedgerEntry::CONFIRMED, 'testtxid');
+
+                    if ($asset == 'BTC') { $btc_balance += $balance; }
                 }
             }
             if (isset($raw_attributes['rawAccountBalances'])) {
                 foreach ($raw_attributes['rawAccountBalances'] as $type_string => $balances) {
                     foreach ($balances as $asset => $balance) {
                         $ledger_entry_repository->addCredit($balance, $asset, $default_account, LedgerEntry::typeStringToInteger($type_string), 'testtxid');
+
+                        if ($asset == 'BTC') { $btc_balance += $balance; }
                     }
                 }
+            }
+
+            // add UTXOs
+            if ($btc_balance > 0) {
+                $this->payment_address_helper->addUTXOToPaymentAddress($btc_balance, $payment_address);
             }
         }
     }
@@ -408,6 +421,19 @@ class ScenarioRunner
         }
         if (isset($raw_transaction_event['recipient'])) {
             $normalized_transaction_event['destinations'] = [$raw_transaction_event['recipient']];
+
+            // vouts
+            if (isset($normalized_transaction_event['bitcoinTx']['vout'])) {
+                $total_vouts = count($normalized_transaction_event['bitcoinTx']['vout']);
+                foreach ($normalized_transaction_event['bitcoinTx']['vout'] as $offset => $vout) {
+                    if ($offset < $total_vouts - 1) {
+                        $new_recipient = $raw_transaction_event['recipient'];
+                        $vout['scriptPubKey']['addresses'] = [$new_recipient];
+                    }
+                    $normalized_transaction_event['bitcoinTx']['vout'][$offset] = $vout;
+                }
+            }
+
         }
         
         // if (isset($raw_transaction_event['isCounterpartyTx'])) {
@@ -425,8 +451,19 @@ class ScenarioRunner
             // $normalized_transaction_event['quantity'] = $raw_transaction_event['quantity'];
             // $normalized_transaction_event['quantitySat'] = CurrencyUtil::valueToSatoshis($raw_transaction_event['quantity']);
             $normalized_transaction_event['values'] = [$normalized_transaction_event['destinations'][0] => $raw_transaction_event['quantity']];
-            $normalized_transaction_event['counterpartyTx']['quantity'] = $raw_transaction_event['quantity'];
-            $normalized_transaction_event['counterpartyTx']['quantitySat'] = CurrencyUtil::valueToSatoshis($raw_transaction_event['quantity']);
+            if (isset($normalized_transaction_event['counterpartyTx']) AND $normalized_transaction_event['counterpartyTx']) {
+                $normalized_transaction_event['counterpartyTx']['quantity'] = $raw_transaction_event['quantity'];
+                $normalized_transaction_event['counterpartyTx']['quantitySat'] = CurrencyUtil::valueToSatoshis($raw_transaction_event['quantity']);
+            } else {
+                // adjust utxos
+                foreach ($normalized_transaction_event['bitcoinTx']['vout'] as $offset => $vout) {
+                    if ($offset < $total_vouts - 1) {
+                        $new_recipient = $raw_transaction_event['recipient'];
+                        $vout['value'] = $raw_transaction_event['quantity'];
+                    }
+                    $normalized_transaction_event['bitcoinTx']['vout'][$offset] = $vout;
+                }
+            }
         }
 
         // confirmations and blockhash
@@ -452,6 +489,9 @@ class ScenarioRunner
         if (isset($raw_transaction_event['mempool'])) {}
         if (isset($raw_transaction_event['blockId'])) {}
 
+
+        // apply special transaction
+        $normalized_transaction_event['txid'] = str_replace('%%last_send_txid%%', $this->last_send_txid, $normalized_transaction_event['txid']);
         
 
         return $normalized_transaction_event;
@@ -507,6 +547,14 @@ class ScenarioRunner
         // SPECIAL
         // if (isset($raw_block_event['previousblockhash'])) { $normalized_block_event['previousblockhash'] = $raw_block_event['previousblockhash']; }
         ///////////////////
+
+        if (isset($normalized_block_event['tx'])) {
+            $filtered_tx = [];
+            foreach($normalized_block_event['tx'] as $raw_tx) {
+                $filtered_tx[] = str_replace('%%last_send_txid%%', $this->last_send_txid, $raw_tx);
+            }
+            $normalized_block_event['tx'] = $filtered_tx;
+        }
 
         // echo "\$normalized_block_event:\n".json_encode($normalized_block_event, 192)."\n";
         return $normalized_block_event;
@@ -695,6 +743,8 @@ class ScenarioRunner
         $payment_address = app('App\Repositories\PaymentAddressRepository')->findAll()->first();
 
         $api_test_helper = app('APITestHelper')->useUserHelper(app('UserHelper'))->setURLBase('/api/v1/sends/');
-        $api_test_helper->callAPIAndValidateResponse('POST', '/api/v1/sends/'.$payment_address['uuid'], app('SampleSendsHelper')->samplePostVars($vars));
+        $send_response = $api_test_helper->callAPIAndValidateResponse('POST', '/api/v1/sends/'.$payment_address['uuid'], app('SampleSendsHelper')->samplePostVars($vars));
+        Log::debug("\$send_response=".json_encode($send_response, 192));
+        $this->last_send_txid = $send_response['txid'];
     }
 }

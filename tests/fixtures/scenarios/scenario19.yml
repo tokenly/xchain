@@ -2,11 +2,11 @@
 #   then confirmed blocks remove the values
 
 monitoredAddresses:
-  - address: MYADDRESS01
+  - address: 1MYADDRESS11111XXXXXXXXXXXXXaks53q
     monitor_type: receive
 
 paymentAddresses:
-  - address: MYADDRESS01
+  - address: 1MYADDRESS11111XXXXXXXXXXXXXaks53q
     accountBalances:
       BTC: 10
 
@@ -29,8 +29,8 @@ events:
     type: transaction
     meta:
         baseFilename: sample_btc_parsed_send_03.json
-    txid: 999999991c410dc987337924be3634106ec8f8896910de0bccd59088a00ce702  # <-- magic number from mock bitcoin sender
-    sender: MYADDRESS01
+    txid: %%last_send_txid%%  # <-- automatically filled from the last send
+    sender: 1MYADDRESS11111XXXXXXXXXXXXXaks53q
     recipient: 1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD
     asset: BTC
     quantity: 0.1
@@ -40,7 +40,7 @@ events:
     type: block
     tx:
         - f88d98717dacb985e3ad49ffa66b8562d8194f1885f58425e1c8582ce2ac5b58
-        - 999999991c410dc987337924be3634106ec8f8896910de0bccd59088a00ce702
+        - %%last_send_txid%%
   -
     type: block
     hash: BLOCKHASH02
@@ -56,6 +56,8 @@ accounts:
   - meta: { baseFilename: default01.yml }
     balances:
       confirmed: { BTC: 8 }
+      # confirmed: { BTC: 7.8999 }
+      # sending: { BTC: 0 }
 
   - meta: { baseFilename: default01.yml }
     name: sendingaccount1

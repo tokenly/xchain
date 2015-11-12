@@ -38,6 +38,7 @@ class Kernel extends ConsoleKernel {
 
         // TXOs
         \App\Console\Commands\TXO\ReconcileTXOsCommand::class,
+        \App\Console\Commands\TXO\ShowTXOsCommand::class,
         \App\Console\Commands\TXO\PruneSpentUTXOs::class,
 
         // vendor commands

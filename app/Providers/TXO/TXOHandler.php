@@ -52,7 +52,6 @@ class TXOHandler {
                 $vout_bitcoin_address = (isset($vout['scriptPubKey']) AND isset($vout['scriptPubKey']['addresses'])) ? $vout['scriptPubKey']['addresses'][0] : null;
                 if ($vout_bitcoin_address AND $vout_bitcoin_address == $bitcoin_address) {
                     $type = ($is_confirmed ? TXO::CONFIRMED : TXO::UNCONFIRMED);
-                    Log::debug("receive TXO: {$parsed_tx['txid']}:{$vout['n']}/".CurrencyUtil::valueToSatoshis($vout['value'])." ".TXO::typeIntegerToString($type)." to ".$payment_address['uuid']);
                     $this->txo_repository->updateOrCreate([
                         'txid'   => $parsed_tx['txid'],
                         'n'      => $vout['n'],
@@ -90,7 +89,7 @@ class TXOHandler {
                     $spent = true;
 
                     // spend the utxo (updates an existing utxo)
-                    Log::debug("send TXO: {$spent_txid}:{$spent_n}/".CurrencyUtil::valueToSatoshis($vin['value'])." ".TXO::typeIntegerToString($type)." to ".$payment_address['uuid']);
+                    Log::debug("new send TXO: {$spent_txid}:{$spent_n}/".CurrencyUtil::valueToSatoshis($vin['value'])." ".TXO::typeIntegerToString($type)." to ".$payment_address['uuid']);
                     $this->txo_repository->updateOrCreate([
                         'txid'   => $spent_txid,
                         'n'      => $spent_n,

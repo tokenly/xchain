@@ -2,16 +2,28 @@
 
 namespace App\Blockchain\Sender;
 
+use App\Blockchain\Sender\TXOChooser;
+use App\Models\LedgerEntry;
 use App\Models\PaymentAddress;
+use App\Models\TXO;
+use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\ComposedTransactionRepository;
+use App\Repositories\LedgerEntryRepository;
+use App\Repositories\PaymentAddressRepository;
+use App\Repositories\TXORepository;
+use BitWasp\Bitcoin\Address\AddressFactory;
+use BitWasp\Bitcoin\Script\ScriptFactory;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Nbobtc\Bitcoind\Bitcoind;
 use Rhumsaa\Uuid\Uuid;
 use Tokenly\BitcoinAddressLib\BitcoinAddressGenerator;
 use Tokenly\BitcoinAddressLib\BitcoinKeyUtils;
 use Tokenly\BitcoinPayer\BitcoinPayer;
 use Tokenly\CounterpartyAssetInfoCache\Cache;
 use Tokenly\CounterpartySender\CounterpartySender;
+use Tokenly\CounterpartyTransactionComposer\Composer;
+use Tokenly\CounterpartyTransactionComposer\Quantity;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use Tokenly\Insight\Client as InsightClient;
 use Tokenly\LaravelEventLog\Facade\EventLog;
@@ -22,134 +34,121 @@ class PaymentAddressSender {
     const DEFAULT_FEE                = 0.0001;
 
     const DEFAULT_REGULAR_DUST_SIZE  = 0.00005430;
-    const DEFAULT_MULTISIG_DUST_SIZE = 0.00007800;
 
-    public function __construct(XCPDClient $xcpd_client, InsightClient $insight_client, CounterpartySender $xcpd_sender, BitcoinPayer $bitcoin_payer, BitcoinAddressGenerator $address_generator, Cache $asset_cache, ComposedTransactionRepository $composed_transaction_repository) {
+    public function __construct(XCPDClient $xcpd_client, InsightClient $insight_client, Bitcoind $bitcoind, CounterpartySender $xcpd_sender, BitcoinPayer $bitcoin_payer, BitcoinAddressGenerator $address_generator, Cache $asset_cache, ComposedTransactionRepository $composed_transaction_repository, TXOChooser $txo_chooser, Composer $transaction_composer, TXORepository $txo_repository, LedgerEntryRepository $ledger_entry_repository, PaymentAddressRepository $payment_address_repository) {
         $this->xcpd_client                     = $xcpd_client;
         $this->insight_client                  = $insight_client;
+        $this->bitcoind                        = $bitcoind;
         $this->xcpd_sender                     = $xcpd_sender;
         $this->bitcoin_payer                   = $bitcoin_payer;
         $this->address_generator               = $address_generator;
         $this->asset_cache                     = $asset_cache;
         $this->composed_transaction_repository = $composed_transaction_repository;
+        $this->txo_chooser                     = $txo_chooser;
+        $this->transaction_composer            = $transaction_composer;
+        $this->txo_repository                  = $txo_repository;
+        $this->ledger_entry_repository         = $ledger_entry_repository;
+        $this->payment_address_repository      = $payment_address_repository;
     }
 
     // returns [$transaction_id, $float_balance_sent]
-    public function sweepBTCByRequestID($request_id, PaymentAddress $payment_address, $destination, $float_fee=null, $float_regular_dust_size=null) {
-        return $this->sendByRequestID($request_id, $payment_address, $destination, null, 'BTC', $float_fee, $float_regular_dust_size, true);
+    public function sweepBTCByRequestID($request_id, PaymentAddress $payment_address, $destination, $float_fee=null) {
+        return $this->sendByRequestID($request_id, $payment_address, $destination, null, 'BTC', $float_fee, null, true);
     }
 
     // returns [$transaction_id, $float_balance_sent]
-    public function sweepBTC(PaymentAddress $payment_address, $destination, $float_fee=null, $float_regular_dust_size=null) {
+    public function sweepBTC(PaymentAddress $payment_address, $destination, $float_fee=null) {
         $request_id = Uuid::uuid4()->toString();
-        return $this->sweepBTCByRequestID($request_id, $payment_address, $destination, $float_fee, $float_regular_dust_size);
+        return $this->sweepBTCByRequestID($request_id, $payment_address, $destination, $float_fee);
     }
 
     // this cannot be separated into a separate signing and sending step
     //    the sweep must happen after the counterparty sends are done
-    public function sweepAllAssets(PaymentAddress $payment_address, $destination, $float_fee=null, $float_regular_dust_size=null) {
-        $balances = $this->xcpd_client->get_balances(['filters' => ['field' => 'address', 'op' => '==', 'value' => $payment_address['address']]]);
+    // Sends all assets from the default account and then sweeps all BTC UTXOs
+    //    To sweep all assets, close all accounts before calling this method
+    // returns only the last transaction ID (the BTC sweep)
+    public function sweepAllAssets(PaymentAddress $payment_address, $destination, $float_fee=null, $float_btc_dust_size=null) {
+        $request_id = Uuid::uuid4()->toString();
+        return $this->sweepAllAssetsByRequestID($request_id, $payment_address, $destination, $float_fee, $float_btc_dust_size);
+    }
 
-        if ($float_fee === null)                { $float_fee                = self::DEFAULT_FEE; }
-        if ($float_regular_dust_size === null)  { $float_regular_dust_size  = self::DEFAULT_REGULAR_DUST_SIZE; }
+    public function sweepAllAssetsByRequestID($request_id, PaymentAddress $payment_address, $destination, $float_fee=null, $float_btc_dust_size=null) {
+        if ($float_fee === null)            { $float_fee            = self::DEFAULT_FEE; }
+        if ($float_btc_dust_size === null)  { $float_btc_dust_size  = self::DEFAULT_REGULAR_DUST_SIZE; }
 
-        // send to destination
-        $other_xcp_vars = [
-            'fee_per_kb'               => CurrencyUtil::valueToSatoshis($float_fee),
-            'regular_dust_size'        => CurrencyUtil::valueToSatoshis($float_regular_dust_size),
-            'allow_unconfirmed_inputs' => true,
-        ];
-        $private_key = $this->address_generator->privateKey($payment_address['private_key_token']);
-        $public_key = BitcoinKeyUtils::publicKeyFromPrivateKey($private_key);
-        $wif_private_key = BitcoinKeyUtils::WIFFromPrivateKey($private_key);
-
-        $last_txid = null;
-        foreach($balances as $balance) {
-            $asset        = $balance['asset'];
-            $quantity_sat = $balance['quantity'];
-
-            // ignore 0 balances
-            if ($quantity_sat <= 0) { continue; }
-
-            Log::debug("sending $quantity_sat $asset from {$payment_address['address']} to $destination");
-            $txid = $this->xcpd_sender->send($public_key, $wif_private_key, $payment_address['address'], $destination, $quantity_sat, $asset, $other_xcp_vars);
-            $last_txid = $txid;
-        }
-
-        // wait for the last transaction id to be seen by insight
-        // try for 4 seconds
-        if ($last_txid) {
-            $start = time();
-            $attempt = 0;
-            while (time() - $start <= 4) {
-                ++$attempt;
-                try {
-                    $insight_tx = $this->insight_client->getTransaction($last_txid);
-                } catch (Exception $e) {
-                    Log::debug("insight did not find $last_txid on attempt {$attempt}: ".$e->getMessage());
-                    $insight_tx = null;
-                }
-                if ($insight_tx) { break; }
-
-                // sleep and try again (with backoff)
-                if ($attempt > 8) {
-                    usleep(500000); // 500 ms
-                } else if ($attempt > 4) {
-                    usleep(250000); // 250 ms
-                } else {
-                    usleep(100000); // 100 ms
-                }
+        // combine all balances
+        $account = AccountHandler::getAccount($payment_address);
+        $balances_by_type = $this->ledger_entry_repository->accountBalancesByAsset($account, null);
+        $combined_balances = [];
+        foreach($balances_by_type as $type => $balances_for_this_type) {
+            if ($type == LedgerEntry::SENDING) { continue; }
+            foreach($balances_for_this_type as $asset => $amount) {
+                if (!isset($combined_balances[$asset])) { $combined_balances[$asset] = 0; }
+                $combined_balances[$asset] += $amount;
             }
         }
 
-        // Lastly, sweep the BTC
-        return $this->send($payment_address, $destination, null, 'BTC', $float_fee, $float_regular_dust_size, true);
-    }
+        // sort assets by name to be a little deterministic
+        ksort($combined_balances);
 
-    public function sendByRequestID($request_id, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_regular_dust_size=null, $is_sweep=false) {
-        // check to see if this signed transaction already exists in the database
-        $signed_transactions = $this->composed_transaction_repository->getComposedTransactionsByRequestID($request_id);
+        // send each asset
+        $offset = 0;
+        foreach($combined_balances as $asset => $float_quantity) {
+            if ($asset == 'BTC') { continue; }
+            if ($amount <= 0) { continue; }
 
-        if ($signed_transactions === null) {
-            // build the signed transactions
-            $signed_transactions = $this->buildAllSignedTransactions($payment_address, $destination, $float_quantity, $asset, $float_fee, $float_regular_dust_size, $is_sweep);
-            $signed_transactions = $this->composed_transaction_repository->storeOrFetchComposedTransactions($request_id, $signed_transactions);
+            // send this asset with a unique request ID
+            $request_id_for_offset = $this->applyOffsetToRequestID($offset, $request_id);
+            $this->sendByRequestID($request_id_for_offset, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size);
+
+            ++$offset;
         }
 
-        if (!$signed_transactions) { return null;}
+        // sweep the remaining BTC
+        return $this->sweepBTCByRequestID($request_id, $payment_address, $destination, $float_fee);
+    }
+
+    public function sendByRequestID($request_id, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false) {
+        $composed_transaction_model = $this->generateComposedTransactionModel($request_id, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep);
+        if (!$composed_transaction_model) { return null;}
+
+        $signed_transaction_hex = $composed_transaction_model['transaction'];
+        $utxo_identifiers       = $composed_transaction_model['utxos'];
 
         // push all signed transactions to the bitcoin network
         //   some of these may fail
-        $tx_ids = [];
-        foreach($signed_transactions as $signed_transaction) {
-            try {
-                $tx_ids[] = $this->bitcoin_payer->sendSignedTransaction($signed_transaction);
-            } catch (Exception $e) {
-                if (in_array($e->getCode(), [-25, -26, -27])) {
-                    if (count($signed_transactions) == 1) {
-                        // this transaction was rejected, remove it from the composed transaction repository
-                        //   so it can be created again
-                        $this->composed_transaction_repository->deleteComposedTransactionsByRequestID($request_id);
+        $sent_tx_id = null;
+        try {
+            $sent_tx_id = $this->bitcoind->sendrawtransaction($signed_transaction_hex);
+        } catch (Exception $e) {
+            Log::debug("bitcoind returned exception: ".$e->getCode());
+            if (in_array($e->getCode(), [-25, -26, -27])) {
+                // this transaction was rejected, remove it from the composed transaction repository
+                //   so it can be created again
+                $this->composed_transaction_repository->deleteComposedTransactionsByRequestID($request_id);
 
-                        $error_log_details = compact('request_id', 'destination', 'float_quantity', 'asset');
-                        $error_log_details['errorCode'] = $e->getCode();
-                        $error_log_details['errorMsg'] = $e->getMessage();
-                        EventLog::log('composedTransaction.removed', $error_log_details);
-                    }
-                }
-                
-                // throw the exception
-                throw $e;
+                // unspend each spent TXO
+                $this->txo_repository->updateByTXOIdentifiers($utxo_identifiers, ['spent' => 0]);
+
+                // delete each new TXO
+                $this->txo_repository->deleteByTXID($composed_transaction_model['txid']);
+
+                $error_log_details = compact('request_id', 'txid', 'destination', 'float_quantity', 'asset');
+                $error_log_details['errorCode'] = $e->getCode();
+                $error_log_details['errorMsg'] = $e->getMessage();
+                EventLog::log('composedTransaction.removed', $error_log_details);
             }
+            
+            // throw the exception
+            throw $e;
         }
 
-        if (count($tx_ids) == 1) { return $tx_ids[0]; }
-        return $tx_ids;
+        return $sent_tx_id;
     }
 
-    public function send(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_regular_dust_size=null, $is_sweep=false) {
+    public function send(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false) {
         $request_id = Uuid::uuid4()->toString();
-        return $this->sendByRequestID($request_id, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_regular_dust_size, $is_sweep);
+        return $this->sendByRequestID($request_id, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep);
     }
 
 
@@ -157,48 +156,147 @@ class PaymentAddressSender {
     ////////////////////////////////////////////////////////////////////////
     // Protected
 
-    protected function buildAllSignedTransactions(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_regular_dust_size=null, $is_sweep=false) {
-        $signed_transactions = [];
+    protected function generateComposedTransactionModel($request_id, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep) {
+        // check to see if this signed transaction already exists in the database
+        $composed_transaction_model = $this->composed_transaction_repository->getComposedTransactionByRequestID($request_id);
 
-        if ($float_fee === null)                { $float_fee                = self::DEFAULT_FEE; }
-        if ($float_regular_dust_size === null)  { $float_regular_dust_size  = self::DEFAULT_REGULAR_DUST_SIZE; }
+        if ($composed_transaction_model === null) {
+            // build the signed transactions
+            $built_transaction_to_send = $this->buildSignedTransactionToSend($payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep);
+
+            // get the utxo identifiers
+            $utxo_identifiers = $this->buildUTXOIdentifiersFromUTXOs($built_transaction_to_send->getInputUtxos());
+
+            // store the signed transactions to the database cache
+            $signed_transaction_hex     = $built_transaction_to_send->getTransactionHex();
+            $txid                       = $built_transaction_to_send->getTxId();
+            $composed_transaction_model = $this->composed_transaction_repository->storeOrFetchComposedTransaction($request_id, $txid, $signed_transaction_hex, $utxo_identifiers);
+
+            // mark each UTXO as spent
+            $update_result = $this->txo_repository->updateByTXOIdentifiers($utxo_identifiers, ['spent' => 1]);
+
+            // create the new UTXOs that belong to any of our addresses
+            $account = AccountHandler::getAccount($payment_address);
+            $this->clearPaymentAddressInfoCache();
+            foreach ($built_transaction_to_send->getOutputUtxos() as $output_utxo) {
+                if ($output_utxo['amount'] <= 0) {
+                    // don't store OP_RETURN UTXOs with no value
+                    continue;
+                }
+
+                // create new UTXO
+                $destination = AddressFactory::fromOutputScript(ScriptFactory::fromHex($output_utxo['script']))->getAddress();
+                list($found_payment_address, $found_account) = $this->loadPaymentAddressInfo($destination);
+                if ($found_payment_address) {
+    
+                    $this->txo_repository->create($found_payment_address, $found_account, [
+                        'txid'   => $output_utxo['txid'],
+                        'n'      => $output_utxo['n'],
+                        'amount' => $output_utxo['amount'],
+                        'script' => $output_utxo['script'],
+
+                        'type'   => TXO::UNCONFIRMED,
+                        'spent'  => 0,
+                        'green'  => 1,
+                    ]);
+                }
+            }
+        }
+
+        return $composed_transaction_model;
+    }
+
+    protected function clearPaymentAddressInfoCache() { $this->payment_address_info_cache = []; }
+    protected function loadPaymentAddressInfo($destination) {
+        if (!isset($this->payment_address_info_cache)) { $this->payment_address_info_cache = []; }
+
+        if (!isset($this->payment_address_info_cache[$destination])) {
+            $found_payment_address = $this->payment_address_repository->findByAddress($destination)->first();
+            if ($found_payment_address) {
+                $this->payment_address_info_cache[$destination] = [$found_payment_address, AccountHandler::getAccount($found_payment_address)];
+            } else {
+                $this->payment_address_info_cache[$destination] = [null, null];
+            }
+        }
+
+        return $this->payment_address_info_cache[$destination];
+    }
+
+    protected function buildSignedTransactionToSend(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false) {
+        $signed_transaction = null;
+
+        if ($float_fee === null)            { $float_fee            = self::DEFAULT_FEE; }
+        if ($float_btc_dust_size === null)  { $float_btc_dust_size  = self::DEFAULT_REGULAR_DUST_SIZE; }
         $private_key = $this->address_generator->privateKey($payment_address['private_key_token']);
-        $public_key = BitcoinKeyUtils::publicKeyFromPrivateKey($private_key);
         $wif_private_key = BitcoinKeyUtils::WIFFromPrivateKey($private_key);
+
 
         if ($is_sweep) {
             if (strtoupper($asset) != 'BTC') { throw new Exception("Sweep is only allowed for BTC.", 1); }
             
-            list($signed_transaction, $float_balance) = $this->bitcoin_payer->buildSignedTransactionAndBalanceToSweepBTC($payment_address['address'], $destination, $wif_private_key, $float_fee);
-            $signed_transactions[] = $signed_transaction;
+            // compose the BTC transaction
+            $chosen_txos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::UNCONFIRMED, TXO::CONFIRMED], true);
+            $float_quantity = CurrencyUtil::satoshisToValue($this->sumUTXOs($chosen_txos)) - $float_fee;
+            $composed_transaction = $this->transaction_composer->composeSend('BTC', $float_quantity, $destination, $wif_private_key, $chosen_txos, null, $float_fee);
         } else {
             if (strtoupper($asset) == 'BTC') {
-                $signed_transaction = $this->bitcoin_payer->buildSignedTransactionHexToSendBTC($payment_address['address'], $destination, $float_quantity, $wif_private_key, $float_fee);
-                $signed_transactions[] = $signed_transaction;
+                // compose the BTC transaction
+                $chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_quantity, $float_fee);
+
+                // $signed_transaction = $this->bitcoin_payer->buildSignedTransactionHexToSendBTC($payment_address['address'], $destination, $float_quantity, $wif_private_key, $float_fee);
+                $change_address_collection = $payment_address['address'];
+                $composed_transaction = $this->transaction_composer->composeSend('BTC', $float_quantity, $destination, $wif_private_key, $chosen_txos, $change_address_collection, $float_fee);
 
             } else {
-                // if the asset is divisible, then convert to satoshis
+                // calculate the quantity
                 $is_divisible = $this->asset_cache->isDivisible($asset);
-                if ($is_divisible) {
-                    // divisible - convert to satoshis
-                    $quantity_for_xcpd = CurrencyUtil::valueToSatoshis($float_quantity);
-                } else {
-                    // not divisible - do not use satoshis
-                    $quantity_for_xcpd = intval($float_quantity);
-                }
+                $quantity = new Quantity($float_quantity, $is_divisible);
 
-                $other_xcp_vars = [
-                    'fee_per_kb'               => CurrencyUtil::valueToSatoshis($float_fee),
-                    'regular_dust_size'        => CurrencyUtil::valueToSatoshis($float_regular_dust_size),
-                    'allow_unconfirmed_inputs' => true,
-                ];
+                // compose the Counterpary and BTC transaction
+                $chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_btc_dust_size, $float_fee);
 
-                $signed_transaction = $this->xcpd_sender->buildSendTransaction($public_key, $wif_private_key, $payment_address['address'], $destination, $quantity_for_xcpd, $asset, $other_xcp_vars);
-                $signed_transactions[] = $signed_transaction;
+                // build the change
+                $change_address_collection = $payment_address['address'];
+
+                $composed_transaction = $this->transaction_composer->composeSend($asset, $quantity, $destination, $wif_private_key, $chosen_txos, $change_address_collection, $float_fee, $float_btc_dust_size);
+
             }
         }
 
-        return $signed_transactions;
+        return $composed_transaction;
     }
+
+
+    protected function buildUTXOIdentifiersFromUTXOs($utxos) {
+        $utxo_identifiers = [];
+        if ($utxos) {
+            foreach ($utxos as $utxo) {
+                $utxo_identifiers[] = $utxo['txid'].':'.$utxo['n'];
+            }
+        }
+        return $utxo_identifiers;
+    }
+
+
+    protected function sumUTXOs($utxos) {
+        $total = 0;
+        foreach($utxos as $utxo) {
+            $total += $utxo['amount'];
+        }
+        return $total;
+    }
+
+    protected function applyOffsetToRequestID($offset, $request_id) {
+        $suffix = '-'.$offset;
+
+        $request_id_for_offset = $request_id.$suffix;
+        $new_strlen = strlen($request_id_for_offset);
+        if ($new_strlen <= 36) { return $request_id_for_offset; }
+
+        $request_id_for_offset = substr($request_id_for_offset, 0, 0-strlen($suffix)).$suffix;
+        return $request_id_for_offset;
+
+    }
+
 
 }

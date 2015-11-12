@@ -31,14 +31,13 @@ class ClientGUIDTest extends TestCase {
         $loaded_resource_model = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
 
         // get_asset_info followed by the send
-        PHPUnit::assertCount(2, $mock_calls['xcpd']);
+        PHPUnit::assertCount(1, $mock_calls['btcd']);
 
         // validate that a mock send was triggered
-        $mock_send_call = $mock_calls['xcpd'][1];
-        PHPUnit::assertEquals($payment_address['address'], $mock_send_call['args'][0]['source']);
-        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $mock_send_call['args'][0]['destination']);
-        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(100), $mock_send_call['args'][0]['quantity']);
-        PHPUnit::assertEquals('TOKENLY', $mock_send_call['args'][0]['asset']);
+        $send_details = app('TransactionComposerHelper')->parseCounterpartyTransaction($mock_calls['btcd'][0]['args'][0]);
+        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $send_details['destination']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(100), $send_details['quantity']);
+        PHPUnit::assertEquals('TOKENLY', $send_details['asset']);
 
         // try the send again with the same request_id
         $expected_resource = $loaded_resource_model;
@@ -47,7 +46,7 @@ class ClientGUIDTest extends TestCase {
         $loaded_resource_model_2 = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
 
         // does not send again
-        PHPUnit::assertCount(2, $mock_calls['xcpd']);
+        PHPUnit::assertCount(1, $mock_calls['btcd']);
 
         // second send resource is the same as the first
         PHPUnit::assertEquals($loaded_resource_model, $loaded_resource_model_2);

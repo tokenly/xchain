@@ -2,7 +2,7 @@
     "network": "bitcoin",
     "txid": "cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741",
     "timestamp": 1421375512,
-    "isCounterpartyTx": true,
+    "isCounterpartyTx": false,
     "counterPartyTxType": "send",
     "sources": [
         "1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1"
@@ -74,18 +74,6 @@
             }
         ]
     },
-    "counterpartyTx": {
-        "type": "send",
-        "sources": [
-            "1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz"
-        ],
-        "destinations": [
-            "1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD"
-        ],
-        "quantity": 53383451959,
-        "asset": "LTBCOIN",
-        "dustSize": 0.00005430,
-        "dustSizeSat": 5430
-    },
+    "counterpartyTx": [],
     "transactionFingerprint": "1234567890123456789012345678901234567890123456789012345678901234"
 }

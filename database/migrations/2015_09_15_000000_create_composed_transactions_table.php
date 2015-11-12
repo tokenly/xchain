@@ -16,7 +16,10 @@ class CreateComposedTransactionsTable extends Migration
             $table->increments('id');
 
             $table->char('request_id', 36)->unique();
-            $table->mediumText('transactions');
+
+            $table->mediumText('transaction');
+            $table->char('txid', 64)->unique();
+            $table->mediumText('utxos');
 
             $table->timestamp('created_at');
         });

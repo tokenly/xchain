@@ -3,6 +3,8 @@
 use App\Models\TXO;
 use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\TXORepository;
+use BitWasp\Bitcoin\Address\AddressFactory;
+use BitWasp\Bitcoin\Script\ScriptFactory;
 
 /**
 *  SampleTXOHelper
@@ -23,13 +25,17 @@ class SampleTXOHelper
 
         $account = AccountHandler::getAccount($payment_address, 'default');
 
+        // build a real script
+        $script = ScriptFactory::scriptPubKey()->payToAddress(AddressFactory::fromString($payment_address['address']));
+
         $attributes = array_merge([
             'txid'   => $this->nextTXID(),
             'n'      => 0,
-            'script' => 'deadbeef0000000001',
+            'script' => $script->getBuffer()->getHex(),
             'amount' => 54321,
             'type'   => TXO::CONFIRMED,
             'spent'  => false,
+            'green'  => false,
         ], $overrides);
         $txo_model = $this->txo_repository->create($payment_address, $account, $attributes);
         return $txo_model;

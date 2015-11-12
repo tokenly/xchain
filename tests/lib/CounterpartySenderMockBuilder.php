@@ -107,8 +107,13 @@ class CounterpartySenderMockBuilder
             return $out;
         })); 
         
-        $mock->method('sendrawtransaction')->will($test_case->returnCallback(function($hex, $allowhighfees=false)  use ($mock_calls) {
-            $txid = '99999999'.substr(hash('sha256', json_encode([$hex, $allowhighfees])), 8);
+        $mock->method('sendrawtransaction')->will($test_case->returnCallback(function($hex, $allowhighfees=false)  use ($mock_calls, $override_functions) {
+            if ($override_functions !== null AND isset($override_functions['sendrawtransaction'])) {
+                $txid = call_user_func($override_functions['sendrawtransaction'], $hex, $allowhighfees);
+            } else {
+                $txid = '99999999'.substr(hash('sha256', json_encode([$hex, $allowhighfees])), 8);
+            }
+
             $mock_calls['btcd'][] = [
                 'method'   => 'sendrawtransaction',
                 'args'     => [$hex, $allowhighfees],

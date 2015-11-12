@@ -35,10 +35,27 @@ class TXORepository
             ->get();
     }
 
-    public function findByPaymentAddress(PaymentAddress $payment_address) {
-        return $this->prototype_model
-            ->where(['payment_address_id' => $payment_address['id']])
-            ->get();
+    public function findByPaymentAddress(PaymentAddress $payment_address, $allowed_types=null, $unspent=null, $green=null) {
+        $query = $this->prototype_model
+            ->where(['payment_address_id' => $payment_address['id']]);
+
+        // filter by types
+        if ($allowed_types !== null) {
+            $query->whereIn('type', $allowed_types);
+        }
+
+        // unspent filter
+        if ($unspent !== null) {
+            $query->where('spent', $unspent ? '0' : '1');
+        }
+
+        // green filter
+        if ($green !== null) {
+            $query->where('green', $green ? '1' : '0');
+        }
+
+
+        return $query->get();
     }
 
     public function findByAccount(Account $account, $unspent=null) {
@@ -80,6 +97,25 @@ class TXORepository
 
     public function update(TXO $model, $new_attributes) {
         return $model->update($new_attributes);
+    }
+
+    public function updateByTXOIdentifiers($txo_identifiers, $new_attributes) {
+        $query = $this->prototype_model->newQuery();
+
+        foreach($txo_identifiers as $txo_identifier) {
+            list($txid, $n) = explode(':', $txo_identifier);
+            $query->orWhere(function($query) use ($txid, $n) {
+                $query->where('txid', $txid)->where('n', $n);
+            });
+        }
+
+        return $query->update($new_attributes);
+    }
+
+    public function deleteByTXID($txid) {
+        $query = $this->prototype_model->newQuery();
+        $query->where(['txid' => $txid]);
+        return $query->delete();
     }
 
 

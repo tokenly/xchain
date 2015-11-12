@@ -32,6 +32,7 @@ class TXOTest extends TestCase {
         $this->sendConfirmationEvents(1, $parsed_txs);
         $loaded_txo = $txo_repository->findAll()[0];
         PHPUnit::assertEquals(TXO::UNCONFIRMED, $loaded_txo['type']);
+        PHPUnit::assertFalse($loaded_txo['green']);
 
         // confirm the transactions (2)
         $this->sendConfirmationEvents(2, $parsed_txs);
@@ -109,8 +110,7 @@ class TXOTest extends TestCase {
     }
 
 
-    public function testSendingFromOnePaymentAddressToAnother()
-    {
+    public function testSendingFromOnePaymentAddressToAnother() {
         // receiving a transaction adds TXOs
         $txo_repository = $this->app->make('App\Repositories\TXORepository');
 
