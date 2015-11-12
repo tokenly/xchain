@@ -221,13 +221,13 @@ class PaymentAddressSenderTest extends TestCase {
     }
 
     public function testFailedPaymentAddressSend() {
-        $sender         = app('App\Blockchain\Sender\PaymentAddressSender');
-        $txo_repository = app('App\Repositories\TXORepository');
-
         // setup bitcoind to return a -25 error
         $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this, ['sendrawtransaction' => function($hex, $allow_high_fees) {
             throw new \Exception("Test bitcoind error", -25);
         }]);
+
+        $sender         = app('App\Blockchain\Sender\PaymentAddressSender');
+        $txo_repository = app('App\Repositories\TXORepository');
 
         $user = $this->app->make('\UserHelper')->createSampleUser();
         list($payment_address, $input_utxos) = $this->makeAddressAndSampleTXOs($user);
