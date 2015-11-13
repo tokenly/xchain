@@ -1,5 +1,6 @@
 <?php
 
+use App\Blockchain\Sender\TXOChooser;
 use App\Models\TXO;
 use App\Providers\Accounts\Facade\AccountHandler;
 use App\Providers\TXO\Facade\TXOHandler;
@@ -95,6 +96,30 @@ class TXOChooserTest extends TestCase {
 */
 
 
+    public function testChoosePrimeTXOs()
+    {
+        // receiving a transaction adds TXOs
+        $txo_repository = app('App\Repositories\TXORepository');
+        $txo_chooser    = app('App\Blockchain\Sender\TXOChooser');
+
+        $float = function($i) { return CurrencyUtil::satoshisToValue($i); };
+
+        list($payment_address, $sample_txos) = $this->makeAddressAndSampleTXOs();
+
+        // 1 confirmed TXO
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(4900), $float(100), TXOChooser::STRATEGY_PRIME);
+        $this->assertFound([5], $sample_txos, $chosen_txos);
+
+    }
+/*
+    6: 50000
+    5:  7000
+    4:  4000
+    3:  3000
+    2:  2000
+    1:  2010
+    0:  1000
+*/
     // ------------------------------------------------------------------------
     
     protected function TXOHelper() {

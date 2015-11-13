@@ -16,12 +16,32 @@ class TXOChooser {
 
     const PREFERRED_VINS_SIZE = 3;
 
+    const STRATEGY_BALANCED = 1;
+    const STRATEGY_PRIME    = 2;
+
     public function __construct(TXORepository $txo_repository) {
         $this->txo_repository = $txo_repository;
     }
 
 
-    public function chooseUTXOs(PaymentAddress $payment_address, $float_quantity, $float_fee) {
+    public function chooseUTXOs(PaymentAddress $payment_address, $float_quantity, $float_fee, $strategy=null) {
+        if ($strategy === null) { $strategy = self::STRATEGY_BALANCED; }
+
+        switch ($strategy) {
+            case self::STRATEGY_PRIME:
+                return $this->chooseUTXOsWithPrimeStrategy($payment_address, $float_quantity, $float_fee);
+            
+            default:
+                // STRATEGY_BALANCED
+                return $this->chooseUTXOsWithBalancedStrategy($payment_address, $float_quantity, $float_fee);
+        }
+
+
+    }
+
+    // ------------------------------------------------------------------------
+
+    public function chooseUTXOsWithBalancedStrategy(PaymentAddress $payment_address, $float_quantity, $float_fee) {
         // select TXOs (confirmed only first)
         $available_txos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::CONFIRMED], true);
         $found_utxos = $this->chooseFromAvailableTXOs(iterator_to_array($available_txos), $float_quantity, $float_fee);
@@ -40,6 +60,28 @@ class TXOChooser {
         return [];
     }
 
+
+    // Best strategy for priming (take big UTXOs and break them up into smaller UTXOs)
+    public function chooseUTXOsWithPrimeStrategy(PaymentAddress $payment_address, $float_quantity, $float_fee) {
+        // select TXOs (confirmed only first)
+        $available_txos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::CONFIRMED], true);
+        $found_utxos = $this->selectFirstSingleTXO(iterator_to_array($available_txos), $float_quantity, $float_fee);
+        if ($found_utxos) { return $found_utxos; }
+
+        // try confirmed / green unconfirmed
+        $available_txos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::UNCONFIRMED, TXO::CONFIRMED], true);
+        $found_utxos = $this->selectFirstSingleTXO($this->filterGreenOrConfirmedUTXOs($available_txos), $float_quantity, $float_fee);
+        if ($found_utxos) { return $found_utxos; }
+
+        // try all unconfirmed and confirmed together
+        $available_txos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::UNCONFIRMED, TXO::CONFIRMED], true);
+        $found_utxos = $this->selectFirstSingleTXO(iterator_to_array($available_txos), $float_quantity, $float_fee);
+        if ($found_utxos) { return $found_utxos; }
+
+        // failed
+        return [];
+    }
+
     // ------------------------------------------------------------------------
     
     protected function chooseFromAvailableTXOs($available_txos, $float_quantity, $float_fee) {
@@ -52,6 +94,15 @@ class TXOChooser {
         // find best grouping
         $txo_groups = $this->groupUTXOs($available_txos, $total_satoshis_needed);
         return $this->balanceTXOGroups($txo_groups, $total_satoshis_needed);
+    }
+
+    protected function selectFirstSingleTXO($available_txos, $float_quantity, $float_fee) {
+        $total_satoshis_needed = CurrencyUtil::valueToSatoshis($float_quantity) + CurrencyUtil::valueToSatoshis($float_fee);
+
+        $txo_groups = $this->groupUTXOs($available_txos, $total_satoshis_needed);
+
+        if ($txo_groups['large']) { return [$txo_groups['large'][0]]; }
+        return [];
     }
 
     protected function findExactMatchUTXOs($available_txos, $total_satoshis_needed) {

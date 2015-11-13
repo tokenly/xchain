@@ -242,7 +242,10 @@ class PaymentAddressSender {
         } else {
             if (strtoupper($asset) == 'BTC') {
                 // compose the BTC transaction
-                $chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_quantity, $float_fee);
+                $strategy = ($this->isPrimeSend($payment_address, $destination) ? TXOChooser::STRATEGY_PRIME : TXOChooser::STRATEGY_BALANCED);
+                $chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_quantity, $float_fee, $strategy);
+                Log::debug("strategy=$strategy Chosen UTXOs: ".$this->debugDumpUTXOs($chosen_txos));
+                if (!$chosen_txos) { throw new Exception("Unable to select transaction outputs (UTXOs)", 1); }
 
                 // $signed_transaction = $this->bitcoin_payer->buildSignedTransactionHexToSendBTC($payment_address['address'], $destination, $float_quantity, $wif_private_key, $float_fee);
                 if ($change_address_collection === null) { $change_address_collection = $payment_address['address']; }
@@ -298,6 +301,37 @@ class PaymentAddressSender {
         return $request_id_for_offset;
 
     }
+
+    protected function isPrimeSend(PaymentAddress $payment_address, $destination_or_destinations) {
+        $address = $payment_address['address'];
+
+        $all_destinations_are_self = true;
+        if (is_array($destination_or_destinations)) {
+            foreach($destination_or_destinations as $destination_pair) {
+                if ($destination_pair[0] != $payment_address) {
+                    $all_destinations_are_self = false;
+                    break;
+                }
+            }
+        } else {
+            $all_destinations_are_self = ($address == $destination_or_destinations);
+        }
+
+        return $all_destinations_are_self;
+    }
+
+    // ------------------------------------------------------------------------
+    
+    
+    protected function debugDumpUTXOs($utxos) {
+        $out = '';
+        $out .= 'total utxos: '.count($utxos)."\n";
+        foreach($utxos as $utxo) {
+            $out .= '  '.$utxo['txid'].':'.$utxo['n'].' ('.CurrencyUtil::satoshisToValue($utxo['amount']).')'."\n";
+        }
+        return rtrim($out);
+    }
+
 
 
 }
