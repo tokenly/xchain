@@ -3,6 +3,7 @@
 namespace App\Handlers\Commands;
 
 use App\Commands\PruneTransactions;
+use App\Repositories\ProvisionalTransactionRepository;
 use App\Repositories\TransactionRepository;
 use Carbon\Carbon;
 use Illuminate\Queue\InteractsWithQueue;
@@ -14,9 +15,10 @@ class PruneTransactionsHandler {
      *
      * @return void
      */
-    public function __construct(TransactionRepository $transaction_repository)
+    public function __construct(TransactionRepository $transaction_repository, ProvisionalTransactionRepository $provisional_transaction_repository)
     {
-        $this->transaction_repository = $transaction_repository;
+        $this->transaction_repository             = $transaction_repository;
+        $this->provisional_transaction_repository = $provisional_transaction_repository;
     }
 
     /**
@@ -31,8 +33,10 @@ class PruneTransactionsHandler {
 
         if ($keep_seconds > 0) {
             $keep_date = Carbon::now()->subSeconds($keep_seconds);
+            $this->provisional_transaction_repository->deleteOlderThan($keep_date);
             $this->transaction_repository->deleteOlderThan($keep_date);
         } else {
+            $this->provisional_transaction_repository->deleteAll();
             $this->transaction_repository->deleteAll();
         }
     }

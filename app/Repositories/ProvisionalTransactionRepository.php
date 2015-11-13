@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\ProvisionalTransaction;
 use App\Models\Transaction;
+use Carbon\Carbon;
 use Exception;
 
 
@@ -40,6 +41,10 @@ class ProvisionalTransactionRepository
         return $model->delete();
     }
 
+    public function deleteOlderThan(Carbon $date) {
+        $affected_rows = $this->prototype_model->where('created_at', '<=', $date)->delete();
+        return;
+    }
 
     public function deleteByTXID($txid) {
         if ($transaction = $this->findByTXID($txid)) {
