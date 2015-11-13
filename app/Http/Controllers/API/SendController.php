@@ -39,6 +39,19 @@ class SendController extends APIController {
     public function createMultisend(APIControllerHelper $helper, CreateMultiSendRequest $request, PaymentAddressRepository $payment_address_respository, SendRepository $send_respository, PaymentAddressSender $address_sender, Guard $auth, APICallRepository $api_call_repository, $id) {
         return $this->executeSend($helper, $request, $payment_address_respository, $send_respository, $address_sender, $auth, $api_call_repository, $id);
     }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return Response
+     */
+    public function show(APIControllerHelper $helper, SendRepository $send_respository, $id)
+    {
+        return $helper->show($send_respository, $id);
+    }
+
+    // ------------------------------------------------------------------------
     
     protected function executeSend(APIControllerHelper $helper, Request $request, PaymentAddressRepository $payment_address_respository, SendRepository $send_respository, PaymentAddressSender $address_sender, Guard $auth, APICallRepository $api_call_repository, $id) {
         $user = $auth->getUser();
@@ -221,19 +234,7 @@ class SendController extends APIController {
 
         return $send_result;
     }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return Response
-     */
-    public function show(APIControllerHelper $helper, SendRepository $send_respository, $id)
-    {
-        return $helper->show($send_respository, $id);
-    }
-
-
+    
     protected function releasePaymentAddressLockWithDelay($payment_address) {
         if (app()->environment() != 'testing') {
             $delay = 1500000;
