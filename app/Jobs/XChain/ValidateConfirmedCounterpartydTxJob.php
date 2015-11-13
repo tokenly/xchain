@@ -55,6 +55,9 @@ class ValidateConfirmedCounterpartydTxJob
 
             // not valid by default
             $is_valid = false;
+
+            // not found by default
+            $was_found = false;
         } catch (Exception $e) {
             EventLog::logError('error.counterparty', $e);
 
@@ -67,6 +70,7 @@ class ValidateConfirmedCounterpartydTxJob
             $send = $sends[0];
             if ($send) {
                 $is_valid = true;
+                $was_found = true;
                 try {
                     if ($send['destination'] != $parsed_tx['destinations'][0]) { throw new Exception("mismatched destination: {$send['destination']} (xcpd) != {$parsed_tx['destinations'][0]} (parsed)", 1); }
 
@@ -144,9 +148,24 @@ class ValidateConfirmedCounterpartydTxJob
             $job->delete();
 
         } else if ($is_valid === false) {
-            // this send was not valid
-            //   delete it
-            $job->delete();
+            if ($was_found) {
+                // this send was found, but it was not a valid send
+                //   delete it
+                $job->delete();
+            } else {
+                // this send wasn't found by counterpartyd at all
+                //   but it might be found if we try a few more times
+                $attempts = $job->attempts();
+                if ($attempts > 8) {
+                    // we've already tried 8 times - give up
+                    Log::debug("Send $tx_hash was not found by counterpartyd after attempt ".$attempts.". Giving up.");
+                    $job->delete();
+                } else {
+                    $release_time = 2;
+                    Log::debug("Send $tx_hash was not found by counterpartyd after attempt ".$attempts.". Trying again in {$release_time} seconds.");
+                    $job->release($release_time);
+                }
+            }
 
         }
     }
