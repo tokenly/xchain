@@ -24,7 +24,7 @@ class PaymentAddressSenderTest extends TestCase {
         PHPUnit::assertEquals('1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i',      $send_details['destination']);
         PHPUnit::assertEquals('TOKENLY',                                 $send_details['asset']);
         PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(100),        $send_details['quantity']);
-        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.00002),    $send_details['sum_out']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.4999),    $send_details['sum_out']);
         PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis($dust_size), $send_details['btc_dust_size']);
 
         // make sure that the composed transaction is correct
@@ -33,7 +33,7 @@ class PaymentAddressSenderTest extends TestCase {
         PHPUnit::assertNotEmpty($composed_tx_model['txid']);
         PHPUnit::assertNotEmpty($composed_tx_model['transaction']);
         PHPUnit::assertNotEmpty($composed_tx_model['utxos']);
-        PHPUnit::assertEquals($input_utxos[5]['txid'].':'.$input_utxos[5]['n'], $composed_tx_model['utxos'][0]);
+        PHPUnit::assertEquals($input_utxos[6]['txid'].':'.$input_utxos[6]['n'], $composed_tx_model['utxos'][0]);
         PHPUnit::assertEquals('request001', $composed_tx_model['request_id']);
 
     }

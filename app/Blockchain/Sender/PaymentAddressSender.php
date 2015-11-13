@@ -243,7 +243,7 @@ class PaymentAddressSender {
             if (strtoupper($asset) == 'BTC') {
                 // compose the BTC transaction
                 $strategy = ($this->isPrimeSend($payment_address, $destination) ? TXOChooser::STRATEGY_PRIME : TXOChooser::STRATEGY_BALANCED);
-                $chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_quantity, $float_fee, $strategy);
+                $chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_quantity, $float_fee, null, $strategy);
                 Log::debug("strategy=$strategy Chosen UTXOs: ".$this->debugDumpUTXOs($chosen_txos));
                 if (!$chosen_txos) { throw new Exception("Unable to select transaction outputs (UTXOs)", 1); }
 
@@ -258,11 +258,17 @@ class PaymentAddressSender {
 
                 // compose the Counterpary and BTC transaction
                 $chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_btc_dust_size, $float_fee);
+                Log::debug("Counterparty send Chosen UTXOs: ".$this->debugDumpUTXOs($chosen_txos));
 
                 // build the change
                 if ($change_address_collection === null) { $change_address_collection = $payment_address['address']; }
 
                 $composed_transaction = $this->transaction_composer->composeSend($asset, $quantity, $destination, $wif_private_key, $chosen_txos, $change_address_collection, $float_fee, $float_btc_dust_size);
+
+
+                // debug
+                $_debug_parsed_tx = app('\TransactionComposerHelper')->parseCounterpartyTransaction($composed_transaction->getTransactionHex());
+                Log::debug("Counterparty send: \$_debug_parsed_tx=".json_encode($_debug_parsed_tx, 192));
 
             }
         }

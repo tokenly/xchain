@@ -19,21 +19,24 @@ class TXOChooser {
     const STRATEGY_BALANCED = 1;
     const STRATEGY_PRIME    = 2;
 
+    const DUST_SIZE  = 0.00005430;
+
     public function __construct(TXORepository $txo_repository) {
         $this->txo_repository = $txo_repository;
     }
 
 
-    public function chooseUTXOs(PaymentAddress $payment_address, $float_quantity, $float_fee, $strategy=null) {
+    public function chooseUTXOs(PaymentAddress $payment_address, $float_quantity, $float_fee, $float_minimum_change_size=null, $strategy=null) {
+        if ($float_minimum_change_size === null) { $float_minimum_change_size = self::DUST_SIZE; }
         if ($strategy === null) { $strategy = self::STRATEGY_BALANCED; }
 
         switch ($strategy) {
             case self::STRATEGY_PRIME:
-                return $this->chooseUTXOsWithPrimeStrategy($payment_address, $float_quantity, $float_fee);
+                return $this->chooseUTXOsWithPrimeStrategy($payment_address, $float_quantity, $float_fee, $float_minimum_change_size);
             
             default:
                 // STRATEGY_BALANCED
-                return $this->chooseUTXOsWithBalancedStrategy($payment_address, $float_quantity, $float_fee);
+                return $this->chooseUTXOsWithBalancedStrategy($payment_address, $float_quantity, $float_fee, $float_minimum_change_size);
         }
 
 
@@ -41,20 +44,20 @@ class TXOChooser {
 
     // ------------------------------------------------------------------------
 
-    public function chooseUTXOsWithBalancedStrategy(PaymentAddress $payment_address, $float_quantity, $float_fee) {
+    public function chooseUTXOsWithBalancedStrategy(PaymentAddress $payment_address, $float_quantity, $float_fee, $float_minimum_change_size) {
         // select TXOs (confirmed only first)
         $available_txos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::CONFIRMED], true);
-        $found_utxos = $this->chooseFromAvailableTXOs(iterator_to_array($available_txos), $float_quantity, $float_fee);
+        $found_utxos = $this->chooseFromAvailableTXOs(iterator_to_array($available_txos), $float_quantity, $float_fee, $float_minimum_change_size);
         if ($found_utxos) { return $found_utxos; }
 
         // try confirmed / green unconfirmed
         $available_txos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::UNCONFIRMED, TXO::CONFIRMED], true);
-        $found_utxos = $this->chooseFromAvailableTXOs($this->filterGreenOrConfirmedUTXOs($available_txos), $float_quantity, $float_fee);
+        $found_utxos = $this->chooseFromAvailableTXOs($this->filterGreenOrConfirmedUTXOs($available_txos), $float_quantity, $float_fee, $float_minimum_change_size);
         if ($found_utxos) { return $found_utxos; }
 
         // try all unconfirmed and confirmed together
         $available_txos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::UNCONFIRMED, TXO::CONFIRMED], true);
-        $found_utxos = $this->chooseFromAvailableTXOs(iterator_to_array($available_txos), $float_quantity, $float_fee);
+        $found_utxos = $this->chooseFromAvailableTXOs(iterator_to_array($available_txos), $float_quantity, $float_fee, $float_minimum_change_size);
         if ($found_utxos) { return $found_utxos; }
 
         return [];
@@ -62,20 +65,20 @@ class TXOChooser {
 
 
     // Best strategy for priming (take big UTXOs and break them up into smaller UTXOs)
-    public function chooseUTXOsWithPrimeStrategy(PaymentAddress $payment_address, $float_quantity, $float_fee) {
+    public function chooseUTXOsWithPrimeStrategy(PaymentAddress $payment_address, $float_quantity, $float_fee, $float_minimum_change_size) {
         // select TXOs (confirmed only first)
         $available_txos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::CONFIRMED], true);
-        $found_utxos = $this->selectFirstSingleTXO(iterator_to_array($available_txos), $float_quantity, $float_fee);
+        $found_utxos = $this->selectFirstSingleTXO(iterator_to_array($available_txos), $float_quantity, $float_fee, $float_minimum_change_size);
         if ($found_utxos) { return $found_utxos; }
 
         // try confirmed / green unconfirmed
         $available_txos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::UNCONFIRMED, TXO::CONFIRMED], true);
-        $found_utxos = $this->selectFirstSingleTXO($this->filterGreenOrConfirmedUTXOs($available_txos), $float_quantity, $float_fee);
+        $found_utxos = $this->selectFirstSingleTXO($this->filterGreenOrConfirmedUTXOs($available_txos), $float_quantity, $float_fee, $float_minimum_change_size);
         if ($found_utxos) { return $found_utxos; }
 
         // try all unconfirmed and confirmed together
         $available_txos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::UNCONFIRMED, TXO::CONFIRMED], true);
-        $found_utxos = $this->selectFirstSingleTXO(iterator_to_array($available_txos), $float_quantity, $float_fee);
+        $found_utxos = $this->selectFirstSingleTXO(iterator_to_array($available_txos), $float_quantity, $float_fee, $float_minimum_change_size);
         if ($found_utxos) { return $found_utxos; }
 
         // failed
@@ -84,11 +87,12 @@ class TXOChooser {
 
     // ------------------------------------------------------------------------
     
-    protected function chooseFromAvailableTXOs($available_txos, $float_quantity, $float_fee) {
-        $total_satoshis_needed = CurrencyUtil::valueToSatoshis($float_quantity) + CurrencyUtil::valueToSatoshis($float_fee);
+    protected function chooseFromAvailableTXOs($available_txos, $float_quantity, $float_fee, $float_minimum_change_size) {
+        $total_satoshis_needed_with_no_change = CurrencyUtil::valueToSatoshis($float_quantity) + CurrencyUtil::valueToSatoshis($float_fee);
+        $total_satoshis_needed = $total_satoshis_needed_with_no_change + CurrencyUtil::valueToSatoshis($float_minimum_change_size);
 
         // look for exact match (no change)
-        $matched_txos = $this->findExactMatchUTXOs($available_txos, $total_satoshis_needed);
+        $matched_txos = $this->findExactMatchUTXOs($available_txos, $total_satoshis_needed_with_no_change);
         if ($matched_txos) { return $matched_txos; }
 
         // find best grouping
@@ -96,8 +100,8 @@ class TXOChooser {
         return $this->balanceTXOGroups($txo_groups, $total_satoshis_needed);
     }
 
-    protected function selectFirstSingleTXO($available_txos, $float_quantity, $float_fee) {
-        $total_satoshis_needed = CurrencyUtil::valueToSatoshis($float_quantity) + CurrencyUtil::valueToSatoshis($float_fee);
+    protected function selectFirstSingleTXO($available_txos, $float_quantity, $float_fee, $float_minimum_change_size) {
+        $total_satoshis_needed = CurrencyUtil::valueToSatoshis($float_quantity) + CurrencyUtil::valueToSatoshis($float_fee) + CurrencyUtil::valueToSatoshis($float_minimum_change_size);
 
         $txo_groups = $this->groupUTXOs($available_txos, $total_satoshis_needed);
 

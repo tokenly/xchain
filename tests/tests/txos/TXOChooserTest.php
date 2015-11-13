@@ -23,33 +23,33 @@ class TXOChooserTest extends TestCase {
         list($payment_address, $sample_txos) = $this->makeAddressAndSampleTXOs();
 
         // exact
-        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(900), $float(100));
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(900), $float(100), 0);
         $this->assertFound([0], $sample_txos, $chosen_txos);
-        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(1900), $float(100));
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(1900), $float(100), 0);
         $this->assertFound([2], $sample_txos, $chosen_txos);
-        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(2900), $float(100));
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(2900), $float(100), 0);
         $this->assertFound([3], $sample_txos, $chosen_txos);
 
         // low
-        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(4900), $float(100));
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(4900), $float(100), 0);
         $this->assertFound([3,2], $sample_txos, $chosen_txos);
-        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(7900), $float(100));
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(7900), $float(100), 0);
         $this->assertFound([5,0], $sample_txos, $chosen_txos);
-        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(7899), $float(100));
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(7899), $float(100), 0);
         $this->assertFound([5,0], $sample_txos, $chosen_txos);
-        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(11900), $float(100));
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(11900), $float(100), 0);
         $this->assertFound([5,3,2], $sample_txos, $chosen_txos);
 
         // high
-        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(19000), $float(100));
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(19000), $float(100), 0);
         $this->assertFound([6], $sample_txos, $chosen_txos);
 
         // choose high or low
-        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(18000), $float(100));
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(18000), $float(100), 0);
         $this->assertFound([6], $sample_txos, $chosen_txos);
 
         // very high
-        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(63000), $float(0));
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(63000), $float(0), 0);
         $this->assertFound([6,5,4,2], $sample_txos, $chosen_txos);
 
     }
@@ -76,15 +76,15 @@ class TXOChooserTest extends TestCase {
         list($payment_address, $sample_txos) = $this->makeAddressAndSampleTXOs_2();
 
         // 1 confirmed TXO
-        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(900), $float(100));
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(900), $float(100), 0);
         $this->assertFound([0], $sample_txos, $chosen_txos);
 
         // Prioritize confirmed over unconfirmed
-        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(5900), $float(100));
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(5900), $float(100), 0);
         $this->assertFound([3], $sample_txos, $chosen_txos);
 
         // Prioritize green over red
-        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(52900), $float(100));
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(52900), $float(100), 0);
         $this->assertFound([3,1,0], $sample_txos, $chosen_txos);
 
     }
@@ -107,8 +107,23 @@ class TXOChooserTest extends TestCase {
         list($payment_address, $sample_txos) = $this->makeAddressAndSampleTXOs();
 
         // 1 confirmed TXO
-        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(4900), $float(100), TXOChooser::STRATEGY_PRIME);
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(4900), $float(100), 0, TXOChooser::STRATEGY_PRIME);
         $this->assertFound([5], $sample_txos, $chosen_txos);
+
+    }
+    public function testChooseTXOsWithMinChange()
+    {
+        // receiving a transaction adds TXOs
+        $txo_repository = app('App\Repositories\TXORepository');
+        $txo_chooser    = app('App\Blockchain\Sender\TXOChooser');
+
+        $float = function($i) { return CurrencyUtil::satoshisToValue($i); };
+
+        list($payment_address, $sample_txos) = $this->makeAddressAndSampleTXOs();
+
+        // 1 confirmed TXO
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(4900), $float(100), $float(5430));
+        $this->assertFound([5,4], $sample_txos, $chosen_txos);
 
     }
 /*

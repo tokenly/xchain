@@ -46,6 +46,10 @@ class ProvisionalTransactionRepository
         return;
     }
 
+    public function deleteAll() {
+        return ProvisionalTransaction::truncate();
+    }
+
     public function deleteByTXID($txid) {
         if ($transaction = $this->findByTXID($txid)) {
             return $this->delete($transaction);
