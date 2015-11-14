@@ -88,16 +88,19 @@ class TXOChooser {
     // ------------------------------------------------------------------------
     
     protected function chooseFromAvailableTXOs($available_txos, $float_quantity, $float_fee, $float_minimum_change_size) {
-        $total_satoshis_needed_with_no_change = CurrencyUtil::valueToSatoshis($float_quantity) + CurrencyUtil::valueToSatoshis($float_fee);
-        $total_satoshis_needed = $total_satoshis_needed_with_no_change + CurrencyUtil::valueToSatoshis($float_minimum_change_size);
+        $total_satoshis_needed_without_change = CurrencyUtil::valueToSatoshis($float_quantity) + CurrencyUtil::valueToSatoshis($float_fee);
+        $total_satoshis_needed_with_change = $total_satoshis_needed_without_change + CurrencyUtil::valueToSatoshis($float_minimum_change_size);
 
         // look for exact match (no change)
-        $matched_txos = $this->findExactMatchUTXOs($available_txos, $total_satoshis_needed_with_no_change);
+        $matched_txos = $this->findExactMatchUTXOs($available_txos, $total_satoshis_needed_without_change);
         if ($matched_txos) { return $matched_txos; }
 
         // find best grouping
-        $txo_groups = $this->groupUTXOs($available_txos, $total_satoshis_needed);
-        return $this->balanceTXOGroups($txo_groups, $total_satoshis_needed);
+        $txo_groups = $this->groupUTXOs($available_txos, $total_satoshis_needed_with_change);
+        $matched_txos = $this->selectBestTXOsFromTXOGroups($txo_groups, $total_satoshis_needed_without_change, $total_satoshis_needed_with_change);
+        if ($matched_txos) { return $matched_txos; }
+
+        return null;
     }
 
     protected function selectFirstSingleTXO($available_txos, $float_quantity, $float_fee, $float_minimum_change_size) {
@@ -119,6 +122,9 @@ class TXOChooser {
         return [];
     }
 
+    // groups into large (all UTXOs greater than total_satoshis_needed) and small (the rest)
+    //   large are sorted by smallest to largest
+    //   small are sorted by largest to smallest
     protected function groupUTXOs($available_txos, $total_satoshis_needed) {
         $sorted = ['large' => [], 'small' => []];
 
@@ -138,9 +144,12 @@ class TXOChooser {
     }
 
 
-    protected function balanceTXOGroups($txo_groups, $total_satoshis_needed) {
+    // 1) tries 3 or more small TXOs first
+    // 2) tries the first large TXO
+    // 3) uses all the small txo found
+    protected function selectBestTXOsFromTXOGroups($txo_groups, $total_satoshis_needed_without_change, $total_satoshis_needed_with_change) {
         // try a grouping of 3 or less small txos
-        $small_txos = $this->selectBestTXOsToSatisfyAmount($txo_groups['small'], $total_satoshis_needed);
+        $small_txos = $this->selectBestTXOsToSatisfyAmount($txo_groups['small'], $total_satoshis_needed_without_change, $total_satoshis_needed_with_change);
         if ($small_txos AND count($small_txos) <= self::PREFERRED_VINS_SIZE) {
             return $small_txos;
         }
@@ -156,22 +165,33 @@ class TXOChooser {
         return null;
     }
 
-    protected function selectBestTXOsToSatisfyAmount($txos, $total_satoshis_needed) {
+    // Chooses the one best TXO set by using the following priorities
+    //   1) exact value match (no change)
+    //   2) lowest number of UTXOs
+    //   3) lowest sum
+    protected function selectBestTXOsToSatisfyAmount($txos, $total_satoshis_needed_without_change, $total_satoshis_needed_with_change) {
         $txos_out = [];
 
-        // 
-        $allCombinationsFn = function($desired_amount, $start, $end, &$all_groupings, $matched_txos=[], $sum=0) use ($txos, &$allCombinationsFn) {
+        // a recursive function to satisfy the desired amount
+        $allCombinationsFn = function($desired_amount, $exact_change_only, $start, $end, &$all_groupings, $matched_txos=[], $sum=0) use ($txos, &$allCombinationsFn) {
             for ($i=$start; $i < $end; $i++) { 
                 $txo = $txos[$i];
                 $txo_amount = $txo['amount'];
 
                 // recurse without this one
-                $allCombinationsFn($desired_amount, $i+1, $end, $all_groupings, $matched_txos, $sum);
+                $allCombinationsFn($desired_amount, $exact_change_only, $i+1, $end, $all_groupings, $matched_txos, $sum);
 
                 $matched_txos[] = $txo;
                 $sum += $txo_amount;
 
-                if ($sum >= $desired_amount) {
+                // does this sum satisfy the requirements
+                if ($exact_change_only) {
+                    $is_satisfied = ($sum == $desired_amount);
+                } else {
+                    $is_satisfied = ($sum >= $desired_amount);
+                }
+
+                if ($is_satisfied) {
                     // amount satisfied, stop recursing
                     $all_groupings[] = ['sum' => $sum, 'txos' => $matched_txos, 'count' => count($matched_txos)];
                     return;
@@ -181,8 +201,17 @@ class TXOChooser {
 
 
         // build all combinations of TXOs
+
+        // try to all exact matches with no change
         $selected_txo_groupings = [];
-        $allCombinationsFn($total_satoshis_needed, 0, count($txos), $selected_txo_groupings);
+        $allCombinationsFn($total_satoshis_needed_without_change, true, 0, count($txos), $selected_txo_groupings);
+
+        if (!$selected_txo_groupings) {
+            // since we couldn't find an exact match with no change, find all matches with change
+            $selected_txo_groupings = [];
+            $allCombinationsFn($total_satoshis_needed_with_change, false, 0, count($txos), $selected_txo_groupings);
+        }
+
 
 
         // choose the best grouping (lowest count with the lowest sum)
