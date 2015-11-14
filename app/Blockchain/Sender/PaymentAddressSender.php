@@ -174,7 +174,7 @@ class PaymentAddressSender {
             $composed_transaction_model = $this->composed_transaction_repository->storeOrFetchComposedTransaction($request_id, $txid, $signed_transaction_hex, $utxo_identifiers);
 
             // mark each UTXO as spent
-            $update_result = $this->txo_repository->updateByTXOIdentifiers($utxo_identifiers, ['spent' => 1]);
+            $this->txo_repository->updateByTXOIdentifiers($utxo_identifiers, ['spent' => 1]);
 
             // create the new UTXOs that belong to any of our addresses
             $account = AccountHandler::getAccount($payment_address);

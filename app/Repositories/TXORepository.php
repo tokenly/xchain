@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /*
 * TXORepository
@@ -100,6 +101,11 @@ class TXORepository
     }
 
     public function updateByTXOIdentifiers($txo_identifiers, $new_attributes) {
+        if (!$txo_identifiers) {
+            Log::warning("No TXO identifiers provided for update");
+            return;
+        }
+
         $query = $this->prototype_model->newQuery();
 
         foreach($txo_identifiers as $txo_identifier) {
