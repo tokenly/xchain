@@ -30,6 +30,8 @@ class TXOChooser {
         if ($float_minimum_change_size === null) { $float_minimum_change_size = self::DUST_SIZE; }
         if ($strategy === null) { $strategy = self::STRATEGY_BALANCED; }
 
+        // Log::debug("begin \$float_quantity=$float_quantity, \$float_fee=$float_fee, \$float_minimum_change_size=$float_minimum_change_size");
+
         switch ($strategy) {
             case self::STRATEGY_PRIME:
                 return $this->chooseUTXOsWithPrimeStrategy($payment_address, $float_quantity, $float_fee, $float_minimum_change_size);
@@ -165,51 +167,29 @@ class TXOChooser {
         return null;
     }
 
+
     // Chooses the one best TXO set by using the following priorities
     //   1) exact value match (no change)
     //   2) lowest number of UTXOs
     //   3) lowest sum
     protected function selectBestTXOsToSatisfyAmount($txos, $total_satoshis_needed_without_change, $total_satoshis_needed_with_change) {
+        // Log::debug("begin selectBestTXOsToSatisfyAmount \$total_satoshis_needed_without_change=".json_encode($total_satoshis_needed_without_change, 192)." \$total_satoshis_needed_with_change=".json_encode($total_satoshis_needed_with_change, 192)."  \$txos=\n".$this->debugDumpTXOs($txos));
         $txos_out = [];
-
-        // a recursive function to satisfy the desired amount
-        $allCombinationsFn = function($desired_amount, $exact_change_only, $start, $end, &$all_groupings, $matched_txos=[], $sum=0) use ($txos, &$allCombinationsFn) {
-            for ($i=$start; $i < $end; $i++) { 
-                $txo = $txos[$i];
-                $txo_amount = $txo['amount'];
-
-                // recurse without this one
-                $allCombinationsFn($desired_amount, $exact_change_only, $i+1, $end, $all_groupings, $matched_txos, $sum);
-
-                $matched_txos[] = $txo;
-                $sum += $txo_amount;
-
-                // does this sum satisfy the requirements
-                if ($exact_change_only) {
-                    $is_satisfied = ($sum == $desired_amount);
-                } else {
-                    $is_satisfied = ($sum >= $desired_amount);
-                }
-
-                if ($is_satisfied) {
-                    // amount satisfied, stop recursing
-                    $all_groupings[] = ['sum' => $sum, 'txos' => $matched_txos, 'count' => count($matched_txos)];
-                    return;
-                }
-            }
-        };
-
 
         // build all combinations of TXOs
 
         // try to all exact matches with no change
         $selected_txo_groupings = [];
-        $allCombinationsFn($total_satoshis_needed_without_change, true, 0, count($txos), $selected_txo_groupings);
+        // $allCombinationsFn($total_satoshis_needed_without_change, true, 0, count($txos), $selected_txo_groupings);
+        $this->__findExactChangeCombinations($txos, $total_satoshis_needed_without_change, $selected_txo_groupings);
 
         if (!$selected_txo_groupings) {
             // since we couldn't find an exact match with no change, find all matches with change
             $selected_txo_groupings = [];
-            $allCombinationsFn($total_satoshis_needed_with_change, false, 0, count($txos), $selected_txo_groupings);
+            // $allCombinationsFn($total_satoshis_needed_with_change, false, 0, count($txos), $selected_txo_groupings);
+            $context=[];
+            $this->__findFewestTXOsCombinations($txos, $total_satoshis_needed_with_change, $selected_txo_groupings, $context);
+
         }
 
 
@@ -268,7 +248,91 @@ class TXOChooser {
         return $filtered_txos;
     }
 
+    // ------------------------------------------------------------------------
+    
+    // finds all combinations of the given txos
+    protected function __findExactChangeCombinations($txos, $desired_amount, &$all_groupings, $matched_txos=[], $sum=0, $start=0, $iteration_count=0) {
+        $count = count($txos);
 
+        for ($i=$start; $i < $count; $i++) { 
+            $txo = $txos[$i];
+            $txo_amount = $txo['amount'];
+
+            $working_sum = $sum + $txo_amount;
+            $working_txos = array_merge($matched_txos, [$txo]);
+
+            // does this sum satisfy the requirements
+            $is_satisfied = ($working_sum == $desired_amount);
+
+            if ($working_sum >= $desired_amount) {
+                // no further matches can help
+                $should_recurse = false;
+            } else {
+                // not found enough yet
+                $should_recurse = true;
+            }
+
+
+            if ($is_satisfied) {
+                // amount satisfied, stop recursing
+                $all_groupings[] = ['sum' => $working_sum, 'txos' => $working_txos, 'count' => count($working_txos)];
+            }
+
+            // recurse
+            if ($should_recurse) {
+                $this->__findExactChangeCombinations($txos, $desired_amount, $all_groupings, $working_txos, $working_sum, $i+1, $iteration_count+1);
+            }
+        }
+    }
+
+    // finds all combinations of the given txos
+    protected function __findFewestTXOsCombinations($txos, $desired_amount, &$all_groupings, &$context, $matched_txos=[], $sum=0, $start=0, $iteration_count=0) {
+        if (!isset($context['lowest_sum_so_far'])) { $context['lowest_sum_so_far'] = null; }
+
+        $count = count($txos);
+
+        for ($i=$start; $i < $count; $i++) { 
+            $txo = $txos[$i];
+            $txo_amount = $txo['amount'];
+
+            $working_sum = $sum + $txo_amount;
+            $working_txos = $matched_txos;
+            $working_txos[] = $txo;
+
+            // does this sum satisfy the requirements
+            $is_big_enough = ($working_sum >= $desired_amount);
+
+            if ($is_big_enough) {
+                // only add this utxo as a match if it is lower than the lowest we found so far
+                if ($working_sum < $context['lowest_sum_so_far'] OR $context['lowest_sum_so_far'] === null) {
+                    $context['lowest_sum_so_far'] = $working_sum;
+                    $is_a_match = true;
+                    $should_recurse = false;
+                } else {
+                    // this was big enough, but we have already found a better match
+                    $is_a_match = false;
+                    $should_recurse = false;
+                }
+            } else {
+                // not big enough yet - keep adding utxos
+                $is_a_match = false;
+                $should_recurse = true;
+            }
+
+            if ($is_a_match) {
+                // amount satisfied, stop recursing
+                $all_groupings[] = ['sum' => $working_sum, 'txos' => $working_txos, 'count' => count($working_txos)];
+            }
+
+            // recurse
+            if ($should_recurse) {
+                $this->__findFewestTXOsCombinations($txos, $desired_amount, $all_groupings, $context, $working_txos, $working_sum, $i+1, $iteration_count+1);
+            }
+        }
+
+
+    }
+    
     // ------------------------------------------------------------------------
     
     protected function debugDumpGroupings($selected_txo_groupings) {
@@ -283,12 +347,25 @@ class TXOChooser {
     }
 
     protected function debugDumpGroup($selected_txo_grouping) {
-        $line = '';
+        $amounts = $this->debugDumpTXOAmounts($selected_txo_grouping['txos']);
+        return 'Count: '.$selected_txo_grouping['count'].' | Sum: '.$selected_txo_grouping['sum'].' | Amts: '.$amounts;
+    }
+
+    protected function debugDumpTXOAmounts($txos) {
         $amounts = '';
-        foreach($selected_txo_grouping['txos'] as $txo) {
+        foreach($txos as $txo) {
             $amounts = ltrim($amounts.','.$txo['amount'], ',');
         }
 
-        return 'Count: '.$selected_txo_grouping['count'].' | Sum: '.$selected_txo_grouping['sum'].' | Amts: '.$amounts;
+        return $amounts;
+    }
+
+    protected function debugDumpTXOs($txos) {
+        $out = '';
+        foreach($txos as $txo) {
+            $out = ltrim($out."\n".$txo['txid'].':'.$txo['n']." (".$txo['amount'].")");
+        }
+
+        return $out;
     }
 }

@@ -11,7 +11,7 @@ class TXOChooserTest extends TestCase {
 
     protected $useDatabase = true;
 
-    public function testChooseTXOs()
+    public function testChooseTXOs_1()
     {
         // receiving a transaction adds TXOs
         $txo_repository = app('App\Repositories\TXORepository');
@@ -32,13 +32,13 @@ class TXOChooserTest extends TestCase {
 
         // low
         $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(4900), $float(100), 0);
-        $this->assertFound([3,2], $sample_txos, $chosen_txos);
+        $this->assertFound([4,0], $sample_txos, $chosen_txos);
         $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(7900), $float(100), 0);
         $this->assertFound([5,0], $sample_txos, $chosen_txos);
         $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(7899), $float(100), 0);
         $this->assertFound([5,0], $sample_txos, $chosen_txos);
         $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(11900), $float(100), 0);
-        $this->assertFound([5,3,2], $sample_txos, $chosen_txos);
+        $this->assertFound([5,4,0], $sample_txos, $chosen_txos);
 
         // high
         $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(19000), $float(100), 0);
@@ -164,6 +164,23 @@ class TXOChooserTest extends TestCase {
     1:  2010
     0:  1000
 */
+
+    public function testChooseTXOsThree()
+    {
+        // receiving a transaction adds TXOs
+        $txo_repository = app('App\Repositories\TXORepository');
+        $txo_chooser    = app('App\Blockchain\Sender\TXOChooser');
+
+        $float = function($i) { return CurrencyUtil::satoshisToValue($i); };
+
+        list($payment_address, $sample_txos) = $this->makeAddressAndSampleTXOs_3();
+
+        // choose from a bunch
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(5430), $float(10000), $float(5430));
+        $this->assertFound([2,1,3,4], $sample_txos, $chosen_txos);
+
+    }
+
     // ------------------------------------------------------------------------
     
     protected function TXOHelper() {
@@ -224,6 +241,31 @@ class TXOChooserTest extends TestCase {
         $sample_txos[2] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txid, 'amount' => 3000,  'n' => 1, 'type' => TXO::UNCONFIRMED, 'green' => 0]);
         $txid = $txo_helper->nextTXID();
         $sample_txos[3] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txid, 'amount' => 50000, 'n' => 2, 'type' => TXO::CONFIRMED,   'green' => 0]);
+
+        return [$payment_address, $sample_txos];
+    }
+
+
+    protected function makeAddressAndSampleTXOs_3() {
+        $payment_address_helper = app('PaymentAddressHelper');
+
+        $txo_helper = $this->TXOHelper();
+        $payment_address = $payment_address_helper->createSamplePaymentAddressWithoutInitialBalances(null, ['address' => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD']);
+        $sample_txos = [];
+
+        // for ($i=0; $i < 6; $i++) { 
+        //     $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txo_helper->nextTXID(), 'amount' => 5430,  'n' => 0, 'type' => TXO::CONFIRMED, 'green' => 0]);
+        // }
+        // for ($i=0; $i < 28; $i++) { 
+        //     $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txo_helper->nextTXID(), 'amount' => 5470,  'n' => 0, 'type' => TXO::CONFIRMED, 'green' => 0]);
+        // }
+
+        for ($i=0; $i < 6; $i++) { 
+            $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txo_helper->nextTXID(), 'amount' => 5430,  'n' => 0, 'type' => TXO::CONFIRMED, 'green' => 0]);
+        }
+        for ($i=0; $i < 28; $i++) { 
+            $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txo_helper->nextTXID(), 'amount' => 5470,  'n' => 0, 'type' => TXO::CONFIRMED, 'green' => 0]);
+        }
 
         return [$payment_address, $sample_txos];
     }
