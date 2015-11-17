@@ -7,6 +7,8 @@ use App\Models\Block;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use PHP_Timer;
+use Tokenly\LaravelEventLog\Facade\EventLog;
+use \Exception;
 
 class XChainTransactionHandler {
 
@@ -20,10 +22,14 @@ class XChainTransactionHandler {
         $transaction = $transaction_handler->storeParsedTransaction($parsed_tx);
 
         $found_addresses = $transaction_handler->findMonitoredAndPaymentAddressesByParsedTransaction($parsed_tx);
-        $transaction_handler->storeProvisionalTransaction($transaction, $found_addresses);
-        $transaction_handler->updateUTXOs($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
-        $transaction_handler->updateAccountBalances($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
-        $transaction_handler->sendNotifications($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
+        try {
+            $transaction_handler->storeProvisionalTransaction($transaction, $found_addresses);
+            $transaction_handler->updateUTXOs($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
+            $transaction_handler->updateAccountBalances($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
+            $transaction_handler->sendNotifications($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
+        } catch (Exception $e) {
+            EventLog::logError('handleUnconfirmedTransaction.error', $e, ['id' => $transaction['id'], 'txid' => $transaction['txid'],]);
+        }
 
         return;
     }
@@ -37,11 +43,15 @@ class XChainTransactionHandler {
 
         $found_addresses = $transaction_handler->findMonitoredAndPaymentAddressesByParsedTransaction($parsed_tx);
 
-        $transaction_handler->updateProvisionalTransaction($parsed_tx, $found_addresses, $confirmations);
-        $transaction_handler->invalidateProvisionalTransactions($found_addresses, $parsed_tx, $confirmations, $block_seq, $block, $block_event_context);
-        $transaction_handler->updateUTXOs($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
-        $transaction_handler->updateAccountBalances($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
-        $transaction_handler->sendNotifications($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
+        try {
+            $transaction_handler->updateProvisionalTransaction($parsed_tx, $found_addresses, $confirmations);
+            $transaction_handler->invalidateProvisionalTransactions($found_addresses, $parsed_tx, $confirmations, $block_seq, $block, $block_event_context);
+            $transaction_handler->updateUTXOs($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
+            $transaction_handler->updateAccountBalances($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
+            $transaction_handler->sendNotifications($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
+        } catch (Exception $e) {
+            EventLog::logError('handleConfirmedTransaction.error', $e, ['txid' => $parsed_tx['txid'],]);
+        }
 
         return;
     }
