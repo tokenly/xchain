@@ -246,13 +246,13 @@ class ForceSyncAddressAccountsCommand extends Command {
                 $quantity = $xchain_quantity - $daemon_quantity;
                 $msg = "Debiting $quantity $asset from account {$default_account['name']}";
                 $this->info($msg);
-                $ledger->addDebit($quantity, $asset, $default_account, LedgerEntry::CONFIRMED, null, $api_call);
+                $ledger->addDebit($quantity, $asset, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, null, $api_call);
             } else {
                 // credit
                 $quantity = $daemon_quantity - $xchain_quantity;
                 $msg = "Crediting $quantity $asset to account {$default_account['name']}";
                 $this->info($msg);
-                $ledger->addCredit($quantity, $asset, $default_account, LedgerEntry::CONFIRMED, null, $api_call);
+                $ledger->addCredit($quantity, $asset, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, null, $api_call);
             }
         }
     }

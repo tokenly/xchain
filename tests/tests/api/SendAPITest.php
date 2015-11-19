@@ -430,15 +430,15 @@ class SendAPITest extends TestCase {
         // add balances to each
         $txid = 'deadbeef00000000000000000000000000000000000000000000000000000001';
         $ledger_entry_repo = app('App\Repositories\LedgerEntryRepository');
-        $ledger_entry_repo->addCredit(110, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, $txid);
-        $ledger_entry_repo->addCredit(100, 'BTC', $created_accounts[1], LedgerEntry::CONFIRMED, $txid);
-        $ledger_entry_repo->addDebit(  10, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, $txid);
-        $ledger_entry_repo->addCredit(  1, 'BTC', $created_accounts[2], LedgerEntry::CONFIRMED, $txid);
-        $ledger_entry_repo->addCredit( 20, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, $txid);
-        $ledger_entry_repo->addCredit( 20, 'BTC', $created_accounts[2], LedgerEntry::UNCONFIRMED, $txid);
+        $ledger_entry_repo->addCredit(110, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $ledger_entry_repo->addCredit(100, 'BTC', $created_accounts[1], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $ledger_entry_repo->addDebit(  10, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $ledger_entry_repo->addCredit(  1, 'BTC', $created_accounts[2], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $ledger_entry_repo->addCredit( 20, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $ledger_entry_repo->addCredit( 20, 'BTC', $created_accounts[2], LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
 
-        $ledger_entry_repo->addCredit(0.01, 'BTC', $created_accounts[3], LedgerEntry::CONFIRMED, $txid);
-        $ledger_entry_repo->addCredit(  20, 'BTC', $created_accounts[3], LedgerEntry::UNCONFIRMED, $txid);
+        $ledger_entry_repo->addCredit(0.01, 'BTC', $created_accounts[3], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $ledger_entry_repo->addCredit(  20, 'BTC', $created_accounts[3], LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
 
         // add UTXOs
         $float_btc_balance = 110 + 100 - 10 + 20 + 20 + 0.01 + 20;

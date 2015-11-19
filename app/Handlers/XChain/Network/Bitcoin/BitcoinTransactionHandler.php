@@ -131,14 +131,13 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
                 // this address sent something
                 $quantity = $this->buildQuantityForEventType('send', $parsed_tx, $payment_address['address']);
                 AccountHandler::send($payment_address, $quantity, $parsed_tx['asset'], $parsed_tx, $confirmations);
-                continue;
             }
 
             if ($is_destination) {
                 // this address received something
+                //   Note that the same address might be both the sender and the receiver
                 $quantity = $this->buildQuantityForEventType('receive', $parsed_tx, $payment_address['address']);
                 AccountHandler::receive($payment_address, $quantity, $parsed_tx['asset'], $parsed_tx, $confirmations);
-                continue;
             }
         }
     }

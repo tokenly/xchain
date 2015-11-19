@@ -26,6 +26,7 @@ class LedgerEntryRepository extends APIRepository
 
     public function create($attributes) {
         if (!isset($attributes['account_id']) OR !$attributes['account_id']) { throw new Exception("Account ID is required", 1); }
+        if (!isset($attributes['direction']) OR !is_numeric($attributes['direction'])) { throw new Exception("direction is required", 1); }
 
         // require either an api call or a transaction
         if (
@@ -40,28 +41,28 @@ class LedgerEntryRepository extends APIRepository
         return parent::create($attributes);
     }
 
-    public function addCredit($float_amount, $asset, Account $account, $type, $txid, APICall $api_call=null) {
+    public function addCredit($float_amount, $asset, Account $account, $type, $direction, $txid, APICall $api_call=null) {
         if ($float_amount < 0) { throw new Exception("Credits must be a positive number", 1); }
         // check type
         LedgerEntry::typeIntegerToString($type);
 
-        return $this->addEntryForAccount($float_amount, $asset, $account, $type, $txid, $api_call ? $api_call['id'] : null);
+        return $this->addEntryForAccount($float_amount, $asset, $account, $type, $direction, $txid, $api_call ? $api_call['id'] : null);
     }
 
-    public function addDebit($float_amount, $asset, Account $account, $type, $txid, APICall $api_call=null) {
+    public function addDebit($float_amount, $asset, Account $account, $type, $direction, $txid, APICall $api_call=null) {
         if ($float_amount < 0) { throw new Exception("Debits must be a positive number", 1); }
         // check type
         LedgerEntry::validateTypeInteger($type);
 
         // begin consistent read transaction
-        return DB::transaction(function() use ($float_amount, $asset, $account, $type, $txid, $api_call) {
+        return DB::transaction(function() use ($float_amount, $asset, $account, $type, $direction, $txid, $api_call) {
             // ensure sufficient asset balance in account
             $existing_balance = $this->accountBalance($account, $asset, $type, true);
             if ($existing_balance <= 0 OR $existing_balance < CurrencyUtil::valueToSatoshis($float_amount)) {
                 throw new AccountException('ERR_INSUFFICIENT_FUNDS', 400, "Balance of ".CurrencyUtil::satoshisToValue($existing_balance)." was insufficient to debit $float_amount (".LedgerEntry::typeIntegerToString($type).") $asset from {$account['name']}");
             }
 
-            return $this->addEntryForAccount(0 - $float_amount, $asset, $account, $type, $txid, $api_call ? $api_call['id'] : null);
+            return $this->addEntryForAccount(0 - $float_amount, $asset, $account, $type, $direction, $txid, $api_call ? $api_call['id'] : null);
         });
     }
 
@@ -77,22 +78,23 @@ class LedgerEntryRepository extends APIRepository
 
         return DB::transaction(function() use ($float_amount, $asset, $from_account, $to_account, $type, $txid, $api_call) {
             // transfer
-            $this->addDebit($float_amount, $asset, $from_account, $type, $txid, $api_call);
-            return $this->addCredit($float_amount, $asset, $to_account, $type, $txid, $api_call);
+            $direction = LedgerEntry::DIRECTION_OTHER;
+            $this->addDebit($float_amount, $asset, $from_account, $type, $direction, $txid, $api_call);
+            return $this->addCredit($float_amount, $asset, $to_account, $type, $direction, $txid, $api_call);
         });
     }
 
-    public function changeType($float_amount, $asset, Account $account, $from_type, $to_type, $txid) {
+    public function changeType($float_amount, $asset, Account $account, $from_type, $to_type, $direction, $txid) {
         if ($float_amount < 0) { throw new Exception("Transfers must be a positive number", 1); }
 
         // check types
         LedgerEntry::validateTypeInteger($from_type);
         LedgerEntry::validateTypeInteger($to_type);
 
-        return DB::transaction(function() use ($float_amount, $asset, $account, $from_type, $to_type, $txid) {
+        return DB::transaction(function() use ($float_amount, $asset, $account, $from_type, $to_type, $direction, $txid) {
             // transfer
-            $this->addDebit(        $float_amount, $asset, $account, $from_type, $txid);
-            return $this->addCredit($float_amount, $asset, $account, $to_type,   $txid);
+            $this->addDebit(        $float_amount, $asset, $account, $from_type, $direction, $txid);
+            return $this->addCredit($float_amount, $asset, $account, $to_type,   $direction, $txid);
         });
     }
 
@@ -243,7 +245,7 @@ class LedgerEntryRepository extends APIRepository
     public function update(Model $model, $attributes) { throw new Exception("Updates are not allowed", 1); }
 
 
-    public function findByTXID($txid, $payment_address_id=null, $type=null) {
+    public function findByTXID($txid, $payment_address_id=null, $type=null, $direction=null) {
         $query = $this->prototype_model
             ->where('txid', $txid)
             ->orderBy('id');
@@ -255,6 +257,11 @@ class LedgerEntryRepository extends APIRepository
         if ($type !== null) {
             // check type
             $query->where('type', LedgerEntry::validateTypeInteger($type));
+        }
+
+        if ($direction !== null) {
+            // check direction
+            $query->where('direction', LedgerEntry::validateDirectionInteger($direction));
         }
 
         return $query->get();
@@ -278,16 +285,17 @@ class LedgerEntryRepository extends APIRepository
 
     ////////////////////////////////////////////////////////////////////////
     
-    protected function addEntryForAccount($float_amount, $asset, Account $account, $type, $txid=null, $api_call_id=null) {
+    protected function addEntryForAccount($float_amount, $asset, Account $account, $type, $direction, $txid=null, $api_call_id=null) {
         $create_vars = [
             'payment_address_id' => $account['payment_address_id'],
-            'account_id'           => $account['id'],
-            'type'                 => $type,
-            'txid'                 => $txid,
-            'api_call_id'          => $api_call_id,
+            'account_id'         => $account['id'],
+            'type'               => $type,
+            'direction'          => $direction,
+            'txid'               => $txid,
+            'api_call_id'        => $api_call_id,
 
-            'amount'               => CurrencyUtil::valueToSatoshis($float_amount),
-            'asset'                => $asset,
+            'amount'             => CurrencyUtil::valueToSatoshis($float_amount),
+            'asset'              => $asset,
         ];
 
         return $this->create($create_vars);

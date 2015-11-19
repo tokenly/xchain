@@ -51,11 +51,11 @@ class AccountBalancesAPITest extends TestCase {
         // add balances to each
         $txid = 'deadbeef00000000000000000000000000000000000000000000000000000001';
         $repo = app('App\Repositories\LedgerEntryRepository');
-        $repo->addCredit(11, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit(20, 'BTC', $created_accounts[1], LedgerEntry::CONFIRMED, $txid);
-        $repo->addDebit(  1, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit( 4, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, $txid);
-        $repo->addCredit( 5, 'BTC', $created_accounts[1], LedgerEntry::UNCONFIRMED, $txid);
+        $repo->addCredit(11, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
+        $repo->addCredit(20, 'BTC', $created_accounts[1], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
+        $repo->addDebit(  1, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
+        $repo->addCredit( 4, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
+        $repo->addCredit( 5, 'BTC', $created_accounts[1], LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
 
         // now get all the accounts
         $api_response = $api_test_helper->callAPIAndValidateResponse('GET', '/api/v1/accounts/balances/'.$address['uuid'].'');
@@ -274,14 +274,14 @@ class AccountBalancesAPITest extends TestCase {
         $txid = 'deadbeef00000000000000000000000000000000000000000000000000000001';
         $txid2 = 'deadbeef00000000000000000000000000000000000000000000000000000002';
         $repo = app('App\Repositories\LedgerEntryRepository');
-        $repo->addCredit(110, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit(100, 'BTC', $created_accounts[1], LedgerEntry::CONFIRMED, $txid);
-        $repo->addDebit(  10, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, $txid);
+        $repo->addCredit(110, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
+        $repo->addCredit(100, 'BTC', $created_accounts[1], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
+        $repo->addDebit(  10, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
 
         if ($with_unconfirmed) {
-            $repo->addCredit( 15, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, $txid);
-            $repo->addCredit(  5, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, $txid2);
-            $repo->addCredit( 20, 'BTC', $created_accounts[2], LedgerEntry::UNCONFIRMED, $txid);
+            $repo->addCredit( 15, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
+            $repo->addCredit(  5, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid2);
+            $repo->addCredit( 20, 'BTC', $created_accounts[2], LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
         }
 
         return [$address, $created_accounts, $api_test_helper];

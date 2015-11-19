@@ -20,6 +20,10 @@ class LedgerEntry extends APIModel {
     const UNCONFIRMED = 2;
     const SENDING     = 3;
 
+    const DIRECTION_OTHER   = 0;
+    const DIRECTION_RECEIVE = 1;
+    const DIRECTION_SEND    = 2;
+
     public static function allTypeStrings() {
         return ['confirmed', 'unconfirmed', 'sending',];
     }
@@ -48,5 +52,35 @@ class LedgerEntry extends APIModel {
 
         throw new Exception("unknown type integer: $type_integer", 1);
     }
+
+    // ------------------------------------------------------------------------
+    
+    public static function directionStringToInteger($direction_string) {
+        switch (strtolower(trim($direction_string))) {
+            case 'other':   return self::DIRECTION_OTHER;
+            case 'receive': return self::DIRECTION_RECEIVE;
+            case 'send':    return self::DIRECTION_SEND;
+        }
+
+        throw new Exception("unknown direction: $direction_string", 1);
+    }
+
+    public static function directionIntegerToString($direction_integer) {
+        switch ($direction_integer) {
+            case self::DIRECTION_OTHER:   return 'other';
+            case self::DIRECTION_RECEIVE: return 'receive';
+            case self::DIRECTION_SEND:    return 'send';
+        }
+
+        throw new Exception("unknown direction integer: $direction_integer", 1);
+    }
+
+    public static function validateDirectionInteger($direction_integer) {
+        self::directionIntegerToString($direction_integer);
+        return $direction_integer;
+    }
+
+
+    // ------------------------------------------------------------------------
 
 }

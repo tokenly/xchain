@@ -1,0 +1,14 @@
+# a simple XCP notification
+
+txid: 1000000000000000000000000000000000000000000000000000000000000111
+network: bitcoin
+event: receive
+notifiedAddress: 1MYADDRESS11111XXXXXXXXXXXXXaks53q
+sources: [1MYADDRESS11111XXXXXXXXXXXXXaks53q]
+destinations: [1MYADDRESS11111XXXXXXXXXXXXXaks53q]
+confirmed: true
+confirmations: 1
+asset: BTC
+quantity: 2
+blockId: 300000
+

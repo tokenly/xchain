@@ -1,0 +1,43 @@
+# sending transaction to self
+
+monitoredAddresses:
+  - address: 1MYADDRESS11111XXXXXXXXXXXXXaks53q
+    monitor_type: receive
+  - address: 1MYADDRESS11111XXXXXXXXXXXXXaks53q
+    monitor_type: send
+
+paymentAddresses:
+  - address: 1MYADDRESS11111XXXXXXXXXXXXXaks53q
+    accountBalances:
+      BTC: 10
+
+events:
+  -
+    type: transaction
+    meta:
+        baseFilename: default_btc_parsed_mempool_01.json
+    txid: 1000000000000000000000000000000000000000000000000000000000000111
+    sender: 1MYADDRESS11111XXXXXXXXXXXXXaks53q
+    recipient: 1MYADDRESS11111XXXXXXXXXXXXXaks53q
+    asset: BTC
+    quantity: 2
+    blockId: 300000
+  -
+    type: block
+    hash: BLOCKHASH01
+    tx:
+        - 1000000000000000000000000000000000000000000000000000000000000111
+  -
+    type: block
+    hash: BLOCKHASH02
+    previousblockhash: BLOCKHASH01
+    height: 333001
+    tx: ["2c4eb2613c9b12c66f07527d9e58d53cf4bcaeb25fbdc2e44c62bd2a3d165d56"] # one random transaction we don't care about
+
+accounts:
+  - meta: { baseFilename: default01.yml }
+    balances:
+      unconfirmed: { BTC: 0 }
+      confirmed: { BTC: 9.9999 }
+      sending: { BTC: 0 }
+

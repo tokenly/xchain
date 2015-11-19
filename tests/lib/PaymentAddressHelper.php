@@ -54,7 +54,7 @@ class PaymentAddressHelper
 
         $account = AccountHandler::getAccount($payment_address, $account_name);
         foreach($balances as $asset => $quantity) {
-            $this->ledger_entry_repository->addCredit($quantity, $asset, $account, LedgerEntry::CONFIRMED, $txid);
+            $this->ledger_entry_repository->addCredit($quantity, $asset, $account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
         }
 
         if ($with_utxos) {

@@ -61,12 +61,14 @@ class AccountHandler {
 
                 list($txid, $dust_size) = $this->extractDataFromParsedTransaction($parsed_tx);
 
+                // Log::debug("receive $quantity $asset \$txid=$txid \$confirmations=".json_encode($confirmations, 192));
                 if ($confirmations >= self::RECEIVED_CONFIRMATIONS_REQUIRED) {
+                    // confirmed receive
                     $type = LedgerEntry::CONFIRMED;
 
                     // if there are any confirmed entries for this txid already, then 
                     //  don't add anything new
-                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, $payment_address['id'], LedgerEntry::CONFIRMED);
+                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, $payment_address['id'], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_RECEIVE);
                     if (count($existing_ledger_entries) > 0) { return; }
 
                     // find the funds and move each one to the confirmed status
@@ -95,7 +97,7 @@ class AccountHandler {
                                 }
 
                                 // start by moving all the unconfirmed funds we can
-                                $this->ledger_entry_repository->changeType($unconfirmed_amount_to_move, $unconfirmed_txid_asset, $account, LedgerEntry::UNCONFIRMED, LedgerEntry::CONFIRMED, $txid);
+                                $this->ledger_entry_repository->changeType($unconfirmed_amount_to_move, $unconfirmed_txid_asset, $account, LedgerEntry::UNCONFIRMED, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
 
                                 if ($unconfirmed_funds_already_sent > 0) {
                                     // these funds were already moved from unconfirmed to sent
@@ -109,25 +111,26 @@ class AccountHandler {
                     if (!$any_unconfirmed_funds_found) {
                         // credit the asset(s) including the BTC dust
                         foreach ($this->buildReceiveBalances($quantity, $asset, $dust_size) as $asset_received => $quantity_received) {
-                            $this->ledger_entry_repository->addCredit($quantity_received, $asset_received, $default_account, $type, $txid);
+                            $this->ledger_entry_repository->addCredit($quantity_received, $asset_received, $default_account, $type, LedgerEntry::DIRECTION_RECEIVE, $txid);
                         }
                     }
 
 
                 } else {
-                    $type = LedgerEntry::UNCONFIRMED;
+                    // unconfirmed receive
 
-                    // if there are any entries for this txid already, then 
+                    // if there are any entries for this txid and type already, then 
                     //  don't add anything new
-                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, $payment_address['id']);
+                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, $payment_address['id'], null, LedgerEntry::DIRECTION_RECEIVE);
                     if (count($existing_ledger_entries) > 0) {
-                        if ($confirmations == 0) { EventLog::log('account.receive.warning', ['txid' => $txid]); }
+                        if ($confirmations == 0) { EventLog::log('account.receive.alreadyRecorded', ['txid' => $txid, 'type' => 'unconfirmed', 'existingLedgerEntries' => count($existing_ledger_entries)]); }
+                        // Log::debug("all ledger entries for payment address: ".json_encode($this->ledger_entry_repository->findByTXID($txid, $payment_address['id']), 192));
                         return;
                     }
 
                     // credit the asset(s) including the BTC dust
                     foreach ($this->buildReceiveBalances($quantity, $asset, $dust_size) as $asset_received => $quantity_received) {
-                        $this->ledger_entry_repository->addCredit($quantity_received, $asset_received, $default_account, $type, $txid);
+                        $this->ledger_entry_repository->addCredit($quantity_received, $asset_received, $default_account, LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
                     }
                 }
 
@@ -149,12 +152,14 @@ class AccountHandler {
                 list($txid, $dust_size, $btc_fees) = $this->extractDataFromParsedTransaction($parsed_tx);
                 // Log::debug("send: $txid, $dust_size, $btc_fees  \$confirmations=$confirmations");
 
+                // Log::debug("send $quantity $asset \$txid=$txid \$confirmations=".json_encode($confirmations, 192));
                 if ($confirmations >= self::SEND_CONFIRMATIONS_REQUIRED) {
-                    // SENT
+                    // confirmed send
 
                     // find any sending funds and debit them
                     $any_sending_funds_found = false;
                     $sent_balances_by_account_id = $this->ledger_entry_repository->accountBalancesByTXID($txid, LedgerEntry::SENDING);
+                    // Log::debug("\$sent_balances_by_account_id=".json_encode($sent_balances_by_account_id, 192));
                     foreach($sent_balances_by_account_id as $account_id => $balances) {
                         $any_sending_funds_found = true;
                         $account = $this->account_repository->findByID($account_id);
@@ -164,28 +169,28 @@ class AccountHandler {
 
                         foreach($balances as $asset => $quantity) {
                             if ($quantity > 0) {
-                                $this->ledger_entry_repository->addDebit($quantity, $asset, $account, LedgerEntry::SENDING, $txid);
+                                $this->ledger_entry_repository->addDebit($quantity, $asset, $account, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
                             }
                         }
                     }
 
                 } else {
-                    // SENDING
+                    // unconfirmed send
 
                     // get the default account
                     $default_account = $this->getAccount($payment_address);
 
-                    // if there are any entries for this txid and payment address already, then 
+                    // if there are any entries for this txid and payment address and type already, then
                     //  don't add anything new
-                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, $payment_address['id']);
+                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, $payment_address['id'], null, LedgerEntry::DIRECTION_SEND);
                     if (count($existing_ledger_entries) > 0) {
-                        if ($confirmations == 0) { EventLog::log('account.send.alreadyRecorded', ['txid' => $txid]); }
+                        if ($confirmations == 0) { EventLog::log('account.send.alreadyRecorded', ['txid' => $txid, 'existingLedgerEntries' => count($existing_ledger_entries)]); }
                         return;
                     }
 
                     // change type
                     foreach ($this->buildSendBalances($quantity, $asset, $btc_fees, $dust_size) as $asset_sent => $quantity_sent) {
-                        $this->ledger_entry_repository->changeType($quantity_sent, $asset_sent, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, $txid);
+                        $this->ledger_entry_repository->changeType($quantity_sent, $asset_sent, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
                     }
                 }
 
@@ -197,7 +202,7 @@ class AccountHandler {
         DB::transaction(function() use ($parsed_tx) {
             $txid = $parsed_tx['txid'];
 
-            $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, null, null);
+            $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, null, null, null);
             if (count($existing_ledger_entries) == 0) { return; }
 
             // get all payment addresses
@@ -229,7 +234,7 @@ class AccountHandler {
             $confirmed_quantity_available = $this->ledger_entry_repository->accountBalance($account, $asset_to_send, LedgerEntry::CONFIRMED);
             $confirmed_quantity_to_send = min($confirmed_quantity_available, $confirmed_and_unconfirmed_quantity_to_send);
             if ($confirmed_quantity_to_send > 0) {
-                $this->ledger_entry_repository->changeType($confirmed_quantity_to_send, $asset_to_send, $account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, $txid);
+                $this->ledger_entry_repository->changeType($confirmed_quantity_to_send, $asset_to_send, $account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
             }
 
             // if any leftover, then do unconfirmed
@@ -237,7 +242,7 @@ class AccountHandler {
                 $unconfirmed_quantity_to_send = $confirmed_and_unconfirmed_quantity_to_send - $confirmed_quantity_to_send;
                 if ($unconfirmed_quantity_to_send > 0) {
                     // Log::debug("\$unconfirmed_quantity_to_send=".json_encode($unconfirmed_quantity_to_send, 192));
-                    $this->ledger_entry_repository->changeType($unconfirmed_quantity_to_send, $asset_to_send, $account, LedgerEntry::UNCONFIRMED, LedgerEntry::SENDING, $txid);
+                    $this->ledger_entry_repository->changeType($unconfirmed_quantity_to_send, $asset_to_send, $account, LedgerEntry::UNCONFIRMED, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
                 }
             }
 
@@ -249,7 +254,7 @@ class AccountHandler {
         $balances_sent = $this->buildSendBalances($quantity, $asset, $float_fee, $dust_size);
         foreach($balances_sent as $sent_asset => $sent_quantity) {
             // Log::debug("changeType $sent_quantity $sent_asset to SENDING with txid $txid");
-            $this->ledger_entry_repository->changeType($sent_quantity, $sent_asset, $account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, $txid);
+            $this->ledger_entry_repository->changeType($sent_quantity, $sent_asset, $account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
         }
     }
 
@@ -422,7 +427,7 @@ class AccountHandler {
             foreach($actual_balances_by_type as $type_string => $actual_balances) {
                 if ($type_string == 'sending') { continue; }
                 foreach($actual_balances as $asset => $quantity) {
-                    $this->ledger_entry_repository->addDebit($quantity, $asset, $account, LedgerEntry::typeStringToInteger($type_string), $txid, $api_call);
+                    $this->ledger_entry_repository->addDebit($quantity, $asset, $account, LedgerEntry::typeStringToInteger($type_string), LedgerEntry::DIRECTION_OTHER, $txid, $api_call);
                 }
             }
         }

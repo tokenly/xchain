@@ -30,7 +30,7 @@ class LedgerEntryRepositoryTest extends TestCase {
 
         // add credit
         $repo = app('App\Repositories\LedgerEntryRepository');
-        $repo->addCredit(100, 'BTC', $account_one, LedgerEntry::CONFIRMED, $txid);
+        $repo->addCredit(100, 'BTC', $account_one, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
 
         // transfer
         $repo->transfer(20, 'BTC', $account_one, $account_two, LedgerEntry::CONFIRMED, $api_call);
@@ -61,7 +61,7 @@ class LedgerEntryRepositoryTest extends TestCase {
 
         // add credit
         $repo = app('App\Repositories\LedgerEntryRepository');
-        $repo->addCredit(100, 'BTC', $account_one, LedgerEntry::CONFIRMED, $txid);
+        $repo->addCredit(100, 'BTC', $account_one, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
 
         // transfer
         $repo->transfer(110, 'BTC', $account_one, $account_two, LedgerEntry::CONFIRMED, $api_call);
@@ -82,7 +82,7 @@ class LedgerEntryRepositoryTest extends TestCase {
 
         // add debit (to empty account)
         $repo = app('App\Repositories\LedgerEntryRepository');
-        $repo->addDebit(100, 'BTC', $account_one, LedgerEntry::CONFIRMED, $txid);
+        $repo->addDebit(100, 'BTC', $account_one, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
     }
 
     public function testAddCreditsAndDebits() {
@@ -94,9 +94,9 @@ class LedgerEntryRepositoryTest extends TestCase {
 
         // add credit
         $repo = app('App\Repositories\LedgerEntryRepository');
-        $repo->addCredit(100, 'BTC', $account, LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit(200, 'BTC', $account, LedgerEntry::CONFIRMED, $txid);
-        $repo->addDebit( 300, 'BTC', $account, LedgerEntry::CONFIRMED, $txid);
+        $repo->addCredit(100, 'BTC', $account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addCredit(200, 'BTC', $account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addDebit( 300, 'BTC', $account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
 
         $loaded_models = array_values(iterator_to_array($repo->findByAccount($account)));
         PHPUnit::assertCount(3, $loaded_models);
@@ -114,10 +114,10 @@ class LedgerEntryRepositoryTest extends TestCase {
 
         // add credit
         $repo = app('App\Repositories\LedgerEntryRepository');
-        $repo->addCredit(100, 'BTC', $account, LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit(200, 'BTC', $account, LedgerEntry::CONFIRMED, $txid);
-        $repo->addDebit(  50, 'BTC', $account, LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit(  3, 'BTC', $account, LedgerEntry::UNCONFIRMED, $txid);
+        $repo->addCredit(100, 'BTC', $account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addCredit(200, 'BTC', $account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addDebit(  50, 'BTC', $account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addCredit(  3, 'BTC', $account, LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
 
         PHPUnit::assertEquals(250, $repo->accountBalance($account, 'BTC', LedgerEntry::CONFIRMED));
         PHPUnit::assertEquals(253, $repo->accountBalance($account, 'BTC', null));
@@ -134,15 +134,15 @@ class LedgerEntryRepositoryTest extends TestCase {
 
         // add credit
         $repo = app('App\Repositories\LedgerEntryRepository');
-        $repo->addCredit(100, 'BTC',     $account,     LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit(200, 'BTC',     $account,     LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit( 80, 'TOKENLY', $account,     LedgerEntry::CONFIRMED, $txid);
-        $repo->addDebit(  50, 'BTC',     $account,     LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit( 23, 'SOUP',    $account,     LedgerEntry::CONFIRMED, $txid);
-        $repo->addDebit(   3, 'SOUP',    $account,     LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit(  9, 'SOUP',    $account_two, LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit(  2, 'BTC',     $account,     LedgerEntry::UNCONFIRMED, $txid);
-        $repo->addCredit(  2, 'BTC',     $account_two, LedgerEntry::UNCONFIRMED, $txid);
+        $repo->addCredit(100, 'BTC',     $account,     LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addCredit(200, 'BTC',     $account,     LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addCredit( 80, 'TOKENLY', $account,     LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addDebit(  50, 'BTC',     $account,     LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addCredit( 23, 'SOUP',    $account,     LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addDebit(   3, 'SOUP',    $account,     LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addCredit(  9, 'SOUP',    $account_two, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addCredit(  2, 'BTC',     $account,     LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addCredit(  2, 'BTC',     $account_two, LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
 
         PHPUnit::assertEquals([
                 'BTC'     => 250,
@@ -178,17 +178,17 @@ class LedgerEntryRepositoryTest extends TestCase {
 
         // add credit
         $repo = app('App\Repositories\LedgerEntryRepository');
-        $repo->addCredit(100, 'BTC',     $account,       LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit(200, 'BTC',     $account,       LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit( 80, 'TOKENLY', $account,       LedgerEntry::CONFIRMED, $txid);
-        $repo->addDebit(  50, 'BTC',     $account,       LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit( 23, 'SOUP',    $account,       LedgerEntry::CONFIRMED, $txid);
-        $repo->addDebit(   3, 'SOUP',    $account,       LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit(  9, 'SOUP',    $account_two,   LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit( 11, 'SOUP',    $account_two,   LedgerEntry::UNCONFIRMED, $txid);
-        $repo->addCredit(  8, 'BTC',     $other_account, LedgerEntry::CONFIRMED, $txid);
-        $repo->addCredit(  2, 'BTC',     $account,       LedgerEntry::UNCONFIRMED, $txid);
-        $repo->addCredit(  3, 'BTC',     $account_two,   LedgerEntry::UNCONFIRMED, $txid);
+        $repo->addCredit(100, 'BTC',     $account,       LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addCredit(200, 'BTC',     $account,       LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addCredit( 80, 'TOKENLY', $account,       LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addDebit(  50, 'BTC',     $account,       LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addCredit( 23, 'SOUP',    $account,       LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addDebit(   3, 'SOUP',    $account,       LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addCredit(  9, 'SOUP',    $account_two,   LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addCredit( 11, 'SOUP',    $account_two,   LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addCredit(  8, 'BTC',     $other_account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addCredit(  2, 'BTC',     $account,       LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+        $repo->addCredit(  3, 'BTC',     $account_two,   LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
 
         PHPUnit::assertEquals([
             'BTC'     => 250,
@@ -211,7 +211,54 @@ class LedgerEntryRepositoryTest extends TestCase {
 
     }
 
+    public function testFindLedgerEntriesByTXID() {
+        $helper = $this->createRepositoryTestHelper();
+        $helper->cleanup();
 
+        $address = app('PaymentAddressHelper')->createSamplePaymentAddress();
+        $address_2 = app('PaymentAddressHelper')->createSamplePaymentAddress();
+        $account = app('AccountHelper')->newSampleAccount($address);
+        $account_two = app('AccountHelper')->newSampleAccount($address_2);
+        $txid_1 = 'deadbeef00000000000000000000000000000000000000000000000000000001';
+        $txid_2 = 'deadbeef00000000000000000000000000000000000000000000000000000002';
+
+        // add entries
+        $entries = [];
+        $repo = app('App\Repositories\LedgerEntryRepository');
+        $entries[] = $repo->addCredit(100, 'BTC',     $account,     LedgerEntry::CONFIRMED,   LedgerEntry::DIRECTION_RECEIVE, $txid_1);
+        $entries[] = $repo->addCredit(100, 'BTC',     $account,     LedgerEntry::CONFIRMED,   LedgerEntry::DIRECTION_SEND,    $txid_1);
+        $entries[] = $repo->addCredit(200, 'BTC',     $account,     LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_OTHER,   $txid_1);
+        $entries[] = $repo->addCredit( 23, 'SOUP',    $account,     LedgerEntry::CONFIRMED,   LedgerEntry::DIRECTION_OTHER,   $txid_1);
+        $entries[] = $repo->addDebit(   3, 'SOUP',    $account,     LedgerEntry::CONFIRMED,   LedgerEntry::DIRECTION_OTHER,   $txid_1);
+        $entries[] = $repo->addCredit(  9, 'SOUP',    $account_two, LedgerEntry::CONFIRMED,   LedgerEntry::DIRECTION_OTHER,   $txid_2);
+        $entries[] = $repo->addDebit(   2, 'SOUP',    $account_two, LedgerEntry::CONFIRMED,   LedgerEntry::DIRECTION_OTHER,   $txid_2);
+
+
+        // all for txid 1
+        $this->assertFound([0,1,2,3,4], $entries, $repo->findByTXID($txid_1, $address['id']));
+        $this->assertFound([0,1,2,3,4], $entries, $repo->findByTXID($txid_1));
+
+        // all for txid 2
+        $this->assertFound([5,6], $entries, $repo->findByTXID($txid_2));
+        $this->assertFound([5,6], $entries, $repo->findByTXID($txid_2, $address_2['id']));
+
+        // filter by type
+        $this->assertFound([0,1,3,4], $entries, $repo->findByTXID($txid_1, $address['id'], LedgerEntry::CONFIRMED));
+        $this->assertFound([2], $entries, $repo->findByTXID($txid_1, $address['id'], LedgerEntry::UNCONFIRMED));
+
+        // filter by direction
+        $this->assertFound([0], $entries, $repo->findByTXID($txid_1,     $address['id'], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_RECEIVE));
+        $this->assertFound([1], $entries, $repo->findByTXID($txid_1,     $address['id'], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_SEND));
+        $this->assertFound([3,4], $entries, $repo->findByTXID($txid_1,   $address['id'], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER));
+        $this->assertFound([0], $entries, $repo->findByTXID($txid_1,     $address['id'], null,                   LedgerEntry::DIRECTION_RECEIVE));
+        $this->assertFound([1], $entries, $repo->findByTXID($txid_1,     $address['id'], null,                   LedgerEntry::DIRECTION_SEND));
+        $this->assertFound([2,3,4], $entries, $repo->findByTXID($txid_1, $address['id'], null,                   LedgerEntry::DIRECTION_OTHER));
+
+    }
+
+
+    // ------------------------------------------------------------------------
+    
     protected function createRepositoryTestHelper() {
         $create_model_fn = function() {
             $address = app('PaymentAddressHelper')->createSamplePaymentAddressWithoutInitialBalances();
@@ -225,5 +272,22 @@ class LedgerEntryRepositoryTest extends TestCase {
     protected function sampleEvent($account) {
         return app('BotEventHelper')->newSampleBotEvent($account);
     }
+
+    protected function assertFound($expected_offsets, $sample_entries, $chosen_entries) {
+        $expected_entry_arrays = [];
+        foreach($expected_offsets as $expected_offset) {
+            $expected_entry_arrays[] = $sample_entries[$expected_offset]->toArray();
+        }
+
+        $actual_amounts = [];
+        $chosen_entry_arrays = [];
+        foreach($chosen_entries as $chosen_entry) {
+            $chosen_entry_arrays[] = ($chosen_entry ? $chosen_entry->toArray() : null);
+            $actual_amounts[] = CurrencyUtil::satoshisToFormattedString($chosen_entry['amount']).' '.$chosen_entry['asset'];
+        }
+
+        PHPUnit::assertEquals($expected_entry_arrays, $chosen_entry_arrays, "Did not find the expected offsets of ".json_encode($expected_offsets).'. Actual amounts were '.json_encode($actual_amounts));
+    }
+
 
 }

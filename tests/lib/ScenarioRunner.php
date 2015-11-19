@@ -368,7 +368,7 @@ class ScenarioRunner
 
             if (isset($raw_attributes['accountBalances'])) {
                 foreach ($raw_attributes['accountBalances'] as $asset => $balance) {
-                    $ledger_entry_repository->addCredit($balance, $asset, $default_account, LedgerEntry::CONFIRMED, 'testtxid');
+                    $ledger_entry_repository->addCredit($balance, $asset, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, 'testtxid');
 
                     if ($asset == 'BTC') { $btc_balance += $balance; }
                 }
@@ -376,7 +376,7 @@ class ScenarioRunner
             if (isset($raw_attributes['rawAccountBalances'])) {
                 foreach ($raw_attributes['rawAccountBalances'] as $type_string => $balances) {
                     foreach ($balances as $asset => $balance) {
-                        $ledger_entry_repository->addCredit($balance, $asset, $default_account, LedgerEntry::typeStringToInteger($type_string), 'testtxid');
+                        $ledger_entry_repository->addCredit($balance, $asset, $default_account, LedgerEntry::typeStringToInteger($type_string), LedgerEntry::DIRECTION_OTHER, 'testtxid');
 
                         if ($asset == 'BTC') { $btc_balance += $balance; }
                     }

@@ -18,6 +18,7 @@ class LedgerEntryHelper  {
             'api_call_id'          => null,
             'txid'                 => null,
             'type'                 => LedgerEntry::CONFIRMED,
+            'direction'            => LedgerEntry::DIRECTION_RECEIVE,
 
             'amount'               => 100000000,
             'asset'                => 'BTC',

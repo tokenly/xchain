@@ -167,9 +167,9 @@ class BalanceLedgerCommand extends Command {
             $this->info($msg);
             $ledger_entry_type = ($balance_type == 'unconfirmed' ? LedgerEntry::UNCONFIRMED : LedgerEntry::SENDING);
             if ($quantity < 0) {
-                $ledger->addCredit(0-$quantity, $asset, $account, $ledger_entry_type, null, $api_call);
+                $ledger->addCredit(0-$quantity, $asset, $account, $ledger_entry_type, LedgerEntry::DIRECTION_OTHER, null, $api_call);
             } else {
-                $ledger->addDebit($quantity, $asset, $account, $ledger_entry_type, null, $api_call);
+                $ledger->addDebit($quantity, $asset, $account, $ledger_entry_type, LedgerEntry::DIRECTION_OTHER, null, $api_call);
             }
         }
     }
