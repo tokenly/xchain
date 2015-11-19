@@ -16,6 +16,10 @@ $router->get('api/v1/transactions/{addressId}', 'API\TransactionController@index
 $router->post('api/v1/sends/{addressId}', 'API\SendController@create');
 $router->post('api/v1/multisends/{addressId}', 'API\SendController@createMultisend');
 
+// prime address
+$router->get('api/v1/primes/{addressId}', 'API\PrimeController@getPrimedUTXOs');
+$router->post('api/v1/primes/{addressId}', 'API\PrimeController@primeAddress');
+
 // address balance
 $router->get('api/v1/balances/{addressId}', 'API\BalancesController@show');
 

@@ -242,9 +242,15 @@ class PaymentAddressSender {
         } else {
             if (strtoupper($asset) == 'BTC') {
                 // compose the BTC transaction
-                $strategy = ($this->isPrimeSend($payment_address, $destination) ? TXOChooser::STRATEGY_PRIME : TXOChooser::STRATEGY_BALANCED);
-                $chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_quantity, $float_fee, null, $strategy);
-                Log::debug("strategy=$strategy Chosen UTXOs: ".$this->debugDumpUTXOs($chosen_txos));
+                if ($this->isPrimeSend($payment_address, $destination)) {
+                    $float_prime_size = $this->getPrimeSendSize($destination, $float_quantity);
+                    $chosen_txos = $this->txo_chooser->chooseUTXOsForPriming($payment_address, $float_quantity, $float_fee, null, $float_prime_size);
+                    $debug_strategy_text = 'prime';
+                } else {
+                    $chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_quantity, $float_fee, null, TXOChooser::STRATEGY_BALANCED);
+                    $debug_strategy_text = 'balanced';
+                }
+                Log::debug("strategy=$debug_strategy_text Chosen UTXOs: ".$this->debugDumpUTXOs($chosen_txos));
                 if (!$chosen_txos) { throw new Exception("Unable to select transaction outputs (UTXOs)", 1); }
 
                 // $signed_transaction = $this->bitcoin_payer->buildSignedTransactionHexToSendBTC($payment_address['address'], $destination, $float_quantity, $wif_private_key, $float_fee);
@@ -314,7 +320,7 @@ class PaymentAddressSender {
         $all_destinations_are_self = true;
         if (is_array($destination_or_destinations)) {
             foreach($destination_or_destinations as $destination_pair) {
-                if ($destination_pair[0] != $payment_address) {
+                if ($destination_pair[0] != $address) {
                     $all_destinations_are_self = false;
                     break;
                 }
@@ -324,6 +330,16 @@ class PaymentAddressSender {
         }
 
         return $all_destinations_are_self;
+    }
+
+    protected function getPrimeSendSize($destination_or_destinations, $float_quantity) {
+        if (is_array($destination_or_destinations)) {
+            foreach($destination_or_destinations as $destination_pair) {
+                return CurrencyUtil::satoshisToValue($destination_pair[1]);
+            }
+        } else {
+            return $float_quantity;
+        }
     }
 
     // ------------------------------------------------------------------------

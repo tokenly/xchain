@@ -29,6 +29,14 @@ class TransactionComposerHelper
 
         $out = [];
 
+        // inputs
+        $inputs = $transaction->getInputs();
+        $out['inputs'] = [];
+        foreach($inputs as $input) {
+            $out['inputs'][] = ['txid' => $input->getTransactionId(), 'n' => $input->getVout()];
+        }
+
+
         // txid
         $out['txid'] = $transaction->getTxId()->getHex();
 

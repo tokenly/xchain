@@ -106,11 +106,26 @@ class TXOChooserTest extends TestCase {
 
         list($payment_address, $sample_txos) = $this->makeAddressAndSampleTXOs();
 
-        // 1 confirmed TXO
-        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(4900), $float(100), 0, TXOChooser::STRATEGY_PRIME);
-        $this->assertFound([5], $sample_txos, $chosen_txos);
+        // priming size without exclusion
+        $chosen_txos = $txo_chooser->chooseUTXOsForPriming($payment_address, $float(6000), $float(100), $float(5430), $float(1001));
+        $this->assertFound([5,4,0], $sample_txos, $chosen_txos);
 
+        // priming size with exclusion (does not choose the 1000 satoshi UTXO)
+        $chosen_txos = $txo_chooser->chooseUTXOsForPriming($payment_address, $float(6000), $float(100), $float(5430), $float(1000));
+        $this->assertFound([5,3,2], $sample_txos, $chosen_txos);
     }
+    /*
+        6: 50000
+        5:  7000
+        4:  4000
+        3:  3000
+        2:  2000
+        1:  2010
+        0:  1000
+    */
+
+
+
     public function testChooseTXOsWithMinChange()
     {
         // receiving a transaction adds TXOs

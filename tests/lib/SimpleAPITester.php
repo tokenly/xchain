@@ -84,6 +84,14 @@ class SimpleAPITester
         ]);
     }
 
+    public function testGetErrors($error_scenarios, $url_path = '')
+    {
+        return $this->testErrors($error_scenarios, [
+            'method'  => 'GET',
+            'urlPath' => $url_path,
+        ]);
+    }
+
     public function testErrors($error_scenarios, $defaults=[])
     {
         foreach($error_scenarios as $error_scenario) {

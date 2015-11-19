@@ -28,6 +28,21 @@ class ComposedTransactionRepository
         ];
     }
 
+    // public function getComposedTransactionByTXID($txid) {
+    //     $loaded_object = DB::connection('untransacted')
+    //         ->table('composed_transactions')
+    //         ->where(['txid' => $txid])
+    //         ->first();
+    //     if (!$loaded_object) { return null; }
+
+    //     return [
+    //         'txid'         => $loaded_object->txid,
+    //         'transaction'  => $loaded_object->transaction,
+    //         'utxos'        => json_decode($loaded_object->utxos, true),
+    //         'request_id'   => $loaded_object->request_id,
+    //     ];
+    // }
+
     public function storeOrFetchComposedTransaction($request_id, $txid, $transaction_hex, Array $utxos) {
 
         try {
