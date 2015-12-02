@@ -188,14 +188,19 @@ class TXOChooser {
         // try to all exact matches with no change
         $selected_txo_groupings = [];
         // $allCombinationsFn($total_satoshis_needed_without_change, true, 0, count($txos), $selected_txo_groupings);
-        $this->__findExactChangeCombinations($txos, $total_satoshis_needed_without_change, $selected_txo_groupings);
+        Log::debug("begin __findExactChangeCombinations"); $_t_start = microtime(true);
+        $context=[];
+        $this->__findExactChangeCombinations($txos, $total_satoshis_needed_without_change, $selected_txo_groupings, $context);
+        Log::debug("end __findExactChangeCombinations: ".round((microtime(true) - $_t_start) * 1000)." ms");
 
         if (!$selected_txo_groupings) {
             // since we couldn't find an exact match with no change, find all matches with change
             $selected_txo_groupings = [];
             // $allCombinationsFn($total_satoshis_needed_with_change, false, 0, count($txos), $selected_txo_groupings);
             $context=[];
+            Log::debug("begin __findFewestTXOsCombinations"); $_t_start = microtime(true);
             $this->__findFewestTXOsCombinations($txos, $total_satoshis_needed_with_change, $selected_txo_groupings, $context);
+            Log::debug("end __findFewestTXOsCombinations: ".round((microtime(true) - $_t_start) * 1000)." ms");
 
         }
 
@@ -272,7 +277,15 @@ class TXOChooser {
     // ------------------------------------------------------------------------
     
     // finds all combinations of the given txos
-    protected function __findExactChangeCombinations($txos, $desired_amount, &$all_groupings, $matched_txos=[], $sum=0, $start=0, $iteration_count=0) {
+    protected function __findExactChangeCombinations($txos, $desired_amount, &$all_groupings, &$context, $matched_txos=[], $sum=0, $start=0, $iteration_count=0) {
+        if (!isset($context['iteration_count'])) { $context['iteration_count'] = 0; }
+        if (!isset($context['lowest_count_so_far'])) { $context['lowest_count_so_far'] = null; }
+        ++$context['iteration_count'];
+        if ($context['iteration_count'] > 10000) {
+            Log::debug("__findExactChangeCombinations iteration count at {$context['iteration_count']}.  Giving up.");
+            return;
+        }
+
         $count = count($txos);
 
         for ($i=$start; $i < $count; $i++) { 
@@ -281,6 +294,12 @@ class TXOChooser {
 
             $working_sum = $sum + $txo_amount;
             $working_txos = array_merge($matched_txos, [$txo]);
+            $working_txos_count = count($working_txos);
+
+            if ($context['lowest_count_so_far'] !== null AND $working_txos_count > $context['lowest_count_so_far']) {
+                // this will never be one of the lowest count
+                return;
+            }
 
             // does this sum satisfy the requirements
             $is_satisfied = ($working_sum == $desired_amount);
@@ -296,12 +315,16 @@ class TXOChooser {
 
             if ($is_satisfied) {
                 // amount satisfied, stop recursing
-                $all_groupings[] = ['sum' => $working_sum, 'txos' => $working_txos, 'count' => count($working_txos)];
+                $all_groupings[] = ['sum' => $working_sum, 'txos' => $working_txos, 'count' => $working_txos_count];
+
+                if ($context['lowest_count_so_far'] === null OR $working_txos_count < $context['lowest_count_so_far']) {
+                    $context['lowest_count_so_far'] = $working_txos_count;
+                }
             }
 
             // recurse
             if ($should_recurse) {
-                $this->__findExactChangeCombinations($txos, $desired_amount, $all_groupings, $working_txos, $working_sum, $i+1, $iteration_count+1);
+                $this->__findExactChangeCombinations($txos, $desired_amount, $all_groupings, $context, $working_txos, $working_sum, $i+1, $iteration_count+1);
             }
         }
     }
@@ -309,6 +332,12 @@ class TXOChooser {
     // finds all combinations of the given txos
     protected function __findFewestTXOsCombinations($txos, $desired_amount, &$all_groupings, &$context, $matched_txos=[], $sum=0, $start=0, $iteration_count=0) {
         if (!isset($context['lowest_sum_so_far'])) { $context['lowest_sum_so_far'] = null; }
+        if (!isset($context['iteration_count'])) { $context['iteration_count'] = 0; }
+        ++$context['iteration_count'];
+        if ($context['iteration_count'] > 10000) {
+            Log::debug("iteration count at {$context['iteration_count']}.  Giving up.");
+            return;
+        }
 
         $count = count($txos);
 

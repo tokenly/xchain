@@ -196,6 +196,22 @@ class TXOChooserTest extends TestCase {
 
     }
 
+    public function testChooseTXOsFour()
+    {
+        // receiving a transaction adds TXOs
+        $txo_repository = app('App\Repositories\TXORepository');
+        $txo_chooser    = app('App\Blockchain\Sender\TXOChooser');
+
+        $float = function($i) { return CurrencyUtil::satoshisToValue($i); };
+
+        list($payment_address, $sample_txos) = $this->makeAddressAndSampleTXOs_4();
+
+        // choose exact change from a bunch
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, 0.0005, 0.0001, $float(5430));
+        // $this->assertFound([2,1,3,4], $sample_txos, $chosen_txos);
+
+    }
+
     // ------------------------------------------------------------------------
     
     protected function TXOHelper() {
@@ -268,17 +284,27 @@ class TXOChooserTest extends TestCase {
         $payment_address = $payment_address_helper->createSamplePaymentAddressWithoutInitialBalances(null, ['address' => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD']);
         $sample_txos = [];
 
-        // for ($i=0; $i < 6; $i++) { 
-        //     $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txo_helper->nextTXID(), 'amount' => 5430,  'n' => 0, 'type' => TXO::CONFIRMED, 'green' => 0]);
-        // }
-        // for ($i=0; $i < 28; $i++) { 
-        //     $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txo_helper->nextTXID(), 'amount' => 5470,  'n' => 0, 'type' => TXO::CONFIRMED, 'green' => 0]);
-        // }
-
         for ($i=0; $i < 6; $i++) { 
             $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txo_helper->nextTXID(), 'amount' => 5430,  'n' => 0, 'type' => TXO::CONFIRMED, 'green' => 0]);
         }
         for ($i=0; $i < 28; $i++) { 
+            $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txo_helper->nextTXID(), 'amount' => 5470,  'n' => 0, 'type' => TXO::CONFIRMED, 'green' => 0]);
+        }
+
+        return [$payment_address, $sample_txos];
+    }
+
+    protected function makeAddressAndSampleTXOs_4() {
+        $payment_address_helper = app('PaymentAddressHelper');
+
+        $txo_helper = $this->TXOHelper();
+        $payment_address = $payment_address_helper->createSamplePaymentAddressWithoutInitialBalances(null, ['address' => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD']);
+        $sample_txos = [];
+
+        for ($i=0; $i < 10; $i++) { 
+            $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txo_helper->nextTXID(), 'amount' => 5430,  'n' => 0, 'type' => TXO::CONFIRMED, 'green' => 0]);
+        }
+        for ($i=0; $i < 10; $i++) { 
             $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txo_helper->nextTXID(), 'amount' => 5470,  'n' => 0, 'type' => TXO::CONFIRMED, 'green' => 0]);
         }
 

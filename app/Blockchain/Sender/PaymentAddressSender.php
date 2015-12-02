@@ -273,8 +273,13 @@ class PaymentAddressSender {
 
 
                 // debug
-                $_debug_parsed_tx = app('\TransactionComposerHelper')->parseCounterpartyTransaction($composed_transaction->getTransactionHex());
-                Log::debug("Counterparty send: \$_debug_parsed_tx=".json_encode($_debug_parsed_tx, 192));
+                try {
+                    $_debug_parsed_tx = app('\TransactionComposerHelper')->parseCounterpartyTransaction($composed_transaction->getTransactionHex());
+                    Log::debug("Counterparty send: \$_debug_parsed_tx=".json_encode($_debug_parsed_tx, 192));
+                } catch (Exception $e) {
+                    Log::debug("Error composing send: $asset, ".(($quantity instanceof Quantity) ? $quantity->getRawValue() : $quantity).", $destination  ".$e->getMessage());
+                    throw $e;
+                }
 
             }
         }

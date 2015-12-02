@@ -111,7 +111,7 @@ class TransactionComposerHelper
 
         $b26_digits = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-        if ($asset_id < pow(26, 3)) { throw new Exception("asset ID was too low", 1); }
+        if ($asset_id < pow(26, 3)) { throw new Exception("asset ID was too low (".json_encode($asset_id, 192).")", 1); }
 
         # Divide that integer into Base 26 string.
         $asset_name = '';

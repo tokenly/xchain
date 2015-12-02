@@ -75,7 +75,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Bit-Wasp/bitcoin-lib-php/zipball/08c6e66388a2f2778ad2e6e5baab5a303c43d007",
+                "url": "https://api.github.com/repos/Bit-Wasp/bitcoin-lib-php/zipball/2e56f2f4bf497acec6daa6dac43724740812e265",
                 "reference": "1d858a9c0411ba2309b8a991a1885e31331aa7d2",
                 "shasum": ""
             },
@@ -3578,12 +3578,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-composer.git",
-                "reference": "c4029df5c7e19a3671c9c8b4536a3de2f3d09f26"
+                "reference": "3f6ddccdb6e98c06e4535d0427d62ffc8eede385"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/c4029df5c7e19a3671c9c8b4536a3de2f3d09f26",
-                "reference": "c4029df5c7e19a3671c9c8b4536a3de2f3d09f26",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/3f6ddccdb6e98c06e4535d0427d62ffc8eede385",
+                "reference": "3f6ddccdb6e98c06e4535d0427d62ffc8eede385",
                 "shasum": ""
             },
             "require": {
@@ -3615,7 +3615,7 @@
                 }
             ],
             "description": "Composes counterparty and bitcoin transactions",
-            "time": "2015-11-12 16:17:59"
+            "time": "2015-11-17 05:15:14"
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
