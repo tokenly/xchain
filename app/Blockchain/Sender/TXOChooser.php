@@ -188,19 +188,19 @@ class TXOChooser {
         // try to all exact matches with no change
         $selected_txo_groupings = [];
         // $allCombinationsFn($total_satoshis_needed_without_change, true, 0, count($txos), $selected_txo_groupings);
-        Log::debug("begin __findExactChangeCombinations"); $_t_start = microtime(true);
+        // Log::debug("begin __findExactChangeCombinations"); $_t_start = microtime(true);
         $context=[];
         $this->__findExactChangeCombinations($txos, $total_satoshis_needed_without_change, $selected_txo_groupings, $context);
-        Log::debug("end __findExactChangeCombinations: ".round((microtime(true) - $_t_start) * 1000)." ms");
+        // Log::debug("end __findExactChangeCombinations: ".round((microtime(true) - $_t_start) * 1000)." ms");
 
         if (!$selected_txo_groupings) {
             // since we couldn't find an exact match with no change, find all matches with change
             $selected_txo_groupings = [];
             // $allCombinationsFn($total_satoshis_needed_with_change, false, 0, count($txos), $selected_txo_groupings);
             $context=[];
-            Log::debug("begin __findFewestTXOsCombinations"); $_t_start = microtime(true);
+            // Log::debug("begin __findFewestTXOsCombinations"); $_t_start = microtime(true);
             $this->__findFewestTXOsCombinations($txos, $total_satoshis_needed_with_change, $selected_txo_groupings, $context);
-            Log::debug("end __findFewestTXOsCombinations: ".round((microtime(true) - $_t_start) * 1000)." ms");
+            // Log::debug("end __findFewestTXOsCombinations: ".round((microtime(true) - $_t_start) * 1000)." ms");
 
         }
 
