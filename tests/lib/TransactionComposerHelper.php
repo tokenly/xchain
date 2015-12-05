@@ -4,7 +4,9 @@ use App\Models\TXO;
 use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\TXORepository;
 use BitWasp\Bitcoin\Address\AddressFactory;
+use BitWasp\Bitcoin\Address\ScriptHashAddress;
 use BitWasp\Bitcoin\Key\PublicKeyFactory;
+use BitWasp\Bitcoin\Script\Classifier\InputClassifier;
 use BitWasp\Bitcoin\Script\ScriptFactory;
 use BitWasp\Bitcoin\Transaction\TransactionFactory;
 
@@ -33,7 +35,27 @@ class TransactionComposerHelper
         $inputs = $transaction->getInputs();
         $out['inputs'] = [];
         foreach($inputs as $input) {
-            $out['inputs'][] = ['txid' => $input->getTransactionId(), 'n' => $input->getVout()];
+            // extract the address
+            $address = null;
+
+            // address decoding not implemented yet
+            // $script = $input->getScript();
+            // $classifier = new InputClassifier($script);
+            // if ($classifier->isPayToPublicKeyHash()) {
+            //     $decoded = $script->getScriptParser()->decode();
+            //     $hex_buffer = $decoded[1]->getData();
+            //     $public_key = PublicKeyFactory::fromHex($hex_buffer);
+            //     $address = $public_key->getAddress()->getAddress();
+            // } else if ($classifier->isPayToScriptHash()) {
+            //     $decoded = $script->getScriptParser()->decode();
+            //     $hex_buffer = $decoded[count($decoded)-1]->getData();
+            //     $script = ScriptFactory::fromHex($hex_buffer);
+            //     $sh_address = new ScriptHashAddress($script->getScriptHash());
+            //     $address = $sh_address->getAddress();
+            // }
+
+            $out['inputs'][] = ['txid' => $input->getTransactionId(), 'n' => $input->getVout(), 'addr' => $address];
+
         }
 
 
