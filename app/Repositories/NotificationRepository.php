@@ -7,6 +7,7 @@ use App\Models\MonitoredAddress;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Rhumsaa\Uuid\Uuid;
 use \Exception;
 
@@ -59,6 +60,10 @@ class NotificationRepository
         return Notification::where('uuid', $uuid)->first();
     }
 
+    public function findByBlockId($block_id) {
+        return Notification::where('block_id', $block_id)->get();
+    }
+
 
     public function updateByUuid($uuid, $attributes) {
         $model = $this->findByUuid($uuid);
@@ -66,22 +71,41 @@ class NotificationRepository
         return $this->update($model, $attributes);
     }
 
-    public function update(Model $address, $attributes) {
-        return $address->update($attributes);
+    public function update(Model $notification, $attributes) {
+        return $notification->update($attributes);
     }
 
 
     public function deleteByUuid($uuid) {
-        if ($address = self::findByUuid($uuid)) {
-            return self::delete($address);
+        if ($notification = self::findByUuid($uuid)) {
+            return self::delete($notification);
         }
         return false;
     }
 
-    public function delete(Model $address) {
-        return $address->delete();
+    public function delete(Model $notification) {
+        return $notification->delete();
     }
 
 
+    public function archive($notification) {
+        DB::transaction(function() use ($notification) {
+            $create_vars = $notification->getOriginal();
+
+            // set the block hash
+            $block = app('App\Repositories\BlockRepository')->findByID($create_vars['block_id']);
+            $create_vars['block_hash'] = $block['hash'];
+
+            // clear the unused variables
+            unset($create_vars['block_id']);
+            unset($create_vars['updated_at']);
+
+            // create the new one
+            DB::table('notification_archive')->insert($create_vars);
+
+            // delete the old one
+            self::delete($notification);
+        });
+    }
 
 }
