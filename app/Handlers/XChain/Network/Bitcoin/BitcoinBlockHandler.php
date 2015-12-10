@@ -132,7 +132,7 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
                             Log::warning("Counld not confirm transaction {$transaction['txid']} in block: {$transaction['block_confirmed_hash']} \$confirmations is ".json_encode($confirmations, 192));
                             throw new Exception("Unable to load confirmations for block {$block_hash_for_transaction}", 1);
                         }
-                        $this->wlog("transaction was confirmed in block: {$transaction['block_confirmed_hash']} \$confirmations is $confirmations");
+                        // $this->wlog("transaction was confirmed in block: {$transaction['block_confirmed_hash']} \$confirmations is $confirmations");
                     }
                     unset($parsed_tx['bitcoinTx']['confirmations']);
 
