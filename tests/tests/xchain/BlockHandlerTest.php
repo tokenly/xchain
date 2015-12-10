@@ -8,9 +8,7 @@ class BlockHandlerTest extends TestCase {
 
     public function testBlockHandler() {
         // init mocks
-        $mock_builder = new \InsightAPIMockBuilder();
-        $mock_calls = $mock_builder->installMockInsightClient($this->app, $this);
-
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
         // build and process a block event
         $block_event = $this->buildBlockEvent([
@@ -24,15 +22,14 @@ class BlockHandlerTest extends TestCase {
         $block_handler->processBlock($block_event);
 
         // check mock calls
-        PHPUnit::assertEquals('f88d98717dacb985e3ad49ffa66b8562d8194f1885f58425e1c8582ce2ac5b58', $mock_calls['insight'][0]['args'][0]);
-        PHPUnit::assertEquals('8de3c8666c40f73ae13df0206e9caf83c075c51eb54349331aeeba130b7520c8', $mock_calls['insight'][1]['args'][0]);
+        PHPUnit::assertEquals('f88d98717dacb985e3ad49ffa66b8562d8194f1885f58425e1c8582ce2ac5b58', $mock_calls['btcd'][0]['args'][0]);
+        PHPUnit::assertEquals('8de3c8666c40f73ae13df0206e9caf83c075c51eb54349331aeeba130b7520c8', $mock_calls['btcd'][2]['args'][0]);
     }
 
 
     public function testDuplicateBlockErrorStillHandlesTransactions() {
         // init mocks
-        $mock_builder = new \InsightAPIMockBuilder();
-        $mock_calls = $mock_builder->installMockInsightClient($this->app, $this);
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
 
         // insert a block that will be a duplicate
@@ -55,14 +52,13 @@ class BlockHandlerTest extends TestCase {
         $block_handler->processBlock($block_event);
 
         // check mock calls
-        PHPUnit::assertEquals('f88d98717dacb985e3ad49ffa66b8562d8194f1885f58425e1c8582ce2ac5b58', $mock_calls['insight'][0]['args'][0]);
-        PHPUnit::assertEquals('8de3c8666c40f73ae13df0206e9caf83c075c51eb54349331aeeba130b7520c8', $mock_calls['insight'][1]['args'][0]);
+        PHPUnit::assertEquals('f88d98717dacb985e3ad49ffa66b8562d8194f1885f58425e1c8582ce2ac5b58', $mock_calls['btcd'][0]['args'][0]);
+        PHPUnit::assertEquals('8de3c8666c40f73ae13df0206e9caf83c075c51eb54349331aeeba130b7520c8', $mock_calls['btcd'][2]['args'][0]);
     }
 
 
     public function testDuplicateBlockErrorSendsNotificationsOnce() {
         // init mocks
-        $mock_builder = new \InsightAPIMockBuilder();
         $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
         $queue_manager = app('Illuminate\Queue\QueueManager');
         $queue_manager->addConnector('sync', function() {
@@ -90,15 +86,15 @@ class BlockHandlerTest extends TestCase {
         $block_handler->processBlock($block_event);
 
         // check mock calls
-        $insight_calls = $mock_calls['insight']['insight'];
-        PHPUnit::assertEquals('000000000000000000000000000000000000000000000000000000000000001a', $insight_calls[0]['args'][0]);
-        PHPUnit::assertEquals('8de3c8666c40f73ae13df0206e9caf83c075c51eb54349331aeeba130b7520c8', $insight_calls[1]['args'][0]);
+        $btcd_calls = $mock_calls['btcd'];
+        PHPUnit::assertEquals('000000000000000000000000000000000000000000000000000000000000001a', $btcd_calls[0]['args'][0]);
+        PHPUnit::assertEquals('8de3c8666c40f73ae13df0206e9caf83c075c51eb54349331aeeba130b7520c8', $btcd_calls[2]['args'][0]);
 
         // check notifications out
         $notifications = $this->getActualNotifications($queue_manager);
         PHPUnit::assertCount(1, $notifications);
         $payload = json_decode($notifications[0]['payload'], true);
-        PHPUnit::assertEquals(['12iVwKP7jCPnuYy7jbAbyXnZ3FxvgLwvGK'], $payload['sources']);
+        PHPUnit::assertEquals(['1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD'], $payload['sources']);
         PHPUnit::assertEquals(['1KUsjZKrkd7LYRV7pbnNJtofsq1HAiz6MF'], $payload['destinations']);
 
         // process the block a second time

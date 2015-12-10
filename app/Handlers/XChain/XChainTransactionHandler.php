@@ -17,6 +17,7 @@ class XChainTransactionHandler {
     }
 
     public function handleUnconfirmedTransaction($parsed_tx, $confirmations, $block_seq, $block) {
+        Log::debug("handleUnconfirmedTransaction");
         $transaction_handler = $this->network_handler_factory->buildTransactionHandler($parsed_tx['network']);
 
         $transaction = $transaction_handler->storeParsedTransaction($parsed_tx);

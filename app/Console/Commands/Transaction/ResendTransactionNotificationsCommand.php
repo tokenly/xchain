@@ -55,9 +55,9 @@ EOF
 
 
         if (!$transaction_model) {
-            $this->comment('Loading transaction '.$txid.' from insight');
+            $this->comment('Loading transaction '.$txid.' from bitcoind');
             $transaction_store = app('App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionStore');
-            $transaction_model = $transaction_store->getParsedTransactionFromInsight($txid);
+            $transaction_model = $transaction_store->getParsedTransactionFromBitcoind($txid);
         }
 
         if (!$transaction_model) {

@@ -6,7 +6,7 @@ use App\Handlers\XChain\Network\Bitcoin\BitcoinBlockEventBuilder;
 use App\Repositories\BlockRepository;
 use Exception;
 use Illuminate\Support\Facades\Config;
-use Tokenly\Insight\Client;
+use Nbobtc\Bitcoind\Bitcoind;
 
 
 /*
@@ -15,9 +15,9 @@ use Tokenly\Insight\Client;
 */
 class BlockChainStore {
 
-    public function __construct(BlockRepository $block_repository, Client $insight_client, BitcoinBlockEventBuilder $block_event_builder) {
+    public function __construct(BlockRepository $block_repository, Bitcoind $bitcoind_client, BitcoinBlockEventBuilder $block_event_builder) {
         $this->block_repository    = $block_repository;
-        $this->insight_client      = $insight_client;
+        $this->bitcoind_client     = $bitcoind_client;
         $this->block_event_builder = $block_event_builder;
     }
 
@@ -60,7 +60,7 @@ class BlockChainStore {
         return null;
     }
 
-    public function loadMissingBlockEventsFromInsight($first_missing_hash, $raw_backfill_max=null) {
+    public function loadMissingBlockEventsFromBitcoind($first_missing_hash, $raw_backfill_max=null) {
         if ($raw_backfill_max === null) { $backfill_max = Config::get('xchain.backfill_max'); }
             else { $backfill_max = $raw_backfill_max; }
 
@@ -89,8 +89,8 @@ class BlockChainStore {
                 $working_hash = null;
                 // we are done
             } else {
-                // load the block from insight
-                $block = $this->loadBlockEventFromInsight($working_hash);
+                // load the block from bitcoind
+                $block = $this->loadBlockEventFromBitcoind($working_hash);
 
                 $missing_block_event = $block;
                 $missing_block_events[] = $missing_block_event;
@@ -105,10 +105,8 @@ class BlockChainStore {
 
     }
 
-    public function loadBlockEventFromInsight($hash) {
-        $insight_data = $this->insight_client->getBlock($hash);
-        if (!$insight_data) { return null; }
-        return $this->block_event_builder->buildBlockEventFromInsightData($insight_data);
+    public function loadBlockEventFromBitcoind($hash) {
+        return $this->block_event_builder->buildBlockEventData($hash);
     }
 
     /**

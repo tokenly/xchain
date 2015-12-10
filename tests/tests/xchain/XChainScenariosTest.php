@@ -57,17 +57,6 @@ class XChainScenariosTest extends TestCase {
         return $this->scenario_runner;
     }
 
-    // protected function init() {
-    //     if (!isset($this->mocks_inited)) {
-    //         $this->mocks_inited = true;
-
-    //         $mock_builder = new \InsightAPIMockBuilder();
-    //         $mock_builder->installMockInsightClient($this->app, $this);
-
-    //     }
-    //     return $this->mocks_inited;
-    // }
-
     protected function resetForScenario() {
         // reset the DB
         $this->teardownDb();

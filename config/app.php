@@ -152,7 +152,6 @@ return [
 		'Tokenly\XCPDClient\XCPDClientServiceProvider',
 		'Tokenly\BitcoinPayer\Provider\BitcoinPayerServiceProvider',
 		'Tokenly\CounterpartySender\Provider\CounterpartySenderServiceProvider',
-		'Tokenly\Insight\InsightServiceProvider',
 		'Tokenly\HmacAuth\ServiceProvider\HmacAuthServiceProvider',
 		'Tokenly\BitcoinAddressLib\BitcoinAddressServiceProvider',
 		'Tokenly\PusherClient\Provider\PusherClientServiceProvider',

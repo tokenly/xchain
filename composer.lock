@@ -4,27 +4,28 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "79f1f7e940661f2a5a68f8822b3257e2",
-    "content-hash": "dc2c2cecbc4969e2cd44724e6687c52e",
+    "hash": "d0d36a4b0911df5ecc1c10ca1b4f8ee8",
+    "content-hash": "a8a879fe12def19275b78b11d5a4725e",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
-            "version": "v0.0.13.2",
+            "version": "v0.0.18",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Bit-Wasp/bitcoin-php.git",
-                "reference": "25298b0ffd2017e2636b4aafaefba6998638b8b5"
+                "reference": "6b32ffe54c7eea21c694b151af7dae214a2b0e8c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Bit-Wasp/bitcoin-php/zipball/25298b0ffd2017e2636b4aafaefba6998638b8b5",
-                "reference": "25298b0ffd2017e2636b4aafaefba6998638b8b5",
+                "url": "https://api.github.com/repos/Bit-Wasp/bitcoin-php/zipball/6b32ffe54c7eea21c694b151af7dae214a2b0e8c",
+                "reference": "6b32ffe54c7eea21c694b151af7dae214a2b0e8c",
                 "shasum": ""
             },
             "require": {
                 "bitwasp/buffertools": "~0.1",
                 "bitwasp/secp256k1-php": "~0.0.6",
                 "bitwasp/stratum": "~0.1",
+                "bitwasp/trait": "~0.0",
                 "ext-curl": "*",
                 "ext-gmp": "*",
                 "ext-json": "*",
@@ -63,7 +64,7 @@
             ],
             "description": "PHP Bitcoin library with functions for transactions, signatures, serialization, Random/Deterministic ECDSA keys, blocks, RPC bindings",
             "homepage": "https://github.com/bit-wasp/bitcoin-php",
-            "time": "2015-10-27 18:52:18"
+            "time": "2015-11-30 21:24:50"
         },
         {
             "name": "bitwasp/bitcoin-lib",
@@ -255,6 +256,39 @@
             "description": "library for interfacing with stratum servers, used to serve both bitcoin mining and electrum clients",
             "homepage": "https://github.com/Bit-Wasp/stratum-php",
             "time": "2015-05-16 23:04:04"
+        },
+        {
+            "name": "bitwasp/trait",
+            "version": "v0.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Bit-Wasp/trait.git",
+                "reference": "61456a84311b1f718a4c30fd6de3655163c187f3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Bit-Wasp/trait/zipball/61456a84311b1f718a4c30fd6de3655163c187f3",
+                "reference": "61456a84311b1f718a4c30fd6de3655163c187f3",
+                "shasum": ""
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "BitWasp\\CommonTrait\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Unlicence"
+            ],
+            "authors": [
+                {
+                    "name": "Thomas Kerin",
+                    "email": "test@test.com"
+                }
+            ],
+            "description": "A collection of traits",
+            "time": "2015-11-11 18:23:27"
         },
         {
             "name": "classpreloader/classpreloader",
@@ -3406,19 +3440,18 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-payer.git",
-                "reference": "9562d69988854dd72777e53d267d52250a434657"
+                "reference": "17259a70a6184b976d2abbd6fa2935c371faf2b5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/9562d69988854dd72777e53d267d52250a434657",
-                "reference": "9562d69988854dd72777e53d267d52250a434657",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/17259a70a6184b976d2abbd6fa2935c371faf2b5",
+                "reference": "17259a70a6184b976d2abbd6fa2935c371faf2b5",
                 "shasum": ""
             },
             "require": {
                 "guzzlehttp/guzzle": "~5",
                 "nbobtc/bitcoind-php": "1.2.*",
-                "php": ">=5.4.0",
-                "tokenly/insight-client": "dev-master"
+                "php": ">=5.4.0"
             },
             "require-dev": {
                 "phpunit/phpunit": "~4"
@@ -3441,7 +3474,7 @@
                 }
             ],
             "description": "A bitcoin payment library",
-            "time": "2015-11-07 13:16:54"
+            "time": "2015-12-05 20:06:14"
         },
         {
             "name": "tokenly/consul-health-daemon",
@@ -3578,16 +3611,16 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-composer.git",
-                "reference": "3f6ddccdb6e98c06e4535d0427d62ffc8eede385"
+                "reference": "46de0a20b978d581814bb2b27e77f3c5ba350c3c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/3f6ddccdb6e98c06e4535d0427d62ffc8eede385",
-                "reference": "3f6ddccdb6e98c06e4535d0427d62ffc8eede385",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/46de0a20b978d581814bb2b27e77f3c5ba350c3c",
+                "reference": "46de0a20b978d581814bb2b27e77f3c5ba350c3c",
                 "shasum": ""
             },
             "require": {
-                "bitwasp/bitcoin": "v0.0.13.2",
+                "bitwasp/bitcoin": "v0.0.18",
                 "ext-gmp": "*",
                 "ext-mcrypt": "*",
                 "php": ">=5.5.0",
@@ -3615,7 +3648,7 @@
                 }
             ],
             "description": "Composes counterparty and bitcoin transactions",
-            "time": "2015-11-17 05:15:14"
+            "time": "2015-12-05 15:30:08"
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
@@ -3623,12 +3656,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-parser.git",
-                "reference": "753ab1f7129d6a86231afc9221a7c05d40cc43a5"
+                "reference": "3d00f450da91af3b9df487fea793d90e01f0accb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/4ac54f7be1e3b5bf9737fc74c5537510041ed8ed",
-                "reference": "753ab1f7129d6a86231afc9221a7c05d40cc43a5",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/3d00f450da91af3b9df487fea793d90e01f0accb",
+                "reference": "3d00f450da91af3b9df487fea793d90e01f0accb",
                 "shasum": ""
             },
             "require": {
@@ -3657,7 +3690,7 @@
                 }
             ],
             "description": "A counterparty transaction parser",
-            "time": "2015-07-22 01:26:51"
+            "time": "2015-12-05 20:04:35"
         },
         {
             "name": "tokenly/hmac-auth",
@@ -3700,47 +3733,6 @@
             ],
             "description": "A library for HMAC authentication",
             "time": "2015-07-30 02:40:50"
-        },
-        {
-            "name": "tokenly/insight-client",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/tokenly/insight-client.git",
-                "reference": "b1c96d51034d588ab487dad8d8fc66b709c0ca1f"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/insight-client/zipball/b1c96d51034d588ab487dad8d8fc66b709c0ca1f",
-                "reference": "b1c96d51034d588ab487dad8d8fc66b709c0ca1f",
-                "shasum": ""
-            },
-            "require": {
-                "guzzlehttp/guzzle": "~5",
-                "php": ">=5.4.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "~4"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "Tokenly\\Insight": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "mit"
-            ],
-            "authors": [
-                {
-                    "name": "Devon Weller",
-                    "email": "dweller@devonweller.com",
-                    "homepage": "http://devonweller.com"
-                }
-            ],
-            "description": "A client library for the Bitpay Insight API",
-            "time": "2015-02-14 16:11:24"
         },
         {
             "name": "tokenly/laravel-api-provider",
@@ -5223,7 +5215,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/satooshi/php-coveralls/zipball/2fbf803803d179ab1082807308a67bbd5a760c70",
+                "url": "https://api.github.com/repos/satooshi/php-coveralls/zipball/8384919da59b11763db611dccc5ca141f32533c5",
                 "reference": "2fbf803803d179ab1082807308a67bbd5a760c70",
                 "shasum": ""
             },
@@ -5867,7 +5859,6 @@
         "tokenly/counterparty-sender": 20,
         "tokenly/counterparty-transaction-parser": 20,
         "tokenly/hmac-auth": 20,
-        "tokenly/insight-client": 20,
         "tokenly/pusher-client": 20,
         "tokenly/token-generator": 20,
         "tokenly/xcpd-client": 20,

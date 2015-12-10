@@ -177,7 +177,6 @@ class PaymentAddressSenderTest extends TestCase {
 
     public function testPaymentAddressSenderForSweepAllAssets() {
         $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
-        $insight_mock_calls = $this->buildInsightMockCallsForSweepAllAssets();
 
         $user = $this->app->make('\UserHelper')->createSampleUser();
         list($payment_address, $input_utxos) = $this->makeAddressAndSimpleSampleTXOs($user);
@@ -292,19 +291,6 @@ class PaymentAddressSenderTest extends TestCase {
 
     // ------------------------------------------------------------------------
     
-    protected function buildInsightMockCallsForSweepAllAssets() {
-        $builder = app('InsightAPIMockBuilder');
-        $calls_count = 0;
-        $getTransactionCallback = function($txid) use (&$calls_count) {
-            ++$calls_count;
-            if ($calls_count <= 1) { throw new Exception("Not Found", 404); }
-            // echo "Loading tx $txid\n";
-            $filepath = base_path().'/tests/fixtures/api/_tx_000000000000000000000000000000000000000000000000000000000001ba5e.json';
-            $base_tx = json_decode(file_get_contents($filepath), true);
-            return $base_tx;
-        };
-        return $builder->installMockInsightClient($this->app, $this, ['getTransaction' => $getTransactionCallback]);
-    }
 
 
     // total is 50019001 satoshis

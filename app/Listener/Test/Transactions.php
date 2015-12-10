@@ -17,9 +17,8 @@ class Transactions
 
     public function formatTxAsXstalkerJobData($raw_tx) {
         return [
-            'ver' => 1,
-            'ts'  => time(),
-            'tx'  => $raw_tx,
+            'ts'   => time(),
+            'txid' => $raw_tx['txid'],
         ];
     }
 

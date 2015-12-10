@@ -7,15 +7,15 @@ use App\Handlers\XChain\Network\Contracts\NetworkTransactionStore;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 use App\Repositories\TransactionRepository;
 use Illuminate\Contracts\Logging\Log;
-use Tokenly\Insight\Client;
+use Nbobtc\Bitcoind\Bitcoind;
 
 class BitcoinTransactionStore implements NetworkTransactionStore {
 
-    public function __construct(BitcoinTransactionEventBuilder $transaction_builder, TransactionRepository $transaction_repository, Client $insight_client, Log $log) {
-        $this->log                    = $log;
-        $this->insight_client         = $insight_client;
-        $this->transaction_repository = $transaction_repository;
-        $this->transaction_builder    = $transaction_builder;
+    public function __construct(BitcoinTransactionEventBuilder $transaction_builder, TransactionRepository $transaction_repository, EnhancedBitcoindTransactionBuilder $bitcoind_transaction_builder, Log $log) {
+        $this->log                          = $log;
+        $this->transaction_repository       = $transaction_repository;
+        $this->bitcoind_transaction_builder = $bitcoind_transaction_builder;
+        $this->transaction_builder          = $transaction_builder;
     }
 
     public function getCachedTransaction($txid)
@@ -27,20 +27,19 @@ class BitcoinTransactionStore implements NetworkTransactionStore {
     {
         $transaction = $this->fetchTransactionFromRepository($txid);
         if (!$transaction) {
-            $transaction = $this->getParsedTransactionFromInsight($txid);
+            $transaction = $this->getParsedTransactionFromBitcoind($txid);
         }
 
         return $transaction;
     }
 
-    public function getParsedTransactionFromInsight($txid, $block_seq=null) {
-        // EventLog::increment('insight.loadtx');
+    public function getParsedTransactionFromBitcoind($txid, $block_seq=null) {
 
         // load
-        $insight_data = $this->fetchTransactionFromInsight($txid);
+        $bitcoind_data = $this->fetchTransactionFromBitcoind($txid);
 
         // convert to a transaction model
-        $parsed_transaction_data = $this->buildParsedTransactionDataFromInsightData($insight_data);
+        $parsed_transaction_data = $this->buildParsedTransactionDataFromBitcoindData($bitcoind_data);
 
         // and cache
         $transaction = $this->saveNewTransactionFromParsedTransactionData($parsed_transaction_data, $block_seq);
@@ -65,16 +64,12 @@ class BitcoinTransactionStore implements NetworkTransactionStore {
     }
 
 
-    protected function buildParsedTransactionDataFromInsightData($insight_data) {
-        $xstalker_data = [
-            'ts' => time() * 1000,
-            'tx' => $insight_data,
-        ];
-        return $this->transaction_builder->buildParsedTransactionData($xstalker_data);
+    protected function buildParsedTransactionDataFromBitcoindData($bitcoind_data) {
+        return $this->transaction_builder->buildParsedTransactionData($bitcoind_data, time() * 1000);
     }
 
-    protected function fetchTransactionFromInsight($txid) {
-        return $this->insight_client->getTransaction($txid);
+    protected function fetchTransactionFromBitcoind($txid) {
+        return $this->bitcoind_transaction_builder->buildTransactionData($txid);
     }
 
     protected function fetchTransactionFromRepository($txid) {

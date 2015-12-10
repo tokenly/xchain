@@ -12,13 +12,10 @@ class CounterpartySenderMockBuilder
     }
 
     public function installMockCounterpartySenderDependencies($app, $test_case, $override_functions=null) {
-        $mock_calls = new \ArrayObject(['xcpd' => [], 'btcd' => [], 'insight' => []]);
+        $mock_calls = new \ArrayObject(['xcpd' => [], 'btcd' => []]);
 
         $this->installMockXCPDClient($app, $test_case, $mock_calls);
         $this->installMockBitcoindClient($app, $test_case, $mock_calls, $override_functions);
-
-        $insight_mock_calls = $app->make('InsightAPIMockBuilder')->installMockInsightClient($app, $test_case);
-        $mock_calls['insight'] = $insight_mock_calls;
 
         return $mock_calls;
     }
@@ -122,14 +119,61 @@ class CounterpartySenderMockBuilder
             return $txid;
         })); 
 
-        $mock->method('getrawtransaction')->will($test_case->returnCallback(function($txid, $verbose=false)  use ($mock_calls) {
-            $fake_hex = '000000001';
-            // $mock_calls['btcd'][] = [
-            //     'method'   => 'getrawtransaction',
-            //     'args'     => [$txid, $verbose],
-            //     'response' => $fake_hex,
-            // ];
-            return $fake_hex;
+        $mock->method('getrawtransaction')->will($test_case->returnCallback(function($txid, $verbose=false)  use ($mock_calls, $override_functions) {
+            $response = null;
+
+            if ($verbose == true) {
+                if ($override_functions !== null AND isset($override_functions['getrawtransaction'])) {
+                    $data = call_user_func($override_functions['getrawtransaction'], $txid, $verbose);
+                    $response = $data;
+                } else {
+                    if ($this->apiFixtureExists('_getrawtransaction_'.$txid.'.json')) {
+                        $data = $this->loadAPIFixture('_getrawtransaction_'.$txid.'.json');
+                    } else {
+                        $data = $this->loadAPIFixture('_getrawtransaction_sample.json');
+
+                    }
+                    $response = $data;
+                }
+            } else {
+                // return a fake hex value
+                $response = '000000001';
+                
+            }
+
+            $mock_calls['btcd'][] = [
+                'method'   => 'getrawtransaction',
+                'args'     => [$txid, $verbose],
+                'response' => $response,
+            ];
+
+            return $response;
+        })); 
+
+        $mock->method('getblock')->will($test_case->returnCallback(function($blockhash)  use ($mock_calls, $override_functions) {
+            $response = null;
+
+            if ($override_functions !== null AND isset($override_functions['getblock'])) {
+                $data = call_user_func($override_functions['getblock'], $blockhash, $verbose);
+                $response = $data;
+            } else {
+                if ($this->apiFixtureExists('_block_'.$blockhash.'.json')) {
+                    $data = $this->loadAPIFixture('_block_'.$blockhash.'.json');
+                    $response = $data;
+            } else {
+                    throw new Exception("Block not found: $blockhash", 1);
+                    // $data = $this->loadAPIFixture('_block_sample.json');
+
+                }
+            }
+
+            $mock_calls['btcd'][] = [
+                'method'   => 'getblock',
+                'args'     => [$blockhash],
+                'response' => $response,
+            ];
+
+            return $response;
         })); 
 
         $app->bind('Nbobtc\Bitcoind\Bitcoind', function() use ($mock) {

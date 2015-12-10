@@ -11,17 +11,14 @@ class TransactionParserTest extends TestCase {
     public function testBitcoinTransactionEventBuilder() {
         $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
         
+        $enhanced_builder = app('App\Handlers\XChain\Network\Bitcoin\EnhancedBitcoindTransactionBuilder');
+        $bitcoin_data = $enhanced_builder->buildTransactionData('d0010d7ddb1662e381520d29177ea83f81f87428879b57735a894cad8dcae2a2');
+
         $builder = app('App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionEventBuilder');
+        $ts = time() * 1000;
+        $parsed_data = $builder->buildParsedTransactionData($bitcoin_data, $ts);
 
-        $insight_tx_data = json_decode(file_get_contents(base_path().'/tests/fixtures/transactions/sample_xcp_raw_02.json'), true);
-
-        $xstalker_data = [
-            'ver' => 1,
-            'ts'  => time() * 1000,
-            'tx'  => $insight_tx_data,
-        ];
-        $parsed_data = $builder->buildParsedTransactionData($xstalker_data);
-
+        PHPUnit::assertNotEmpty($parsed_data['counterpartyTx']);
         PHPUnit::assertEquals(1013.54979902, $parsed_data['counterpartyTx']['quantity']);
         PHPUnit::assertEquals(101354979902, $parsed_data['counterpartyTx']['quantitySat']);
         PHPUnit::assertEquals(0.00001250, $parsed_data['counterpartyTx']['dustSize']);

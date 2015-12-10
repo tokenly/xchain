@@ -17,7 +17,6 @@
         "tokenly/counterparty-sender": "dev-master",
         "tokenly/counterparty-transaction-parser": "dev-master@dev",
         "tokenly/hmac-auth": "dev-master@dev",
-        "tokenly/insight-client": "dev-master@dev",
         "tokenly/pusher-client": "dev-master",
         "tokenly/token-generator": "dev-master@dev",
         "tokenly/xcpd-client": "dev-master@dev",
@@ -28,7 +27,7 @@
 		"tokenly/laravel-blocking-beanstalkd": "dev-master",
 		"tokenly/consul-health-daemon": "dev-master",
 		"tokenly/laravel-record-lock": "dev-master",
-		"bitwasp/bitcoin": "v0.0.13.2",
+		"bitwasp/bitcoin": "v0.0.18",
 		"tokenly/counterparty-transaction-composer": "dev-master"
 	},
 	"require-dev": {

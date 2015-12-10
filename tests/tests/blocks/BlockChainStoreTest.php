@@ -65,8 +65,7 @@ class BlockChainStoreTest extends TestCase {
 
     public function testFindMissingBlocks() {
         // init mocks
-        $mock_builder = new \InsightAPIMockBuilder();
-        $mock_builder->installMockInsightClient($this->app, $this);
+        app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
         // insert
         $created_block_model_1 = $this->blockHelper()->createSampleBlock('default_parsed_block_01.json', [
@@ -89,7 +88,7 @@ class BlockChainStoreTest extends TestCase {
         ]);
 
         $blockchain_store = $this->app->make('App\Blockchain\Block\BlockChainStore');
-        $block_events = $blockchain_store->loadMissingBlockEventsFromInsight('BLOCKHASH04', 4);
+        $block_events = $blockchain_store->loadMissingBlockEventsFromBitcoind('BLOCKHASH04', 4);
         PHPUnit::assertCount(2, $block_events);
 
         // make sure they were loaded in the correct order

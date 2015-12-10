@@ -21,14 +21,14 @@ class BitcoinTransactionEventBuilder
         $this->asset_cache      = $asset_cache;
     }
 
-    public function buildParsedTransactionData($xstalker_data)
+    public function buildParsedTransactionData($bitcoin_transaction_data, $ts)
     {
         try {
             $parsed_transaction_data = [];
             $parsed_transaction_data = [
-                'txid'               => $xstalker_data['tx']['txid'],
+                'txid'               => $bitcoin_transaction_data['txid'],
                 'network'            => 'bitcoin',
-                'timestamp'          => round($xstalker_data['ts'] / 1000),
+                'timestamp'          => round($ts / 1000),
 
                 'counterPartyTxType' => false,
 
@@ -37,20 +37,20 @@ class BitcoinTransactionEventBuilder
                 'values'             => [],
                 'asset'              => false,
 
-                'bitcoinTx'          => $xstalker_data['tx'],
+                'bitcoinTx'          => $bitcoin_transaction_data,
                 'counterpartyTx'     => [],
             ];
 
-            $xcp_data = $this->parser->parseBitcoinTransaction($xstalker_data['tx']);
+            $xcp_data = $this->parser->parseBitcoinTransaction($bitcoin_transaction_data);
             if ($xcp_data) {
                 // ensure 1 source and 1 desination
                 if (!isset($xcp_data['sources'][0])) {
                     $xcp_data['sources'] = ['unknown'];
-                    Log::error("No source found in transaction: ".((isset($xstalker_data['tx']) AND isset($xstalker_data['tx']['txid'])) ? $xstalker_data['tx']['txid'] : "unknown"));
+                    Log::error("No source found in transaction: ".((isset($bitcoin_transaction_data) AND isset($bitcoin_transaction_data['txid'])) ? $bitcoin_transaction_data['txid'] : "unknown"));
                 }
                 if (!isset($xcp_data['destinations'][0])) {
                     $xcp_data['destinations'] = ['unknown'];
-                    Log::error("No destination found in transaction: ".((isset($xstalker_data['tx']) AND isset($xstalker_data['tx']['txid'])) ? $xstalker_data['tx']['txid'] : "unknown"));
+                    Log::error("No destination found in transaction: ".((isset($bitcoin_transaction_data) AND isset($bitcoin_transaction_data['txid'])) ? $bitcoin_transaction_data['txid'] : "unknown"));
                 }
 
                 // this is a counterparty transaction
@@ -82,7 +82,7 @@ class BitcoinTransactionEventBuilder
 
                     // dustSize
                     // dustSizeSat
-                    list($sources, $quantity_by_destination) = $this->extractSourcesAndDestinations($xstalker_data['tx']);
+                    list($sources, $quantity_by_destination) = $this->extractSourcesAndDestinations($bitcoin_transaction_data);
                     $dust_size_float = (isset($quantity_by_destination[$destination]) ? $quantity_by_destination[$destination] : 0);
 
                     $xcp_data['dustSize'] = $dust_size_float;
@@ -96,7 +96,7 @@ class BitcoinTransactionEventBuilder
 
             } else  {
                 // this is just a bitcoin transaction
-                list($sources, $quantity_by_destination) = $this->extractSourcesAndDestinations($xstalker_data['tx']);
+                list($sources, $quantity_by_destination) = $this->extractSourcesAndDestinations($bitcoin_transaction_data);
 
                 $parsed_transaction_data['network']      = 'bitcoin';
                 $parsed_transaction_data['sources']      = $sources;
@@ -118,7 +118,7 @@ class BitcoinTransactionEventBuilder
             return $parsed_transaction_data;
 
         } catch (Exception $e) {
-            Log::warning("Failed to parse transaction: ".((isset($xstalker_data['tx']) AND isset($xstalker_data['tx']['txid'])) ? $xstalker_data['tx']['txid'] : "unknown")."\n".$e->getMessage());
+            Log::warning("Failed to parse transaction: ".((isset($bitcoin_transaction_data) AND isset($bitcoin_transaction_data['txid'])) ? $bitcoin_transaction_data['txid'] : "unknown")."\n".$e->getMessage());
             // print "ERROR: ".$e->getMessage()."\n";
             // echo "\$parsed_transaction_data:\n".json_encode($parsed_transaction_data, 192)."\n";
             throw $e;
@@ -153,55 +153,6 @@ class BitcoinTransactionEventBuilder
     }
 
     protected function buildFingerprint($bitcoin_tx) {
-
-        // "vin": [
-        //     {
-        //         "addr": "1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1",
-        //         "doubleSpentTxID": null,
-        //         "n": 0,
-        //         "scriptSig": {
-        //             "asm": "3045022100a37bcfd3087fa4ba9480ce09c7adf02ba3ce2208d6170b42e50b5b2633b91ee6022025d409d3d9dae0a159982c7ab079787948b6b6c5f87fa583d3886ebf1e074c8901 02f4aef682535628a7e0492b2b5db1aa312348c3095e0258e26b275b25b10290e6"
-        //         },
-        //         "sequence": 4294967295,
-        //         "txid": "cc669b824186886407ad7edd46796437e20ad73c89080420c45e5803f917228d",
-        //         "value": 0.00781213,
-        //         "valueSat": 781213,
-        //         "vout": 2
-        //     }
-        // ],
-        // "vout": [
-        //     {
-        //         "n": 0,
-        //         "scriptPubKey": {
-        //             "addresses": [
-        //                 "1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD"
-        //             ],
-        //             "asm": "OP_DUP OP_HASH160 c56cb39f9b289c0ec4ef6943fa107c904820fe09 OP_EQUALVERIFY OP_CHECKSIG",
-        //             "reqSigs": 1,
-        //             "type": "pubkeyhash"
-        //         },
-        //         "spentIndex": 2,
-        //         "spentTs": 1403958484,
-        //         "spentTxId": "e90bc279294d704d09b227ad0e37459f61cccb85008605656dc8b024235eefe8",
-        //         "value": "0.00400000"
-        //     },
-        //     {
-        //         "n": 1,
-        //         "scriptPubKey": {
-        //             "addresses": [
-        //                 "1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1"
-        //             ],
-        //             "asm": "OP_DUP OP_HASH160 6ca4b6b20eac497e9ca94489c545a3372bdd2fa7 OP_EQUALVERIFY OP_CHECKSIG",
-        //             "reqSigs": 1,
-        //             "type": "pubkeyhash"
-        //         },
-        //         "spentIndex": 0,
-        //         "spentTs": 1405081243,
-        //         "spentTxId": "3587bfa8d96c10b6696728651900db2ad6b41321ea44f26693de4f90d2b63526",
-        //         "value": "0.00361213"
-        //     }
-
-
         $scripts = [];
         foreach($bitcoin_tx['vin'] as $vin_offset => $vin){
             if (isset($vin['txid']) AND isset($vin['vout'])) {

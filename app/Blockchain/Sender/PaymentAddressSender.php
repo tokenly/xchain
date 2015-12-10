@@ -25,7 +25,6 @@ use Tokenly\CounterpartySender\CounterpartySender;
 use Tokenly\CounterpartyTransactionComposer\Composer;
 use Tokenly\CounterpartyTransactionComposer\Quantity;
 use Tokenly\CurrencyLib\CurrencyUtil;
-use Tokenly\Insight\Client as InsightClient;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 use Tokenly\XCPDClient\Client as XCPDClient;
 
@@ -35,9 +34,8 @@ class PaymentAddressSender {
 
     const DEFAULT_REGULAR_DUST_SIZE  = 0.00005430;
 
-    public function __construct(XCPDClient $xcpd_client, InsightClient $insight_client, Bitcoind $bitcoind, CounterpartySender $xcpd_sender, BitcoinPayer $bitcoin_payer, BitcoinAddressGenerator $address_generator, Cache $asset_cache, ComposedTransactionRepository $composed_transaction_repository, TXOChooser $txo_chooser, Composer $transaction_composer, TXORepository $txo_repository, LedgerEntryRepository $ledger_entry_repository, PaymentAddressRepository $payment_address_repository) {
+    public function __construct(XCPDClient $xcpd_client, Bitcoind $bitcoind, CounterpartySender $xcpd_sender, BitcoinPayer $bitcoin_payer, BitcoinAddressGenerator $address_generator, Cache $asset_cache, ComposedTransactionRepository $composed_transaction_repository, TXOChooser $txo_chooser, Composer $transaction_composer, TXORepository $txo_repository, LedgerEntryRepository $ledger_entry_repository, PaymentAddressRepository $payment_address_repository) {
         $this->xcpd_client                     = $xcpd_client;
-        $this->insight_client                  = $insight_client;
         $this->bitcoind                        = $bitcoind;
         $this->xcpd_sender                     = $xcpd_sender;
         $this->bitcoin_payer                   = $bitcoin_payer;

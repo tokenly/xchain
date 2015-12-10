@@ -2,6 +2,8 @@
 
 namespace App\Handlers\XChain\Network\Bitcoin;
 
+use Nbobtc\Bitcoind\Bitcoind;
+use Tokenly\LaravelEventLog\Facade\EventLog;
 use \Exception;
 
 /*
@@ -9,21 +11,25 @@ use \Exception;
 */
 class BitcoinBlockEventBuilder
 {
-    public function __construct()
+    public function __construct(Bitcoind $bitcoind)
     {
+        $this->bitcoind = $bitcoind;
     }
 
-    public function buildBlockEventFromXstalkerData($xstalker_data)
-    {
-        return $this->buildBlockEventFromInsightData($xstalker_data['block']);
-    }
 
-    public function buildBlockEventFromInsightData($block) {
+    public function buildBlockEventData($block_hash) {
         try {
+            // get the full block data from bitcoind 
+            $block = $this->bitcoind->getblock($block_hash, true);
+            if (!$block) { throw new Exception("Block not found for hash $block_hash", 1); }
+
+            // convert to array
+            $block = json_decode(json_encode($block), true);
+
+            // create the event data
             $event_data = [];
 
             $event_data['network']           = 'bitcoin';
-
             $event_data['hash']              = $block['hash'];
             $event_data['height']            = $block['height'];
             $event_data['previousblockhash'] = $block['previousblockhash'];
@@ -33,8 +39,7 @@ class BitcoinBlockEventBuilder
             return $event_data;
 
         } catch (Exception $e) {
-            print "ERROR: ".$e->getMessage()."\n";
-            echo "\$event_data:\n".json_encode($event_data, 192)."\n";
+            EventLog::logError('block', $e, ['hash' => $block_hash]);
             throw $e;
         }
 

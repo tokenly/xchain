@@ -48,8 +48,8 @@ class ScenarioRunner
         if (!isset($this->mocks_inited)) {
             $this->mocks_inited = true;
 
-            $mock_builder = new \InsightAPIMockBuilder();
-            $mock_builder->installMockInsightClient($this->app, $test_case);
+            // install mocks
+            app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $test_case);
 
             $this->test_case = $test_case;
         }

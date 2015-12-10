@@ -48,16 +48,21 @@ EOF
     public function fire()
     {
         $backfill_max = $this->input->getOption('maximum-blocks');
-        $blockchain_repository = $this->laravel->make('App\Blockchain\Block\BlockChainStore');
+        $blockchain_store = $this->laravel->make('App\Blockchain\Block\BlockChainStore');
         $block_handler = $this->laravel->make('App\Handlers\XChain\XChainBlockHandler');
-        $insight_client = $this->laravel->make('Tokenly\Insight\Client');
+        $bitcoind = $this->laravel->make('Nbobtc\Bitcoind\Bitcoind');
+
+        $block_height = $bitcoind->getblockcount();
+        $best_block_hash = $bitcoind->getblockhash($block_height);
+        $this->info('Current block is '.$block_height.' ('.$best_block_hash.')');
+
+
         
-        // load the current block from insight
-        $data = $insight_client->getBestBlockHash();
-        $first_missing_hash = $blockchain_repository->findFirstMissingHash($data['bestblockhash'], $backfill_max);
+        // load the current block from bitcoind
+        $first_missing_hash = $blockchain_store->findFirstMissingHash($best_block_hash, $backfill_max);
         if ($first_missing_hash) {
             // backfill any missing blocks
-            $missing_block_events = $blockchain_repository->loadMissingBlockEventsFromInsight($first_missing_hash, $backfill_max);
+            $missing_block_events = $blockchain_store->loadMissingBlockEventsFromBitcoind($first_missing_hash, $backfill_max);
 
             // process missing blocks
             foreach($missing_block_events as $missing_block_event) {

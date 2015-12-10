@@ -40,7 +40,7 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
 
     public function handleNewBlock($block_event) {
         // backfill any missing blocks
-        $missing_block_events = $this->blockchain_store->loadMissingBlockEventsFromInsight($block_event['previousblockhash']);
+        $missing_block_events = $this->blockchain_store->loadMissingBlockEventsFromBitcoind($block_event['previousblockhash']);
 
         // process missing blocks
         foreach($missing_block_events as $missing_block_event) {
@@ -117,9 +117,9 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
                     // check to see if it was reorganized
                     $was_reorganized = ($transaction['block_confirmed_hash'] AND $transaction['block_confirmed_hash'] != $block_event['hash']);
                     if ($was_reorganized) {
-                        // we must reload this transaction from insight
+                        // we must reload this transaction from bitcoind
                         // since this transaction was reorganized
-                        $transaction = $this->transaction_store->getParsedTransactionFromInsight($txid, $block_seq);
+                        $transaction = $this->transaction_store->getParsedTransactionFromBitcoind($txid, $block_seq);
                     }
 
                     // update the transaction
@@ -128,8 +128,11 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
                         // this is a previously confirmed transaction
                         $block_hash_for_transaction = $transaction['block_confirmed_hash'];
                         $confirmations = $this->confirmations_builder->getConfirmationsForBlockHashAsOfHeight($block_hash_for_transaction, $block_event['height']);
+                        if ($confirmations === null) {
+                            Log::warning("Counld not confirm transaction {$transaction['txid']} in block: {$transaction['block_confirmed_hash']} \$confirmations is ".json_encode($confirmations, 192));
+                            throw new Exception("Unable to load confirmations for block {$block_hash_for_transaction}", 1);
+                        }
                         $this->wlog("transaction was confirmed in block: {$transaction['block_confirmed_hash']} \$confirmations is $confirmations");
-                        if ($confirmations === null) { throw new Exception("Unable to load confirmations for block {$block_hash_for_transaction}", 1); }
                     }
                     unset($parsed_tx['bitcoinTx']['confirmations']);
 
@@ -142,16 +145,16 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
                     ]);
                 }
             } else {
-                $this->wlog("transaction $txid was not found.  Loading from insight.");
+                $this->wlog("transaction $txid was not found.  Loading from bitcoind.");
 
-                // no cached transaction - load from Insight
-                $transaction = $this->transaction_store->getParsedTransactionFromInsight($txid, $block_seq);
+                // no cached transaction - load from Bitcoind
+                $transaction = $this->transaction_store->getParsedTransactionFromBitcoind($txid, $block_seq);
                 $confirmations = $transaction['parsed_tx']['bitcoinTx']['confirmations'];
             }
 
             ++$block_seq;
         }
-        $this->wlog("BlockHandler finished {$block_seq} of $tx_count");
+        $this->wlog("BlockHandler finished {$block_seq} of $tx_count ($confirmations confirmations)");
 
         return $confirmations;
     }

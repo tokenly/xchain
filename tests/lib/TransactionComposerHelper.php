@@ -72,7 +72,7 @@ class TransactionComposerHelper
         if ($is_counterparty) {
             // OP_RETURN
             ++$output_offset;
-            $obfuscated_op_return_hex = $outputs[$output_offset]->getScript()->getScriptParser()->parse()[1]->getHex();
+            $obfuscated_op_return_hex = $outputs[$output_offset]->getScript()->getScriptParser()->decode()[1]->getData()->getHex();
             $hex = $this->arc4decrypt($transaction->getInput(0)->getTransactionId(), $obfuscated_op_return_hex);
             $counterparty_data = $this->parseTransactionData(hex2bin(substr($hex, 16)));
             $out = $counterparty_data + $out;

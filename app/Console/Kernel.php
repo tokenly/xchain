@@ -19,7 +19,6 @@ class Kernel extends ConsoleKernel {
         \App\Console\Commands\Development\PopulateNotificationCommand::class,
         \App\Console\Commands\Development\SendManualNotificationCommand::class,
         \App\Console\Commands\Development\ExportWIFCommand::class,
-        \App\Console\Commands\Development\ParseTransactionCommand::class,
 
         // Other
         \App\Console\Commands\Experiment\ExperimentCommand::class,
