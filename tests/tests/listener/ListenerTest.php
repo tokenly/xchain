@@ -27,10 +27,7 @@ class ListenerTest extends TestCase
         PHPUnit::assertNotNull($heard_tx_data);
         PHPUnit::assertEquals(['1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1'], $heard_tx_data['sources']);
         PHPUnit::assertEquals(['1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD'], $heard_tx_data['destinations']);
-        // 1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1 was change and is ignored
-        // '1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1' => 0.00361213, 
         PHPUnit::assertEquals(['1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD' => 0.004], $heard_tx_data['values']);
-        // PHPUnit::assertEquals(761213, $heard_tx_data['quantitySat']);
         PHPUnit::assertEquals('cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741', $heard_tx_data['bitcoinTx']['txid']);
     }
 
@@ -81,6 +78,9 @@ class ListenerTest extends TestCase
     public function setUp()
     {
         parent::setUp();
+
+        $mock_calls = new \ArrayObject(['xcpd' => [], 'btcd' => []]);
+        app('CounterpartySenderMockBuilder')->installMockBitcoindClient($this->app, $this, $mock_calls);
 
         $this->mockXCPDClient($this->app);
         $this->mockAssetCache($this->app);
