@@ -31,7 +31,9 @@ class BTCBlockJob
 
         // fire an event
         try {
+            Log::debug("Begin xchain.block.received {$event_data['height']} ({$event_data['hash']})");
             Event::fire('xchain.block.received', [$event_data]);
+            Log::debug("End xchain.block.received {$event_data['height']} ({$event_data['hash']})");
 
             // job successfully handled
             $job->delete();

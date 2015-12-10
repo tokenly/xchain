@@ -15,9 +15,11 @@ use App\Util\DateTimeUtil;
 use Exception;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 use Tokenly\XcallerClient\Client;
+use PHP_Timer;
 
 /**
  * This is invoked when a new block is received
@@ -84,9 +86,13 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
 
         // update the block transactions in this block
         // Log::debug("\$block=".json_encode($block, 192));
+        if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
         $block_confirmations = $this->updateAllBlockTransactions($block_event, $block);
+        if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for updateAllBlockTransactions: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
 
+        if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
         $this->generateAndSendNotifications($block_event, $block_confirmations, $block);
+        if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for generateAndSendNotifications: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
     }
 
     public function updateAllBlockTransactions($block_event, Block $block) {
@@ -117,6 +123,7 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
                     // check to see if it was reorganized
                     $was_reorganized = ($transaction['block_confirmed_hash'] AND $transaction['block_confirmed_hash'] != $block_event['hash']);
                     if ($was_reorganized) {
+                        Log::debug("NOTE: $txid was reorganized.  Loading from bitcoind.");
                         // we must reload this transaction from bitcoind
                         // since this transaction was reorganized
                         $transaction = $this->transaction_store->getParsedTransactionFromBitcoind($txid, $block_seq);
@@ -221,7 +228,7 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
             $_offset = 0;
             foreach($this->transaction_repository->findAllTransactionsConfirmedInBlockHashes($block_hashes) as $transaction_model) {
                 $confirmations = $this->confirmations_builder->getConfirmationsForBlockHashAsOfHeight($transaction_model['block_confirmed_hash'], $block_event['height']);
-                // if ($_offset % 50 === 1) { Log::debug("tx {$_offset} $confirmations confirmations"); }
+                if ($_offset % 50 === 1) { Log::debug("tx {$_offset} $confirmations confirmations"); }
 
                 // the block height might have changed if the chain was reorganized
                 $parsed_tx = $transaction_model['parsed_tx'];
