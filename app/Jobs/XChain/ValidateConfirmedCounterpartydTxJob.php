@@ -156,12 +156,12 @@ class ValidateConfirmedCounterpartydTxJob
                 // this send wasn't found by counterpartyd at all
                 //   but it might be found if we try a few more times
                 $attempts = $job->attempts();
-                if ($attempts > 8) {
-                    // we've already tried 8 times - give up
+                if ($attempts >= 4) {
+                    // we've already tried 4 times - give up
                     Log::debug("Send $tx_hash was not found by counterpartyd after attempt ".$attempts.". Giving up.");
                     $job->delete();
                 } else {
-                    $release_time = 2;
+                    $release_time = ($attempts > 2 ? 10 : 2);
                     Log::debug("Send $tx_hash was not found by counterpartyd after attempt ".$attempts.". Trying again in {$release_time} seconds.");
                     $job->release($release_time);
                 }
