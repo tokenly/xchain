@@ -36,10 +36,9 @@ class PruneBlocksTest extends TestCase {
             $created_blocks[] = $block_helper->createSampleBlock('default_parsed_block_01.json', ['hash' => str_repeat('0', 63).($i+1), 'height' => 10001+$i]);
         }
 
-        // prune all
-        $this->dispatch(new PruneBlocks(2));
+        // prune last 3
+        $this->dispatch(new PruneBlocks(3));
 
-        // check that all transactions were erased
         $block_repository = app('App\Repositories\BlockRepository');
         foreach($created_blocks as $offset => $created_block) {
             $loaded_block = $block_repository->findByHash($created_block['hash']);
