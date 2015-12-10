@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Block;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use \Exception;
 
 /*
@@ -63,9 +64,12 @@ class BlockRepository
         return;
     }
 
-    public function findAllBlocksBefore($blocks_to_keep) {
+    public function findAllBlockIDsBefore($blocks_to_keep) {
         $height_to_keep = $this->findLatestBlockHeight() - $blocks_to_keep;
-        return Block::where('height', '<=', $height_to_keep)->get();
+        
+        foreach (DB::table('block')->where('height', '<=', $height_to_keep)->select('id')->get() as $result) {
+            yield $result->id;
+        }
     }
 
     public function deleteAll() {

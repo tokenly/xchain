@@ -47,8 +47,8 @@ class PruneBlocksHandler {
     }
 
     protected function archiveNotifications($keep_blocks) {
-        foreach ($this->block_repository->findAllBlocksBefore($keep_blocks) as $block_to_archive) {
-            foreach ($this->notification_repository->findByBlockId($block_to_archive['id']) as $notification) {
+        foreach ($this->block_repository->findAllBlockIDsBefore($keep_blocks) as $block_id) {
+            foreach ($this->notification_repository->findByBlockId($block_id) as $notification) {
                 $this->notification_repository->archive($notification);
             }
         }
