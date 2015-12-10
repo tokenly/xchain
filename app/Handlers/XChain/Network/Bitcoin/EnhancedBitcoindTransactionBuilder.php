@@ -8,7 +8,8 @@ use BitWasp\Bitcoin\Key\PublicKeyFactory;
 use BitWasp\Bitcoin\Script\Classifier\InputClassifier;
 use BitWasp\Bitcoin\Script\ScriptFactory;
 use BitWasp\Bitcoin\Transaction\TransactionFactory;
-use Illuminate\Contracts\Logging\Log;
+use Exception;
+use Illuminate\Support\Facades\Log;
 use Nbobtc\Bitcoind\Bitcoind;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use Tokenly\LaravelEventLog\Facade\EventLog;
@@ -84,24 +85,28 @@ class EnhancedBitcoindTransactionBuilder {
     protected function addressFromScriptHex($script_hex) {
         $address = null;
 
-        $script = ScriptFactory::fromHex($script_hex);
-        $classifier = new InputClassifier($script);
-        if ($classifier->isPayToPublicKeyHash()) {
+        try {
+            $script = ScriptFactory::fromHex($script_hex);
+            $classifier = new InputClassifier($script);
+            if ($classifier->isPayToPublicKeyHash()) {
 
-            $decoded = $script->getScriptParser()->decode();
-            $public_key = PublicKeyFactory::fromHex($decoded[1]->getData());
-            $address = $public_key->getAddress()->getAddress();
+                $decoded = $script->getScriptParser()->decode();
+                $public_key = PublicKeyFactory::fromHex($decoded[1]->getData());
+                $address = $public_key->getAddress()->getAddress();
 
-        } else if ($classifier->isPayToScriptHash()) {
+            } else if ($classifier->isPayToScriptHash()) {
 
-            $decoded = $script->getScriptParser()->decode();
-            $hex_buffer = $decoded[count($decoded)-1]->getData();
-            $sh_address = new ScriptHashAddress(ScriptFactory::fromHex($hex_buffer)->getScriptHash());
-            $address = $sh_address->getAddress();
+                $decoded = $script->getScriptParser()->decode();
+                $hex_buffer = $decoded[count($decoded)-1]->getData();
+                $sh_address = new ScriptHashAddress(ScriptFactory::fromHex($hex_buffer)->getScriptHash());
+                $address = $sh_address->getAddress();
 
-        } else {
-            // unknown script type
-            Log::debug("Unable to classify script ".substr($hex, 0, 20)."...");
+            } else {
+                // unknown script type
+                Log::debug("Unable to classify script ".substr($hex, 0, 20)."...");
+            }
+        } catch (Exception $e) {
+            Log::error("failed to get address from script. ".$e->getMessage());
         }
 
         return $address;
