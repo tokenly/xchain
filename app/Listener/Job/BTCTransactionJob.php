@@ -17,6 +17,10 @@ use \Exception;
 */
 class BTCTransactionJob
 {
+
+    const MAX_ATTEMPTS = 10;
+    const RETRY_DELAY  = 6;
+
     public function __construct(BitcoinTransactionEventBuilder $transaction_data_builder, BitcoinTransactionStore $bitcoin_transaction_store)
     {
         $this->transaction_data_builder  = $transaction_data_builder;
@@ -53,7 +57,19 @@ class BTCTransactionJob
 
         } catch (Exception $e) {
             EventLog::logError('BTCTransactionJob.failed', $e, $data);
-            throw $e;
+
+            // this transaction had a problem
+            //   but it might be found if we try a few more times
+            $attempts = $job->attempts();
+            if ($attempts > self::MAX_ATTEMPTS) {
+                // we've already tried MAX_ATTEMPTS times - give up
+                Log::debug("Transaction {$data['txid']} event failed after attempt ".$attempts.". Giving up.");
+                $job->delete();
+            } else {
+                $release_time = 2;
+                Log::debug("Transaction {$data['txid']} event failed after attempt ".$attempts.". Trying again in ".self::RETRY_DELAY." seconds.");
+                $job->release(self::RETRY_DELAY);
+            }
         }
     }
 
