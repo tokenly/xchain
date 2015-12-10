@@ -15,7 +15,6 @@ class XChainWebsocketPusherHandler {
 
     public function pushEvent($tx_event)
     {
-        Log::debug("pushEvent");
         $xcp_data = $tx_event['counterpartyTx'];
 
         $source = ($tx_event['sources'] ? $tx_event['sources'][0] : null);
