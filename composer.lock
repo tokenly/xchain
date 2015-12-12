@@ -3611,12 +3611,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-composer.git",
-                "reference": "46de0a20b978d581814bb2b27e77f3c5ba350c3c"
+                "reference": "a160960e09ad278206b3c6dd8ae5615ee79da226"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/46de0a20b978d581814bb2b27e77f3c5ba350c3c",
-                "reference": "46de0a20b978d581814bb2b27e77f3c5ba350c3c",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/a160960e09ad278206b3c6dd8ae5615ee79da226",
+                "reference": "a160960e09ad278206b3c6dd8ae5615ee79da226",
                 "shasum": ""
             },
             "require": {
@@ -3648,7 +3648,7 @@
                 }
             ],
             "description": "Composes counterparty and bitcoin transactions",
-            "time": "2015-12-05 15:30:08"
+            "time": "2015-12-12 13:59:37"
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
@@ -5215,7 +5215,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/satooshi/php-coveralls/zipball/8384919da59b11763db611dccc5ca141f32533c5",
+                "url": "https://api.github.com/repos/satooshi/php-coveralls/zipball/afd0861d5e219bf8b3cca8957d9bb1f2004b76c2",
                 "reference": "2fbf803803d179ab1082807308a67bbd5a760c70",
                 "shasum": ""
             },

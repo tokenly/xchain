@@ -35,11 +35,23 @@ class TransactionComposerHelper
         $inputs = $transaction->getInputs();
         $out['inputs'] = [];
         foreach($inputs as $input) {
+            // build the ASM
+            $asm = "";
+            $opcodes = $input->getScript()->getOpCodes();
+            foreach($input->getScript()->getScriptParser()->decode() as $op) {
+                // $asm .= $opcodes->getOp($op->getOp());
+                if ($op->isPush()) {
+                    $item = $op->getData()->getHex();
+                } else {
+                    $item = $opcodes->getOp($op->getOp());
+                }
+                $asm = ltrim($asm." ".$item);
+            }
+
             // extract the address
             $address = null;
 
             // address decoding not implemented yet
-            // $script = $input->getScript();
             // $classifier = new InputClassifier($script);
             // if ($classifier->isPayToPublicKeyHash()) {
             //     $decoded = $script->getScriptParser()->decode();
@@ -54,7 +66,7 @@ class TransactionComposerHelper
             //     $address = $sh_address->getAddress();
             // }
 
-            $out['inputs'][] = ['txid' => $input->getTransactionId(), 'n' => $input->getVout(), 'addr' => $address];
+            $out['inputs'][] = ['txid' => $input->getTransactionId(), 'n' => $input->getVout(), 'asm' => $asm, /* 'addr' => $address, */];
 
         }
 

@@ -76,7 +76,7 @@ class PrimeAPITest extends TestCase {
         PHPUnit::assertEquals(false, $api_data['primed']);
     }
 
-    public function testAPICreatePrimes()
+    public function testAPICreatePrimes_1()
     {
         $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
