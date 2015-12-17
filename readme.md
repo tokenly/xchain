@@ -5,3 +5,17 @@
 
 A public web service for BTC and XCP transactions.
 
+###Queue commands
+
+```
+php artisan queue:work --sleep=0 --daemon --queue btctx blockingbeanstalkd
+
+php artisan queue:work --sleep=0 --daemon --queue btcblock blockingbeanstalkd
+
+php artisan queue:work --sleep=0 --daemon --queue notifications_return blockingbeanstalkd
+
+php artisan queue:work --sleep=0 --daemon --queue validate_counterpartytx blockingbeanstalkd
+
+
+
+```
