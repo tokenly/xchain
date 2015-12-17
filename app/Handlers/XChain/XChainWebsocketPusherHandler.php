@@ -39,7 +39,9 @@ class XChainWebsocketPusherHandler {
     }
 
     public function subscribe($events) {
-        $events->listen('xchain.tx.received', 'App\Handlers\XChain\XChainWebsocketPusherHandler@pushEvent');
+        if (env('USE_PUSHER', false)) {
+            $events->listen('xchain.tx.received', 'App\Handlers\XChain\XChainWebsocketPusherHandler@pushEvent');
+        }
     }
 
 }
