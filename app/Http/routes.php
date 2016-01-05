@@ -42,7 +42,10 @@ $router->post('api/v1/accounts/transfer/{addressId}', 'API\AccountBalancesContro
 // get asset info
 $router->get('api/v1/assets/{asset}', 'API\AssetController@get');
 
-
-
 // health check
 $router->get('/healthcheck/{checkType}', '\Tokenly\ConsulHealthDaemon\HealthController\HealthController@healthcheck');
+
+//verify signed messages and validate addresses
+$router->get('api/v1/message/verify/{address}', 'API\AddressController@verifyMessage');
+$router->post('api/v1/message/sign/{address}', 'API\AddressController@signMessage');
+$router->get('api/v1/validate/{address}', 'API\AddressController@validateAddress');
