@@ -41,6 +41,20 @@ EOF
         );
     }
 
+
+    /**
+     * Get the console command options.
+     *
+     * @return array
+     */
+    protected function getOptions()
+    {
+        return [
+            ['force-reparse', null, InputOption::VALUE_NONE, 'Force a reparse of the transaction before sending'],
+        ];
+    }
+
+
     /**
      * Execute the console command.
      *
@@ -49,13 +63,13 @@ EOF
     public function fire()
     {
         $txid = $this->input->getArgument('transaction-id');
+        $force_reparse = !!$this->option('force-reparse');
 
         $transaction_repository = app('App\Repositories\TransactionRepository');
         $transaction_model = $transaction_repository->findByTXID($txid);
 
-
-        if (!$transaction_model) {
-            $this->comment('Loading transaction '.$txid.' from bitcoind');
+        if (!$transaction_model OR $force_reparse) {
+            $this->comment(($force_reparse ? '[forced] ' : '').'Loading transaction '.$txid.' from bitcoind');
             $transaction_store = app('App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionStore');
             $transaction_model = $transaction_store->getParsedTransactionFromBitcoind($txid);
         }

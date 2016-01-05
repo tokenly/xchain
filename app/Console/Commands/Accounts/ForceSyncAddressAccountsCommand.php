@@ -99,8 +99,8 @@ class ForceSyncAddressAccountsCommand extends Command {
             $combined_xchain_balances = [];
             foreach($raw_xchain_balances_by_type as $type_string => $xchain_balances) {
                 foreach($xchain_balances as $asset => $quantity) {
-                    if ($type_string == 'sending') { continue; }
-                    if ($type_string == 'unconfirmed') { continue; }
+                    if ($type_string == 'sending' AND $asset == 'BTC') { continue; }
+                    if ($type_string == 'unconfirmed' AND $asset != 'BTC') { continue; }
                     if (!isset($combined_xchain_balances[$asset])) { $combined_xchain_balances[$asset] = 0.0; }
                     $combined_xchain_balances[$asset] += $quantity;
                 }
@@ -210,7 +210,10 @@ class ForceSyncAddressAccountsCommand extends Command {
                 // debit the unconfirmed balance
                 $msg = "Clearing unconfirmed $quantity $asset from account {$account['name']}";
                 $this->info($msg);
-                $ledger->addDebit($quantity, $asset, $account, LedgerEntry::UNCONFIRMED, null, $api_call);
+
+                // $ledger->deleteByTXID();
+
+                $ledger->addDebit($quantity, $asset, $account, LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_OTHER, null, $api_call);
             }
         }
     }
@@ -228,7 +231,7 @@ class ForceSyncAddressAccountsCommand extends Command {
                 // debit the sending balance
                 $msg = "Clearing sending $quantity $asset from account {$account['name']}";
                 $this->info($msg);
-                $ledger->addDebit($quantity, $asset, $account, LedgerEntry::SENDING, null, $api_call);
+                $ledger->addDebit($quantity, $asset, $account, LedgerEntry::SENDING, LedgerEntry::DIRECTION_OTHER, null, $api_call);
             }
         }
     }

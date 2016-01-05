@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel {
         // core xchain commands
         \App\Console\Commands\Blocks\LoadMissingBlocksCommand::class,
         \App\Console\Commands\Transaction\ResendTransactionNotificationsCommand::class,
+        \App\Console\Commands\Transaction\ReprocessAllNotificationsCommand::class,
 
         // development
         \App\Console\Commands\Development\PopulateNotificationCommand::class,
