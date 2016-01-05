@@ -29,7 +29,7 @@ class CreateNotificationArchiveTable extends Migration
             $table->char('block_hash', 64);
             $table->timestamp('created_at');
 
-            $table->unique(['txid','block_hash','monitored_address_id','user_id',], 'notification_txid_conf_addr_user');
+            $table->unique(['txid','block_hash','monitored_address_id','event_type',], 'notification_txid_conf_addr_user');
         });
     }
 
