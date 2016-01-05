@@ -33,4 +33,33 @@ class TransactionParserTest extends TestCase {
         PHPUnit::assertEquals($expected_fingerprint, $parsed_data['transactionFingerprint']);
     }
 
+    public function testP2SHBitcoinTransactionEventBuilder() {
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        
+        $enhanced_builder = app('App\Handlers\XChain\Network\Bitcoin\EnhancedBitcoindTransactionBuilder');
+        $bitcoin_data = $enhanced_builder->buildTransactionData('99c93bf83cdd4d60f234bd34ee39acc4c1b5eb66db8c932600de12b05c96d0ef');
+
+        $builder = app('App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionEventBuilder');
+        $ts = time() * 1000;
+        $parsed_data = $builder->buildParsedTransactionData($bitcoin_data, $ts);
+        // echo "\$parsed_data: ".json_encode($parsed_data, 192)."\n";
+
+        PHPUnit::assertEmpty($parsed_data['counterpartyTx']);
+        PHPUnit::assertEquals(['36wJo1xtHZ2NGcCovy6vHgWvyF7ryMTjHF'], $parsed_data['sources']);
+        PHPUnit::assertEquals(['3EMLoeeUZtKBe6pg7wJZdVdXTJWa9pFNMR', '3BwWe6D2znQ7XnMaGaddu1MdyyGWppxRwj'], $parsed_data['destinations']);
+        PHPUnit::assertNotEmpty($parsed_data['values']);
+        PHPUnit::assertEquals(0.24858765, $parsed_data['values']['3EMLoeeUZtKBe6pg7wJZdVdXTJWa9pFNMR']);
+        PHPUnit::assertEquals(0.02898411, $parsed_data['values']['3BwWe6D2znQ7XnMaGaddu1MdyyGWppxRwj']);
+        PHPUnit::assertEquals(0.27762848, $parsed_data['bitcoinTx']['valueIn']);
+        PHPUnit::assertEquals(0.27757176, $parsed_data['bitcoinTx']['valueOut']);
+        PHPUnit::assertEquals(0.00005672, $parsed_data['bitcoinTx']['fees']);
+
+        $expected_fingerprint = hash('sha256',
+            '94415dc3ad8ada2f9a65623b67bd525b34f539703760a234beb6c612690abeef:1'
+            .'|OP_HASH160 8ae113bf266f4510fabd8e0c258973e3b9f006f2 OP_EQUAL'
+            .'|OP_HASH160 706f0d6f929ffc74fc7ae476a9055029cdf8515c OP_EQUAL'
+        );
+        PHPUnit::assertEquals($expected_fingerprint, $parsed_data['transactionFingerprint']);
+    }
+
 }

@@ -138,7 +138,7 @@ class BitcoinTransactionEventBuilder
         $quantity_by_destination = [];
         foreach ($tx['vout'] as $vout) {
             if (isset($vout['scriptPubKey']) AND isset($vout['scriptPubKey']['addresses'])) {
-                if ($vout['scriptPubKey']['type'] == 'pubkeyhash') {
+                if ($vout['scriptPubKey']['type'] == 'pubkeyhash' OR $vout['scriptPubKey']['type'] == 'scripthash') {
                     foreach($vout['scriptPubKey']['addresses'] as $destination_address) {
                         // ignore change
                         if (isset($sources_map[$destination_address])) { continue; }
