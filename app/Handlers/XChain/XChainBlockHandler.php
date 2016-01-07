@@ -21,12 +21,11 @@ class XChainBlockHandler {
     public function handleNewBlock($block_event) {
         $block_handler = $this->network_handler_factory->buildBlockHandler($block_event['network']);
 
-        // if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
         PHP_Timer::start();
         $result = $block_handler->handleNewBlock($block_event);
         $float_seconds = PHP_Timer::stop();
         EventLog::info('block.finished', ['height' => $block_event['height'], 'time' => $float_seconds]);
-        if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for handleNewBlock: ".PHP_Timer::secondsToTimeString($float_seconds)); }
+        if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { Log::debug("[".getmypid()."] Time for handleNewBlock: ".PHP_Timer::secondsToTimeString($float_seconds)); }
 
         return $result;
     }
