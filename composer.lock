@@ -3824,12 +3824,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/laravel-event-log.git",
-                "reference": "f689da183dff772708863d79fda0985c06d4730b"
+                "reference": "c2665c1813400bd8815653a6c08bece0e0aec28d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-event-log/zipball/f689da183dff772708863d79fda0985c06d4730b",
-                "reference": "f689da183dff772708863d79fda0985c06d4730b",
+                "url": "https://api.github.com/repos/tokenly/laravel-event-log/zipball/c2665c1813400bd8815653a6c08bece0e0aec28d",
+                "reference": "c2665c1813400bd8815653a6c08bece0e0aec28d",
                 "shasum": ""
             },
             "require": {
@@ -3856,7 +3856,7 @@
                 }
             ],
             "description": "An event logger provider for Laravel.",
-            "time": "2015-07-02 20:58:07"
+            "time": "2016-01-07 16:22:26"
         },
         {
             "name": "tokenly/laravel-record-lock",
@@ -5215,7 +5215,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/satooshi/php-coveralls/zipball/afd0861d5e219bf8b3cca8957d9bb1f2004b76c2",
+                "url": "https://api.github.com/repos/satooshi/php-coveralls/zipball/536b23de186ff3e04a138a8d3efbc526946964c4",
                 "reference": "2fbf803803d179ab1082807308a67bbd5a760c70",
                 "shasum": ""
             },
