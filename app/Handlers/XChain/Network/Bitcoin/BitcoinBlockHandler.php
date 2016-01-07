@@ -123,7 +123,7 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
                     // check to see if it was reorganized
                     $was_reorganized = ($transaction['block_confirmed_hash'] AND $transaction['block_confirmed_hash'] != $block_event['hash']);
                     if ($was_reorganized) {
-                        Log::debug("NOTE: $txid was reorganized.  Loading from bitcoind.");
+                        EventLog::info('tx.reorganized', ['txid' => $txid]);
                         // we must reload this transaction from bitcoind
                         // since this transaction was reorganized
                         $transaction = $this->transaction_store->getParsedTransactionFromBitcoind($txid, $block_seq);

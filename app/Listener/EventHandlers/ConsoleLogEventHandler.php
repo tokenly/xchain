@@ -28,16 +28,26 @@ class ConsoleLogEventHandler
         $xcp_data = $tx_event['counterpartyTx'];
         if ($tx_event['network'] == 'counterparty') {
             if ($xcp_data['type'] == 'send') {
-                $this->wlog("from: {$xcp_data['sources'][0]} to {$xcp_data['destinations'][0]}: {$xcp_data['quantity']} {$xcp_data['asset']} [{$tx_event['txid']}]");
+                // $this->wlog("from: {$xcp_data['sources'][0]} to {$xcp_data['destinations'][0]}: {$xcp_data['quantity']} {$xcp_data['asset']} [{$tx_event['txid']}]");
+                EventLog::info('xcp.send', [
+                    'from'  => $xcp_data['sources'],
+                    'to'    => $xcp_data['destinations'],
+                    'qty'   => $xcp_data['quantity'],
+                    'asset' => $xcp_data['asset'],
+                    'txid'  => $tx_event['txid'],
+                ]);
             } else {
-                $this->wlog("[".date("Y-m-d H:i:s")."] XCP TX FOUND: {$xcp_data['type']} at {$tx_event['txid']}");
-
+                EventLog::info('xcp.other', [
+                    'type'  => $xcp_data['type'],
+                    'txid'  => $tx_event['txid'],
+                ]);
             }
         } else {
             if (rand(1, 100) === 1) {
                 $c = Carbon::createFromTimestampUTC(floor($tx_event['timestamp']))->timezone(new \DateTimeZone('America/Chicago'));
                 $this->wlog("heard $count tx.  Last tx time: ".$c->format('Y-m-d h:i:s A T'));
             }
+            EventLog::jsonLog('info', 'tx.heard');
         }
 
         if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for logToConsole: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }

@@ -119,7 +119,7 @@ class PaymentAddressSender {
         try {
             $sent_tx_id = $this->bitcoind->sendrawtransaction($signed_transaction_hex);
         } catch (Exception $e) {
-            Log::debug("bitcoind returned exception: ".$e->getCode());
+            EventLog::debug('bitcoind.exception', ['msg' => "bitcoind returned exception: ".$e->getCode(), 'code' => $e->getCode()]);
             if (in_array($e->getCode(), [-25, -26, -27])) {
                 // this transaction was rejected, remove it from the composed transaction repository
                 //   so it can be created again

@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use PHP_Timer;
+use Tokenly\LaravelEventLog\Facade\EventLog;
 
 /**
  * This is invoked when a new block is received
@@ -20,9 +21,12 @@ class XChainBlockHandler {
     public function handleNewBlock($block_event) {
         $block_handler = $this->network_handler_factory->buildBlockHandler($block_event['network']);
 
-        if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
+        // if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
+        PHP_Timer::start();
         $result = $block_handler->handleNewBlock($block_event);
-        if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for handleNewBlock: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
+        $float_seconds = PHP_Timer::stop();
+        EventLog::info('block.finished', ['height' => $block_event['height'], 'time' => $float_seconds]);
+        if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for handleNewBlock: ".PHP_Timer::secondsToTimeString($float_seconds)); }
 
         return $result;
     }
