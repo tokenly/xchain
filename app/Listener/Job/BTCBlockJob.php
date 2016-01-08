@@ -31,7 +31,10 @@ class BTCBlockJob
 
         // fire an event
         try {
-            Log::debug("Begin xchain.block.received {$event_data['height']} ({$event_data['hash']})");
+            EventLog::debug('xchain.block.received', [
+                'height' => $event_data['height'],
+                'hash' => $event_data['hash'],
+            ]);
             Event::fire('xchain.block.received', [$event_data]);
             Log::debug("End xchain.block.received {$event_data['height']} ({$event_data['hash']})");
 
@@ -45,11 +48,23 @@ class BTCBlockJob
             $attempts = $job->attempts();
             if ($attempts > self::MAX_ATTEMPTS) {
                 // we've already tried MAX_ATTEMPTS times - give up
-                Log::debug("Block {$data['hash']} event failed after attempt ".$attempts.". Giving up.");
+                // Log::debug("Block {$data['hash']} event failed after attempt ".$attempts.". Giving up.");
+                EventLog::warning('xchain.block.failedPermanent', [
+                    'msg'      => "Block {$data['hash']} event failed after attempt ".$attempts.". Giving up.",
+                    'height'   => $event_data['height'],
+                    'hash'     => $event_data['hash'],
+                    'attempts' => $attempts,
+                ]);
                 $job->delete();
             } else {
                 $release_time = 2;
-                Log::debug("Block {$data['hash']} event failed after attempt ".$attempts.". Trying again in ".self::RETRY_DELAY." seconds.");
+                // Log::debug("Block {$data['hash']} event failed after attempt ".$attempts.". Trying again in ".self::RETRY_DELAY." seconds.");
+                EventLog::debug('xchain.block.failedTemporary', [
+                    'msg'      => "Block {$data['hash']} event failed after attempt ".$attempts.". Trying again in ".self::RETRY_DELAY." seconds.",
+                    'height'   => $event_data['height'],
+                    'hash'     => $event_data['hash'],
+                    'attempts' => $attempts,
+                ]);
                 $job->release(self::RETRY_DELAY);
             }
         }

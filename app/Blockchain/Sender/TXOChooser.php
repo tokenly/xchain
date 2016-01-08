@@ -8,6 +8,7 @@ use App\Repositories\TXORepository;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Tokenly\CurrencyLib\CurrencyUtil;
+use Tokenly\LaravelEventLog\Facade\EventLog;
 
 class TXOChooser {
 
@@ -282,7 +283,8 @@ class TXOChooser {
         if (!isset($context['lowest_count_so_far'])) { $context['lowest_count_so_far'] = null; }
         ++$context['iteration_count'];
         if ($context['iteration_count'] > 10000) {
-            Log::debug("__findExactChangeCombinations iteration count at {$context['iteration_count']}.  Giving up.");
+            $msg = "__findExactChangeCombinations iteration count at {$context['iteration_count']}.  Giving up.";
+            EventLog::warning('txoChooser.highIterationCount', $msg);
             return;
         }
 
@@ -335,7 +337,8 @@ class TXOChooser {
         if (!isset($context['iteration_count'])) { $context['iteration_count'] = 0; }
         ++$context['iteration_count'];
         if ($context['iteration_count'] > 10000) {
-            Log::debug("iteration count at {$context['iteration_count']}.  Giving up.");
+            $msg = "__findFewestTXOsCombinations iteration count at {$context['iteration_count']}.  Giving up.";
+            EventLog::warning('txoChooser.highIterationCount', $msg);
             return;
         }
 

@@ -248,7 +248,7 @@ class PaymentAddressSender {
                     $chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_quantity, $float_fee, null, TXOChooser::STRATEGY_BALANCED);
                     $debug_strategy_text = 'balanced';
                 }
-                Log::debug("strategy=$debug_strategy_text Chosen UTXOs: ".$this->debugDumpUTXOs($chosen_txos));
+                // Log::debug("strategy=$debug_strategy_text Chosen UTXOs: ".$this->debugDumpUTXOs($chosen_txos));
                 if (!$chosen_txos) { throw new Exception("Unable to select transaction outputs (UTXOs)", 1); }
 
                 // $signed_transaction = $this->bitcoin_payer->buildSignedTransactionHexToSendBTC($payment_address['address'], $destination, $float_quantity, $wif_private_key, $float_fee);
@@ -262,7 +262,7 @@ class PaymentAddressSender {
 
                 // compose the Counterpary and BTC transaction
                 $chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_btc_dust_size, $float_fee);
-                Log::debug("Counterparty send Chosen UTXOs: ".$this->debugDumpUTXOs($chosen_txos));
+                // Log::debug("Counterparty send Chosen UTXOs: ".$this->debugDumpUTXOs($chosen_txos));
 
                 // build the change
                 if ($change_address_collection === null) { $change_address_collection = $payment_address['address']; }
@@ -273,9 +273,16 @@ class PaymentAddressSender {
                 // debug
                 try {
                     $_debug_parsed_tx = app('\TransactionComposerHelper')->parseCounterpartyTransaction($composed_transaction->getTransactionHex());
-                    Log::debug("Counterparty send: \$_debug_parsed_tx=".json_encode($_debug_parsed_tx, 192));
+                    // Log::debug("Counterparty send: \$_debug_parsed_tx=".json_encode($_debug_parsed_tx, 192));
                 } catch (Exception $e) {
-                    Log::debug("Error composing send: $asset, ".(($quantity instanceof Quantity) ? $quantity->getRawValue() : $quantity).", $destination  ".$e->getMessage());
+                    $qty_desc = (($quantity instanceof Quantity) ? $quantity->getRawValue() : $quantity);
+                    $msg = "Error parsing new send of $qty_desc $asset to $destination";
+                    EventLog::logError('compose.reparse.failure', $e, [
+                        'msg'         => $msg,
+                        'qty'         => $qty_desc,
+                        'asset'       => $asset,
+                        'destination' => $destination,
+                    ]);
                     throw $e;
                 }
 

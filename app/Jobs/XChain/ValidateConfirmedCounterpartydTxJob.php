@@ -25,7 +25,7 @@ class ValidateConfirmedCounterpartydTxJob
     }
 
     public function fire($job, $data) {
-        Log::debug("ValidateConfirmedCounterpartydTxJob called.\ntxid=".json_encode($data['tx']['txid'], 192));
+        // Log::debug("ValidateConfirmedCounterpartydTxJob called.\ntxid=".json_encode($data['tx']['txid'], 192));
 
         // $data = [
         //     'tx'            => $parsed_tx,
@@ -89,7 +89,12 @@ class ValidateConfirmedCounterpartydTxJob
                     // check asset
                     if ($send['asset'] != $parsed_tx['asset']) { throw new Exception("mismatched asset: {$send['asset']} (xcpd) != {$parsed_tx['asset']} (parsed)", 1); }
 
-                    Log::debug("Send $tx_hash was confirmed by counterpartyd.  {$xcpd_quantity_sat} {$send['asset']} to {$send['destination']}");
+                    // Log::debug("Send $tx_hash was confirmed by counterpartyd.  {$xcpd_quantity_sat} {$send['asset']} to {$send['destination']}");
+                    EventLog::debug('counterparty.sendConfirmed', [
+                        'qty'         => $xcpd_quantity_sat,
+                        'asset'       => $send['asset'],
+                        'destination' => $send['destination'],
+                    ]);
 
                 } catch (Exception $e) {
                     EventLog::logError('error.counterpartyConfirm', $e, ['txid' => $tx_hash]);
@@ -102,7 +107,7 @@ class ValidateConfirmedCounterpartydTxJob
             // no response from conterpartyd
             if ($job->attempts() > 240) {
                 // permanent failure
-                EventLog::logError('job.failed.permanent', ['txid' => $tx_hash,]);
+                EventLog::logError('counterparty.job.failed.permanent', ['txid' => $tx_hash,]);
                 $job->delete();
 
             } else {
@@ -122,7 +127,13 @@ class ValidateConfirmedCounterpartydTxJob
                 }
 
                 // put it back in the queue
-                Log::debug("Send $tx_hash was not confirmed by counterpartyd yet.  putting it back in the queue for $release_time seconds.  \$sends=".json_encode($sends, 192));
+                $msg = "Send not confirmed.  No response from counterpartyd.";
+                // Log::debug("Send $tx_hash was not confirmed by counterpartyd yet.  putting it back in the queue for $release_time seconds.  \$sends=".json_encode($sends, 192));
+                EventLog::warning('counterparty.sendUnconfirmed', [
+                    'msg'            => $msg,
+                    'txid'           => $tx_hash,
+                    'release'        => $release_time,
+                ]);
                 $job->release($release_time);
             }
 
@@ -158,11 +169,25 @@ class ValidateConfirmedCounterpartydTxJob
                 $attempts = $job->attempts();
                 if ($attempts >= 4) {
                     // we've already tried 4 times - give up
-                    Log::debug("Send $tx_hash was not found by counterpartyd after attempt ".$attempts.". Giving up.");
+                    // Log::debug("Send $tx_hash was not found by counterpartyd after attempt ".$attempts.". Giving up.");
+                    $msg = "Send was not found by counterpartyd after attempt ".$attempts.". Giving up.";
+                    EventLog::warning('counterparty.sendUnconfirmed.failure', [
+                        'msg'      => $msg,
+                        'txid'     => $tx_hash,
+                        'attempts' => $attempts,
+                    ]);
                     $job->delete();
                 } else {
                     $release_time = ($attempts > 2 ? 10 : 2);
-                    Log::debug("Send $tx_hash was not found by counterpartyd after attempt ".$attempts.". Trying again in {$release_time} seconds.");
+                    // Log::debug("Send $tx_hash was not found by counterpartyd after attempt ".$attempts.". Trying again in {$release_time} seconds.");
+                    $msg = "Send was not found by counterpartyd after attempt ".$attempts.". Trying again in {$release_time} seconds.";
+                    EventLog::debug('counterparty.sendUnconfirmed.retry', [
+                        'msg'      => $msg,
+                        'txid'     => $tx_hash,
+                        'attempts' => $attempts,
+                        'release'  => $release_time,
+                    ]);
+
                     $job->release($release_time);
                 }
             }

@@ -30,6 +30,7 @@ class ConsoleLogEventHandler
             if ($xcp_data['type'] == 'send') {
                 // $this->wlog("from: {$xcp_data['sources'][0]} to {$xcp_data['destinations'][0]}: {$xcp_data['quantity']} {$xcp_data['asset']} [{$tx_event['txid']}]");
                 EventLog::info('xcp.send', [
+                    'type'  => $xcp_data['type'],
                     'from'  => $xcp_data['sources'],
                     'to'    => $xcp_data['destinations'],
                     'qty'   => $xcp_data['quantity'],
