@@ -3440,12 +3440,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-payer.git",
-                "reference": "17259a70a6184b976d2abbd6fa2935c371faf2b5"
+                "reference": "9df3aadc5104059e480efab90128b583ed981320"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/17259a70a6184b976d2abbd6fa2935c371faf2b5",
-                "reference": "17259a70a6184b976d2abbd6fa2935c371faf2b5",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/9df3aadc5104059e480efab90128b583ed981320",
+                "reference": "9df3aadc5104059e480efab90128b583ed981320",
                 "shasum": ""
             },
             "require": {
@@ -3474,7 +3474,7 @@
                 }
             ],
             "description": "A bitcoin payment library",
-            "time": "2015-12-05 20:06:14"
+            "time": "2016-01-09 18:06:35"
         },
         {
             "name": "tokenly/consul-health-daemon",

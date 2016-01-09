@@ -9,6 +9,8 @@ use \PHPUnit_Framework_Assert as PHPUnit;
 
 class TXOChooserTest extends TestCase {
 
+    const SATOSHI = 100000000;
+
     protected $useDatabase = true;
 
     public function testChooseTXOs_1()
@@ -192,7 +194,7 @@ class TXOChooserTest extends TestCase {
 
         // choose from a bunch
         $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(5430), $float(10000), $float(5430));
-        $this->assertFound([2,1,3,4], $sample_txos, $chosen_txos);
+        $this->assertFound([8,0,5,4], $sample_txos, $chosen_txos);
 
     }
 
@@ -209,6 +211,24 @@ class TXOChooserTest extends TestCase {
         // choose exact change from a bunch
         $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, 0.0005, 0.0001, $float(5430));
         // $this->assertFound([2,1,3,4], $sample_txos, $chosen_txos);
+        PHPUnit::assertNotEmpty($chosen_txos);
+
+    }
+
+    public function testChooseTXOsFive()
+    {
+        // receiving a transaction adds TXOs
+        $txo_repository = app('App\Repositories\TXORepository');
+        $txo_chooser    = app('App\Blockchain\Sender\TXOChooser');
+
+        $float = function($i) { return CurrencyUtil::satoshisToValue($i); };
+
+        list($payment_address, $sample_txos) = $this->makeAddressAndSampleTXOs_5();
+
+        // choose TXOs
+        // public function chooseUTXOs(PaymentAddress $payment_address, $float_quantity, $float_fee, $float_minimum_change_size=null, $strategy=null, $priming_size=null) {
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, 0.16, 0.0001, 0);
+        PHPUnit::assertNotEmpty($chosen_txos);
 
     }
 
@@ -244,6 +264,7 @@ class TXOChooserTest extends TestCase {
         $expected_txo_arrays = [];
         foreach($expected_offsets as $expected_offset) {
             $expected_txo_arrays[] = $sample_txos[$expected_offset]->toArray();
+            $expected_amounts[] = $sample_txos[$expected_offset]['amount'];
         }
 
         $actual_amounts = [];
@@ -253,7 +274,7 @@ class TXOChooserTest extends TestCase {
             $actual_amounts[] = $chosen_txo['amount'];
         }
 
-        PHPUnit::assertEquals($expected_txo_arrays, $chosen_txo_arrays, "Did not find the expected offsets of ".json_encode($expected_offsets).'. Actual amounts were '.json_encode($actual_amounts));
+        PHPUnit::assertEquals($expected_txo_arrays, $chosen_txo_arrays, "Did not find the expected offsets of ".json_encode($expected_offsets).'. Expected amounts were '.json_encode($expected_amounts).'. Actual amounts were '.json_encode($actual_amounts));
     }
 
 
@@ -307,6 +328,41 @@ class TXOChooserTest extends TestCase {
         for ($i=0; $i < 10; $i++) { 
             $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txo_helper->nextTXID(), 'amount' => 5470,  'n' => 0, 'type' => TXO::CONFIRMED, 'green' => 0]);
         }
+
+        return [$payment_address, $sample_txos];
+    }
+
+    protected function makeAddressAndSampleTXOs_5() {
+        $payment_address_helper = app('PaymentAddressHelper');
+
+        $txo_helper = $this->TXOHelper();
+        $payment_address = $payment_address_helper->createSamplePaymentAddressWithoutInitialBalances(null, ['address' => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD']);
+
+        $values = [
+            [0.00005470, false],
+            [0.00005470, false],
+            [0.00005470, false],
+            [0.00005470, false],
+            [0.00005470, false],
+            [0.00006370, true ],
+            [0.00006410, true ],
+            [0.00005430, false],
+            [0.00005470, false],
+            [0.00005470, false],
+            [0.00005920, true ],
+            [0.08000000, false],
+            [0.00005470, false],
+            [0.07943710, true ],
+        ];
+
+        $sum = 0;
+        $sample_txos = [];
+        foreach($values as $value_pair) {
+            list($value, $is_green) = $value_pair;
+            $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txo_helper->nextTXID(), 'amount' => $value * self::SATOSHI,  'n' => 0, 'type' => TXO::CONFIRMED, 'green' => ($is_green ? 1 : 0)]);
+            $sum += CurrencyUtil::valueToSatoshis($value);
+        }
+        // echo "\$sum: ".json_encode($sum, 192)."\n";
 
         return [$payment_address, $sample_txos];
     }
