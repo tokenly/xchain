@@ -3,17 +3,21 @@
 namespace App\Listener\EventHandlers;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
+use PHP_Timer;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 use \Exception;
-use PHP_Timer;
 
 /*
 * ConsoleLogEventHandler
 */
 class ConsoleLogEventHandler
 {
+
+    const TX_HEARD_GROUP_BY = 10;
+
     public function __construct()
     {
     }
@@ -23,7 +27,9 @@ class ConsoleLogEventHandler
         if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
 
         if (!isset($GLOBALS['XCHAIN_GLOBAL_COUNTER'])) { $GLOBALS['XCHAIN_GLOBAL_COUNTER'] = 0; }
-        $count = ++$GLOBALS['XCHAIN_GLOBAL_COUNTER'];
+        if (!isset($GLOBALS['XCHAIN_GLOBAL_COUNTER_STACK'])) { $GLOBALS['XCHAIN_GLOBAL_COUNTER_STACK'] = 0; }
+        $in_memory_count = ++$GLOBALS['XCHAIN_GLOBAL_COUNTER'];
+        $in_memory_stack = ++$GLOBALS['XCHAIN_GLOBAL_COUNTER_STACK'];
 
         $xcp_data = $tx_event['counterpartyTx'];
         if ($tx_event['network'] == 'counterparty') {
@@ -43,12 +49,17 @@ class ConsoleLogEventHandler
                     'txid'  => $tx_event['txid'],
                 ]);
             }
-        } else {
-            if (rand(1, 100) === 1) {
-                $c = Carbon::createFromTimestampUTC(floor($tx_event['timestamp']))->timezone(new \DateTimeZone('America/Chicago'));
-                $this->wlog("heard $count tx.  Last tx time: ".$c->format('Y-m-d h:i:s A T'));
-            }
-            EventLog::jsonLog('info', 'tx.heard');
+        }
+
+
+        if (($in_memory_count % 100) === 1) {
+            $c = Carbon::createFromTimestampUTC(floor($tx_event['timestamp']))->timezone(new \DateTimeZone('America/Chicago'));
+            $this->wlog("heard $in_memory_count tx.  Last tx time: ".$c->format('Y-m-d h:i:s A T'));
+        }
+
+        if ($in_memory_stack >= self::TX_HEARD_GROUP_BY) {
+            EventLog::jsonLog('info', 'tx.heard', ['txCount' => $in_memory_stack]);
+            $GLOBALS['XCHAIN_GLOBAL_COUNTER_STACK'] -= $in_memory_stack;
         }
 
         if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for logToConsole: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
