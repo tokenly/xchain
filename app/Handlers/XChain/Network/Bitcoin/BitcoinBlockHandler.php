@@ -85,14 +85,24 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
         }
 
         // update the block transactions in this block
-        // Log::debug("\$block=".json_encode($block, 192));
-        if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
-        $block_confirmations = $this->updateAllBlockTransactions($block_event, $block);
-        if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for updateAllBlockTransactions: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
+        try {
 
-        if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
-        $this->generateAndSendNotifications($block_event, $block_confirmations, $block);
-        if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for generateAndSendNotifications: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
+            // Log::debug("\$block=".json_encode($block, 192));
+            if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
+            $block_confirmations = $this->updateAllBlockTransactions($block_event, $block);
+            if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for updateAllBlockTransactions: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
+
+            if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
+            $this->generateAndSendNotifications($block_event, $block_confirmations, $block);
+            if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for generateAndSendNotifications: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
+
+        } catch (Exception $e) {
+
+            EventLog::logError('block.update.error', $e);
+            sleep(5);
+            throw $e;
+        }
+
     }
 
     public function updateAllBlockTransactions($block_event, Block $block) {
