@@ -107,6 +107,7 @@ class EnhancedBitcoindTransactionBuilder {
             }
         } catch (Exception $e) {
             Log::error("failed to get address from script. ".$e->getMessage());
+            throw $e;
         }
 
         return $address;
