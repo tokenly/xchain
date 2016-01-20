@@ -9,6 +9,7 @@ use BitWasp\Bitcoin\Script\Classifier\InputClassifier;
 use BitWasp\Bitcoin\Script\ScriptFactory;
 use BitWasp\Bitcoin\Transaction\TransactionFactory;
 use Exception;
+use RuntimeException;
 use Illuminate\Support\Facades\Log;
 use Nbobtc\Bitcoind\Bitcoind;
 use Tokenly\CurrencyLib\CurrencyUtil;
@@ -28,30 +29,32 @@ class EnhancedBitcoindTransactionBuilder {
 
 
     public function buildTransactionData($txid) {
-        $enhanced_bitcoind_transaction = $this->loadTransactionFromBitcoind($txid);
 
-        // enhance vins
-        $enhanced_vins = [];
-        foreach ($enhanced_bitcoind_transaction['vin'] as $n => $vin) {
-            $enhanced_vins[] = $this->enhanceVin($vin, $n);
-        }
-        $enhanced_bitcoind_transaction['vin'] = $enhanced_vins;
-
-
-        // values in, out and fees
-        $enhanced_bitcoind_transaction['valueIn'] = 0.0;
-        $enhanced_bitcoind_transaction['valueInSat'] = $this->sumValuesIn($enhanced_vins);
-        $enhanced_bitcoind_transaction['valueIn'] = CurrencyUtil::satoshisToValue($enhanced_bitcoind_transaction['valueInSat']);
-
-        $enhanced_bitcoind_transaction['valueOut'] = $this->sumValuesOut($enhanced_bitcoind_transaction['vout']);
-        $enhanced_bitcoind_transaction['valueOutSat'] = CurrencyUtil::valueToSatoshis($enhanced_bitcoind_transaction['valueOut']);
-
-        $enhanced_bitcoind_transaction['fees'] = 0.0;
-        $enhanced_bitcoind_transaction['feesSat'] = $enhanced_bitcoind_transaction['valueInSat'] - $enhanced_bitcoind_transaction['valueOutSat'];
-        $enhanced_bitcoind_transaction['fees'] = CurrencyUtil::satoshisToValue($enhanced_bitcoind_transaction['feesSat']);
+            $enhanced_bitcoind_transaction = $this->loadTransactionFromBitcoind($txid);
+                
+            // enhance vins
+            $enhanced_vins = [];
+            foreach ($enhanced_bitcoind_transaction['vin'] as $n => $vin) {
+                $enhanced_vin = $this->enhanceVin($vin, $n, $txid);
+                if ($enhanced_vin) { $enhanced_vins[] = $enhanced_vin; }
+            }
+            $enhanced_bitcoind_transaction['vin'] = $enhanced_vins;
 
 
-        return $enhanced_bitcoind_transaction;
+            // values in, out and fees
+            $enhanced_bitcoind_transaction['valueIn'] = 0.0;
+            $enhanced_bitcoind_transaction['valueInSat'] = $this->sumValuesIn($enhanced_vins);
+            $enhanced_bitcoind_transaction['valueIn'] = CurrencyUtil::satoshisToValue($enhanced_bitcoind_transaction['valueInSat']);
+
+            $enhanced_bitcoind_transaction['valueOut'] = $this->sumValuesOut($enhanced_bitcoind_transaction['vout']);
+            $enhanced_bitcoind_transaction['valueOutSat'] = CurrencyUtil::valueToSatoshis($enhanced_bitcoind_transaction['valueOut']);
+
+            $enhanced_bitcoind_transaction['fees'] = 0.0;
+            $enhanced_bitcoind_transaction['feesSat'] = $enhanced_bitcoind_transaction['valueInSat'] - $enhanced_bitcoind_transaction['valueOutSat'];
+            $enhanced_bitcoind_transaction['fees'] = CurrencyUtil::satoshisToValue($enhanced_bitcoind_transaction['feesSat']);
+
+
+            return $enhanced_bitcoind_transaction;
     }
 
     protected function loadTransactionFromBitcoind($txid) {
@@ -63,14 +66,25 @@ class EnhancedBitcoindTransactionBuilder {
         return $result;
     }
 
-    protected function enhanceVin($vin, $n) {
+    protected function enhanceVin($vin, $n, $txid) {
         if (!isset($vin['scriptSig']) OR !isset($vin['scriptSig']['hex'])) { return $vin; }
 
         // add n
         $vin['n'] = $n;
 
         // extract the address
-        $address = $this->addressFromScriptHex($vin['scriptSig']['hex']);
+        try {
+            $address = $this->addressFromScriptHex($vin['scriptSig']['hex']);
+        } catch (RuntimeException $e) {
+            // allow a failed address parse to go through
+            //  but log it as an error
+            EventLog::logError('transaction.parseAddressError', $e, ['txid' => $txid]);
+
+            // Log::debug("transaction.parseError: ".$e->getTraceAsString());
+            // throw new Exception("Failed to parse transaction $txid.  ".$e->getMessage(), 1);
+
+            $address = null;
+        }
         $vin['addr'] = $address;
 
         // build value

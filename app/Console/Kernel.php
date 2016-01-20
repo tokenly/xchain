@@ -13,6 +13,7 @@ class Kernel extends ConsoleKernel {
     protected $commands = [
         // core xchain commands
         \App\Console\Commands\Blocks\LoadMissingBlocksCommand::class,
+        \App\Console\Commands\Blocks\ReparseBlockCommand::class,
         \App\Console\Commands\Transaction\ResendTransactionNotificationsCommand::class,
         \App\Console\Commands\Transaction\ReprocessAllNotificationsCommand::class,
 
