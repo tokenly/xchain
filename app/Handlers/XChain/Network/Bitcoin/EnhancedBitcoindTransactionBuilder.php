@@ -117,7 +117,7 @@ class EnhancedBitcoindTransactionBuilder {
 
             } else {
                 // unknown script type
-                Log::debug("Unable to classify script ".substr($hex, 0, 20)."...");
+                Log::debug("Unable to classify script ".substr($script_hex, 0, 20)."...");
             }
         } catch (Exception $e) {
             Log::error("failed to get address from script. ".$e->getMessage());

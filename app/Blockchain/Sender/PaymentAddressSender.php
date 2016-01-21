@@ -255,6 +255,23 @@ class PaymentAddressSender {
                 if ($change_address_collection === null) { $change_address_collection = $payment_address['address']; }
                 $composed_transaction = $this->transaction_composer->composeSend('BTC', $float_quantity, $destination, $wif_private_key, $chosen_txos, $change_address_collection, $float_fee);
 
+                // debug
+                try {
+                    $_debug_parsed_tx = app('\TransactionComposerHelper')->parseBTCTransaction($composed_transaction->getTransactionHex());
+                    // Log::debug("BTC send: \$_debug_parsed_tx=".json_encode($_debug_parsed_tx, 192));
+                    // Log::debug("BTC send: \$signed_tx=".$composed_transaction->getTransactionHex());
+                } catch (Exception $e) {
+                    $qty_desc = $float_quantity;
+                    $msg = "Error parsing new send of $qty_desc $asset to $destination";
+                    EventLog::logError('compose.reparse.failure', $e, [
+                        'msg'         => $msg,
+                        'qty'         => $qty_desc,
+                        'asset'       => $asset,
+                        'destination' => $destination,
+                    ]);
+                    throw $e;
+                }
+
             } else {
                 // calculate the quantity
                 $is_divisible = $this->asset_cache->isDivisible($asset);
