@@ -38,7 +38,7 @@ class PaymentAddressController extends APIController {
         $attributes['user_id'] = $user['id'];
 
         $address = $payment_address_respository->create($attributes);
-        EventLog::log('paymentAddress.created', $address->toArray());
+        EventLog::log('paymentAddress.created', $address->toArray(), ['uuid', 'user_id', 'address', 'id']);
 
         // create a default account
         AccountHandler::createDefaultAccount($address);
