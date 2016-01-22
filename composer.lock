@@ -3167,12 +3167,12 @@
             "version": "v2.7.2",
             "source": {
                 "type": "git",
-                "url": "https://github.com/symfony/Routing.git",
+                "url": "https://github.com/symfony/routing.git",
                 "reference": "ea9134f277162b02e5f80ac058b75a77637b0d26"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Routing/zipball/ea9134f277162b02e5f80ac058b75a77637b0d26",
+                "url": "https://api.github.com/repos/symfony/routing/zipball/ea9134f277162b02e5f80ac058b75a77637b0d26",
                 "reference": "ea9134f277162b02e5f80ac058b75a77637b0d26",
                 "shasum": ""
             },
@@ -3440,12 +3440,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-payer.git",
-                "reference": "9df3aadc5104059e480efab90128b583ed981320"
+                "reference": "ee38108a6be897fe91b1b5a0fb7dca38bda7c9b4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/9df3aadc5104059e480efab90128b583ed981320",
-                "reference": "9df3aadc5104059e480efab90128b583ed981320",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/ee38108a6be897fe91b1b5a0fb7dca38bda7c9b4",
+                "reference": "ee38108a6be897fe91b1b5a0fb7dca38bda7c9b4",
                 "shasum": ""
             },
             "require": {
@@ -3474,7 +3474,7 @@
                 }
             ],
             "description": "A bitcoin payment library",
-            "time": "2016-01-09 18:06:35"
+            "time": "2016-01-21 15:09:57"
         },
         {
             "name": "tokenly/consul-health-daemon",
@@ -5215,7 +5215,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/satooshi/php-coveralls/zipball/536b23de186ff3e04a138a8d3efbc526946964c4",
+                "url": "https://api.github.com/repos/satooshi/php-coveralls/zipball/50c60bb64054974f8ed7540ae6e75fd7981a5fd3",
                 "reference": "2fbf803803d179ab1082807308a67bbd5a760c70",
                 "shasum": ""
             },
