@@ -1,5 +1,6 @@
 <?php namespace App\Providers;
 
+use App\Handlers\XChain\Error\XChainErrorCounter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider {
@@ -29,6 +30,11 @@ class AppServiceProvider extends ServiceProvider {
 			'Illuminate\Contracts\Auth\Registrar',
 			'App\Services\Registrar'
 		);
+
+        $this->app->singleton('XChainErrorCounter', function ($app) {
+            return new XChainErrorCounter(env('MAX_ADDRESS_PARSE_ERRORS', 10));
+        });
+
 	}
 
 }

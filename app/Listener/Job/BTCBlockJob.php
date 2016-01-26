@@ -38,6 +38,12 @@ class BTCBlockJob
             Event::fire('xchain.block.received', [$event_data]);
             Log::debug("End xchain.block.received {$event_data['height']} ({$event_data['hash']})");
 
+            // check for max error count
+            if (app('XChainErrorCounter')->maxErrorCountReached()) {
+                EventLog::logError('errorCount.exceeded', ['error' => 'Too many errors received for this process.', 'errorCount' => app('XChainErrorCounter')->getErrorCount()]);
+                exit(1);
+            }
+
             // job successfully handled
             $job->delete();
         } catch (Exception $e) {

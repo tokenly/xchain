@@ -79,6 +79,7 @@ class EnhancedBitcoindTransactionBuilder {
             // allow a failed address parse to go through
             //  but log it as an error
             EventLog::logError('transaction.parseAddressError', $e, ['txid' => $txid]);
+            app('XChainErrorCounter')->incrementErrorCount();
 
             // Log::debug("transaction.parseError: ".$e->getTraceAsString());
             // throw new Exception("Failed to parse transaction $txid.  ".$e->getMessage(), 1);

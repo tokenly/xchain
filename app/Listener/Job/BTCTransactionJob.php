@@ -50,6 +50,12 @@ class BTCTransactionJob
             Event::fire('xchain.tx.received', [$event_data, 0, null, null]);
             if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for fire xchain.tx.received: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
 
+            // check for max error count
+            if (app('XChainErrorCounter')->maxErrorCountReached()) {
+                EventLog::logError('errorCount.exceeded', ['error' => 'Too many errors received for this process.', 'errorCount' => app('XChainErrorCounter')->getErrorCount()]);
+                exit(1);
+            }
+
             // job successfully handled
             if ($_debugLogTxTiming) { PHP_Timer::start(); }
             $job->delete();

@@ -205,6 +205,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         } else {
             // there were no source or destination addresses (?!) in this transaction
             EventLog::logError('transaction.noAddresses', ['txid' => $parsed_tx['txid'],]);
+            app('XChainErrorCounter')->incrementErrorCount();
             $monitored_addresses = [];
         }
 
