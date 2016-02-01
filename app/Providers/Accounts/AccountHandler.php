@@ -438,6 +438,7 @@ class AccountHandler {
     protected function hasSufficientFunds($actual_balances, $quantity, $asset, $float_fee, $dust_size) {
         // build required balances with fees
         $balances_required = $this->buildSendBalances($quantity, $asset, $float_fee, $dust_size);
+        // Log::debug("hasSufficientFunds quantity=$quantity asset=$asset) \$balances_required=".json_encode($balances_required, 192));
 
         // check actual balances
         $has_sufficient_funds = true;
