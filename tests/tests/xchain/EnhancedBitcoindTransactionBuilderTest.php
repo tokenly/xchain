@@ -35,6 +35,18 @@ class EnhancedBitcoindTransactionBuilderTest extends TestCase {
         PHPUnit::assertEquals('1YQQ1rJwS8B54tnuuquJd1AzBs8Jvi4Q5', $tx_data['vin'][0]['addr']);
     }
 
+    public function testEnhancedBitcoindTransactionBuilder_nodestinations() {
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        
+        $builder = app('App\Handlers\XChain\Network\Bitcoin\EnhancedBitcoindTransactionBuilder');
+
+        // try loading from bitcoind
+        $tx_data = $builder->buildTransactionData('8dbc65c0ab866a47cbeb7fde98c612082d7b8180f0ebf858f95aa5c7e258ea70');
+        // echo "\$tx_data: ".json_encode($tx_data, 192)."\n";
+
+        PHPUnit::assertEquals('19hH4a6HoQS2zmNAdvMN8K437TfGVYWDus', $tx_data['vin'][0]['addr']);
+    }
+
     public function testEnhancedBitcoindTransactionBuilder_cached() {
         $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
         

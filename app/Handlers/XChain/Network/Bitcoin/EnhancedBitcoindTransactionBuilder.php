@@ -103,29 +103,31 @@ class EnhancedBitcoindTransactionBuilder {
         try {
             $script = ScriptFactory::fromHex($script_hex);
             $classifier = new InputClassifier($script);
-            if ($classifier->isPayToPublicKeyHash()) {
+            $script_type = $classifier->classify();
+
+            if ($script_type == InputClassifier::PAYTOPUBKEYHASH) {
 
                 $decoded = $script->getScriptParser()->decode();
                 $public_key = PublicKeyFactory::fromHex($decoded[1]->getData());
                 $address = $public_key->getAddress()->getAddress();
 
-            } else if ($classifier->isPayToScriptHash()) {
+            } else if ($script_type == InputClassifier::PAYTOSCRIPTHASH OR $script_type == InputClassifier::MULTISIG) {
 
                 $decoded = $script->getScriptParser()->decode();
                 $hex_buffer = $decoded[count($decoded)-1]->getData();
                 $sh_address = new ScriptHashAddress(ScriptFactory::fromHex($hex_buffer)->getScriptHash());
                 $address = $sh_address->getAddress();
 
-            } else if ($classifier->isPayToPublicKey()) {
-                // load the previous output
+            } else if ($script_type == InputClassifier::PAYTOPUBKEY) {
+                // load the address from the previous output
                 $address = $this->getPreviousOutputAddressFromVin($vin);
 
             } else {
                 // unknown script type
-                Log::debug("Unable to classify script ".substr($script_hex, 0, 20)."...  classified as: ".$classifier->classify());
+                Log::debug("Unable to classify script ".substr($script_hex, 0, 20)."...  classified as: ".$script_type);
             }
         } catch (Exception $e) {
-            Log::error("failed to get address from script. ".$e->getMessage());
+            Log::error("failed to get address from script with type ".$script_type.". ".$e->getMessage());
             throw $e;
         }
 
