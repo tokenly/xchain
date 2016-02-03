@@ -9,9 +9,9 @@ use BitWasp\Bitcoin\Script\Classifier\InputClassifier;
 use BitWasp\Bitcoin\Script\ScriptFactory;
 use BitWasp\Bitcoin\Transaction\TransactionFactory;
 use Exception;
-use RuntimeException;
 use Illuminate\Support\Facades\Log;
 use Nbobtc\Bitcoind\Bitcoind;
+use RuntimeException;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 
@@ -74,7 +74,7 @@ class EnhancedBitcoindTransactionBuilder {
 
         // extract the address
         try {
-            $address = $this->addressFromScriptHex($vin['scriptSig']['hex']);
+            $address = $this->addressFromScriptHex($vin['scriptSig']['hex'], $vin);
         } catch (RuntimeException $e) {
             // allow a failed address parse to go through
             //  but log it as an error
@@ -97,7 +97,7 @@ class EnhancedBitcoindTransactionBuilder {
 
     }
 
-    protected function addressFromScriptHex($script_hex) {
+    protected function addressFromScriptHex($script_hex, $vin) {
         $address = null;
 
         try {
@@ -116,9 +116,13 @@ class EnhancedBitcoindTransactionBuilder {
                 $sh_address = new ScriptHashAddress(ScriptFactory::fromHex($hex_buffer)->getScriptHash());
                 $address = $sh_address->getAddress();
 
+            } else if ($classifier->isPayToPublicKey()) {
+                // load the previous output
+                $address = $this->getPreviousOutputAddressFromVin($vin);
+
             } else {
                 // unknown script type
-                Log::debug("Unable to classify script ".substr($script_hex, 0, 20)."...");
+                Log::debug("Unable to classify script ".substr($script_hex, 0, 20)."...  classified as: ".$classifier->classify());
             }
         } catch (Exception $e) {
             Log::error("failed to get address from script. ".$e->getMessage());
@@ -165,6 +169,17 @@ class EnhancedBitcoindTransactionBuilder {
             $sum_float += $vout['value'];
         }
         return $sum_float;
+    }
+
+    protected function getPreviousOutputAddressFromVin($vin) {
+        $transaction_model = $this->transaction_repository->findByTXID($vin['txid']);
+        if ($transaction_model) {
+            return $transaction_model['parsed_tx']['bitcoinTx']['vout'][$vin['vout']]['scriptPubKey']['addresses'][0];
+        }
+
+        // load from bitcoind
+        $bitcoind_transaction = $this->loadTransactionFromBitcoind($vin['txid']);
+        return $bitcoind_transaction['vout'][$vin['vout']]['scriptPubKey']['addresses'][0];
     }
 
 }
