@@ -37,10 +37,16 @@ class TransactionRepository
     }
 
     public function findAllTransactionsConfirmedInBlockHashes($hashes, $columns=['*']) {
+        // done allow empty hashes or addresses
+        if (!$hashes) { return []; }
+
         return Transaction::whereIn('block_confirmed_hash', $hashes)->get($columns);
     }
 
     public function findAllTransactionsConfirmedInBlockHashesInvolvingAddresses($hashes, $addresses) {
+        // done allow empty hashes or addresses
+        if (!$hashes OR !$addresses) { return []; }
+
         $query = Transaction::whereIn('block_confirmed_hash', $hashes);
 
         $query->join('transaction_address_lookup', function ($join) use ($addresses) {
