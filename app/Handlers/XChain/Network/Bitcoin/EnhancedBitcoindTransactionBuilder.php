@@ -99,7 +99,8 @@ class EnhancedBitcoindTransactionBuilder {
     }
 
     protected function addressFromScriptHex($script_hex, $vin) {
-        $address = null;
+        $address     = null;
+        $script_type = null;
 
         try {
             $script = ScriptFactory::fromHex($script_hex);
