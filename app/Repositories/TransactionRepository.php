@@ -50,7 +50,7 @@ class TransactionRepository
 
         $query->groupBy('transaction.id');
 
-        return $query->get(['transaction.*']);
+        return $query->get();
     }
 
     public function updateByTXID($txid, $attributes) {
