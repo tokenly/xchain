@@ -56,6 +56,14 @@ class PaymentAddressRepository implements APIResourceRepositoryContract
         return PaymentAddress::all();
     }
 
+    public function findAllAddresses() {
+        $addresses = [];
+        foreach (PaymentAddress::all(['address']) as $model) {
+            $addresses[] = $model['address'];
+        }
+        return $addresses;
+    }
+
     public function findByID($id) {
         return PaymentAddress::find($id);
     }

@@ -20,6 +20,7 @@
         <env name="SESSION_DRIVER" value="array"/>
         <env name="BEANSTALK_DRIVER" value="sync"/>
         <env name="DATABASE_DRIVER" value="testing"/>
+        <!-- <env name="DATABASE_DRIVER" value="testing_real_mysql"/> -->
         <env name="QUEUE_DRIVER" value="sync"/>
         <env name="BITCOIN_MASTER_KEY" value="testingfoo123"/>
         <env name="XCALLER_QUEUE_CONNECTION" value="sync"/>

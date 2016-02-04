@@ -35,7 +35,7 @@ class EnhancedBitcoindTransactionBuilder {
             // enhance vins
             $enhanced_vins = [];
             foreach ($enhanced_bitcoind_transaction['vin'] as $n => $vin) {
-                $enhanced_vin = $this->enhanceVin($vin, $n, $txid);
+                $enhanced_vin = $this->enhanceVin($vin, $n, $txid, $enhanced_bitcoind_transaction);
                 if ($enhanced_vin) { $enhanced_vins[] = $enhanced_vin; }
             }
             $enhanced_bitcoind_transaction['vin'] = $enhanced_vins;
@@ -66,8 +66,9 @@ class EnhancedBitcoindTransactionBuilder {
         return $result;
     }
 
-    protected function enhanceVin($vin, $n, $txid) {
+    protected function enhanceVin($vin, $n, $txid, $bitcoind_transaction) {
         if (!isset($vin['scriptSig']) OR !isset($vin['scriptSig']['hex'])) { return $vin; }
+        if (isset($bitcoind_transaction['_skipEnhance']) AND $bitcoind_transaction['_skipEnhance'] AND app()->environment() == 'testing') { return $vin; }
 
         // add n
         $vin['n'] = $n;

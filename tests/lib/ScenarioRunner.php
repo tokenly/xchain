@@ -10,6 +10,7 @@ use App\Repositories\UserRepository;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Queue\QueueManager;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Yaml\Yaml;
 use Tokenly\CurrencyLib\CurrencyUtil;
@@ -573,6 +574,7 @@ class ScenarioRunner
     protected function clearDatabasesForScenario() {
         \App\Models\Block::truncate();
         \App\Models\Transaction::truncate();
+        DB::table('transaction_address_lookup')->truncate();
         \App\Models\Notification::truncate();
         \App\Models\MonitoredAddress::truncate();
         \App\Models\PaymentAddress::truncate();

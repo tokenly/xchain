@@ -8,7 +8,9 @@ use App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionStore;
 use App\Handlers\XChain\Network\Bitcoin\Block\BlockEventContextFactory;
 use App\Handlers\XChain\Network\Contracts\NetworkBlockHandler;
 use App\Models\Block;
+use App\Repositories\MonitoredAddressRepository;
 use App\Repositories\NotificationRepository;
+use App\Repositories\PaymentAddressRepository;
 use App\Repositories\TransactionRepository;
 use App\Repositories\UserRepository;
 use App\Util\DateTimeUtil;
@@ -17,9 +19,9 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
+use PHP_Timer;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 use Tokenly\XcallerClient\Client;
-use PHP_Timer;
 
 /**
  * This is invoked when a new block is received
@@ -28,16 +30,18 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
 
     const MAX_CONFIRMATIONS_TO_NOTIFY = 6;
 
-    public function __construct(BitcoinTransactionStore $transaction_store, TransactionRepository $transaction_repository, NotificationRepository $notification_repository, UserRepository $user_repository, BlockChainStore $blockchain_store, ConfirmationsBuilder $confirmations_builder, Client $xcaller_client, Dispatcher $events, BlockEventContextFactory $block_event_context_factory) {
-        $this->transaction_store           = $transaction_store;
-        $this->transaction_repository      = $transaction_repository;
-        $this->notification_repository     = $notification_repository;
-        $this->user_repository             = $user_repository;
-        $this->confirmations_builder       = $confirmations_builder;
-        $this->blockchain_store            = $blockchain_store;
-        $this->xcaller_client              = $xcaller_client;
-        $this->events                      = $events;
-        $this->block_event_context_factory = $block_event_context_factory;
+    public function __construct(BitcoinTransactionStore $transaction_store, TransactionRepository $transaction_repository, NotificationRepository $notification_repository, UserRepository $user_repository, BlockChainStore $blockchain_store, ConfirmationsBuilder $confirmations_builder, Client $xcaller_client, Dispatcher $events, BlockEventContextFactory $block_event_context_factory, MonitoredAddressRepository $monitored_address_repository, PaymentAddressRepository $payment_address_repository) {
+        $this->transaction_store            = $transaction_store;
+        $this->transaction_repository       = $transaction_repository;
+        $this->notification_repository      = $notification_repository;
+        $this->user_repository              = $user_repository;
+        $this->confirmations_builder        = $confirmations_builder;
+        $this->blockchain_store             = $blockchain_store;
+        $this->xcaller_client               = $xcaller_client;
+        $this->events                       = $events;
+        $this->block_event_context_factory  = $block_event_context_factory;
+        $this->monitored_address_repository = $monitored_address_repository;
+        $this->payment_address_repository   = $payment_address_repository;
     }
 
     public function handleNewBlock($block_event) {
@@ -137,6 +141,7 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
                         // we must reload this transaction from bitcoind
                         // since this transaction was reorganized
                         $transaction = $this->transaction_store->getParsedTransactionFromBitcoind($txid, $block_seq);
+                        Log::debug("tx.reorganized \$transaction=".json_encode($transaction, 192));
                     }
 
                     // update the transaction
@@ -234,9 +239,13 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
             $blocks_by_hash[$previous_block['hash']] = $previous_block;
         }
         if ($block_hashes) {
+            // get all addresses we care about
+            $all_addresses = $this->findAllMonitoredAddresses();
+
             $block_event_context = $this->block_event_context_factory->newBlockEventContext();
             $_offset = 0;
-            foreach($this->transaction_repository->findAllTransactionsConfirmedInBlockHashes($block_hashes) as $transaction_model) {
+            foreach($this->transaction_repository->findAllTransactionsConfirmedInBlockHashesInvolvingAddresses($block_hashes, $all_addresses) as $transaction_model) {
+                Log::debug("found transaction model: ".$transaction_model['txid']);
                 $confirmations = $this->confirmations_builder->getConfirmationsForBlockHashAsOfHeight($transaction_model['block_confirmed_hash'], $block_event['height']);
                 if ($_offset % 50 === 1) { Log::debug("tx {$_offset} $confirmations confirmations"); }
 
@@ -282,6 +291,13 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
 
         return $notification;
     }
+
+    protected function findAllMonitoredAddresses() {
+        $addresses = $this->monitored_address_repository->findAllAddresses();
+        $addresses = array_unique(array_merge($addresses, $this->payment_address_repository->findAllAddresses()));
+        return $addresses;
+    }
+    
 }
 
 

@@ -4,15 +4,14 @@ namespace App\Handlers\XChain\Network\Bitcoin;
 
 use App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionEventBuilder;
 use App\Handlers\XChain\Network\Contracts\NetworkTransactionStore;
-use Tokenly\LaravelEventLog\Facade\EventLog;
 use App\Repositories\TransactionRepository;
-use Illuminate\Contracts\Logging\Log;
+use Illuminate\Support\Facades\Log;
 use Nbobtc\Bitcoind\Bitcoind;
+use Tokenly\LaravelEventLog\Facade\EventLog;
 
 class BitcoinTransactionStore implements NetworkTransactionStore {
 
-    public function __construct(BitcoinTransactionEventBuilder $transaction_builder, TransactionRepository $transaction_repository, EnhancedBitcoindTransactionBuilder $bitcoind_transaction_builder, Log $log) {
-        $this->log                          = $log;
+    public function __construct(BitcoinTransactionEventBuilder $transaction_builder, TransactionRepository $transaction_repository, EnhancedBitcoindTransactionBuilder $bitcoind_transaction_builder) {
         $this->transaction_repository       = $transaction_repository;
         $this->bitcoind_transaction_builder = $bitcoind_transaction_builder;
         $this->transaction_builder          = $transaction_builder;
@@ -85,9 +84,5 @@ class BitcoinTransactionStore implements NetworkTransactionStore {
         return $transaction;
     }
 
-
-    protected function wlog($text) {
-        $this->log->info($text);
-    }
 
 }

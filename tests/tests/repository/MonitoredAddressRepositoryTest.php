@@ -47,6 +47,21 @@ class MonitoredAddressRepositoryTest extends TestCase {
         PHPUnit::assertEquals('1recipient222222222222222222222222', $loaded_address_models->get()[0]['address']);
     }
 
+    public function testFindMonitoredAddressesOnly()
+    {
+        // insert
+        $monitored_address_helper = $this->app->make('\MonitoredAddressHelper');
+        $monitored_address_repo = $this->app->make('App\Repositories\MonitoredAddressRepository');
+        $monitored_address_repo->create($monitored_address_helper->sampleDBVars(['address' => '1recipient111111111111111111111111']));
+        $monitored_address_repo->create($monitored_address_helper->sampleDBVars(['address' => '1recipient222222222222222222222222', 'active' => false,]));
+        $monitored_address_repo->create($monitored_address_helper->sampleDBVars(['address' => '1recipient333333333333333333333333']));
+        $monitored_address_repo->create($monitored_address_helper->sampleDBVars(['address' => '1recipient444444444444444444444444']));
+
+        // load from repo
+        $addresses = $monitored_address_repo->findAllAddresses();
+        PHPUnit::assertEquals(['1recipient111111111111111111111111','1recipient222222222222222222222222','1recipient333333333333333333333333','1recipient444444444444444444444444',], $addresses);
+    }
+
     public function testFindByUUID()
     {
         // insert

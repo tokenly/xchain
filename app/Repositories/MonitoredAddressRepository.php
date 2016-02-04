@@ -35,6 +35,14 @@ class MonitoredAddressRepository implements APIResourceRepositoryContract
         return MonitoredAddress::all();
     }
 
+    public function findAllAddresses() {
+        $addresses = [];
+        foreach (MonitoredAddress::all(['address']) as $model) {
+            $addresses[] = $model['address'];
+        }
+        return $addresses;
+    }
+
     public function findByID($id) {
         return MonitoredAddress::find($id);
     }
