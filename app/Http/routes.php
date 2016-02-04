@@ -16,6 +16,11 @@ $router->get('api/v1/transactions/{addressId}', 'API\TransactionController@index
 $router->post('api/v1/sends/{addressId}', 'API\SendController@create');
 $router->post('api/v1/multisends/{addressId}', 'API\SendController@createMultisend');
 
+// unsigned sends
+$router->post('api/v1/unsigned/sends/{addressId}', 'API\UnmanagedPaymentAddressSendController@composeSend');
+$router->post('api/v1/unsigned/send/{sendId}', 'API\UnmanagedPaymentAddressSendController@submitSend');
+$router->delete('api/v1/unsigned/sends/{sendId}', 'API\UnmanagedPaymentAddressSendController@revokeSend');
+
 // prime address
 $router->get('api/v1/primes/{addressId}', 'API\PrimeController@getPrimedUTXOs');
 $router->post('api/v1/primes/{addressId}', 'API\PrimeController@primeAddress');

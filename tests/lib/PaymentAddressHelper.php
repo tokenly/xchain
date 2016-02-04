@@ -83,5 +83,18 @@ class PaymentAddressHelper
         ], $override_vars);
     }
 
+    public function samplePostVars($override_vars=[]) { 
+        $post_vars = [];
+        foreach ($this->sampleVars() as $key => $value) {
+            if ($key == 'user_id') { continue; }
+            if ($key == 'private_key_token') { continue; }
+
+            $camel_key = camel_case($key);
+            $post_vars[$camel_key] = $value;
+        }
+
+        return array_merge($post_vars, $override_vars);
+    }
+
 
 }

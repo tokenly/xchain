@@ -36,14 +36,17 @@ class PaymentAddressRepository implements APIResourceRepositoryContract
         // create a uuid
         if (!isset($attributes['uuid'])) { $attributes['uuid'] = Uuid::uuid4()->toString(); }
 
-        if (!isset($attributes['private_key_token'])) {
+        if (!isset($attributes['private_key_token']) AND !isset($attributes['address'])) {
             // create a token
             $token_generator = new TokenGenerator();
             $token = $token_generator->generateToken(40, 'A');
             $attributes['private_key_token'] = $token;
+        } else if (!isset($attributes['private_key_token']) AND isset($attributes['address'])) {
+            // an address without a private key token is an unmanaged address
+            $attributes['private_key_token'] = '';
         }
 
-        if (!isset($attributes['address'])) {
+        if (!isset($attributes['address']) AND $attributes['private_key_token']) {
             // create an address
             $new_address = $this->address_generator->publicAddress($attributes['private_key_token']);
             $attributes['address'] = $new_address;

@@ -234,6 +234,7 @@ class PaymentAddressSenderTest extends TestCase {
         try {
             $sender->send($payment_address, '1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i', '0.123', 'BTC', $float_fee=null, $dust_size=null, $is_sweep=false);
         } catch (Exception $e) {
+            // echo "Exception: ".get_class($e)."\n"."Exception Message: ".($e->getMessage())."\n"."Exception Code: ".($e->getCode())."\n"."transaction.parseError: ".$e->getTraceAsString()."\n";
             PHPUnit::assertEquals(-25, $e->getCode());
         }
 

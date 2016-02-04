@@ -105,8 +105,10 @@ class TXORepository
             Log::warning("No TXO identifiers provided for update");
             return;
         }
+        if (!is_array($txo_identifiers)) { throw new Exception("Invalid \$txo_identifiers: ".json_encode($txo_identifiers, 192), 1); }
 
         $query = $this->prototype_model->newQuery();
+
 
         foreach($txo_identifiers as $txo_identifier) {
             list($txid, $n) = explode(':', $txo_identifier);

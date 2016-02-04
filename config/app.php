@@ -149,18 +149,18 @@ return [
 		/*
 		 * Vendor Service Providers...
 		 */
-		'Tokenly\XCPDClient\XCPDClientServiceProvider',
-		'Tokenly\BitcoinPayer\Provider\BitcoinPayerServiceProvider',
-		'Tokenly\CounterpartySender\Provider\CounterpartySenderServiceProvider',
-		'Tokenly\HmacAuth\ServiceProvider\HmacAuthServiceProvider',
-		'Tokenly\BitcoinAddressLib\BitcoinAddressServiceProvider',
-		'Tokenly\PusherClient\Provider\PusherClientServiceProvider',
-		'Tokenly\LaravelEventLog\EventLogServiceProvider',
-		'Tokenly\LaravelApiProvider\APIServiceProvider',
-		'Tokenly\XcallerClient\Provider\XCallerClientServiceProvider',
-		'Tokenly\LaravelBlockingBeanstalkd\BlockingBeanstalkServiceProvider',
-		'Tokenly\ConsulHealthDaemon\ServiceProvider\ConsulHealthDaemonServiceProvider',
-		'Tokenly\RecordLock\Provider\RecordLockServiceProvider',
+		Tokenly\XCPDClient\XCPDClientServiceProvider::class,
+		Tokenly\BitcoinPayer\Provider\BitcoinPayerServiceProvider::class,
+		Tokenly\CounterpartySender\Provider\CounterpartySenderServiceProvider::class,
+		Tokenly\HmacAuth\ServiceProvider\HmacAuthServiceProvider::class,
+		Tokenly\BitcoinAddressLib\BitcoinAddressServiceProvider::class,
+		Tokenly\PusherClient\Provider\PusherClientServiceProvider::class,
+		Tokenly\LaravelEventLog\EventLogServiceProvider::class,
+		Tokenly\LaravelApiProvider\APIServiceProvider::class,
+		Tokenly\XcallerClient\Provider\XCallerClientServiceProvider::class,
+		Tokenly\LaravelBlockingBeanstalkd\BlockingBeanstalkServiceProvider::class,
+		Tokenly\ConsulHealthDaemon\ServiceProvider\ConsulHealthDaemonServiceProvider::class,
+		Tokenly\RecordLock\Provider\RecordLockServiceProvider::class,
 
 		/*
 		 * Local App Service Providers...
@@ -170,6 +170,8 @@ return [
 		App\Providers\Monitoring\MonitoringServiceProvider::class,
 		App\Providers\Accounts\Provider\AccountHandlerServiceProvider::class,
 		App\Providers\TXO\Provider\TXOHandlerServiceProvider::class,
+		App\Providers\XChain\SendComposerServiceProvider::class,
+		App\Providers\DateProvider\Provider\DateProviderServiceProvider::class,
 
 	],
 

@@ -7,6 +7,7 @@ use BitWasp\Bitcoin\Address\AddressFactory;
 use BitWasp\Bitcoin\Address\ScriptHashAddress;
 use BitWasp\Bitcoin\Key\PublicKeyFactory;
 use BitWasp\Bitcoin\Script\Classifier\InputClassifier;
+use BitWasp\Bitcoin\Script\Classifier\OutputClassifier;
 use BitWasp\Bitcoin\Script\ScriptFactory;
 use BitWasp\Bitcoin\Transaction\TransactionFactory;
 
@@ -95,8 +96,13 @@ class TransactionComposerHelper
         ++$output_offset;
         $change = [];
         for ($i=$output_offset; $i < count($outputs); $i++) { 
-            $output = $outputs[$i];
-            $change[] = [AddressFactory::getAssociatedAddress($outputs[$i]->getScript()), $output->getValue()];
+            $script = $outputs[$i]->getScript();
+            $classifier = new OutputClassifier($script);
+            $script_type = $classifier->classify();
+            if ($script_type == OutputClassifier::PAYTOPUBKEYHASH) {
+                $output = $outputs[$i];
+                $change[] = [AddressFactory::getAssociatedAddress($script), $output->getValue()];
+            }
         }
         $out['change'] = $change;
 
