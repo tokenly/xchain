@@ -41,6 +41,9 @@ class TestCase extends Illuminate\Foundation\Testing\TestCase {
         {
             $this->setUpRealSQLiteDb();
         }
+
+        // reset sample TXID
+        SampleTXOHelper::resetSampleTXID();
     }
 
     public function tearDown() {

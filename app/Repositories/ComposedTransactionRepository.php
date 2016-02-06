@@ -20,69 +20,48 @@ class ComposedTransactionRepository
             ->first();
         if (!$loaded_object) { return null; }
 
-        return [
-            'txid'         => $loaded_object->txid,
-            'transaction'  => $loaded_object->transaction,
-            'utxos'        => json_decode($loaded_object->utxos, true),
-            'request_id'   => $loaded_object->request_id,
-        ];
+        return $this->unserializeTransactionModelFromDatabase([
+            'txid'        => $loaded_object->txid,
+            'transaction' => $loaded_object->transaction,
+            'utxos'       => $loaded_object->utxos,
+            'request_id'  => $loaded_object->request_id,
+            'signed'      => $loaded_object->signed,
+            'created_at'  => $loaded_object->created_at,
+        ]);
     }
 
-    // public function getComposedTransactionByTXID($txid) {
-    //     $loaded_object = DB::connection('untransacted')
-    //         ->table('composed_transactions')
-    //         ->where(['txid' => $txid])
-    //         ->first();
-    //     if (!$loaded_object) { return null; }
-
-    //     return [
-    //         'txid'         => $loaded_object->txid,
-    //         'transaction'  => $loaded_object->transaction,
-    //         'utxos'        => json_decode($loaded_object->utxos, true),
-    //         'request_id'   => $loaded_object->request_id,
-    //     ];
-    // }
-
-    public function storeOrFetchComposedTransaction($request_id, $txid, $transaction_hex, Array $utxos) {
+    public function storeOrFetchComposedTransaction($request_id, $txid, $transaction_hex, Array $utxos, $signed) {
 
         try {
-            $this->storeComposedTransaction($request_id, $txid, $transaction_hex, $utxos);
+            return $this->storeComposedTransaction($request_id, $txid, $transaction_hex, $utxos, $signed);
         } catch (QueryException $e) {
             if ($e->errorInfo[0] == 23000) {
-                try {
-                    // fetch the existing one instead of adding a duplicate
-                    return $this->getComposedTransactionByRequestID($request_id);
-                } catch (Exception $e) {
-                    
-                }
-                return true;
+                // fetch the existing one instead of adding a duplicate
+                return $this->getComposedTransactionByRequestID($request_id);
             }
 
             throw $e;
         }
 
-        return [
-            'txid'         => $txid,
-            'transaction'  => $transaction_hex,
-            'utxos'        => $utxos,
-            'request_id'   => $request_id,
-        ];
     }
 
-    public function storeComposedTransaction($request_id, $txid, $transaction_hex, Array $utxos) {
+    public function storeComposedTransaction($request_id, $txid, $transaction_hex, Array $utxos, $signed) {
         $created_at = Carbon::now();
+
+        $create_vars = [
+            'txid'        => $txid,
+            'request_id'  => $request_id,
+            'transaction' => $transaction_hex,
+            'utxos'       => json_encode($utxos),
+            'signed'      => $signed,
+            'created_at'  => $created_at,
+        ];
 
         $row = DB::connection('untransacted')
             ->table('composed_transactions')
-            ->insert([
-                'txid'         => $txid,
-                'request_id'   => $request_id,
-                'transaction'  => $transaction_hex,
-                'utxos'        => json_encode($utxos),
-                'created_at'   => $created_at,
-            ]);
+            ->insert($create_vars);
 
-        return;
+        return $this->unserializeTransactionModelFromDatabase($create_vars);
     }
 
     public function deleteComposedTransactionsByRequestID($request_id) {
@@ -94,4 +73,14 @@ class ComposedTransactionRepository
         return $result;
     }
 
+    protected function unserializeTransactionModelFromDatabase($raw_model) {
+        return [
+            'txid'        => $raw_model['txid'],
+            'transaction' => $raw_model['transaction'],
+            'utxos'       => json_decode($raw_model['utxos'], true),
+            'request_id'  => $raw_model['request_id'],
+            'signed'      => $raw_model['signed'],
+            'created_at'  => Carbon::parse($raw_model['created_at']),
+        ];
+    }
 }

@@ -23,4 +23,7 @@ class PaymentAddress extends APIModel
     protected $api_attributes = ['id', 'address',];
 
 
+    public function isManaged() {
+        return (strlen($this['private_key_token']) > 0);
+    }
 }

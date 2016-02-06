@@ -4,10 +4,12 @@ namespace App\Http\Controllers\API;
 
 use App\Blockchain\Sender\PaymentAddressSender;
 use App\Http\Controllers\API\Base\APIController;
+use App\Http\Requests\API\Send\ComposeSendRequest;
 use App\Http\Requests\API\Send\CreateMultiSendRequest;
 use App\Http\Requests\API\Send\CreateSendRequest;
 use App\Providers\Accounts\Exception\AccountException;
 use App\Providers\Accounts\Facade\AccountHandler;
+use App\Providers\DateProvider\Facade\DateProvider;
 use App\Repositories\APICallRepository;
 use App\Repositories\PaymentAddressRepository;
 use App\Repositories\SendRepository;
@@ -28,7 +30,7 @@ class SendController extends APIController {
     const SEND_LOCK_TIMEOUT = 3600; // 1 hour
 
     /**
-     * Store a newly created resource in storage.
+     * Create and execute a send
      *
      * @return Response
      */
@@ -215,8 +217,8 @@ class SendController extends APIController {
             }
 
             $attributes = [];
-            $attributes['sent']               = time();
-            $attributes['txid']               = $txid;
+            $attributes['sent'] = DateProvider::now();
+            $attributes['txid'] = $txid;
 
             EventLog::log('send.complete', $attributes);
 

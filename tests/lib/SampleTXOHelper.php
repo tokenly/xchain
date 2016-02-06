@@ -14,6 +14,10 @@ class SampleTXOHelper
 
     static $SAMPLE_TXID = 0;
 
+    public static function resetSampleTXID() {
+        self::$SAMPLE_TXID = 0;
+    }
+
     public function __construct(TXORepository $txo_repository) {
         $this->txo_repository = $txo_repository;
     }

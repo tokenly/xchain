@@ -159,6 +159,12 @@ class SimpleAPITester
     }
 
 
+    public function callAPIWithAuthenticationAndReturnJSONContent($method, $uri, $parameters = [], $expected_response_code=200, $cookies = [], $files = [], $server = [], $content = null) {
+        $response = $this->callAPIWithAuthentication($method, $uri, $parameters, $cookies, $files, $server, $content);
+        PHPUnit::assertEquals($expected_response_code, $response->getStatusCode(), "Response was: ".$response->getContent());
+        return json_decode($response->getContent(), true);
+    }
+
     public function callAPIWithAuthentication($method, $uri, $parameters = [], $cookies = [], $files = [], $server = [], $content = null) {
         $request = $this->createAPIRequest($method, $uri, $parameters, $cookies, $files, $server, $content);
         $generator = new Generator();

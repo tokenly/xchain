@@ -2,6 +2,7 @@
 
 namespace App\Blockchain\Sender;
 
+use App\Blockchain\Sender\Exception\BitcoinDaemonException;
 use App\Blockchain\Sender\TXOChooser;
 use App\Models\LedgerEntry;
 use App\Models\PaymentAddress;
@@ -13,6 +14,8 @@ use App\Repositories\PaymentAddressRepository;
 use App\Repositories\TXORepository;
 use BitWasp\Bitcoin\Address\AddressFactory;
 use BitWasp\Bitcoin\Script\ScriptFactory;
+use BitWasp\Bitcoin\Transaction\TransactionFactory;
+use BitWasp\Bitcoin\Transaction\TransactionInterface;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Nbobtc\Bitcoind\Bitcoind;
@@ -107,40 +110,13 @@ class PaymentAddressSender {
     }
 
     public function sendByRequestID($request_id, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false) {
-        $composed_transaction_model = $this->generateComposedTransactionModel($request_id, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep);
+        $composed_transaction_model = $this->generateSignedTransactionModelWithUTXOUpdates($request_id, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep);
         if (!$composed_transaction_model) { return null;}
 
         $signed_transaction_hex = $composed_transaction_model['transaction'];
         $utxo_identifiers       = $composed_transaction_model['utxos'];
 
-        // push all signed transactions to the bitcoin network
-        //   some of these may fail
-        $sent_tx_id = null;
-        try {
-            $sent_tx_id = $this->bitcoind->sendrawtransaction($signed_transaction_hex);
-        } catch (Exception $e) {
-            EventLog::debug('bitcoind.exception', ['msg' => "bitcoind returned exception: ".$e->getCode(), 'code' => $e->getCode()]);
-            if (in_array($e->getCode(), [-25, -26, -27])) {
-                // this transaction was rejected, remove it from the composed transaction repository
-                //   so it can be created again
-                $this->composed_transaction_repository->deleteComposedTransactionsByRequestID($request_id);
-
-                // unspend each spent TXO
-                $this->txo_repository->updateByTXOIdentifiers($utxo_identifiers, ['spent' => 0]);
-
-                // delete each new TXO
-                $this->txo_repository->deleteByTXID($composed_transaction_model['txid']);
-
-                $error_log_details = compact('request_id', 'txid', 'destination', 'float_quantity', 'asset');
-                $error_log_details['errorCode'] = $e->getCode();
-                $error_log_details['errorMsg'] = $e->getMessage();
-                EventLog::log('composedTransaction.removed', $error_log_details);
-            }
-            
-            // throw the exception
-            throw $e;
-        }
-
+        $sent_tx_id = $this->pushSignedTransaction($signed_transaction_hex, $composed_transaction_model['txid'], $utxo_identifiers, $request_id);
         return $sent_tx_id;
     }
 
@@ -150,59 +126,133 @@ class PaymentAddressSender {
     }
 
 
-    
+
+    public function composeUnsignedTransactionByRequestID($request_id, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false) {
+        // check to see if this transaction already exists in the database
+        $composed_transaction_model = $this->composed_transaction_repository->getComposedTransactionByRequestID($request_id);
+        if ($composed_transaction_model) { return $composed_transaction_model; }
+
+        // build a new unsigned transaction
+        $change_address_collection = null;
+        $built_transaction_to_send = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep);
+
+        // get the transaction variables
+        $txid             = $built_transaction_to_send->getTxId();
+        $transaction_hex  = $built_transaction_to_send->getTransactionHex();
+        $utxo_identifiers = $this->buildUTXOIdentifiersFromUTXOs($built_transaction_to_send->getInputUtxos());
+        $is_signed        = $built_transaction_to_send->getSigned();
+
+        $composed_transaction_data = $this->composed_transaction_repository->storeOrFetchComposedTransaction($request_id, $txid, $transaction_hex, $utxo_identifiers, $is_signed);
+        return $composed_transaction_data;
+    }
+
+    public function pushSignedComposedTransaction($signed_transaction_hex, $composed_send, $payment_address) {
+        // get the utxo identifiers
+        $transaction = TransactionFactory::fromHex($signed_transaction_hex);
+        $input_utxo_identifiers = $this->buildInputUTXOIdentifiersFromTransaction($transaction);
+
+        // mark each input UTXO as spent
+        $this->txo_repository->updateByTXOIdentifiers($input_utxo_identifiers, ['spent' => 1]);
+
+        // create the new UTXOs that belong to any of our addresses
+        $output_utxos = $this->buildOutputUTXOsFromTransaction($transaction);
+        $this->createNewUTXORecords($payment_address, $output_utxos, false);
+
+        $sent_tx_id = $this->pushSignedTransaction($signed_transaction_hex, $transaction->getTxId()->getHex(), $input_utxo_identifiers, null);
+        return $sent_tx_id;
+
+    }
+
     ////////////////////////////////////////////////////////////////////////
     // Protected
 
-    protected function generateComposedTransactionModel($request_id, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep) {
+    protected function generateSignedTransactionModelWithUTXOUpdates($request_id, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep) {
         // check to see if this signed transaction already exists in the database
         $composed_transaction_model = $this->composed_transaction_repository->getComposedTransactionByRequestID($request_id);
 
         if ($composed_transaction_model === null) {
             // build the signed transactions
             $change_address_collection = null;
-            $built_transaction_to_send = $this->buildSignedTransactionToSend($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep);
+            $built_transaction_to_send = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep);
 
             // get the utxo identifiers
             $utxo_identifiers = $this->buildUTXOIdentifiersFromUTXOs($built_transaction_to_send->getInputUtxos());
 
             // store the signed transactions to the database cache
-            $signed_transaction_hex     = $built_transaction_to_send->getTransactionHex();
-            $txid                       = $built_transaction_to_send->getTxId();
-            $composed_transaction_model = $this->composed_transaction_repository->storeOrFetchComposedTransaction($request_id, $txid, $signed_transaction_hex, $utxo_identifiers);
+            $signed_transaction_hex = $built_transaction_to_send->getTransactionHex();
+            $txid                   = $built_transaction_to_send->getTxId();
+            $is_signed              = $built_transaction_to_send->getSigned();
+            $composed_transaction_model = $this->composed_transaction_repository->storeOrFetchComposedTransaction($request_id, $txid, $signed_transaction_hex, $utxo_identifiers, $is_signed);
 
             // mark each UTXO as spent
             $this->txo_repository->updateByTXOIdentifiers($utxo_identifiers, ['spent' => 1]);
 
             // create the new UTXOs that belong to any of our addresses
-            $account = AccountHandler::getAccount($payment_address);
-            $this->clearPaymentAddressInfoCache();
-            foreach ($built_transaction_to_send->getOutputUtxos() as $output_utxo) {
-                if ($output_utxo['amount'] <= 0) {
-                    // don't store OP_RETURN UTXOs with no value
-                    continue;
-                }
-
-                // create new UTXO
-                $utxo_destination_address = AddressFactory::fromOutputScript(ScriptFactory::fromHex($output_utxo['script']))->getAddress();
-                list($found_payment_address, $found_account) = $this->loadPaymentAddressInfo($utxo_destination_address);
-                if ($found_payment_address) {
-    
-                    $this->txo_repository->create($found_payment_address, $found_account, [
-                        'txid'   => $output_utxo['txid'],
-                        'n'      => $output_utxo['n'],
-                        'amount' => $output_utxo['amount'],
-                        'script' => $output_utxo['script'],
-
-                        'type'   => TXO::UNCONFIRMED,
-                        'spent'  => 0,
-                        'green'  => 1,
-                    ]);
-                }
-            }
+            $this->createNewUTXORecords($payment_address, $built_transaction_to_send->getOutputUtxos());
         }
 
         return $composed_transaction_model;
+    }
+
+    // * @param  array  $output_utxos  An array of UTXOs.  Each UTXO should be ['txid' => txid, 'n' => n, 'amount' => amount (in satoshis), 'script' => script hexadecimal string]
+    protected function createNewUTXORecords($payment_address, $output_utxos, $green=true) {
+        $account = AccountHandler::getAccount($payment_address);
+        $this->clearPaymentAddressInfoCache();
+        foreach ($output_utxos as $output_utxo) {
+            if ($output_utxo['amount'] <= 0) {
+                // don't store OP_RETURN UTXOs with no value
+                continue;
+            }
+
+            // create new UTXO
+            $utxo_destination_address = AddressFactory::fromOutputScript(ScriptFactory::fromHex($output_utxo['script']))->getAddress();
+            list($found_payment_address, $found_account) = $this->loadPaymentAddressInfo($utxo_destination_address);
+            if ($found_payment_address) {
+        
+                $this->txo_repository->create($found_payment_address, $found_account, [
+                    'txid'   => $output_utxo['txid'],
+                    'n'      => $output_utxo['n'],
+                    'amount' => $output_utxo['amount'],
+                    'script' => $output_utxo['script'],
+
+                    'type'   => TXO::UNCONFIRMED,
+                    'spent'  => 0,
+                    'green'  => $green,
+                ]);
+            }
+        }
+    }
+
+    protected function pushSignedTransaction($signed_transaction_hex, $txid, $utxo_identifiers, $request_id=null) {
+        // push all signed transactions to the bitcoin network
+        //   some of these may fail
+        $sent_tx_id = null;
+        try {
+            $sent_tx_id = $this->bitcoind->sendrawtransaction($signed_transaction_hex);
+        } catch (Exception $e) {
+            EventLog::debug('bitcoind.exception', ['msg' => "bitcoind returned exception: ".$e->getCode(), 'code' => $e->getCode()]);
+            if (in_array($e->getCode(), [-25, -26, -27])) {
+                if ($request_id) {
+                    // this transaction was rejected, remove it from the composed transaction repository
+                    //   so it can be created again
+                    $this->composed_transaction_repository->deleteComposedTransactionsByRequestID($request_id);
+                }
+
+                // unspend each spent TXO
+                $this->txo_repository->updateByTXOIdentifiers($utxo_identifiers, ['spent' => 0]);
+
+                // delete each new TXO
+                $this->txo_repository->deleteByTXID($txid);
+
+                $error_log_details = compact('request_id', 'txid');
+                EventLog::logError('composedTransaction.removed', $e, $error_log_details);
+            }
+            
+            // throw the exception
+            throw new BitcoinDaemonException("Bitcoin daemon error while sending raw transaction: ".ltrim($e->getMessage()." ".$e->getCode()), $e->getCode());
+        }
+
+        return $sent_tx_id;
     }
 
     protected function clearPaymentAddressInfoCache() { $this->payment_address_info_cache = []; }
@@ -221,14 +271,18 @@ class PaymentAddressSender {
         return $this->payment_address_info_cache[$address];
     }
 
-    protected function buildSignedTransactionToSend(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $change_address_collection=null, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false) {
+    protected function buildComposedTransaction(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $change_address_collection=null, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false) {
         $signed_transaction = null;
 
         if ($float_fee === null)            { $float_fee            = self::DEFAULT_FEE; }
         if ($float_btc_dust_size === null)  { $float_btc_dust_size  = self::DEFAULT_REGULAR_DUST_SIZE; }
-        $private_key = $this->address_generator->privateKey($payment_address['private_key_token']);
-        $wif_private_key = BitcoinKeyUtils::WIFFromPrivateKey($private_key);
 
+        if ($payment_address->isManaged()) {
+            $private_key = $this->address_generator->privateKey($payment_address['private_key_token']);
+            $wif_private_key = BitcoinKeyUtils::WIFFromPrivateKey($private_key);
+        } else {
+            $wif_private_key = null;
+        }
 
         if ($is_sweep) {
             if (strtoupper($asset) != 'BTC') { throw new Exception("Sweep is only allowed for BTC.", 1); }
@@ -283,7 +337,6 @@ class PaymentAddressSender {
 
                 // build the change
                 if ($change_address_collection === null) { $change_address_collection = $payment_address['address']; }
-
                 $composed_transaction = $this->transaction_composer->composeSend($asset, $quantity, $destination, $wif_private_key, $chosen_txos, $change_address_collection, $float_fee, $float_btc_dust_size);
 
 
@@ -319,6 +372,35 @@ class PaymentAddressSender {
         }
         return $utxo_identifiers;
     }
+
+    protected function buildInputUTXOIdentifiersFromTransaction(TransactionInterface $transaction) {
+        $utxo_identifiers = [];
+
+        // inputs
+        foreach($transaction->getInputs() as $input) {
+            $utxo_identifiers[] = $input->getTransactionId().':'.$input->getVout();
+        }
+
+        return $utxo_identifiers;
+    }
+
+    protected function buildOutputUTXOsFromTransaction(TransactionInterface $transaction) {
+        $utxo_records = [];
+
+        // inputs
+        $txid = $transaction->getTxId()->getHex();
+        foreach($transaction->getOutputs() as $n => $output) {
+            $utxo_records[] = [
+                'txid'   => $txid,
+                'n'      => $n,
+                'amount' => CurrencyUtil::valueToSatoshis($output->getValue()),
+                'script' => $output->getScript()->getBuffer()->getHex(),
+            ];
+        }
+
+        return $utxo_records;
+    }
+
 
 
     protected function sumUTXOs($utxos) {
