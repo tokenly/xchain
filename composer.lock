@@ -3611,12 +3611,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-composer.git",
-                "reference": "7dcc366ddb8d9acabb18c61666a8c73ebb93e5fd"
+                "reference": "87e1f9d092e89c4503e4958347a2a876f6271af7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/7dcc366ddb8d9acabb18c61666a8c73ebb93e5fd",
-                "reference": "7dcc366ddb8d9acabb18c61666a8c73ebb93e5fd",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/87e1f9d092e89c4503e4958347a2a876f6271af7",
+                "reference": "87e1f9d092e89c4503e4958347a2a876f6271af7",
                 "shasum": ""
             },
             "require": {
@@ -3648,7 +3648,7 @@
                 }
             ],
             "description": "Composes counterparty and bitcoin transactions",
-            "time": "2016-01-09 18:34:55"
+            "time": "2016-02-06 16:23:44"
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
@@ -3824,12 +3824,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/laravel-event-log.git",
-                "reference": "e44123fbcf87a642f63e8e4ed4312c6c56f32678"
+                "reference": "dbe414b1b6e7f26af1e4261938cea3f3fd2d0ee3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-event-log/zipball/e44123fbcf87a642f63e8e4ed4312c6c56f32678",
-                "reference": "e44123fbcf87a642f63e8e4ed4312c6c56f32678",
+                "url": "https://api.github.com/repos/tokenly/laravel-event-log/zipball/dbe414b1b6e7f26af1e4261938cea3f3fd2d0ee3",
+                "reference": "dbe414b1b6e7f26af1e4261938cea3f3fd2d0ee3",
                 "shasum": ""
             },
             "require": {
@@ -3856,7 +3856,7 @@
                 }
             ],
             "description": "An event logger provider for Laravel.",
-            "time": "2016-01-25 23:19:21"
+            "time": "2016-02-06 16:24:12"
         },
         {
             "name": "tokenly/laravel-record-lock",
@@ -3864,12 +3864,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/laravel-record-lock.git",
-                "reference": "a408f6d820faf355fe681d9483beb3dec16ef741"
+                "reference": "f45b9c1eeef9cac7d8bf486effab56ad995c35cb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-record-lock/zipball/8963ccc90674d705d4553c56e82c2c505da38d5f",
-                "reference": "a408f6d820faf355fe681d9483beb3dec16ef741",
+                "url": "https://api.github.com/repos/tokenly/laravel-record-lock/zipball/f45b9c1eeef9cac7d8bf486effab56ad995c35cb",
+                "reference": "f45b9c1eeef9cac7d8bf486effab56ad995c35cb",
                 "shasum": ""
             },
             "require": {
@@ -3896,7 +3896,7 @@
                 }
             ],
             "description": "A library for locking records in a database",
-            "time": "2015-06-27 16:29:57"
+            "time": "2016-02-06 16:23:20"
         },
         {
             "name": "tokenly/pusher-client",
