@@ -8,18 +8,29 @@
 
 $router->get('/', 'HomeController@index');
 
-$router->resource('api/v1/monitors', 'API\MonitorController', ['except' => ['create','edit']]);
+// create a managed address (where xchain owns the private key)
 $router->resource('api/v1/addresses', 'API\PaymentAddressController', ['except' => ['create','edit']]);
+
+// create a monitor to be notified about all send and receive transactions to a certain address
+$router->resource('api/v1/monitors', 'API\MonitorController', ['except' => ['create','edit']]);
+
+// get all transactions for an address
 $router->get('api/v1/transactions/{addressId}', 'API\TransactionController@index');
+
+// create an unmanaged address
+$router->post('api/v1/unmanaged/addresses', 'API\PaymentAddressController@createUnmanaged');
 
 // create a send
 $router->post('api/v1/sends/{addressId}', 'API\SendController@create');
 $router->post('api/v1/multisends/{addressId}', 'API\SendController@createMultisend');
 
-// unsigned sends
+// create an unsigned send
 $router->post('api/v1/unsigned/sends/{addressId}', 'API\UnmanagedPaymentAddressSendController@composeSend');
-$router->post('api/v1/unsigned/send/{sendId}', 'API\UnmanagedPaymentAddressSendController@submitSend');
 $router->delete('api/v1/unsigned/sends/{sendId}', 'API\UnmanagedPaymentAddressSendController@revokeSend');
+
+// submit an externally signed send
+$router->post('api/v1/signed/send/{sendId}', 'API\UnmanagedPaymentAddressSendController@submitSend');
+
 
 // prime address
 $router->get('api/v1/primes/{addressId}', 'API\PrimeController@getPrimedUTXOs');

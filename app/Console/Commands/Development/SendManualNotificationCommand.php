@@ -141,9 +141,10 @@ EOF
         }
 
         // send notifications
-        $tx_handler = $this->laravel->make('App\Handlers\XChain\XChainTransactionHandler');
         $block_seq = 1; # <-- hard-coded for now
-        $tx_handler->sendNotifications($parsed_tx, $confirmations, $block_seq, null);
+        $tx_handler = $this->laravel->make('App\Handlers\XChain\Network\Factory\NetworkHandlerFactory')->buildTransactionHandler($parsed_tx['network']);
+        $found_addresses = $tx_handler->findMonitoredAndPaymentAddressesByParsedTransaction($parsed_tx);
+        $tx_handler->sendNotifications($found_addresses, $parsed_tx, $confirmations, $block_seq, null);
     }
 
 }

@@ -24,28 +24,21 @@ class PaymentAddressAPITest extends TestCase {
         $loaded_address_model = $api_tester->testAddResource($posted_vars, $expected_created_resource);
     }
 
-/*
+
     public function testAPIErrorsAddPaymentAddress()
     {
         $api_tester = $this->getAPITester();
         $api_tester->testAddErrors([
             [
                 'postVars' => [
-                    'address'     => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD',
-                    'monitorType' => 'bad',
+                    'address'     => 'xBAD123456789',
+                    'monitorType' => 'receive',
                 ],
-                'expectedErrorString' => 'The selected monitor type is invalid',
-            ],
-            [
-                'postVars' => [
-                'address'     => 'xBAD123456789',
-                'monitorType' => 'receive',
-            ],
                 'expectedErrorString' => 'The address was invalid',
             ],
         ]);
     }
-*/
+
 
     public function testAPIListPaymentAddresses() {
         $api_tester = $this->getAPITester();

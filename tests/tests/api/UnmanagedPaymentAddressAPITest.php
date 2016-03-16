@@ -33,6 +33,12 @@ class UnmanagedPaymentAddressAPITest extends TestCase {
                 ],
                 'expectedErrorString' => 'The address was invalid',
             ],
+            [
+                'postVars' => [
+                    'address'     => '',
+                ],
+                'expectedErrorString' => 'The address field is required',
+            ],
         ]);
     }
 
@@ -125,7 +131,7 @@ class UnmanagedPaymentAddressAPITest extends TestCase {
         $parameters = [
             'signedTx' => $signed_tx_hex,
         ];
-        $result = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/unsigned/send/'.$send_details['id'], $parameters);
+        $result = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/signed/send/'.$send_details['id'], $parameters);
 
 
         // check new txos were made
@@ -180,7 +186,7 @@ class UnmanagedPaymentAddressAPITest extends TestCase {
         $parameters = [
             'signedTx' => $signed_tx_hex,
         ];
-        $result = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/unsigned/send/'.$send_details['id'], $parameters, 500);
+        $result = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/signed/send/'.$send_details['id'], $parameters, 500);
 
 
         // check the no new txos were made
@@ -196,12 +202,10 @@ class UnmanagedPaymentAddressAPITest extends TestCase {
 
     }
 
-
-
     ////////////////////////////////////////////////////////////////////////
     
     protected function getAPITester() {
-        $api_tester = app('SimpleAPITester', [$this->app, '/api/v1/addresses', app('App\Repositories\PaymentAddressRepository')]);
+        $api_tester = app('SimpleAPITester', [$this->app, '/api/v1/unmanaged/addresses', app('App\Repositories\PaymentAddressRepository')]);
         $api_tester->ensureAuthenticatedUser();
         return $api_tester;
     }
@@ -231,4 +235,5 @@ class UnmanagedPaymentAddressAPITest extends TestCase {
         }
         return $this->authenticated_user;
     }
+
 }
