@@ -194,7 +194,12 @@ class TXOChooserTest extends TestCase {
 
         // choose from a bunch
         $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, $float(5430), $float(10000), $float(5430));
-        $this->assertFound([8,0,5,4], $sample_txos, $chosen_txos);
+        $chosen_txos = $this->sortById($chosen_txos);
+        // $this->assertFound([8,0,5,4], $sample_txos, $chosen_txos);
+        // fall back to all
+        $found_offsets = [];
+        $max = 34; for ($i=0; $i < $max; $i++) { $found_offsets[] = $i; }
+        $this->assertFound($found_offsets, $sample_txos, $chosen_txos);
 
     }
 
@@ -367,5 +372,11 @@ class TXOChooserTest extends TestCase {
         return [$payment_address, $sample_txos];
     }
 
+    protected function sortById($txos) {
+        uasort($txos, function($txo_a, $txo_b) {
+            return $txo_a['id'] > $txo_b['id'];
+        });
+        return $txos;
+    }
 
 }

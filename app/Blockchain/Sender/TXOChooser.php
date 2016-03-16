@@ -291,6 +291,7 @@ class TXOChooser {
             },
         ];
         $combinations = $this->__changeCombinations($target_amount, $this->sortTXOs($txos, self::SORT_DESCENDING), $context);
+        // Log::debug("__findExactChangeCombinations iteration_count=".$context['iteration_count']." cominations: ".$this->debugDumpGroupings($combinations));
         // $this->__last_context = $context;
         return $combinations;
     }
@@ -310,6 +311,12 @@ class TXOChooser {
             },
         ];
         $combinations = $this->__changeCombinations($target_amount, $this->sortTXOs($txos, self::SORT_DESCENDING), $context);
+        if ($context['gave_up']) {
+            // fall back to all UTXOs
+            $combinations = [$this->allUTXOsAsCombination($txos)];
+            Log::debug("falling back to spending all UTXOs");
+        }
+        // Log::debug("__findFewestTXOsCombinations iteration_count=".$context['iteration_count']." combinations: ".$this->debugDumpGroupings($combinations));
         // $this->__last_context = $context;
         return $combinations;
     }
@@ -318,14 +325,18 @@ class TXOChooser {
         if (!isset($context['iteration_count'])) { $context['iteration_count'] = 0; }
         if (!isset($context['lowest_sum_so_far'])) { $context['lowest_sum_so_far'] = null; }
         if (!isset($context['lowest_count_far'])) { $context['lowest_count_far'] = null; }
+        if (!isset($context['gave_up'])) { $context['gave_up'] = false; }
 
         $combinations = [];
 
         $txos_count = count($txos);
         for ($working_offset=$starting_offset; $working_offset < $txos_count; $working_offset++) { 
-            if ($context['iteration_count'] == 25000) {
-                $msg = "__changeCombinations iteration count at {$context['iteration_count']}.  Giving up.";
-                EventLog::warning('txoChooser.highIterationCount', $msg);
+            if ($context['iteration_count'] >= 25000) {
+                if (!$context['gave_up']) {
+                    $msg = "__changeCombinations iteration count at {$context['iteration_count']}.  Giving up.";
+                    EventLog::warning('txoChooser.highIterationCount', $msg);
+                    $context['gave_up'] = true;
+                }
                 return $combinations;
             }
 
@@ -368,6 +379,15 @@ class TXOChooser {
         }
 
         return $combinations;
+    }
+
+    protected function allUTXOsAsCombination($txos) {
+        $sum = 0;
+        foreach($txos as $txo) {
+            $sum += $txo['amount'];
+        }
+
+        return ['sum' => $sum, 'txos' => $txos, 'count' => count($txos)];
     }
 
     // ------------------------------------------------------------------------
