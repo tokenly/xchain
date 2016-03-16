@@ -37,7 +37,7 @@ $router->get('api/v1/primes/{addressId}', 'API\PrimeController@getPrimedUTXOs');
 $router->post('api/v1/primes/{addressId}', 'API\PrimeController@primeAddress');
 
 // address balance
-$router->get('api/v1/balances/{addressId}', 'API\BalancesController@show');
+$router->get('api/v1/balances/{address}', 'API\BalancesController@show');
 
 
 // accounts
