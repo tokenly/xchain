@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Blockchain\Sender\PaymentAddressSender;
 use App\Http\Controllers\API\Base\APIController;
+use App\Http\Requests\API\Send\EstimateFeeRequest;
 use App\Http\Requests\API\Send\ComposeSendRequest;
 use App\Http\Requests\API\Send\CreateMultiSendRequest;
 use App\Http\Requests\API\Send\CreateSendRequest;
@@ -40,6 +41,10 @@ class SendController extends APIController {
 
     public function createMultisend(APIControllerHelper $helper, CreateMultiSendRequest $request, PaymentAddressRepository $payment_address_respository, SendRepository $send_respository, PaymentAddressSender $address_sender, Guard $auth, APICallRepository $api_call_repository, $id) {
         return $this->executeSend($helper, $request, $payment_address_respository, $send_respository, $address_sender, $auth, $api_call_repository, $id);
+    }
+
+    public function estimateFee(APIControllerHelper $helper, EstimateFeeRequest $request, PaymentAddressRepository $payment_address_respository, SendRepository $send_respository, PaymentAddressSender $address_sender, Guard $auth, APICallRepository $api_call_repository, $id) {
+        return $this->estimateFeeFromRequest($helper, $request, $payment_address_respository, $send_respository, $address_sender, $auth, $api_call_repository, $id);
     }
 
     /**
@@ -236,7 +241,93 @@ class SendController extends APIController {
 
         return $send_result;
     }
-    
+
+    protected function estimateFeeFromRequest(APIControllerHelper $helper, Request $request, PaymentAddressRepository $payment_address_respository, SendRepository $send_respository, PaymentAddressSender $address_sender, Guard $auth, APICallRepository $api_call_repository, $id) {
+        $user = $auth->getUser();
+        if (!$user) { throw new Exception("User not found", 1); }
+
+        // get the address
+        $payment_address = $payment_address_respository->findByUuid($id);
+        if (!$payment_address) { return new JsonResponse(['message' => 'address not found'], 404); }
+
+        // make sure this address belongs to this user
+        if ($payment_address['user_id'] != $user['id']) { return new JsonResponse(['message' => 'Not authorized to send from this address'], 403); }
+
+        // attributes
+        $request_attributes = $request->only(array_keys($request->rules()));
+
+        // determine if this is a multisend
+        $is_multisend = (isset($request_attributes['destinations']) AND $request_attributes['destinations']);
+        $is_regular_send = !$is_multisend;
+
+        // normalize destinations
+        $destinations = $is_multisend ? $this->normalizeDestinations($request_attributes['destinations']) : '';
+        $destination = $is_regular_send ? $request_attributes['destination'] : '';
+
+        // determine variables
+        $quantity_sat = CurrencyUtil::valueToSatoshis($is_multisend ? $this->sumMultisendQuantity($destinations) : $request_attributes['quantity']);
+        $asset        = $is_regular_send ? $request_attributes['asset'] : 'BTC';
+        $is_sweep     = isset($request_attributes['sweep']) ? !!$request_attributes['sweep'] : false;
+        $dust_size    = isset($request_attributes['dust_size']) ? $request_attributes['dust_size'] : PaymentAddressSender::DEFAULT_REGULAR_DUST_SIZE;
+
+        // create attibutes
+        $create_attributes = [];
+        $create_attributes['user_id']            = $user['id'];
+        $create_attributes['payment_address_id'] = $payment_address['id'];
+        $create_attributes['destination']        = $destination;
+        $create_attributes['quantity_sat']       = $quantity_sat;
+        $create_attributes['asset']              = $asset;
+
+        // for multisends
+        $create_attributes['destinations']       = $destinations;
+
+        $float_quantity = CurrencyUtil::satoshisToValue($quantity_sat);
+
+        try {
+            // get the account
+            $account_name = ((isset($request_attributes['account']) AND strlen($request_attributes['account'])) ? $request_attributes['account'] : 'default');
+            $account = AccountHandler::getAccount($payment_address, $account_name);
+            if (!$account) {
+                EventLog::logError('error.send.accountMissing', ['address_id' => $payment_address['id'], 'account' => $account_name]);
+                return new JsonResponse(['message' => "This account did not exist."], 404);
+            }
+            // Log::debug("\$account=".json_encode($account, 192));
+
+            // whether to spend unconfirmed balances
+            $allow_unconfirmed = isset($request_attributes['unconfirmed']) ? $request_attributes['unconfirmed'] : false;
+            // Log::debug("\$allow_unconfirmed=".json_encode($allow_unconfirmed, 192));
+
+            // validate that the funds are available (with a fee of 0)
+            $float_fee = 0;
+            if ($allow_unconfirmed) {
+                $has_enough_funds = AccountHandler::accountHasSufficientFunds($account, $float_quantity, $asset, $float_fee, $dust_size);
+            } else {
+                $has_enough_funds = AccountHandler::accountHasSufficientConfirmedFunds($account, $float_quantity, $asset, $float_fee, $dust_size);
+            }
+            if (!$has_enough_funds) {
+                EventLog::logError('error.send.insufficient', ['address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset]);
+                return new JsonResponse(['message' => "This account does not have sufficient".($allow_unconfirmed ? '' : ' confirmed')." funds available."], 400);
+            }
+
+            // calculate the fee
+            EventLog::log('estimateFee.begin', ['address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset, 'destination' => ($is_multisend ? $destinations : $destination)]);
+            $fee_info = $address_sender->buildFeeEstimateInfo($payment_address, ($is_multisend ? $destinations : $destination), $float_quantity, $asset, $dust_size);
+            EventLog::log('estimateFee.complete', ['fees' => $fee_info, 'address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset, 'destination' => ($is_multisend ? $destinations : $destination)]);
+
+        } catch (Exception $e) {
+            EventLog::logError('error.estimateFee', $e);
+            return new JsonResponse(['message' => 'Unable to complete this request'], 500); 
+        }
+
+        $fees_response = ['fees' => [], 'size' => $fee_info['size']];
+        foreach($fee_info['fees'] as $level => $fee_satoshi) {
+            $fees_response['fees'][$level] = CurrencyUtil::satoshisToValue($fee_satoshi);
+            $fees_response['fees'][$level.'Sat'] = $fee_satoshi;
+        }
+
+        return $helper->buildJSONResponse($fees_response);
+    }
+        
     protected function releasePaymentAddressLockWithDelay($payment_address) {
         if (app()->environment() != 'testing') {
             $delay = 1500000;

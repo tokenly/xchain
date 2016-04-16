@@ -65,3 +65,7 @@ $router->get('/healthcheck/{checkType}', '\Tokenly\ConsulHealthDaemon\HealthCont
 $router->get('api/v1/message/verify/{address}', 'API\AddressController@verifyMessage');
 $router->post('api/v1/message/sign/{address}', 'API\AddressController@signMessage');
 $router->get('api/v1/validate/{address}', 'API\AddressController@validateAddress');
+
+// estimate fee
+$router->post('api/v1/estimatefee/{addressId}', 'API\SendController@estimateFee');
+

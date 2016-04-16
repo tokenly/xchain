@@ -37,6 +37,10 @@ class PaymentAddressSender {
 
     const DEFAULT_REGULAR_DUST_SIZE  = 0.00005430;
 
+    const FEE_SATOSHIS_PER_BYTE_LOW  = 5;
+    const FEE_SATOSHIS_PER_BYTE_MED  = 11;
+    const FEE_SATOSHIS_PER_BYTE_HIGH = 41;
+
     public function __construct(XCPDClient $xcpd_client, Bitcoind $bitcoind, CounterpartySender $xcpd_sender, BitcoinPayer $bitcoin_payer, BitcoinAddressGenerator $address_generator, Cache $asset_cache, ComposedTransactionRepository $composed_transaction_repository, TXOChooser $txo_chooser, Composer $transaction_composer, TXORepository $txo_repository, LedgerEntryRepository $ledger_entry_repository, PaymentAddressRepository $payment_address_repository) {
         $this->xcpd_client                     = $xcpd_client;
         $this->bitcoind                        = $bitcoind;
@@ -125,6 +129,30 @@ class PaymentAddressSender {
         return $this->sendByRequestID($request_id, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep);
     }
 
+    // calculates the fee in satoshis
+    public function buildFeeEstimateInfo(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_btc_dust_size = null, $is_sweep=false) {
+        $change_address_collection = null;
+        $float_fee = 0.0001;
+        $built_transaction = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep);
+        $size = strlen($built_transaction->getTransactionHex()) / 2;
+        // Log::debug("\$size=".json_encode($size, 192));
+
+        $rates = [
+            'low'  => self::FEE_SATOSHIS_PER_BYTE_LOW,
+            'med'  => self::FEE_SATOSHIS_PER_BYTE_MED,
+            'high' => self::FEE_SATOSHIS_PER_BYTE_HIGH,
+        ];
+
+        return [
+            'size' => $size,
+            'fees' => [
+                'low'  => $size * $rates['low'],
+                'med'  => $size * $rates['med'],
+                'high' => $size * $rates['high'],
+            ],
+        ];
+        // $built_transaction_to_send = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep);
+    }
 
 
     public function composeUnsignedTransactionByRequestID($request_id, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false) {

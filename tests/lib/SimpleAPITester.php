@@ -192,7 +192,8 @@ class SimpleAPITester
         $response = $this->callAPIWithAuthentication($method, $this->url_base.$url_path, $posted_vars);
         PHPUnit::assertEquals(400, $response->getStatusCode(), "Response was: ".$response->getContent());
         $response_data = json_decode($response->getContent(), true);
-        PHPUnit::assertContains($expected_error, $response_data['errors'][0]);
+        $error = (isset($response_data['errors']) ? implode(", ", $response_data['errors']) : (isset($response_data['message']) ? $response_data['message'] : ''));
+        PHPUnit::assertContains($expected_error, $error);
     }
 
     protected function fillExpectedResourceWithAPIRespose($expected_created_resource, $response_from_api) {
