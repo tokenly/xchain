@@ -419,10 +419,12 @@ class TXOChooser {
 
     protected function debugDumpTXOs($txos) {
         $out = '';
+        $total = 0;
         foreach($txos as $txo) {
             $out = ltrim($out."\n".$txo['txid'].':'.$txo['n']." (".$txo['amount'].")");
+            $total += $txo['amount'];
         }
 
-        return $out;
+        return $out."\nTOTAL=".CurrencyUtil::satoshisToValue($total);
     }
 }
