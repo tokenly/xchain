@@ -59,9 +59,11 @@ class EstimateFeeAPITest extends TestCase {
         $posted_vars['quantity'] = 0.025;
         $posted_vars['asset'] = 'BTC';
 
-        $response = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/estimatefee/'.$payment_address['uuid'], $posted_vars);
+        $fees_info = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/estimatefee/'.$payment_address['uuid'], $posted_vars);
 
-        $bytes = 225;
+        $bytes = $fees_info['size'];
+        PHPUnit::assertGreaterThanOrEqual(225, $bytes);
+        PHPUnit::assertLessThan(230, $bytes);
         PHPUnit::assertEquals([
             'size' => $bytes,
             'fees' => [
@@ -72,15 +74,17 @@ class EstimateFeeAPITest extends TestCase {
                 'high'    => CurrencyUtil::satoshisToValue(PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
                 'highSat' => PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes,
             ],
-        ], $response);
+        ], $fees_info);
 
         // Counterparty send
         $posted_vars = $this->sendHelper()->samplePostVars();
         $posted_vars['quantity'] = 10;
         $posted_vars['asset'] = 'TOKENLY';
 
-        $response = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/estimatefee/'.$payment_address['uuid'], $posted_vars);
-        $bytes = 264;
+        $fees_info = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/estimatefee/'.$payment_address['uuid'], $posted_vars);
+        $bytes = $fees_info['size'];
+        PHPUnit::assertGreaterThanOrEqual(264, $bytes);
+        PHPUnit::assertLessThan(270, $bytes);
         PHPUnit::assertEquals([
             'size' => $bytes,
             'fees' => [
@@ -91,7 +95,7 @@ class EstimateFeeAPITest extends TestCase {
                 'high'    => CurrencyUtil::satoshisToValue(PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
                 'highSat' => PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes,
             ],
-        ], $response);
+        ], $fees_info);
     }
 
 

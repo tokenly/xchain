@@ -19,7 +19,9 @@ class EstimateFeesTest extends TestCase {
 
         $sender = app('App\Blockchain\Sender\PaymentAddressSender');
         $fees_info = $sender->buildFeeEstimateInfo($payment_address, '1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i', '0.123', 'BTC', $dust_size=null, $is_sweep=false);
-        $bytes = 225;
+        $bytes = $fees_info['size'];
+        PHPUnit::assertGreaterThanOrEqual(225, $bytes);
+        PHPUnit::assertLessThan(230, $bytes);
         PHPUnit::assertEquals([
             'size' => $bytes,
             'fees' => [
@@ -39,7 +41,9 @@ class EstimateFeesTest extends TestCase {
         $sender = app('App\Blockchain\Sender\PaymentAddressSender');
         $dust_size = 0.00001234;
         $fees_info = $sender->buildFeeEstimateInfo($payment_address, '1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i', '100', 'TOKENLY', $dust_size, $is_sweep=false);
-        $bytes = 265;
+        $bytes = $fees_info['size'];
+        PHPUnit::assertGreaterThanOrEqual(400, $bytes);
+        PHPUnit::assertLessThan(500, $bytes);
         PHPUnit::assertEquals([
             'size' => $bytes,
             'fees' => [
