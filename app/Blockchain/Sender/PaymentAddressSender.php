@@ -132,7 +132,7 @@ class PaymentAddressSender {
     // calculates the fee in satoshis
     public function buildFeeEstimateInfo(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_btc_dust_size = null, $is_sweep=false) {
         $change_address_collection = null;
-        $float_fee = 0.0001;
+        $float_fee = 0;
         $built_transaction = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep);
         $size = strlen($built_transaction->getTransactionHex()) / 2;
         // Log::debug("\$size=".json_encode($size, 192));
