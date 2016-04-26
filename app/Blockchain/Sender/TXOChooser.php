@@ -22,6 +22,8 @@ class TXOChooser {
 
     const DUST_SIZE  = 0.00005430;
 
+    const MAX_INPUTS_PER_TRANSACTION = 145;
+
     public function __construct(TXORepository $txo_repository) {
         $this->txo_repository = $txo_repository;
     }
@@ -244,6 +246,11 @@ class TXOChooser {
     protected function sortTXOs($unsorted_txos, $direction) {
         $sorted_txos = $unsorted_txos;
         usort($sorted_txos, function($a, $b) use ($direction) {
+            // sort by ID when amounts are the same
+            if ($b['amount'] == $a['amount']) {
+                return ($a['id'] - $b['id']);
+            }
+
             if ($direction == self::SORT_DESCENDING) {
                 return ($b['amount'] - $a['amount']);
             }
@@ -313,8 +320,8 @@ class TXOChooser {
         $combinations = $this->__changeCombinations($target_amount, $this->sortTXOs($txos, self::SORT_DESCENDING), $context);
         if ($context['gave_up']) {
             // fall back to all UTXOs
-            $combinations = [$this->allUTXOsAsCombination($txos)];
-            Log::debug("falling back to spending all UTXOs");
+            Log::debug("falling back to naive UTXO selection algorithm");
+            $combinations = [$this->naiveUTXOsAsCombination($txos, $target_amount, self::MAX_INPUTS_PER_TRANSACTION)];
         }
         // Log::debug("__findFewestTXOsCombinations iteration_count=".$context['iteration_count']." combinations: ".$this->debugDumpGroupings($combinations));
         // $this->__last_context = $context;
@@ -381,13 +388,41 @@ class TXOChooser {
         return $combinations;
     }
 
-    protected function allUTXOsAsCombination($txos) {
-        $sum = 0;
-        foreach($txos as $txo) {
-            $sum += $txo['amount'];
+    // 
+    protected function naiveUTXOsAsCombination($txos, $target_amount, $maximum_number_of_utxos_allowed) {
+        // try ascending first
+        $sorted_txos = $this->sortTXOs($txos, self::SORT_ASCENDING);
+        $utxos_combination = $this->selectNaiveTXOs($sorted_txos, $target_amount, $maximum_number_of_utxos_allowed);
+
+        if ($utxos_combination === null) {
+            // ascending didn't work - try descending
+            $sorted_txos = $this->sortTXOs($txos, self::SORT_DESCENDING);
+            $utxos_combination = $this->selectNaiveTXOs($sorted_txos, $target_amount, $maximum_number_of_utxos_allowed);
         }
 
-        return ['sum' => $sum, 'txos' => $txos, 'count' => count($txos)];
+        if ($utxos_combination === null) {
+            throw new Exception("Unable to find any naive UTXO combination to satisfy amount ".json_encode($target_amount, 192), 1);
+        }
+
+        return $utxos_combination;
+    }
+
+    protected function selectNaiveTXOs($sorted_txos, $target_amount, $maximum_number_of_utxos_allowed) {
+        $sum = 0;
+        $txos_count = 0;
+        $matched_txos = [];
+        foreach($sorted_txos as $txo) {
+            $sum += $txo['amount'];
+            $matched_txos[] = $txo;
+
+            if ($sum >= $target_amount) { break; }
+            ++$txos_count;
+            if ($txos_count >= $maximum_number_of_utxos_allowed) { break; }
+        }
+
+        if ($sum < $target_amount) { return null; }
+
+        return ['sum' => $sum, 'txos' => $matched_txos, 'count' => $txos_count];
     }
 
     // ------------------------------------------------------------------------

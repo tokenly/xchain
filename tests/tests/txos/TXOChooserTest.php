@@ -197,9 +197,9 @@ class TXOChooserTest extends TestCase {
         $chosen_txos = $this->sortById($chosen_txos);
         // $this->assertFound([8,0,5,4], $sample_txos, $chosen_txos);
         // fall back to all
-        $found_offsets = [];
-        $max = 34; for ($i=0; $i < $max; $i++) { $found_offsets[] = $i; }
-        $this->assertFound($found_offsets, $sample_txos, $chosen_txos);
+        $expected_found_offsets = [];
+        $max = 4; for ($i=0; $i < $max; $i++) { $expected_found_offsets[] = $i; }
+        $this->assertFound($expected_found_offsets, $sample_txos, $chosen_txos);
 
     }
 
@@ -237,6 +237,41 @@ class TXOChooserTest extends TestCase {
 
     }
 
+    public function testChooseLargeNumberOfTXOsOne()
+    {
+        // receiving a transaction adds TXOs
+        $txo_repository = app('App\Repositories\TXORepository');
+        $txo_chooser    = app('App\Blockchain\Sender\TXOChooser');
+
+        $float = function($i) { return CurrencyUtil::satoshisToValue($i); };
+
+        list($payment_address, $sample_txos) = $this->makeAddressAndSampleTXOs_6();
+
+        // choose TXOs
+        // public function chooseUTXOs(PaymentAddress $payment_address, $float_quantity, $float_fee, $float_minimum_change_size=null, $strategy=null, $priming_size=null) {
+        //   needs a minimum of 0.00051 + 0.0001 + 0.0000543 = 0.0006643
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, 0.00051, 0.0001);
+        PHPUnit::assertNotEmpty($chosen_txos);
+        // 13 UTXOs at 5430 satoshis each is correct (0.00070590).
+        //   12 UTXOS would not meet the minimum change size requirement (0.00065160)
+        PHPUnit::assertCount(13, $chosen_txos);
+    }
+
+    public function testChooseLargeNumberOfTXOsTwo()
+    {
+        // receiving a transaction adds TXOs
+        $txo_repository = app('App\Repositories\TXORepository');
+        $txo_chooser    = app('App\Blockchain\Sender\TXOChooser');
+
+        $float = function($i) { return CurrencyUtil::satoshisToValue($i); };
+
+        list($payment_address, $sample_txos) = $this->makeAddressAndSampleTXOs_7();
+
+        $chosen_txos = $txo_chooser->chooseUTXOs($payment_address, 0.008, 0.0001);
+        PHPUnit::assertNotEmpty($chosen_txos);
+        PHPUnit::assertCount(9, $chosen_txos);
+    }
+
     // ------------------------------------------------------------------------
     
     protected function TXOHelper() {
@@ -267,19 +302,25 @@ class TXOChooserTest extends TestCase {
 
     protected function assertFound($expected_offsets, $sample_txos, $chosen_txos) {
         $expected_txo_arrays = [];
+        $expected_amounts = [];
+        $expected_ids = [];
         foreach($expected_offsets as $expected_offset) {
             $expected_txo_arrays[] = $sample_txos[$expected_offset]->toArray();
             $expected_amounts[] = $sample_txos[$expected_offset]['amount'];
+            $expected_ids[] = $sample_txos[$expected_offset]['id'];
         }
 
         $actual_amounts = [];
+        $actual_ids = [];
         $chosen_txo_arrays = [];
         foreach($chosen_txos as $chosen_txo) {
             $chosen_txo_arrays[] = ($chosen_txo ? $chosen_txo->toArray() : null);
             $actual_amounts[] = $chosen_txo['amount'];
+            $actual_ids[] = $chosen_txo['id'];
         }
 
-        PHPUnit::assertEquals($expected_txo_arrays, $chosen_txo_arrays, "Did not find the expected offsets of ".json_encode($expected_offsets).'. Expected amounts were '.json_encode($expected_amounts).'. Actual amounts were '.json_encode($actual_amounts));
+        $explanation = "Did not find the expected offsets of ".json_encode($expected_offsets).'. Expected amounts were '.json_encode($expected_amounts).'. Actual amounts were '.json_encode($actual_amounts)."  Expected ids were ".json_encode($expected_ids).". Actual ids were ".json_encode($actual_ids);
+        PHPUnit::assertEquals($expected_txo_arrays, $chosen_txo_arrays, $explanation);
     }
 
 
@@ -368,6 +409,40 @@ class TXOChooserTest extends TestCase {
             $sum += CurrencyUtil::valueToSatoshis($value);
         }
         // echo "\$sum: ".json_encode($sum, 192)."\n";
+
+        return [$payment_address, $sample_txos];
+    }
+
+    protected function makeAddressAndSampleTXOs_6() {
+        $payment_address_helper = app('PaymentAddressHelper');
+
+        $txo_helper = $this->TXOHelper();
+        $payment_address = $payment_address_helper->createSamplePaymentAddressWithoutInitialBalances(null, ['address' => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD']);
+        $sample_txos = [];
+
+        for ($i=0; $i < 150; $i++) {
+            $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txo_helper->nextTXID(), 'amount' => 5430,  'n' => 0, 'type' => TXO::CONFIRMED, 'green' => 0]);
+        }
+        for ($i=0; $i < 50; $i++) {
+            $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txo_helper->nextTXID(), 'amount' => 10000,  'n' => 0, 'type' => TXO::CONFIRMED, 'green' => 0]);
+        }
+
+        return [$payment_address, $sample_txos];
+    }
+
+    protected function makeAddressAndSampleTXOs_7() {
+        $payment_address_helper = app('PaymentAddressHelper');
+
+        $txo_helper = $this->TXOHelper();
+        $payment_address = $payment_address_helper->createSamplePaymentAddressWithoutInitialBalances(null, ['address' => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD']);
+        $sample_txos = [];
+
+        for ($i=0; $i < 150; $i++) {
+            $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txo_helper->nextTXID(), 'amount' => 5430,  'n' => 0, 'type' => TXO::CONFIRMED, 'green' => 0]);
+        }
+        for ($i=0; $i < 50; $i++) {
+            $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txo_helper->nextTXID(), 'amount' => 100000,  'n' => 0, 'type' => TXO::CONFIRMED, 'green' => 0]);
+        }
 
         return [$payment_address, $sample_txos];
     }
