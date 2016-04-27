@@ -50,6 +50,25 @@ class TXOChooser {
 
 
     }
+    
+    public function chooseSpecificUTXOs(PaymentAddress $payment_address, $utxo_list)
+    {
+		$available_txos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::CONFIRMED], true);
+		if(!$available_txos){
+			return [];
+		}
+		$list = array();
+		foreach($available_txos as $txo){
+			foreach($utxo_list as $custom_txo){
+				if(isset($custom_txo['txid']) AND isset($custom_txo['n'])){
+					if($txo->txid == $custom_txo['txid'] AND $txo->n == $custom_txo['n']){
+						$list[] = $txo;
+					}
+				}
+			}
+		}
+		return $list;
+	}
 
     // ------------------------------------------------------------------------
 
