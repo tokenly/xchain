@@ -85,13 +85,13 @@ class SendController extends APIController {
         $destination = $is_regular_send ? $request_attributes['destination'] : '';
 
         // determine variables
-        $quantity_sat = CurrencyUtil::valueToSatoshis($is_multisend ? $this->sumMultisendQuantity($destinations) : $request_attributes['quantity']);
-        $asset        = $is_regular_send ? $request_attributes['asset'] : 'BTC';
-        $is_sweep     = isset($request_attributes['sweep']) ? !!$request_attributes['sweep'] : false;
-        $float_fee    = isset($request_attributes['fee']) ? $request_attributes['fee'] : PaymentAddressSender::DEFAULT_FEE;
-        $dust_size    = isset($request_attributes['dust_size']) ? $request_attributes['dust_size'] : PaymentAddressSender::DEFAULT_REGULAR_DUST_SIZE;
-        $request_id   = isset($request_attributes['requestId']) ? $request_attributes['requestId'] : Uuid::uuid4()->toString();
-		$custom_inputs = isset($request_attributes['utxo_override']) ? $request_attributes['utxo_override'] : false;
+        $quantity_sat  = CurrencyUtil::valueToSatoshis($is_multisend ? $this->sumMultisendQuantity($destinations) : $request_attributes['quantity']);
+        $asset         = $is_regular_send ? $request_attributes['asset'] : 'BTC';
+        $is_sweep      = isset($request_attributes['sweep']) ? !!$request_attributes['sweep'] : false;
+        $float_fee     = isset($request_attributes['fee']) ? $request_attributes['fee'] : PaymentAddressSender::DEFAULT_FEE;
+        $dust_size     = isset($request_attributes['dust_size']) ? $request_attributes['dust_size'] : PaymentAddressSender::DEFAULT_REGULAR_DUST_SIZE;
+        $request_id    = isset($request_attributes['requestId']) ? $request_attributes['requestId'] : Uuid::uuid4()->toString();
+        $custom_inputs = isset($request_attributes['utxo_override']) ? $request_attributes['utxo_override'] : false;
 
         // create attibutes
         $create_attributes = [];
@@ -178,22 +178,22 @@ class SendController extends APIController {
                     $allow_unconfirmed = isset($request_attributes['unconfirmed']) ? $request_attributes['unconfirmed'] : false;
                     // Log::debug("\$allow_unconfirmed=".json_encode($allow_unconfirmed, 192));
 
-                    // validate that the funds are available, bypass this is custom_inputs used
+                    // validate that the funds are available, bypass this if custom_inputs used
                     if(!$custom_inputs){
-						if ($allow_unconfirmed) {
-							$has_enough_funds = AccountHandler::accountHasSufficientFunds($account, $float_quantity, $asset, $float_fee, $dust_size);
-						} else {
-							$has_enough_funds = AccountHandler::accountHasSufficientConfirmedFunds($account, $float_quantity, $asset, $float_fee, $dust_size);
-						}
-						if (!$has_enough_funds) {
-							EventLog::logError('error.send.insufficient', ['address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset]);
-							return new JsonResponse(['message' => "This account does not have sufficient".($allow_unconfirmed ? '' : ' confirmed')." funds available."], 400);
-						}
-					}
+                        if ($allow_unconfirmed) {
+                            $has_enough_funds = AccountHandler::accountHasSufficientFunds($account, $float_quantity, $asset, $float_fee, $dust_size);
+                        } else {
+                            $has_enough_funds = AccountHandler::accountHasSufficientConfirmedFunds($account, $float_quantity, $asset, $float_fee, $dust_size);
+                        }
+                        if (!$has_enough_funds) {
+                            EventLog::logError('error.send.insufficient', ['address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset]);
+                            return new JsonResponse(['message' => "This account does not have sufficient".($allow_unconfirmed ? '' : ' confirmed')." funds available."], 400);
+                        }
+                    }
 
 
                     // send the funds
-                    EventLog::log('send.begin', ['request_id' => $request_id, 'address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset, 'destination' => ($is_multisend ? $destinations : $destination), 'custom_inputs' => json_encode($custom_inputs)]);
+                    EventLog::log('send.begin', ['request_id' => $request_id, 'address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset, 'destination' => ($is_multisend ? $destinations : $destination), 'custom_inputs' => $custom_inputs]);
                     $txid = $address_sender->sendByRequestID($request_id, $payment_address, ($is_multisend ? $destinations : $destination), $float_quantity, $asset, $float_fee, $dust_size, false, $custom_inputs);
                     EventLog::log('send.complete', ['txid' => $txid, 'request_id' => $request_id, 'address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset, 'destination' => ($is_multisend ? $destinations : $destination)]);
 

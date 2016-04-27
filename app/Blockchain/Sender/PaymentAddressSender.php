@@ -322,11 +322,10 @@ class PaymentAddressSender {
         } else {
             if (strtoupper($asset) == 'BTC') {
                 // compose the BTC transaction
-                if(is_array($utxo_override) AND count($utxo_override) > 0){
-					$chosen_txos = $this->txo_chooser->chooseSpecificUTXOs($payment_address, $utxo_override);
-					$debug_strategy_text = 'custom';
-				}
-                elseif ($this->isPrimeSend($payment_address, $destination)) {
+                if (is_array($utxo_override) AND count($utxo_override) > 0){
+                    $chosen_txos = $this->txo_chooser->chooseSpecificUTXOs($payment_address, $utxo_override);
+                    $debug_strategy_text = 'custom';
+                } else if ($this->isPrimeSend($payment_address, $destination)) {
                     $float_prime_size = $this->getPrimeSendSize($destination, $float_quantity);
                     $chosen_txos = $this->txo_chooser->chooseUTXOsForPriming($payment_address, $float_quantity, $float_fee, null, $float_prime_size);
                     $debug_strategy_text = 'prime';
@@ -359,19 +358,18 @@ class PaymentAddressSender {
                 }
 
             } else {
-				//counterparty transaction
-				
+                //counterparty transaction
+                
                 // calculate the quantity
                 $is_divisible = $this->asset_cache->isDivisible($asset);
                 $quantity = new Quantity($float_quantity, $is_divisible);
 
                 // compose the Counterpary and BTC transaction
-                if(is_array($utxo_override) AND count($utxo_override) > 0){
-					$chosen_txos = $this->txo_chooser->chooseSpecificUTXOs($payment_address, $utxo_override);
-				}
-				else{
-					$chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_btc_dust_size, $float_fee);
-				}
+                if (is_array($utxo_override) AND count($utxo_override) > 0){
+                    $chosen_txos = $this->txo_chooser->chooseSpecificUTXOs($payment_address, $utxo_override);
+                } else {
+                    $chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_btc_dust_size, $float_fee);
+                }
                 Log::info('Txos: '.json_encode($chosen_txos));
                 Log::debug("Counterparty send Chosen UTXOs: ".$this->debugDumpUTXOs($chosen_txos));
 
