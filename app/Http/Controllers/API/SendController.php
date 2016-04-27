@@ -4,16 +4,19 @@ namespace App\Http\Controllers\API;
 
 use App\Blockchain\Sender\PaymentAddressSender;
 use App\Http\Controllers\API\Base\APIController;
-use App\Http\Requests\API\Send\EstimateFeeRequest;
+use App\Http\Requests\API\Send\CleanupRequest;
 use App\Http\Requests\API\Send\ComposeSendRequest;
 use App\Http\Requests\API\Send\CreateMultiSendRequest;
 use App\Http\Requests\API\Send\CreateSendRequest;
+use App\Http\Requests\API\Send\EstimateFeeRequest;
+use App\Models\TXO;
 use App\Providers\Accounts\Exception\AccountException;
 use App\Providers\Accounts\Facade\AccountHandler;
 use App\Providers\DateProvider\Facade\DateProvider;
 use App\Repositories\APICallRepository;
 use App\Repositories\PaymentAddressRepository;
 use App\Repositories\SendRepository;
+use App\Repositories\TXORepository;
 use Exception;
 use Illuminate\Auth\Guard;
 use Illuminate\Http\JsonResponse;
@@ -29,6 +32,7 @@ use Tokenly\LaravelEventLog\Facade\EventLog;
 class SendController extends APIController {
 
     const SEND_LOCK_TIMEOUT = 3600; // 1 hour
+    const DEFAULT_FEE_PRIORITY = 'medium';
 
     /**
      * Create and execute a send
@@ -45,6 +49,10 @@ class SendController extends APIController {
 
     public function estimateFee(APIControllerHelper $helper, EstimateFeeRequest $request, PaymentAddressRepository $payment_address_respository, SendRepository $send_respository, PaymentAddressSender $address_sender, Guard $auth, APICallRepository $api_call_repository, $id) {
         return $this->estimateFeeFromRequest($helper, $request, $payment_address_respository, $send_respository, $address_sender, $auth, $api_call_repository, $id);
+    }
+
+    public function cleanup(APIControllerHelper $helper, CleanupRequest $request, PaymentAddressRepository $payment_address_respository, TXORepository $txo_repository, SendRepository $send_respository, PaymentAddressSender $address_sender, Guard $auth, APICallRepository $api_call_repository, $id) {
+        return $this->cleanupFromRequest($helper, $request, $payment_address_respository, $txo_repository, $send_respository, $address_sender, $auth, $api_call_repository, $id);
     }
 
     /**
@@ -326,6 +334,54 @@ class SendController extends APIController {
         }
 
         return $helper->buildJSONResponse($fees_response);
+    }
+
+    protected function cleanupFromRequest(APIControllerHelper $helper, Request $request, PaymentAddressRepository $payment_address_respository, TXORepository $txo_repository, SendRepository $send_respository, PaymentAddressSender $address_sender, Guard $auth, APICallRepository $api_call_repository, $id) {
+        $user = $auth->getUser();
+        if (!$user) { throw new Exception("User not found", 1); }
+
+        // get the address
+        $payment_address = $payment_address_respository->findByUuid($id);
+        if (!$payment_address) { return new JsonResponse(['message' => 'address not found'], 404); }
+
+        // make sure this address belongs to this user
+        if ($payment_address['user_id'] != $user['id']) { return new JsonResponse(['message' => 'Not authorized to send from this address'], 403); }
+
+        // attributes
+        $request_attributes = $request->only(array_keys($request->rules()));
+
+        // get the utxos
+        $confirmed_txos = iterator_to_array($txo_repository->findByPaymentAddress($payment_address, [TXO::CONFIRMED], true));
+
+        $max_utxos = $request_attributes['max_utxos'];
+        $fee_priority = isset($request_attributes['priority']) ? $request_attributes['priority'] : self::DEFAULT_FEE_PRIORITY;
+
+
+        $txid = null;
+        $before_utxos_count = count($confirmed_txos);
+        $after_utxos_count = $before_utxos_count;
+        $cleaned_up = false;
+        if ($before_utxos_count > $max_utxos) {
+            $cleaned_up = true;
+
+            // build the send transaction
+            $utxo_count_to_consolidate = $before_utxos_count - $max_utxos + 1;
+            $composed_transaction_object = $address_sender->consolidateUTXOs($payment_address, $utxo_count_to_consolidate, $fee_priority);
+            $txid = $composed_transaction_object->getTxId();
+            $txos_sent = count($composed_transaction_object->getInputUtxos());
+            
+            $after_utxos_count = $before_utxos_count - $txos_sent + 1;
+        }
+
+        $cleanup_response = [
+            'before_utxos_count' => $before_utxos_count,
+            'after_utxos_count'  => $after_utxos_count,
+            'cleaned_up'         => $cleaned_up,
+            'txid'               => $txid,
+        ];
+
+
+        return $helper->buildJSONResponse($cleanup_response);
     }
         
     protected function releasePaymentAddressLockWithDelay($payment_address) {

@@ -47,8 +47,6 @@ class TXOChooser {
                 // STRATEGY_BALANCED
                 return $this->chooseUTXOsWithBalancedStrategy($payment_address, $float_quantity, $float_fee, $float_minimum_change_size);
         }
-
-
     }
 
     // ------------------------------------------------------------------------
@@ -96,6 +94,22 @@ class TXOChooser {
 
         // failed
         return [];
+    }
+
+    public function chooseTXOsByCount(PaymentAddress $payment_address, $count, $sort_order=null) {
+        $available_txos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::CONFIRMED], true)->toArray();
+        if ($sort_order === null) { $sort_order = self::SORT_ASCENDING; }
+        $txos = $this->sortTXOs($available_txos, $sort_order);
+
+        $offset = 0;
+        $selected_txos = [];
+        foreach($txos as $txo) {
+            $selected_txos[] = $txo;
+            ++$offset;
+            if ($offset >= $count) { break; }
+        }
+
+        return $selected_txos;
     }
 
     // ------------------------------------------------------------------------

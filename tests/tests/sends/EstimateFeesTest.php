@@ -1,6 +1,6 @@
 <?php
 
-use App\Blockchain\Sender\PaymentAddressSender;
+use App\Blockchain\Sender\FeePriority;
 use App\Models\TXO;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use \PHPUnit_Framework_Assert as PHPUnit;
@@ -25,9 +25,9 @@ class EstimateFeesTest extends TestCase {
         PHPUnit::assertEquals([
             'size' => $bytes,
             'fees' => [
-                'low'     => (PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
-                'med'     => (PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
-                'high'    => (PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
+                'low'     => (FeePriority::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
+                'med'     => (FeePriority::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
+                'high'    => (FeePriority::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
             ],
         ], $fees_info);
     }
@@ -47,9 +47,9 @@ class EstimateFeesTest extends TestCase {
         PHPUnit::assertEquals([
             'size' => $bytes,
             'fees' => [
-                'low'     => (PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
-                'med'     => (PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
-                'high'    => (PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
+                'low'     => (FeePriority::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
+                'med'     => (FeePriority::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
+                'high'    => (FeePriority::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
             ],
         ], $fees_info);
 
