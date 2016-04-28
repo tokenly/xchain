@@ -1,6 +1,6 @@
 <?php
 
-use App\Blockchain\Sender\PaymentAddressSender;
+use App\Blockchain\Sender\FeePriority;
 use App\Models\LedgerEntry;
 use App\Models\PaymentAddress;
 use App\Providers\Accounts\Facade\AccountHandler;
@@ -59,39 +59,43 @@ class EstimateFeeAPITest extends TestCase {
         $posted_vars['quantity'] = 0.025;
         $posted_vars['asset'] = 'BTC';
 
-        $response = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/estimatefee/'.$payment_address['uuid'], $posted_vars);
+        $fees_info = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/estimatefee/'.$payment_address['uuid'], $posted_vars);
 
-        $bytes = 225;
+        $bytes = $fees_info['size'];
+        PHPUnit::assertGreaterThanOrEqual(225, $bytes);
+        PHPUnit::assertLessThan(230, $bytes);
         PHPUnit::assertEquals([
             'size' => $bytes,
             'fees' => [
-                'low'     => CurrencyUtil::satoshisToValue(PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
-                'lowSat'  => PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_LOW * $bytes,
-                'med'     => CurrencyUtil::satoshisToValue(PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
-                'medSat'  => PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_MED * $bytes,
-                'high'    => CurrencyUtil::satoshisToValue(PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
-                'highSat' => PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes,
+                'low'     => CurrencyUtil::satoshisToValue(FeePriority::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
+                'lowSat'  => FeePriority::FEE_SATOSHIS_PER_BYTE_LOW * $bytes,
+                'med'     => CurrencyUtil::satoshisToValue(FeePriority::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
+                'medSat'  => FeePriority::FEE_SATOSHIS_PER_BYTE_MED * $bytes,
+                'high'    => CurrencyUtil::satoshisToValue(FeePriority::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
+                'highSat' => FeePriority::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes,
             ],
-        ], $response);
+        ], $fees_info);
 
         // Counterparty send
         $posted_vars = $this->sendHelper()->samplePostVars();
         $posted_vars['quantity'] = 10;
         $posted_vars['asset'] = 'TOKENLY';
 
-        $response = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/estimatefee/'.$payment_address['uuid'], $posted_vars);
-        $bytes = 264;
+        $fees_info = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/estimatefee/'.$payment_address['uuid'], $posted_vars);
+        $bytes = $fees_info['size'];
+        PHPUnit::assertGreaterThanOrEqual(264, $bytes);
+        PHPUnit::assertLessThan(270, $bytes);
         PHPUnit::assertEquals([
             'size' => $bytes,
             'fees' => [
-                'low'     => CurrencyUtil::satoshisToValue(PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
-                'lowSat'  => PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_LOW * $bytes,
-                'med'     => CurrencyUtil::satoshisToValue(PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
-                'medSat'  => PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_MED * $bytes,
-                'high'    => CurrencyUtil::satoshisToValue(PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
-                'highSat' => PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes,
+                'low'     => CurrencyUtil::satoshisToValue(FeePriority::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
+                'lowSat'  => FeePriority::FEE_SATOSHIS_PER_BYTE_LOW * $bytes,
+                'med'     => CurrencyUtil::satoshisToValue(FeePriority::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
+                'medSat'  => FeePriority::FEE_SATOSHIS_PER_BYTE_MED * $bytes,
+                'high'    => CurrencyUtil::satoshisToValue(FeePriority::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
+                'highSat' => FeePriority::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes,
             ],
-        ], $response);
+        ], $fees_info);
     }
 
 
@@ -111,71 +115,5 @@ class EstimateFeeAPITest extends TestCase {
         return $this->sample_sends_helper;
     }
 
-    protected function monitoredAddressByAddress() {
-        $address_repo = $this->app->make('App\Repositories\MonitoredAddressRepository');
-        $payment_address = $address_repo->findByAddress('RECIPIENT01')->first();
-        return $payment_address;
-
-    }
-
-    protected function newSampleAccount(PaymentAddress $address, $account_vars_or_name=null) {
-        static $address_name_counter = 0;
-        if ($account_vars_or_name AND !is_array($account_vars_or_name)) { $account_vars = ['name' => $account_vars_or_name]; }
-            else if ($account_vars_or_name === null) { $account_vars = []; }
-            else { $account_vars = $account_vars_or_name; }
-
-        if (!isset($account_vars['name'])) {
-            $account_vars['name'] = "Address ".(++$address_name_counter);
-        }
-
-        return app('AccountHelper')->newSampleAccount($address, $account_vars);
-    }
-
-
-
-    // account1 => [
-    //     unconfirmed => [BTC => 20]
-    //     confirmed   => [BTC => 100]
-    // ]
-    // account2 => [
-    //     confirmed   => [BTC => 100]
-    // ]
-    // account3 => [
-    //     unconfirmed => [BTC => 20]
-    // ]
-    protected function setupBalancesForTransfer() {
-        // setup balances
-        $sample_user = app('UserHelper')->createSampleUser();
-        $address = app('PaymentAddressHelper')->createSamplePaymentAddressWithoutDefaultAccount($sample_user);
-
-        // create models
-        $created_accounts = [];
-        $created_accounts[] = $this->newSampleAccount($address, 'default');
-        $created_accounts[] = $this->newSampleAccount($address, 'accountone');
-        $created_accounts[] = $this->newSampleAccount($address, 'accounttwo');
-        $created_accounts[] = $this->newSampleAccount($address, 'accountthree');
-        $inactive_account = app('AccountHelper')->newSampleAccount($address, ['name' => 'Inactive 1', 'active' => 0]);
-
-        // add balances to each
-        $txid = 'deadbeef00000000000000000000000000000000000000000000000000000001';
-        $ledger_entry_repo = app('App\Repositories\LedgerEntryRepository');
-        $ledger_entry_repo->addCredit(110, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
-        $ledger_entry_repo->addCredit(100, 'BTC', $created_accounts[1], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
-        $ledger_entry_repo->addDebit(  10, 'BTC', $created_accounts[0], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
-        $ledger_entry_repo->addCredit(  1, 'BTC', $created_accounts[2], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
-        $ledger_entry_repo->addCredit( 20, 'BTC', $created_accounts[0], LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
-        $ledger_entry_repo->addCredit( 20, 'BTC', $created_accounts[2], LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
-
-        $ledger_entry_repo->addCredit(0.01, 'BTC', $created_accounts[3], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
-        $ledger_entry_repo->addCredit(  20, 'BTC', $created_accounts[3], LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
-
-        // add UTXOs
-        $float_btc_balance = 110 + 100 - 10 + 20 + 20 + 0.01 + 20;
-        app('PaymentAddressHelper')->addUTXOToPaymentAddress($float_btc_balance, $address);
-
-        $api_test_helper = app('APITestHelper')->useUserHelper(app('UserHelper'));
-
-        return [$address, $created_accounts, $api_test_helper];
-    }
 
 }

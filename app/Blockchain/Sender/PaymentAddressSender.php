@@ -3,6 +3,7 @@
 namespace App\Blockchain\Sender;
 
 use App\Blockchain\Sender\Exception\BitcoinDaemonException;
+use App\Blockchain\Sender\FeePriority;
 use App\Blockchain\Sender\TXOChooser;
 use App\Models\LedgerEntry;
 use App\Models\PaymentAddress;
@@ -25,6 +26,7 @@ use Tokenly\BitcoinAddressLib\BitcoinKeyUtils;
 use Tokenly\BitcoinPayer\BitcoinPayer;
 use Tokenly\CounterpartyAssetInfoCache\Cache;
 use Tokenly\CounterpartySender\CounterpartySender;
+use Tokenly\CounterpartyTransactionComposer\ComposedTransaction;
 use Tokenly\CounterpartyTransactionComposer\Composer;
 use Tokenly\CounterpartyTransactionComposer\Quantity;
 use Tokenly\CurrencyLib\CurrencyUtil;
@@ -34,14 +36,11 @@ use Tokenly\XCPDClient\Client as XCPDClient;
 class PaymentAddressSender {
 
     const DEFAULT_FEE                = 0.0001;
+    const HIGH_FEE_SATOSHIS          = 1000000; // 0.01;
 
     const DEFAULT_REGULAR_DUST_SIZE  = 0.00005430;
 
-    const FEE_SATOSHIS_PER_BYTE_LOW  = 5;
-    const FEE_SATOSHIS_PER_BYTE_MED  = 11;
-    const FEE_SATOSHIS_PER_BYTE_HIGH = 41;
-
-    public function __construct(XCPDClient $xcpd_client, Bitcoind $bitcoind, CounterpartySender $xcpd_sender, BitcoinPayer $bitcoin_payer, BitcoinAddressGenerator $address_generator, Cache $asset_cache, ComposedTransactionRepository $composed_transaction_repository, TXOChooser $txo_chooser, Composer $transaction_composer, TXORepository $txo_repository, LedgerEntryRepository $ledger_entry_repository, PaymentAddressRepository $payment_address_repository) {
+    public function __construct(XCPDClient $xcpd_client, Bitcoind $bitcoind, CounterpartySender $xcpd_sender, BitcoinPayer $bitcoin_payer, BitcoinAddressGenerator $address_generator, Cache $asset_cache, ComposedTransactionRepository $composed_transaction_repository, TXOChooser $txo_chooser, Composer $transaction_composer, TXORepository $txo_repository, LedgerEntryRepository $ledger_entry_repository, PaymentAddressRepository $payment_address_repository, FeePriority $fee_priority) {
         $this->xcpd_client                     = $xcpd_client;
         $this->bitcoind                        = $bitcoind;
         $this->xcpd_sender                     = $xcpd_sender;
@@ -54,6 +53,7 @@ class PaymentAddressSender {
         $this->txo_repository                  = $txo_repository;
         $this->ledger_entry_repository         = $ledger_entry_repository;
         $this->payment_address_repository      = $payment_address_repository;
+        $this->fee_priority                    = $fee_priority;
     }
 
     // returns [$transaction_id, $float_balance_sent]
@@ -114,7 +114,7 @@ class PaymentAddressSender {
     }
 
     public function sendByRequestID($request_id, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false, $custom_inputs=false) {
-        $composed_transaction_model = $this->generateSignedTransactionModelWithUTXOUpdates($request_id, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep, $custom_inputs);
+        $composed_transaction_model = $this->generateSignedTransactionModelAndUpdateUTXORecords($request_id, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep, $custom_inputs);
         if (!$composed_transaction_model) { return null;}
 
         $signed_transaction_hex = $composed_transaction_model['transaction'];
@@ -129,18 +129,38 @@ class PaymentAddressSender {
         return $this->sendByRequestID($request_id, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep);
     }
 
+    /**
+     * Builds and sends a UTXO consolidation transaction
+     * @param  PaymentAddress $payment_address
+     * @param  integer        $utxo_count_to_consolidate Number of UTXOs to consolidate
+     * @param  mixed          $fee_priority_desc         A fee priority description (medium)
+     * @return Tokenly\CounterpartyTransactionComposer\ComposedTransaction The composed transaction object
+     */
+    public function consolidateUTXOs(PaymentAddress $payment_address, $utxo_count_to_consolidate, $fee_priority_desc='medium') {
+        // build the transaction
+        $composed_transaction_object = $this->buildTransactionToConsolidateUTXOs($payment_address, $utxo_count_to_consolidate, $fee_priority_desc);
+
+        // update and build the UTXO records
+        $this->updateTXORecordsFromComposedTransaction($payment_address, $composed_transaction_object);
+
+        // push the signed transaction
+        $sent_tx_id = $this->pushSignedTransactionFromComposedTransactionObject($composed_transaction_object);
+
+        return $composed_transaction_object;
+    }
+
+
     // calculates the fee in satoshis
     public function buildFeeEstimateInfo(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_btc_dust_size = null, $is_sweep=false) {
         $change_address_collection = null;
-        $float_fee = 0.0001;
-        $built_transaction = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep);
-        $size = strlen($built_transaction->getTransactionHex()) / 2;
-        // Log::debug("\$size=".json_encode($size, 192));
+        $float_fee = 0;
+        $size = $this->estimateSizeWithFee($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep);
+        Log::debug("buildFeeEstimateInfo \$size=".json_encode($size, 192));
 
         $rates = [
-            'low'  => self::FEE_SATOSHIS_PER_BYTE_LOW,
-            'med'  => self::FEE_SATOSHIS_PER_BYTE_MED,
-            'high' => self::FEE_SATOSHIS_PER_BYTE_HIGH,
+            'low'  => $this->fee_priority->getSatoshisPerByte('low'),
+            'med'  => $this->fee_priority->getSatoshisPerByte('medium'),
+            'high' => $this->fee_priority->getSatoshisPerByte('high'),
         ];
 
         return [
@@ -151,7 +171,13 @@ class PaymentAddressSender {
                 'high' => $size * $rates['high'],
             ],
         ];
-        // $built_transaction_to_send = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep);
+    }
+
+    public function estimateSizeWithFee(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size = null, $is_sweep=false) {
+        $change_address_collection = null;
+        $composed_transaction = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep);
+        $size = strlen($composed_transaction->getTransactionHex()) / 2;
+        return $size;
     }
 
 
@@ -194,32 +220,39 @@ class PaymentAddressSender {
     ////////////////////////////////////////////////////////////////////////
     // Protected
 
-    protected function generateSignedTransactionModelWithUTXOUpdates($request_id, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep, $custom_inputs=false) {
+    protected function generateSignedTransactionModelAndUpdateUTXORecords($request_id, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep, $custom_inputs=false) {
         // check to see if this signed transaction already exists in the database
         $composed_transaction_model = $this->composed_transaction_repository->getComposedTransactionByRequestID($request_id);
 
         if ($composed_transaction_model === null) {
             // build the signed transactions
             $change_address_collection = null;
+
             $built_transaction_to_send = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep, $custom_inputs);
 
-            // get the utxo identifiers
-            $utxo_identifiers = $this->buildUTXOIdentifiersFromUTXOs($built_transaction_to_send->getInputUtxos());
-
             // store the signed transactions to the database cache
-            $signed_transaction_hex = $built_transaction_to_send->getTransactionHex();
-            $txid                   = $built_transaction_to_send->getTxId();
-            $is_signed              = $built_transaction_to_send->getSigned();
+            $signed_transaction_hex     = $built_transaction_to_send->getTransactionHex();
+            $txid                       = $built_transaction_to_send->getTxId();
+            $is_signed                  = $built_transaction_to_send->getSigned();
+            $utxo_identifiers           = $this->buildUTXOIdentifiersFromUTXOs($built_transaction_to_send->getInputUtxos());
             $composed_transaction_model = $this->composed_transaction_repository->storeOrFetchComposedTransaction($request_id, $txid, $signed_transaction_hex, $utxo_identifiers, $is_signed);
 
-            // mark each UTXO as spent
-            $this->txo_repository->updateByTXOIdentifiers($utxo_identifiers, ['spent' => 1]);
-
-            // create the new UTXOs that belong to any of our addresses
-            $this->createNewUTXORecords($payment_address, $built_transaction_to_send->getOutputUtxos());
+            $this->updateTXORecordsFromComposedTransaction($payment_address, $built_transaction_to_send);
         }
 
         return $composed_transaction_model;
+    }
+
+    // updates the status of the spending UTXOs and creates any new UTXOs
+    protected function updateTXORecordsFromComposedTransaction(PaymentAddress $payment_address, ComposedTransaction $built_transaction_to_send) {
+        // get the utxo identifiers
+        $utxo_identifiers = $this->buildUTXOIdentifiersFromUTXOs($built_transaction_to_send->getInputUtxos());
+
+        // mark each UTXO as spent
+        $this->txo_repository->updateByTXOIdentifiers($utxo_identifiers, ['spent' => 1]);
+
+        // create the new UTXOs that belong to any of our addresses
+        $this->createNewUTXORecords($payment_address, $built_transaction_to_send->getOutputUtxos());
     }
 
     // * @param  array  $output_utxos  An array of UTXOs.  Each UTXO should be ['txid' => txid, 'n' => n, 'amount' => amount (in satoshis), 'script' => script hexadecimal string]
@@ -249,6 +282,12 @@ class PaymentAddressSender {
                 ]);
             }
         }
+    }
+
+    protected function pushSignedTransactionFromComposedTransactionObject(ComposedTransaction $composed_transaction_object) {
+        $utxo_identifiers = [];
+        $utxo_identifiers = $this->buildUTXOIdentifiersFromUTXOs($composed_transaction_object->getInputUtxos());
+        return $this->pushSignedTransaction($composed_transaction_object->getTransactionHex(), $composed_transaction_object->getTxId(), $utxo_identifiers, null);
     }
 
     protected function pushSignedTransaction($signed_transaction_hex, $txid, $utxo_identifiers, $request_id=null) {
@@ -300,6 +339,7 @@ class PaymentAddressSender {
     }
 
     protected function buildComposedTransaction(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $change_address_collection=null, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false, $utxo_override=false) {
+        Log::debug("buildComposedTransaction \$float_quantity=".json_encode($float_quantity, 192)." \$asset=".json_encode($asset, 192)." is_sweep=".json_encode($is_sweep, 192));
         $signed_transaction = null;
 
         if ($float_fee === null)            { $float_fee            = self::DEFAULT_FEE; }
@@ -398,6 +438,35 @@ class PaymentAddressSender {
         }
 
         return $composed_transaction;
+    }
+
+
+    protected function buildTransactionToConsolidateUTXOs(PaymentAddress $payment_address, $utxo_count_to_consolidate, $fee_priority_desc) {
+        $wif_private_key = BitcoinKeyUtils::WIFFromPrivateKey($this->address_generator->privateKey($payment_address['private_key_token']));
+
+        // get the smallest TXOs first
+        $chosen_txos = $this->txo_chooser->chooseTXOsByCount($payment_address, $utxo_count_to_consolidate);
+        $float_quantity_orig = CurrencyUtil::satoshisToValue($this->sumUTXOs($chosen_txos));
+
+        // use approximate fee
+        $float_quantity = $float_quantity_orig;
+        $float_fee = self::DEFAULT_FEE;
+        if ($float_fee > $float_quantity) { $float_fee = $float_quantity; }
+        $float_quantity -= $float_fee;
+        $composed_transaction_object = $this->transaction_composer->composeSend('BTC', $float_quantity, $payment_address['address'], $wif_private_key, $chosen_txos, $payment_address['address'], $float_fee);
+
+        // now build again with a better fee
+        $size = strlen($composed_transaction_object->getTransactionHex()) / 2;
+        $fee_satoshis = $size * $this->fee_priority->getSatoshisPerByte($fee_priority_desc);
+        $float_quantity = $float_quantity_orig;
+        // prevent high fees (sanity check)
+        if ($fee_satoshis > self::HIGH_FEE_SATOSHIS) { throw new Exception("Unexpected high fee for consolidateUTXOs", 1); }
+        $float_fee = CurrencyUtil::satoshisToValue($fee_satoshis);
+        if ($float_fee > $float_quantity) { $float_fee = $float_quantity; }
+        $float_quantity -= $float_fee;
+        $composed_transaction_object = $this->transaction_composer->composeSend('BTC', $float_quantity, $payment_address['address'], $wif_private_key, $chosen_txos, $payment_address['address'], $float_fee);
+
+        return $composed_transaction_object;
     }
 
 

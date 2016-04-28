@@ -1,6 +1,7 @@
 <?php namespace App\Providers;
 
 use App\Handlers\XChain\Error\XChainErrorCounter;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider {
@@ -12,7 +13,9 @@ class AppServiceProvider extends ServiceProvider {
 	 */
 	public function boot()
 	{
-		//
+        Validator::extend('fee_priority', function($attribute, $value, $parameters, $validator) {
+            return app('App\Blockchain\Sender\FeePriority')->isValid($value);
+        });
 	}
 
 	/**

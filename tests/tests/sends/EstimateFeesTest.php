@@ -1,6 +1,6 @@
 <?php
 
-use App\Blockchain\Sender\PaymentAddressSender;
+use App\Blockchain\Sender\FeePriority;
 use App\Models\TXO;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use \PHPUnit_Framework_Assert as PHPUnit;
@@ -19,13 +19,15 @@ class EstimateFeesTest extends TestCase {
 
         $sender = app('App\Blockchain\Sender\PaymentAddressSender');
         $fees_info = $sender->buildFeeEstimateInfo($payment_address, '1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i', '0.123', 'BTC', $dust_size=null, $is_sweep=false);
-        $bytes = 225;
+        $bytes = $fees_info['size'];
+        PHPUnit::assertGreaterThanOrEqual(225, $bytes);
+        PHPUnit::assertLessThan(230, $bytes);
         PHPUnit::assertEquals([
             'size' => $bytes,
             'fees' => [
-                'low'     => (PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
-                'med'     => (PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
-                'high'    => (PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
+                'low'     => (FeePriority::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
+                'med'     => (FeePriority::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
+                'high'    => (FeePriority::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
             ],
         ], $fees_info);
     }
@@ -39,13 +41,15 @@ class EstimateFeesTest extends TestCase {
         $sender = app('App\Blockchain\Sender\PaymentAddressSender');
         $dust_size = 0.00001234;
         $fees_info = $sender->buildFeeEstimateInfo($payment_address, '1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i', '100', 'TOKENLY', $dust_size, $is_sweep=false);
-        $bytes = 265;
+        $bytes = $fees_info['size'];
+        PHPUnit::assertGreaterThanOrEqual(400, $bytes);
+        PHPUnit::assertLessThan(500, $bytes);
         PHPUnit::assertEquals([
             'size' => $bytes,
             'fees' => [
-                'low'     => (PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
-                'med'     => (PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
-                'high'    => (PaymentAddressSender::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
+                'low'     => (FeePriority::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
+                'med'     => (FeePriority::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
+                'high'    => (FeePriority::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
             ],
         ], $fees_info);
 

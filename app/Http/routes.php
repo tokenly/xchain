@@ -69,3 +69,6 @@ $router->get('api/v1/validate/{address}', 'API\AddressController@validateAddress
 // estimate fee
 $router->post('api/v1/estimatefee/{addressId}', 'API\SendController@estimateFee');
 
+// cleanup UTXOs
+$router->post('api/v1/cleanup/{addressId}', 'API\SendController@cleanup');
+
