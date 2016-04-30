@@ -20,7 +20,7 @@ class CleanupRequest extends APIRequest {
     public function rules()
     {
         return [
-            'max_utxos' => 'required|numeric|min:1',
+            'max_utxos' => 'required|numeric|min:2|max:150',
             'priority'  => 'sometimes|fee_priority',
         ];
     }

@@ -22,7 +22,7 @@ class TXOChooser {
 
     const DUST_SIZE  = 0.00005430;
 
-    const MAX_INPUTS_PER_TRANSACTION = 145;
+    const MAX_INPUTS_PER_TRANSACTION = 150;
 
     public function __construct(TXORepository $txo_repository) {
         $this->txo_repository = $txo_repository;

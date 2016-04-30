@@ -353,7 +353,7 @@ class SendController extends APIController {
         // get the utxos
         $confirmed_txos = iterator_to_array($txo_repository->findByPaymentAddress($payment_address, [TXO::CONFIRMED], true));
 
-        $max_utxos = $request_attributes['max_utxos'];
+        $utxo_count_to_consolidate = min($confirmed_txos, $request_attributes['max_utxos']);
         $fee_priority = isset($request_attributes['priority']) ? $request_attributes['priority'] : self::DEFAULT_FEE_PRIORITY;
 
 
@@ -361,11 +361,10 @@ class SendController extends APIController {
         $before_utxos_count = count($confirmed_txos);
         $after_utxos_count = $before_utxos_count;
         $cleaned_up = false;
-        if ($before_utxos_count > $max_utxos) {
+        if ($utxo_count_to_consolidate > 1) {
             $cleaned_up = true;
 
             // build the send transaction
-            $utxo_count_to_consolidate = $before_utxos_count - $max_utxos + 1;
             $composed_transaction_object = $address_sender->consolidateUTXOs($payment_address, $utxo_count_to_consolidate, $fee_priority);
             $txid = $composed_transaction_object->getTxId();
             $txos_sent = count($composed_transaction_object->getInputUtxos());
