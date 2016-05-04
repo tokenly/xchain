@@ -11,6 +11,9 @@ class UnmanagedPaymentAddressAPITest extends TestCase {
     protected $useRealSQLiteDatabase = true;
 
     public function testAPIAddUnmanagedPaymentAddress() {
+        // install the counterparty client mock
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
         $api_tester = $this->getAPITester();
 
         list($private_key, $address) = $this->generateUnmanagedAddress();
