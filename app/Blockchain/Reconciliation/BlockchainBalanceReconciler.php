@@ -65,7 +65,6 @@ class BlockchainBalanceReconciler {
             } else {
                 // determine quantity based on asset info
                 $is_divisible = $this->asset_info_cache->isDivisible($asset_name);
-                Log::debug("$asset_name \$is_divisible=".json_encode($is_divisible, 192));
                 if ($is_divisible) {
                     $quantity_float = CurrencyUtil::satoshisToValue($balance['quantity']);
                 } else {
@@ -76,8 +75,6 @@ class BlockchainBalanceReconciler {
 
             $daemon_balances[$asset_name] = $quantity_float;
         }
-        Log::debug("\$daemon_balances=".json_encode($daemon_balances, 192));
-
 
         // compare
         $balance_differences = $this->buildBalanceDifferencesFromMaps($combined_xchain_balances, $daemon_balances);
