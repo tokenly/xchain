@@ -1,5 +1,7 @@
 <?php
 
+use Tokenly\CurrencyLib\CurrencyUtil;
+
 
 /**
 *  CounterpartySenderMockBuilder
@@ -37,11 +39,11 @@ class CounterpartySenderMockBuilder
                 return [
                     [
                         'asset'    => 'FOOCOIN',
-                        'quantity' => 100,
+                        'quantity' => CurrencyUtil::valueToSatoshis(100),
                     ],
                     [
                         'asset'    => 'BARCOIN',
-                        'quantity' => 200,
+                        'quantity' => CurrencyUtil::valueToSatoshis(200),
                     ],
                 ];
             }

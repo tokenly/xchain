@@ -42,6 +42,37 @@ class UnmanagedPaymentAddressAPITest extends TestCase {
         ]);
     }
 
+    public function testNewUnmanagedPaymentAddressLoadsExistingBalances() {
+        $api_tester = $this->getAPITester();
+
+        // install the counterparty client mock
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        list($private_key, $address) = $this->generateUnmanagedAddress();
+
+        $posted_vars = $this->paymentAddressHelper()->samplePostVars(['address' => $address]);
+        $expected_created_resource = [
+            'id'      => '{{response.id}}',
+            'address' => $address,
+        ];
+        $loaded_address_model = $api_tester->testAddResource($posted_vars, $expected_created_resource);
+
+        // load the balances for the address
+        $parameters = ['type' => 'confirmed'];
+        $api_response = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('GET', '/api/v1/accounts/balances/'.$loaded_address_model['uuid'], $parameters);
+        // echo "\$api_response: ".json_encode($api_response, 192)."\n";
+
+        // make sure the daemons were called
+        PHPUnit::assertNotEmpty($mock_calls['xcpd'], "No calls to xcpd daemon found");
+        PHPUnit::assertNotEmpty($mock_calls['btcd'], "No calls to btcd daemon found");
+
+        PHPUnit::assertArrayHasKey('BTC', $api_response[0]['balances'], 'BTC balance was not found.');
+        PHPUnit::assertEquals(0.235, $api_response[0]['balances']['BTC']);
+        PHPUnit::assertEquals(100, $api_response[0]['balances']['FOOCOIN']);
+        PHPUnit::assertEquals(200, $api_response[0]['balances']['BARCOIN']);
+    }
+
+
     public function testAPICreateUnmanagedAddressComposedTransaction() {
         // mock asset cache
         app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
