@@ -38,7 +38,8 @@ class PaymentAddressSender {
     const DEFAULT_FEE                = 0.0001;
     const HIGH_FEE_SATOSHIS          = 1000000; // 0.01;
 
-    const DEFAULT_REGULAR_DUST_SIZE  = 0.00005430;
+    const DEFAULT_REGULAR_DUST_SIZE = 0.00005430;
+    const MINIMUM_DUST_SIZE         = 0.00005000;
 
     public function __construct(XCPDClient $xcpd_client, Bitcoind $bitcoind, CounterpartySender $xcpd_sender, BitcoinPayer $bitcoin_payer, BitcoinAddressGenerator $address_generator, Cache $asset_cache, ComposedTransactionRepository $composed_transaction_repository, TXOChooser $txo_chooser, Composer $transaction_composer, TXORepository $txo_repository, LedgerEntryRepository $ledger_entry_repository, PaymentAddressRepository $payment_address_repository, FeePriority $fee_priority) {
         $this->xcpd_client                     = $xcpd_client;
@@ -356,7 +357,16 @@ class PaymentAddressSender {
             
             // compose the BTC transaction
             $chosen_txos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::UNCONFIRMED, TXO::CONFIRMED], true);
-            $float_quantity = CurrencyUtil::satoshisToValue($this->sumUTXOs($chosen_txos)) - $float_fee;
+            $float_utxo_sum = CurrencyUtil::satoshisToValue($this->sumUTXOs($chosen_txos));
+            if ($float_utxo_sum < self::MINIMUM_DUST_SIZE) {
+                throw new Exception("BTC amount is too small to sweep", 1);
+            }
+            $float_quantity = $float_utxo_sum - $float_fee;
+            if ($float_quantity <= 0) {
+                // the fee is too large - try to send it with as much fee as possible
+                $float_quantity = self::MINIMUM_DUST_SIZE;
+                $float_fee = $float_utxo_sum - $float_quantity;
+            }
             $composed_transaction = $this->transaction_composer->composeSend('BTC', $float_quantity, $destination, $wif_private_key, $chosen_txos, null, $float_fee);
         } else {
             if (strtoupper($asset) == 'BTC') {
