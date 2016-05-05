@@ -240,11 +240,11 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
         }
         if ($block_hashes) {
             // get all addresses we care about
-            $all_addresses = $this->findAllMonitoredAddresses();
+            // $all_addresses = $this->findAllMonitoredAndPaymentAddresses();
 
             $block_event_context = $this->block_event_context_factory->newBlockEventContext();
             $_offset = 0;
-            foreach($this->transaction_repository->findAllTransactionsConfirmedInBlockHashesInvolvingAddresses($block_hashes, $all_addresses) as $transaction_model) {
+            foreach($this->transaction_repository->findAllTransactionsConfirmedInBlockHashesInvolvingAllMonitorAndPaymentAddresses($block_hashes) as $transaction_model) {
                 Log::debug("found transaction model: ".$transaction_model['txid']);
                 $confirmations = $this->confirmations_builder->getConfirmationsForBlockHashAsOfHeight($transaction_model['block_confirmed_hash'], $block_event['height']);
                 if ($_offset % 50 === 1) { Log::debug("tx {$_offset} $confirmations confirmations"); }
@@ -292,11 +292,11 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
         return $notification;
     }
 
-    protected function findAllMonitoredAddresses() {
-        $addresses = $this->monitored_address_repository->findAllAddresses();
-        $addresses = array_unique(array_merge($addresses, $this->payment_address_repository->findAllAddresses()));
-        return $addresses;
-    }
+    // protected function findAllMonitoredAndPaymentAddresses() {
+    //     $addresses = $this->monitored_address_repository->findAllAddresses();
+    //     $addresses = array_unique(array_merge($addresses, $this->payment_address_repository->findAllAddresses()));
+    //     return $addresses;
+    // }
     
 }
 

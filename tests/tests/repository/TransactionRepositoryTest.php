@@ -184,6 +184,127 @@ class TransactionRepositoryTest extends TestCase {
         PHPUnit::assertCount(0, $transactions);
     }
 
+    public function testMonitoredAddressLookupQuery() {
+        $sample_user = app('UserHelper')->createSampleUser();
+        $helper = $this->app->make('MonitoredAddressHelper');
+        $created_addresses = [
+            $helper->createSampleMonitoredAddress($sample_user, ['address' => '1TEST1111xxxxxxxxxxxxxxxxxxxtjomkj']),
+            $helper->createSampleMonitoredAddress($sample_user, ['address' => '1TEST2222xxxxxxxxxxxxxxxxxxxxEoA4S']),
+            $helper->createSampleMonitoredAddress($sample_user, ['address' => '1TEST3333xxxxxxxxxxxxxxxxxxxypM2D5']),
+        ];
+
+        $transaction_models = [
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000000',],]),
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000001',],]),
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000001',], 'sources' => ['1TEST1111xxxxxxxxxxxxxxxxxxxtjomkj']]),
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000001',], 'sources' => ['1TEST1111xxxxxxxxxxxxxxxxxxxtjomkj'], 'destinations' => ['1TEST1111xxxxxxxxxxxxxxxxxxxtjomkj', '1TEST2222xxxxxxxxxxxxxxxxxxxxEoA4S']]),
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000001',],]),
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000002',], 'sources' => ['1TEST1111xxxxxxxxxxxxxxxxxxxtjomkj', '1TEST2222xxxxxxxxxxxxxxxxxxxxEoA4S',]]),
+        ];
+        // echo "\$transaction_models: ".json_encode($transaction_models, 192)."\n";
+        $blocks = [
+            app('SampleBlockHelper')->createSampleBlock('default_parsed_block_01.json', ['hash' => 'BLOCKHASH000000']),
+            app('SampleBlockHelper')->createSampleBlock('default_parsed_block_01.json', ['hash' => 'BLOCKHASH000001', 'tx' => [
+                $transaction_models[0]['txid'],
+                $transaction_models[1]['txid'],
+            ]]),
+            app('SampleBlockHelper')->createSampleBlock('default_parsed_block_01.json', ['hash' => 'BLOCKHASH000002']),
+        ];
+
+        $tx_repo = app('App\Repositories\TransactionRepository');
+        $found_transactions = $tx_repo->findAllTransactionsConfirmedInBlockHashesInvolvingAllMonitorAndPaymentAddresses([$blocks[1]['hash']]);
+        // echo "\$found_transactions: ".json_encode($found_transactions, 192)."\n";
+        PHPUnit::assertCount(2, $found_transactions);
+        PHPUnit::assertEquals($transaction_models[2]['id'], $found_transactions[0]['id']);
+        PHPUnit::assertEquals($transaction_models[3]['id'], $found_transactions[1]['id']);
+
+
+    }
+
+    public function testPaymentAddressLookupQuery() {
+        $sample_user = app('UserHelper')->createSampleUser();
+        $helper = $this->app->make('MonitoredAddressHelper');
+        $created_addresses = [
+            $helper->createSampleMonitoredAddress($sample_user, ['address' => '1AAAA3333xxxxxxxxxxxxxxxxxxxsTtS6v']),
+        ];
+
+        $payment_addresses = [
+            app('PaymentAddressHelper')->createSamplePaymentAddress($sample_user, ['address' => '1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j']),
+            app('PaymentAddressHelper')->createSamplePaymentAddress($sample_user, ['address' => '1AAAA2222xxxxxxxxxxxxxxxxxxy4pQ3tU']),
+        ];
+
+
+        $transaction_models = [
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000000',], 'sources' => ['1AAAA2222xxxxxxxxxxxxxxxxxxy4pQ3tU']]),
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000001',],]),
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000001',], 'sources' => ['1TEST1111xxxxxxxxxxxxxxxxxxxtjomkj']]),
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000001',], 'sources' => ['1TEST1111xxxxxxxxxxxxxxxxxxxtjomkj'], 'destinations' => ['1TEST1111xxxxxxxxxxxxxxxxxxxtjomkj', '1TEST2222xxxxxxxxxxxxxxxxxxxxEoA4S']]),
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000001',], 'sources' => ['1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j']]),
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000002',], 'sources' => ['1TEST1111xxxxxxxxxxxxxxxxxxxtjomkj', '1TEST2222xxxxxxxxxxxxxxxxxxxxEoA4S',]]),
+        ];
+
+        $blocks = [
+            app('SampleBlockHelper')->createSampleBlock('default_parsed_block_01.json', ['hash' => 'BLOCKHASH000000']),
+            app('SampleBlockHelper')->createSampleBlock('default_parsed_block_01.json', ['hash' => 'BLOCKHASH000001', 'tx' => [
+                $transaction_models[0]['txid'],
+                $transaction_models[1]['txid'],
+            ]]),
+            app('SampleBlockHelper')->createSampleBlock('default_parsed_block_01.json', ['hash' => 'BLOCKHASH000003']),
+        ];
+
+        $tx_repo = app('App\Repositories\TransactionRepository');
+        $found_transactions = $tx_repo->findAllTransactionsConfirmedInBlockHashesInvolvingAllMonitorAndPaymentAddresses([$blocks[1]['hash'], $blocks[2]['hash']]);
+        // echo "\$found_transactions: ".json_encode($found_transactions, 192)."\n";
+        PHPUnit::assertCount(1, $found_transactions);
+        PHPUnit::assertEquals($transaction_models[4]['id'], $found_transactions[0]['id']);
+
+
+    }
+
+    public function testPaymentAddressAndMonitorLookupQuery() {
+        $sample_user = app('UserHelper')->createSampleUser();
+        $helper = $this->app->make('MonitoredAddressHelper');
+        $created_addresses = [
+            $helper->createSampleMonitoredAddress($sample_user, ['address' => '1TEST1111xxxxxxxxxxxxxxxxxxxtjomkj']),
+            $helper->createSampleMonitoredAddress($sample_user, ['address' => '1TEST2222xxxxxxxxxxxxxxxxxxxxEoA4S']),
+            $helper->createSampleMonitoredAddress($sample_user, ['address' => '1TEST3333xxxxxxxxxxxxxxxxxxxypM2D5']),
+        ];
+
+        $payment_addresses = [
+            app('PaymentAddressHelper')->createSamplePaymentAddress($sample_user, ['address' => '1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j']),
+            app('PaymentAddressHelper')->createSamplePaymentAddress($sample_user, ['address' => '1AAAA2222xxxxxxxxxxxxxxxxxxy4pQ3tU']),
+        ];
+
+
+        $transaction_models = [
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000000',], 'sources' => ['1AAAA2222xxxxxxxxxxxxxxxxxxy4pQ3tU']]),
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000001',],]),
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000001',], 'sources' => ['1TEST1111xxxxxxxxxxxxxxxxxxxtjomkj']]),
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000001',], 'sources' => ['1TEST1111xxxxxxxxxxxxxxxxxxxtjomkj'], 'destinations' => ['1TEST1111xxxxxxxxxxxxxxxxxxxtjomkj', '1TEST2222xxxxxxxxxxxxxxxxxxxxEoA4S']]),
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000001',], 'sources' => ['1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j']]),
+            $this->txHelper()->createSampleTransaction('sample_btc_parsed_01.json', ['bitcoinTx' => ['blockhash' => 'BLOCKHASH000002',], 'sources' => ['1TEST1111xxxxxxxxxxxxxxxxxxxtjomkj', '1TEST2222xxxxxxxxxxxxxxxxxxxxEoA4S',]]),
+        ];
+
+        $blocks = [
+            app('SampleBlockHelper')->createSampleBlock('default_parsed_block_01.json', ['hash' => 'BLOCKHASH000000']),
+            app('SampleBlockHelper')->createSampleBlock('default_parsed_block_01.json', ['hash' => 'BLOCKHASH000001', 'tx' => [
+                $transaction_models[0]['txid'],
+                $transaction_models[1]['txid'],
+            ]]),
+            app('SampleBlockHelper')->createSampleBlock('default_parsed_block_01.json', ['hash' => 'BLOCKHASH000003']),
+        ];
+
+        $tx_repo = app('App\Repositories\TransactionRepository');
+        $found_transactions = $tx_repo->findAllTransactionsConfirmedInBlockHashesInvolvingAllMonitorAndPaymentAddresses([$blocks[1]['hash']]);
+        // echo "\$found_transactions: ".json_encode($found_transactions, 192)."\n";
+        PHPUnit::assertCount(3, $found_transactions);
+        PHPUnit::assertEquals($transaction_models[2]['id'], $found_transactions[0]['id']);
+        PHPUnit::assertEquals($transaction_models[3]['id'], $found_transactions[1]['id']);
+        PHPUnit::assertEquals($transaction_models[4]['id'], $found_transactions[2]['id']);
+
+
+    }
+
     // ------------------------------------------------------------------------
 
     protected function txHelper() {
