@@ -100,7 +100,7 @@ class PaymentAddressSender {
         $offset = 0;
         foreach($combined_balances as $asset => $float_quantity) {
             if ($asset == 'BTC') { continue; }
-            if ($amount <= 0) { continue; }
+            if ($float_quantity <= 0) { continue; }
 
             // send this asset with a unique request ID
             $request_id_for_offset = $this->applyOffsetToRequestID($offset, $request_id);

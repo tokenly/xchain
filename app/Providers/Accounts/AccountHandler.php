@@ -427,6 +427,7 @@ class AccountHandler {
             foreach($actual_balances_by_type as $type_string => $actual_balances) {
                 if ($type_string == 'sending') { continue; }
                 foreach($actual_balances as $asset => $quantity) {
+                    if ($quantity <= 0) { continue; }
                     $this->ledger_entry_repository->addDebit($quantity, $asset, $account, LedgerEntry::typeStringToInteger($type_string), LedgerEntry::DIRECTION_OTHER, $txid, $api_call);
                 }
             }
