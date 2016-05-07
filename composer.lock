@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "b188c8ff9ebb4443107bb23b66a43369",
-    "content-hash": "30ebffc50468353f170dfa0d11c99d11",
+    "hash": "5529bfe9b5b14d388fd953d9a4265dcf",
+    "content-hash": "5d06e99400087615824841ce297138c6",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
@@ -3502,16 +3502,15 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-payer.git",
-                "reference": "f376e627b159368c2d07a337fdf2d0333a8c3319"
+                "reference": "e088b0c06f6332d11d72060ed82dc578feed1843"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/f376e627b159368c2d07a337fdf2d0333a8c3319",
-                "reference": "f376e627b159368c2d07a337fdf2d0333a8c3319",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/e088b0c06f6332d11d72060ed82dc578feed1843",
+                "reference": "e088b0c06f6332d11d72060ed82dc578feed1843",
                 "shasum": ""
             },
             "require": {
-                "guzzlehttp/guzzle": "~5",
                 "nbobtc/bitcoind-php": "1.2.*",
                 "php": ">=5.4.0"
             },
@@ -3536,7 +3535,7 @@
                 }
             ],
             "description": "A bitcoin payment library",
-            "time": "2016-05-07 12:20:16"
+            "time": "2016-05-07 16:53:24"
         },
         {
             "name": "tokenly/consul-health-daemon",
@@ -3544,15 +3543,16 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/consul-health-daemon.git",
-                "reference": "6fafc6f789c7ee739281dcca41a47ed14b6d830d"
+                "reference": "d066e16fc3ecc92bf85bef1f93abb493235de2e3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/consul-health-daemon/zipball/6fafc6f789c7ee739281dcca41a47ed14b6d830d",
-                "reference": "6fafc6f789c7ee739281dcca41a47ed14b6d830d",
+                "url": "https://api.github.com/repos/tokenly/consul-health-daemon/zipball/d066e16fc3ecc92bf85bef1f93abb493235de2e3",
+                "reference": "d066e16fc3ecc92bf85bef1f93abb493235de2e3",
                 "shasum": ""
             },
             "require": {
+                "guzzlehttp/guzzle": "~5|~6",
                 "php": ">=5.5.0"
             },
             "require-dev": {
@@ -3560,8 +3560,8 @@
             },
             "type": "library",
             "autoload": {
-                "psr-0": {
-                    "Tokenly\\ConsulHealthDaemon": "src"
+                "psr-4": {
+                    "Tokenly\\ConsulHealthDaemon\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -3576,7 +3576,7 @@
                 }
             ],
             "description": "A library to monitor services health and report to consul",
-            "time": "2016-03-04 14:45:44"
+            "time": "2016-05-07 17:06:25"
         },
         {
             "name": "tokenly/counterparty-asset-info-cache",

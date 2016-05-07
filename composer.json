@@ -28,7 +28,8 @@
 		"bitwasp/bitcoin": "v0.0.18",
 		"tokenly/counterparty-transaction-composer": "dev-master",
 		"tokenly/hmac-auth": "^1",
-		"tokenly/laravel-api-provider": "dev-master"
+		"tokenly/laravel-api-provider": "dev-master",
+		"guzzlehttp/guzzle": "~5"
 	},
 	"require-dev": {
 		"phpunit/phpunit": "^4.5",
