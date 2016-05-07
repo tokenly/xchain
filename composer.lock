@@ -72,12 +72,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Bit-Wasp/bitcoin-lib-php.git",
-                "reference": "1d858a9c0411ba2309b8a991a1885e31331aa7d2"
+                "reference": "2e56f2f4bf497acec6daa6dac43724740812e265"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/Bit-Wasp/bitcoin-lib-php/zipball/2e56f2f4bf497acec6daa6dac43724740812e265",
-                "reference": "1d858a9c0411ba2309b8a991a1885e31331aa7d2",
+                "reference": "2e56f2f4bf497acec6daa6dac43724740812e265",
                 "shasum": ""
             },
             "require": {
@@ -3400,12 +3400,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-currency-lib.git",
-                "reference": "e3db1d2af979be4cd5c021a9df4f5f4c60503b8e"
+                "reference": "439cbd4fa4a2cc7684b9e08b2ce6b0a73ee59112"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/tokenly/bitcoin-currency-lib/zipball/439cbd4fa4a2cc7684b9e08b2ce6b0a73ee59112",
-                "reference": "e3db1d2af979be4cd5c021a9df4f5f4c60503b8e",
+                "reference": "439cbd4fa4a2cc7684b9e08b2ce6b0a73ee59112",
                 "shasum": ""
             },
             "require": {
@@ -3440,12 +3440,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-payer.git",
-                "reference": "7e7ac8c8d7379709c934ce3445360a20ab82aaf7"
+                "reference": "f376e627b159368c2d07a337fdf2d0333a8c3319"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/7e7ac8c8d7379709c934ce3445360a20ab82aaf7",
-                "reference": "7e7ac8c8d7379709c934ce3445360a20ab82aaf7",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/f376e627b159368c2d07a337fdf2d0333a8c3319",
+                "reference": "f376e627b159368c2d07a337fdf2d0333a8c3319",
                 "shasum": ""
             },
             "require": {
@@ -3474,7 +3474,7 @@
                 }
             ],
             "description": "A bitcoin payment library",
-            "time": "2016-03-24 01:03:29"
+            "time": "2016-05-07 12:20:16"
         },
         {
             "name": "tokenly/consul-health-daemon",
@@ -3482,12 +3482,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/consul-health-daemon.git",
-                "reference": "a2ac467fd96e5704172642c01dd2cdd9904a6b5c"
+                "reference": "6fafc6f789c7ee739281dcca41a47ed14b6d830d"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/tokenly/consul-health-daemon/zipball/6fafc6f789c7ee739281dcca41a47ed14b6d830d",
-                "reference": "a2ac467fd96e5704172642c01dd2cdd9904a6b5c",
+                "reference": "6fafc6f789c7ee739281dcca41a47ed14b6d830d",
                 "shasum": ""
             },
             "require": {
@@ -3698,12 +3698,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/hmac-auth.git",
-                "reference": "6487720477ed1edba36bb0b60deec4234a8bc712"
+                "reference": "14cab75f2805921772cb54c941d58adbef62a614"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/d4f710714b78cde28f3dc8126c155325fe2efc05",
-                "reference": "6487720477ed1edba36bb0b60deec4234a8bc712",
+                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/14cab75f2805921772cb54c941d58adbef62a614",
+                "reference": "14cab75f2805921772cb54c941d58adbef62a614",
                 "shasum": ""
             },
             "require": {
@@ -3740,12 +3740,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/laravel-api-provider.git",
-                "reference": "2bea4f2b0711bc730fe0a994a4cf0d2088597f4e"
+                "reference": "961569215d03cf36db9016bb6fa6d6dde82f8fe4"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/961569215d03cf36db9016bb6fa6d6dde82f8fe4",
-                "reference": "2bea4f2b0711bc730fe0a994a4cf0d2088597f4e",
+                "reference": "961569215d03cf36db9016bb6fa6d6dde82f8fe4",
                 "shasum": ""
             },
             "require": {
@@ -3985,12 +3985,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/xcaller-client.git",
-                "reference": "db8dea35848067948402d1db25c316aa7022d4bc"
+                "reference": "c0f9a9aa409a60f30fb57be5e356f13a2449ee30"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/tokenly/xcaller-client/zipball/c0f9a9aa409a60f30fb57be5e356f13a2449ee30",
-                "reference": "db8dea35848067948402d1db25c316aa7022d4bc",
+                "reference": "c0f9a9aa409a60f30fb57be5e356f13a2449ee30",
                 "shasum": ""
             },
             "require": {
@@ -5211,12 +5211,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/satooshi/php-coveralls.git",
-                "reference": "2fbf803803d179ab1082807308a67bbd5a760c70"
+                "reference": "50c60bb64054974f8ed7540ae6e75fd7981a5fd3"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/satooshi/php-coveralls/zipball/50c60bb64054974f8ed7540ae6e75fd7981a5fd3",
-                "reference": "2fbf803803d179ab1082807308a67bbd5a760c70",
+                "reference": "50c60bb64054974f8ed7540ae6e75fd7981a5fd3",
                 "shasum": ""
             },
             "require": {
@@ -5657,12 +5657,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/config.git",
-                "reference": "6c905bbed1e728226de656e4c07d620dfe9e80d9"
+                "reference": "65791be28189e2c3d2d289d1b0b23d1f1e521c65"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/config/zipball/65791be28189e2c3d2d289d1b0b23d1f1e521c65",
-                "reference": "6c905bbed1e728226de656e4c07d620dfe9e80d9",
+                "reference": "65791be28189e2c3d2d289d1b0b23d1f1e521c65",
                 "shasum": ""
             },
             "require": {
