@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "d0d36a4b0911df5ecc1c10ca1b4f8ee8",
-    "content-hash": "a8a879fe12def19275b78b11d5a4725e",
+    "hash": "b188c8ff9ebb4443107bb23b66a43369",
+    "content-hash": "30ebffc50468353f170dfa0d11c99d11",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
@@ -123,7 +123,7 @@
                 "php",
                 "transactions"
             ],
-            "time": "2015-06-26 13:39:25"
+            "time": "2015-11-14 03:09:50"
         },
         {
             "name": "bitwasp/buffertools",
@@ -2279,16 +2279,16 @@
         },
         {
             "name": "react/promise",
-            "version": "v2.2.1",
+            "version": "v2.4.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/promise.git",
-                "reference": "3b6fca09c7d56321057fa8867c8dbe1abf648627"
+                "reference": "8025426794f1944de806618671d4fa476dc7626f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/reactphp/promise/zipball/3b6fca09c7d56321057fa8867c8dbe1abf648627",
-                "reference": "3b6fca09c7d56321057fa8867c8dbe1abf648627",
+                "url": "https://api.github.com/repos/reactphp/promise/zipball/8025426794f1944de806618671d4fa476dc7626f",
+                "reference": "8025426794f1944de806618671d4fa476dc7626f",
                 "shasum": ""
             },
             "require": {
@@ -2319,7 +2319,7 @@
                 }
             ],
             "description": "A lightweight implementation of CommonJS Promises/A for PHP",
-            "time": "2015-07-03 13:48:55"
+            "time": "2016-05-03 17:50:52"
         },
         {
             "name": "react/react",
@@ -2982,24 +2982,24 @@
         },
         {
             "name": "symfony/http-foundation",
-            "version": "v2.7.2",
+            "version": "v2.7.12",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/http-foundation.git",
-                "reference": "88903c0531b90d4ecd90282b18f08c0c77bde0b2"
+                "reference": "dea1508c965603051e359f2a5f8b7d923ba358fb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/http-foundation/zipball/88903c0531b90d4ecd90282b18f08c0c77bde0b2",
-                "reference": "88903c0531b90d4ecd90282b18f08c0c77bde0b2",
+                "url": "https://api.github.com/repos/symfony/http-foundation/zipball/dea1508c965603051e359f2a5f8b7d923ba358fb",
+                "reference": "dea1508c965603051e359f2a5f8b7d923ba358fb",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.3.9"
+                "php": ">=5.3.9",
+                "symfony/polyfill-mbstring": "~1.1"
             },
             "require-dev": {
-                "symfony/expression-language": "~2.4",
-                "symfony/phpunit-bridge": "~2.7"
+                "symfony/expression-language": "~2.4"
             },
             "type": "library",
             "extra": {
@@ -3013,6 +3013,9 @@
                 },
                 "classmap": [
                     "Resources/stubs"
+                ],
+                "exclude-from-classmap": [
+                    "/Tests/"
                 ]
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -3031,7 +3034,7 @@
             ],
             "description": "Symfony HttpFoundation Component",
             "homepage": "https://symfony.com",
-            "time": "2015-07-09 16:07:40"
+            "time": "2016-04-05 16:36:43"
         },
         {
             "name": "symfony/http-kernel",
@@ -3112,6 +3115,65 @@
             "description": "Symfony HttpKernel Component",
             "homepage": "https://symfony.com",
             "time": "2015-07-13 19:27:49"
+        },
+        {
+            "name": "symfony/polyfill-mbstring",
+            "version": "v1.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/polyfill-mbstring.git",
+                "reference": "1289d16209491b584839022f29257ad859b8532d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/1289d16209491b584839022f29257ad859b8532d",
+                "reference": "1289d16209491b584839022f29257ad859b8532d",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "suggest": {
+                "ext-mbstring": "For best performance"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.1-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Polyfill\\Mbstring\\": ""
+                },
+                "files": [
+                    "bootstrap.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony polyfill for the Mbstring extension",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "compatibility",
+                "mbstring",
+                "polyfill",
+                "portable",
+                "shim"
+            ],
+            "time": "2016-01-20 09:13:37"
         },
         {
             "name": "symfony/process",
@@ -3432,7 +3494,7 @@
                 }
             ],
             "description": "A simple bitcoin currency library",
-            "time": "2015-07-16 00:53:49"
+            "time": "2016-02-24 02:17:54"
         },
         {
             "name": "tokenly/bitcoin-payer",
@@ -3514,7 +3576,7 @@
                 }
             ],
             "description": "A library to monitor services health and report to consul",
-            "time": "2015-06-18 13:29:14"
+            "time": "2016-03-04 14:45:44"
         },
         {
             "name": "tokenly/counterparty-asset-info-cache",
@@ -3694,7 +3756,7 @@
         },
         {
             "name": "tokenly/hmac-auth",
-            "version": "dev-master",
+            "version": "v1.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/hmac-auth.git",
@@ -3707,22 +3769,32 @@
                 "shasum": ""
             },
             "require": {
-                "guzzlehttp/guzzle": "~5",
-                "php": ">=5.4.0",
-                "symfony/http-foundation": "~2"
+                "php": ">=5.5.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "~4"
+                "guzzlehttp/guzzle": "~6",
+                "phpunit/phpunit": "~4",
+                "symfony/http-foundation": "~2|~3"
+            },
+            "suggest": {
+                "guzzlehttp/guzzle": "Use with Guzzle >= 6",
+                "rmccue/requests": "Use with Requests >= 1.6",
+                "symfony/http-foundation": "Used for signing HTTP requests"
             },
             "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
             "autoload": {
-                "psr-0": {
-                    "Tokenly\\HmacAuth": "src"
+                "psr-4": {
+                    "Tokenly\\HmacAuth\\": "src"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
-                "mit"
+                "MIT"
             ],
             "authors": [
                 {
@@ -3731,8 +3803,8 @@
                     "homepage": "http://tokenly.com"
                 }
             ],
-            "description": "A library for HMAC authentication",
-            "time": "2015-07-30 02:40:50"
+            "description": "HMAC authentication for Tokenly APIs",
+            "time": "2016-04-16 17:59:13"
         },
         {
             "name": "tokenly/laravel-api-provider",
@@ -3740,18 +3812,18 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/laravel-api-provider.git",
-                "reference": "961569215d03cf36db9016bb6fa6d6dde82f8fe4"
+                "reference": "08840532d5729b9b4ba1155df0d380d70ceed6dd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/961569215d03cf36db9016bb6fa6d6dde82f8fe4",
-                "reference": "961569215d03cf36db9016bb6fa6d6dde82f8fe4",
+                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/08840532d5729b9b4ba1155df0d380d70ceed6dd",
+                "reference": "08840532d5729b9b4ba1155df0d380d70ceed6dd",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.5.0",
                 "ramsey/uuid": "~2.",
-                "tokenly/hmac-auth": "dev-master",
+                "tokenly/hmac-auth": "^1",
                 "tokenly/laravel-event-log": "dev-master",
                 "tokenly/token-generator": "dev-master"
             },
@@ -3776,7 +3848,7 @@
                 }
             ],
             "description": "An API service provider for Laravel",
-            "time": "2015-09-15 12:56:01"
+            "time": "2016-05-07 16:14:01"
         },
         {
             "name": "tokenly/laravel-blocking-beanstalkd",
@@ -4017,7 +4089,7 @@
                 }
             ],
             "description": "A library to push webhook notifications to XCaller",
-            "time": "2015-05-13 01:57:07"
+            "time": "2016-02-17 02:51:04"
         },
         {
             "name": "tokenly/xcpd-client",
@@ -5278,7 +5350,7 @@
                 "github",
                 "test"
             ],
-            "time": "2014-11-11 15:35:34"
+            "time": "2016-01-20 17:44:41"
         },
         {
             "name": "sebastian/comparator",
@@ -5858,17 +5930,16 @@
         "tokenly/bitcoin-payer": 20,
         "tokenly/counterparty-sender": 20,
         "tokenly/counterparty-transaction-parser": 20,
-        "tokenly/hmac-auth": 20,
         "tokenly/pusher-client": 20,
         "tokenly/token-generator": 20,
         "tokenly/xcpd-client": 20,
-        "tokenly/laravel-api-provider": 20,
         "tokenly/laravel-event-log": 20,
         "tokenly/xcaller-client": 20,
         "tokenly/laravel-blocking-beanstalkd": 20,
         "tokenly/consul-health-daemon": 20,
         "tokenly/laravel-record-lock": 20,
         "tokenly/counterparty-transaction-composer": 20,
+        "tokenly/laravel-api-provider": 20,
         "satooshi/php-coveralls": 20
     },
     "prefer-stable": true,
