@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "5529bfe9b5b14d388fd953d9a4265dcf",
-    "content-hash": "5d06e99400087615824841ce297138c6",
+    "hash": "eca68fd61029975b5c912def1e345275",
+    "content-hash": "680124fd634cc7eff64332578de8d139",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
@@ -3458,7 +3458,7 @@
         },
         {
             "name": "tokenly/bitcoin-currency-lib",
-            "version": "dev-master",
+            "version": "v1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-currency-lib.git",
@@ -3489,11 +3489,11 @@
             "authors": [
                 {
                     "name": "Devon Weller",
-                    "email": "dweller@devonweller.com",
-                    "homepage": "http://devonweller.com"
+                    "email": "devon@tokenly.com",
+                    "homepage": "http://tokenly.com"
                 }
             ],
-            "description": "A simple bitcoin currency library",
+            "description": "A bitcoin currency and quantity value library",
             "time": "2016-02-24 02:17:54"
         },
         {
@@ -3502,17 +3502,18 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-payer.git",
-                "reference": "e088b0c06f6332d11d72060ed82dc578feed1843"
+                "reference": "f8e498fd20f61401da2e4f841f5c1051c749b926"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/e088b0c06f6332d11d72060ed82dc578feed1843",
-                "reference": "e088b0c06f6332d11d72060ed82dc578feed1843",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/f8e498fd20f61401da2e4f841f5c1051c749b926",
+                "reference": "f8e498fd20f61401da2e4f841f5c1051c749b926",
                 "shasum": ""
             },
             "require": {
                 "nbobtc/bitcoind-php": "1.2.*",
-                "php": ">=5.4.0"
+                "php": ">=5.4.0",
+                "tokenly/bitcoin-currency-lib": "^1"
             },
             "require-dev": {
                 "phpunit/phpunit": "~4"
@@ -3535,7 +3536,7 @@
                 }
             ],
             "description": "A bitcoin payment library",
-            "time": "2016-05-07 16:53:24"
+            "time": "2016-05-10 13:17:56"
         },
         {
             "name": "tokenly/consul-health-daemon",
@@ -5925,7 +5926,6 @@
     "minimum-stability": "dev",
     "stability-flags": {
         "tokenly/bitcoin-address-lib": 20,
-        "tokenly/bitcoin-currency-lib": 20,
         "tokenly/counterparty-asset-info-cache": 20,
         "tokenly/bitcoin-payer": 20,
         "tokenly/counterparty-sender": 20,

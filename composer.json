@@ -11,7 +11,7 @@
         "ramsey/uuid": "~2.",
         "nbobtc/bitcoind-php": "1.2.*",
         "tokenly/bitcoin-address-lib": "dev-master@dev",
-        "tokenly/bitcoin-currency-lib": "dev-master@dev",
+        "tokenly/bitcoin-currency-lib": "^1",
         "tokenly/counterparty-asset-info-cache": "dev-master@dev",
         "tokenly/bitcoin-payer": "dev-master",
         "tokenly/counterparty-sender": "dev-master",
