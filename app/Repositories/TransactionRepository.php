@@ -6,6 +6,7 @@ use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use \Exception;
 
 /*
@@ -57,6 +58,31 @@ class TransactionRepository
         $query->groupBy('transaction.id');
 
         return $query->get();
+    }
+
+    public function findAllTransactionsConfirmedInBlockHashesInvolvingAllMonitorAndPaymentAddresses($hashes) {
+        // done allow empty hashes or addresses
+        if (!$hashes) { return []; }
+
+        $m_query = Transaction::whereIn('block_confirmed_hash', $hashes);
+
+        $m_query->join('transaction_address_lookup', 'transaction.id', '=', 'transaction_address_lookup.transaction_id');
+        $m_query->join('monitored_address', 'transaction_address_lookup.address', '=', 'monitored_address.address');
+        $m_query->groupBy('transaction.id');
+        $m_query->select('transaction.*');
+
+
+        $p_query = Transaction::whereIn('block_confirmed_hash', $hashes);
+
+        $p_query->join('transaction_address_lookup', 'transaction.id', '=', 'transaction_address_lookup.transaction_id');
+        $p_query->join('payment_address', 'transaction_address_lookup.address', '=', 'payment_address.address');
+        $p_query->groupBy('transaction.id');
+        $p_query->select('transaction.*');
+
+        $p_query->union($m_query->getQuery());
+
+        // Log::debug("Transactions QUERY: ".$p_query->getQuery()->toSql());
+        return $p_query->get();
     }
 
     public function updateByTXID($txid, $attributes) {

@@ -30,6 +30,7 @@ $router->delete('api/v1/unsigned/sends/{sendId}', 'API\UnmanagedPaymentAddressSe
 
 // submit an externally signed send
 $router->post('api/v1/signed/send/{sendId}', 'API\UnmanagedPaymentAddressSendController@submitSend');
+$router->post('api/v1/signed/sends/{sendId}', 'API\UnmanagedPaymentAddressSendController@submitSend');
 
 
 // prime address

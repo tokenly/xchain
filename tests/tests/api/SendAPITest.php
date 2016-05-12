@@ -201,6 +201,43 @@ class SendAPITest extends TestCase {
         PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(1 - 0.0001 - 0.0001 - 0.00005430), $send_details['btc_amount']);
     }
 
+    public function testSecondAPISweep()
+    {
+        // mock the xcp sender
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $user = $this->app->make('\UserHelper')->createSampleUser();
+        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user, [], ['BTC' => 0.00030860, 'LTBCOIN' => 75, 'TOKENLY' => 0,]);
+
+        $api_tester = $this->getAPITester();
+
+        $posted_vars = $this->sendHelper()->samplePostVars(['sweep' => true, 'asset' => 'ALLASSETS',]);
+        unset($posted_vars['quantity']);
+        $expected_created_resource = [
+            'id'           => '{{response.id}}',
+            'destination'  => '{{response.destination}}',
+            'destinations' => '',
+            'asset'        => 'ALLASSETS',
+            'sweep'        => '{{response.sweep}}',
+            'quantity'     => '{{response.quantity}}',
+            'txid'         => '{{response.txid}}',
+            'requestId'    => '{{response.requestId}}',
+        ];
+        $api_response = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
+
+        // validate the sweep
+        PHPUnit::assertCount(2, $mock_calls['btcd']);
+        $transaction_composer_helper = app('TransactionComposerHelper');
+        $send_details = $transaction_composer_helper->parseCounterpartyTransaction($mock_calls['btcd'][0]['args'][0]);
+        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $send_details['destination']);
+        PHPUnit::assertEquals('LTBCOIN', $send_details['asset']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.00005430), $send_details['btc_amount']);
+
+        $send_details = $transaction_composer_helper->parseBTCTransaction($mock_calls['btcd'][1]['args'][0]);
+        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $send_details['destination']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.00030860 - 0.0001 - 0.0001 - 0.00005430), $send_details['btc_amount']);
+    }
+
 
 
     public function testAPISendFromAccount()

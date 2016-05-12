@@ -1,0 +1,33 @@
+{
+    "notificationId": 10001,
+    "event": "block",
+    "network": "bitcoin",
+
+    "bits": "181b7b74",
+    "chainwork": "0000000000000000000000000000000000000000000326f8ea33036afa4eb816",
+    "confirmations": 1,
+    "difficulty": 40007470271.27126,
+    "hash": "000000000000000015f697b296584d9d443d2225c67df9033157a9efe4a8faa0",
+    "height": 332913,
+    "isMainChain": true,
+    "merkleroot": "7f363b95ee09c5e77c3d8da2dcd67ff5616e478774286b399c80d2b8cd865e9e",
+    "nonce": 3289248220,
+    "poolInfo": {
+        "poolName": "KNCminer",
+        "url": "https://www.kncminer.com/"
+    },
+    "previousblockhash": "000000000000000007ecb6e897b512134dad930fa9298b706bf21042c65d34b2",
+    "reward": 25,
+    "size": 749143,
+    "time": 1417742460,
+    "tx": [
+        "f88d98717dacb985e3ad49ffa66b8562d8194f1885f58425e1c8582ce2ac5b58",
+        "8de3c8666c40f73ae13df0206e9caf83c075c51eb54349331aeeba130b7520c8",
+        "8a26b51174d5d50e99f01cec0868572bc3fb6f52df3e7ce75421b26cc4050687",
+        "30208222840c83db7b67a1d178ac6d8578b0ea66d09bcef7842923927ade5f7b",
+        "826c9556b12c501d268daf8f36a41eade54e90c22d91a7f33a71cad7d15ae530",
+        "e46bf3e9ba7ffa0722a5d153373fd1c4499285537b73d8842d695267955d68ec",
+        "71504730cef7e0c33a6462fe8497f18a02e33ea1b6623c253fcae30658a96b3b"
+   ],
+    "version": 2
+}

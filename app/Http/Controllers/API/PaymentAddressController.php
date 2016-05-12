@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Blockchain\Reconciliation\BlockchainBalanceReconciler;
 use App\Http\Controllers\API\Base\APIController;
 use App\Http\Requests\API\PaymentAddress\CreatePaymentAddressRequest;
 use App\Http\Requests\API\PaymentAddress\CreateUnmanagedAddressRequest;
 use App\Http\Requests\API\PaymentAddress\UpdatePaymentAddressRequest;
+use App\Models\APICall;
 use App\Providers\Accounts\Facade\AccountHandler;
+use App\Repositories\APICallRepository;
 use App\Repositories\PaymentAddressRepository;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
@@ -41,8 +44,20 @@ class PaymentAddressController extends APIController {
      *
      * @return Response
      */
-    public function createUnmanaged(APIControllerHelper $helper, CreateUnmanagedAddressRequest $request, PaymentAddressRepository $payment_address_respository, Guard $auth) {
-        return $this->buildNewPaymentAddressFromRequest($helper, $request, $payment_address_respository, $auth, false);
+    public function createUnmanaged(APIControllerHelper $helper, CreateUnmanagedAddressRequest $request, PaymentAddressRepository $payment_address_respository, BlockchainBalanceReconciler $blockchain_balance_reconciler, APICallRepository $api_call_repository, Guard $auth) {
+        $user = $auth->getUser();
+        if (!$user) { throw new Exception("User not found", 1); }
+
+        $request_attributes = $request->only(array_keys($request->rules()));
+        $api_call = $api_call_repository->create([
+            'user_id' => $user['id'],
+            'details' => [
+                'method' => 'api/unmanaged/addresses',
+                'args'   => $request_attributes,
+            ],
+        ]);
+
+        return $this->buildNewPaymentAddressFromRequest($helper, $request, $payment_address_respository, $auth, false, $blockchain_balance_reconciler, $api_call);
     }
 
     /**
@@ -80,25 +95,33 @@ class PaymentAddressController extends APIController {
 
     // ------------------------------------------------------------------------
 
-    protected function buildNewPaymentAddressFromRequest(APIControllerHelper $helper, Request $request, PaymentAddressRepository $payment_address_respository, Guard $auth, $is_managed) {
+    protected function buildNewPaymentAddressFromRequest(APIControllerHelper $helper, Request $request, PaymentAddressRepository $payment_address_respository, Guard $auth, $is_managed, BlockchainBalanceReconciler $blockchain_balance_reconciler=null, APICall $api_call=null) {
         $user = $auth->getUser();
         if (!$user) { throw new Exception("User not found", 1); }
 
         $attributes = $request->only(array_keys($request->rules()));
         $attributes['user_id'] = $user['id'];
 
-        $address = $payment_address_respository->create($attributes);
+        $payment_address = $payment_address_respository->create($attributes);
 
         if ($is_managed) {
-            EventLog::log('paymentAddress.created', $address->toArray(), ['uuid', 'user_id', 'address', 'id']);
+            EventLog::log('paymentAddress.created', $payment_address->toArray(), ['uuid', 'user_id', 'address', 'id']);
         } else {
-            EventLog::log('unmanagedPaymentAddress.created', $address->toArray(), ['uuid', 'user_id', 'address', 'id']);
+            EventLog::log('unmanagedPaymentAddress.created', $payment_address->toArray(), ['uuid', 'user_id', 'address', 'id']);
         }
 
         // create a default account
-        AccountHandler::createDefaultAccount($address);
+        AccountHandler::createDefaultAccount($payment_address);
 
-        return $helper->transformResourceForOutput($address);
+        // reconcile the address balances from the daemon on creation
+        if (!$is_managed) {
+            if (!$blockchain_balance_reconciler) { throw new Exception("Balance reconciler not found", 1); }
+            $balance_differences = $blockchain_balance_reconciler->buildDifferences($payment_address);
+            // Log::debug("\$balance_differences=".json_encode($balance_differences, 192));
+            $blockchain_balance_reconciler->reconcileDifferences($balance_differences, $payment_address, $api_call);
+        }
+
+        return $helper->transformResourceForOutput($payment_address);
     }
 
 }

@@ -22,7 +22,7 @@ class TXOChooser {
 
     const DUST_SIZE  = 0.00005430;
 
-    const MAX_INPUTS_PER_TRANSACTION = 145;
+    const MAX_INPUTS_PER_TRANSACTION = 150;
 
     public function __construct(TXORepository $txo_repository) {
         $this->txo_repository = $txo_repository;
@@ -354,7 +354,11 @@ class TXOChooser {
         if ($context['gave_up']) {
             // fall back to all UTXOs
             Log::debug("falling back to naive UTXO selection algorithm");
-            $combinations = [$this->naiveUTXOsAsCombination($txos, $target_amount, self::MAX_INPUTS_PER_TRANSACTION)];
+            $combinations = [];
+            $combination = $this->naiveUTXOsAsCombination($txos, $target_amount, self::MAX_INPUTS_PER_TRANSACTION);
+            if ($combination) {
+                $combinations[] = $combination;
+            }
         }
         // Log::debug("__findFewestTXOsCombinations iteration_count=".$context['iteration_count']." combinations: ".$this->debugDumpGroupings($combinations));
         // $this->__last_context = $context;
@@ -434,7 +438,8 @@ class TXOChooser {
         }
 
         if ($utxos_combination === null) {
-            throw new Exception("Unable to find any naive UTXO combination to satisfy amount ".json_encode($target_amount, 192), 1);
+            // not all naive sets will work
+            return [];
         }
 
         return $utxos_combination;

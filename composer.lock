@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "d0d36a4b0911df5ecc1c10ca1b4f8ee8",
-    "content-hash": "a8a879fe12def19275b78b11d5a4725e",
+    "hash": "eca68fd61029975b5c912def1e345275",
+    "content-hash": "680124fd634cc7eff64332578de8d139",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
@@ -72,12 +72,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Bit-Wasp/bitcoin-lib-php.git",
-                "reference": "1d858a9c0411ba2309b8a991a1885e31331aa7d2"
+                "reference": "2e56f2f4bf497acec6daa6dac43724740812e265"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/Bit-Wasp/bitcoin-lib-php/zipball/2e56f2f4bf497acec6daa6dac43724740812e265",
-                "reference": "1d858a9c0411ba2309b8a991a1885e31331aa7d2",
+                "reference": "2e56f2f4bf497acec6daa6dac43724740812e265",
                 "shasum": ""
             },
             "require": {
@@ -123,7 +123,7 @@
                 "php",
                 "transactions"
             ],
-            "time": "2015-06-26 13:39:25"
+            "time": "2015-11-14 03:09:50"
         },
         {
             "name": "bitwasp/buffertools",
@@ -2279,16 +2279,16 @@
         },
         {
             "name": "react/promise",
-            "version": "v2.2.1",
+            "version": "v2.4.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/promise.git",
-                "reference": "3b6fca09c7d56321057fa8867c8dbe1abf648627"
+                "reference": "8025426794f1944de806618671d4fa476dc7626f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/reactphp/promise/zipball/3b6fca09c7d56321057fa8867c8dbe1abf648627",
-                "reference": "3b6fca09c7d56321057fa8867c8dbe1abf648627",
+                "url": "https://api.github.com/repos/reactphp/promise/zipball/8025426794f1944de806618671d4fa476dc7626f",
+                "reference": "8025426794f1944de806618671d4fa476dc7626f",
                 "shasum": ""
             },
             "require": {
@@ -2319,7 +2319,7 @@
                 }
             ],
             "description": "A lightweight implementation of CommonJS Promises/A for PHP",
-            "time": "2015-07-03 13:48:55"
+            "time": "2016-05-03 17:50:52"
         },
         {
             "name": "react/react",
@@ -2982,24 +2982,24 @@
         },
         {
             "name": "symfony/http-foundation",
-            "version": "v2.7.2",
+            "version": "v2.7.12",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/http-foundation.git",
-                "reference": "88903c0531b90d4ecd90282b18f08c0c77bde0b2"
+                "reference": "dea1508c965603051e359f2a5f8b7d923ba358fb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/http-foundation/zipball/88903c0531b90d4ecd90282b18f08c0c77bde0b2",
-                "reference": "88903c0531b90d4ecd90282b18f08c0c77bde0b2",
+                "url": "https://api.github.com/repos/symfony/http-foundation/zipball/dea1508c965603051e359f2a5f8b7d923ba358fb",
+                "reference": "dea1508c965603051e359f2a5f8b7d923ba358fb",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.3.9"
+                "php": ">=5.3.9",
+                "symfony/polyfill-mbstring": "~1.1"
             },
             "require-dev": {
-                "symfony/expression-language": "~2.4",
-                "symfony/phpunit-bridge": "~2.7"
+                "symfony/expression-language": "~2.4"
             },
             "type": "library",
             "extra": {
@@ -3013,6 +3013,9 @@
                 },
                 "classmap": [
                     "Resources/stubs"
+                ],
+                "exclude-from-classmap": [
+                    "/Tests/"
                 ]
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -3031,7 +3034,7 @@
             ],
             "description": "Symfony HttpFoundation Component",
             "homepage": "https://symfony.com",
-            "time": "2015-07-09 16:07:40"
+            "time": "2016-04-05 16:36:43"
         },
         {
             "name": "symfony/http-kernel",
@@ -3112,6 +3115,65 @@
             "description": "Symfony HttpKernel Component",
             "homepage": "https://symfony.com",
             "time": "2015-07-13 19:27:49"
+        },
+        {
+            "name": "symfony/polyfill-mbstring",
+            "version": "v1.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/polyfill-mbstring.git",
+                "reference": "1289d16209491b584839022f29257ad859b8532d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/1289d16209491b584839022f29257ad859b8532d",
+                "reference": "1289d16209491b584839022f29257ad859b8532d",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "suggest": {
+                "ext-mbstring": "For best performance"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.1-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Polyfill\\Mbstring\\": ""
+                },
+                "files": [
+                    "bootstrap.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony polyfill for the Mbstring extension",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "compatibility",
+                "mbstring",
+                "polyfill",
+                "portable",
+                "shim"
+            ],
+            "time": "2016-01-20 09:13:37"
         },
         {
             "name": "symfony/process",
@@ -3396,16 +3458,16 @@
         },
         {
             "name": "tokenly/bitcoin-currency-lib",
-            "version": "dev-master",
+            "version": "v1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-currency-lib.git",
-                "reference": "e3db1d2af979be4cd5c021a9df4f5f4c60503b8e"
+                "reference": "439cbd4fa4a2cc7684b9e08b2ce6b0a73ee59112"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/tokenly/bitcoin-currency-lib/zipball/439cbd4fa4a2cc7684b9e08b2ce6b0a73ee59112",
-                "reference": "e3db1d2af979be4cd5c021a9df4f5f4c60503b8e",
+                "reference": "439cbd4fa4a2cc7684b9e08b2ce6b0a73ee59112",
                 "shasum": ""
             },
             "require": {
@@ -3427,12 +3489,12 @@
             "authors": [
                 {
                     "name": "Devon Weller",
-                    "email": "dweller@devonweller.com",
-                    "homepage": "http://devonweller.com"
+                    "email": "devon@tokenly.com",
+                    "homepage": "http://tokenly.com"
                 }
             ],
-            "description": "A simple bitcoin currency library",
-            "time": "2015-07-16 00:53:49"
+            "description": "A bitcoin currency and quantity value library",
+            "time": "2016-02-24 02:17:54"
         },
         {
             "name": "tokenly/bitcoin-payer",
@@ -3440,18 +3502,18 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-payer.git",
-                "reference": "7e7ac8c8d7379709c934ce3445360a20ab82aaf7"
+                "reference": "f8e498fd20f61401da2e4f841f5c1051c749b926"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/7e7ac8c8d7379709c934ce3445360a20ab82aaf7",
-                "reference": "7e7ac8c8d7379709c934ce3445360a20ab82aaf7",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/f8e498fd20f61401da2e4f841f5c1051c749b926",
+                "reference": "f8e498fd20f61401da2e4f841f5c1051c749b926",
                 "shasum": ""
             },
             "require": {
-                "guzzlehttp/guzzle": "~5",
                 "nbobtc/bitcoind-php": "1.2.*",
-                "php": ">=5.4.0"
+                "php": ">=5.4.0",
+                "tokenly/bitcoin-currency-lib": "^1"
             },
             "require-dev": {
                 "phpunit/phpunit": "~4"
@@ -3474,7 +3536,7 @@
                 }
             ],
             "description": "A bitcoin payment library",
-            "time": "2016-03-24 01:03:29"
+            "time": "2016-05-10 13:17:56"
         },
         {
             "name": "tokenly/consul-health-daemon",
@@ -3482,15 +3544,16 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/consul-health-daemon.git",
-                "reference": "a2ac467fd96e5704172642c01dd2cdd9904a6b5c"
+                "reference": "d066e16fc3ecc92bf85bef1f93abb493235de2e3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/consul-health-daemon/zipball/6fafc6f789c7ee739281dcca41a47ed14b6d830d",
-                "reference": "a2ac467fd96e5704172642c01dd2cdd9904a6b5c",
+                "url": "https://api.github.com/repos/tokenly/consul-health-daemon/zipball/d066e16fc3ecc92bf85bef1f93abb493235de2e3",
+                "reference": "d066e16fc3ecc92bf85bef1f93abb493235de2e3",
                 "shasum": ""
             },
             "require": {
+                "guzzlehttp/guzzle": "~5|~6",
                 "php": ">=5.5.0"
             },
             "require-dev": {
@@ -3498,8 +3561,8 @@
             },
             "type": "library",
             "autoload": {
-                "psr-0": {
-                    "Tokenly\\ConsulHealthDaemon": "src"
+                "psr-4": {
+                    "Tokenly\\ConsulHealthDaemon\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -3514,7 +3577,7 @@
                 }
             ],
             "description": "A library to monitor services health and report to consul",
-            "time": "2015-06-18 13:29:14"
+            "time": "2016-05-07 17:06:25"
         },
         {
             "name": "tokenly/counterparty-asset-info-cache",
@@ -3694,35 +3757,45 @@
         },
         {
             "name": "tokenly/hmac-auth",
-            "version": "dev-master",
+            "version": "v1.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/hmac-auth.git",
-                "reference": "6487720477ed1edba36bb0b60deec4234a8bc712"
+                "reference": "afd81cc0e080835e47aee6c294fbc72a7b85195c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/d4f710714b78cde28f3dc8126c155325fe2efc05",
-                "reference": "6487720477ed1edba36bb0b60deec4234a8bc712",
+                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/afd81cc0e080835e47aee6c294fbc72a7b85195c",
+                "reference": "afd81cc0e080835e47aee6c294fbc72a7b85195c",
                 "shasum": ""
             },
             "require": {
-                "guzzlehttp/guzzle": "~5",
-                "php": ">=5.4.0",
-                "symfony/http-foundation": "~2"
+                "php": ">=5.5.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "~4"
+                "guzzlehttp/guzzle": "~6",
+                "phpunit/phpunit": "~4",
+                "symfony/http-foundation": "~2|~3"
+            },
+            "suggest": {
+                "guzzlehttp/guzzle": "Use with Guzzle >= 6",
+                "rmccue/requests": "Use with Requests >= 1.6",
+                "symfony/http-foundation": "Used for signing HTTP requests"
             },
             "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
             "autoload": {
-                "psr-0": {
-                    "Tokenly\\HmacAuth": "src"
+                "psr-4": {
+                    "Tokenly\\HmacAuth\\": "src"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
-                "mit"
+                "MIT"
             ],
             "authors": [
                 {
@@ -3731,8 +3804,8 @@
                     "homepage": "http://tokenly.com"
                 }
             ],
-            "description": "A library for HMAC authentication",
-            "time": "2015-07-30 02:40:50"
+            "description": "HMAC authentication for Tokenly APIs",
+            "time": "2016-05-12 02:10:40"
         },
         {
             "name": "tokenly/laravel-api-provider",
@@ -3740,18 +3813,18 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/laravel-api-provider.git",
-                "reference": "2bea4f2b0711bc730fe0a994a4cf0d2088597f4e"
+                "reference": "08840532d5729b9b4ba1155df0d380d70ceed6dd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/961569215d03cf36db9016bb6fa6d6dde82f8fe4",
-                "reference": "2bea4f2b0711bc730fe0a994a4cf0d2088597f4e",
+                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/08840532d5729b9b4ba1155df0d380d70ceed6dd",
+                "reference": "08840532d5729b9b4ba1155df0d380d70ceed6dd",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.5.0",
                 "ramsey/uuid": "~2.",
-                "tokenly/hmac-auth": "dev-master",
+                "tokenly/hmac-auth": "^1",
                 "tokenly/laravel-event-log": "dev-master",
                 "tokenly/token-generator": "dev-master"
             },
@@ -3776,7 +3849,7 @@
                 }
             ],
             "description": "An API service provider for Laravel",
-            "time": "2015-09-15 12:56:01"
+            "time": "2016-05-07 16:14:01"
         },
         {
             "name": "tokenly/laravel-blocking-beanstalkd",
@@ -3985,12 +4058,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/xcaller-client.git",
-                "reference": "db8dea35848067948402d1db25c316aa7022d4bc"
+                "reference": "c0f9a9aa409a60f30fb57be5e356f13a2449ee30"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/tokenly/xcaller-client/zipball/c0f9a9aa409a60f30fb57be5e356f13a2449ee30",
-                "reference": "db8dea35848067948402d1db25c316aa7022d4bc",
+                "reference": "c0f9a9aa409a60f30fb57be5e356f13a2449ee30",
                 "shasum": ""
             },
             "require": {
@@ -4017,7 +4090,7 @@
                 }
             ],
             "description": "A library to push webhook notifications to XCaller",
-            "time": "2015-05-13 01:57:07"
+            "time": "2016-02-17 02:51:04"
         },
         {
             "name": "tokenly/xcpd-client",
@@ -5211,12 +5284,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/satooshi/php-coveralls.git",
-                "reference": "2fbf803803d179ab1082807308a67bbd5a760c70"
+                "reference": "50c60bb64054974f8ed7540ae6e75fd7981a5fd3"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/satooshi/php-coveralls/zipball/50c60bb64054974f8ed7540ae6e75fd7981a5fd3",
-                "reference": "2fbf803803d179ab1082807308a67bbd5a760c70",
+                "reference": "50c60bb64054974f8ed7540ae6e75fd7981a5fd3",
                 "shasum": ""
             },
             "require": {
@@ -5278,7 +5351,7 @@
                 "github",
                 "test"
             ],
-            "time": "2014-11-11 15:35:34"
+            "time": "2016-01-20 17:44:41"
         },
         {
             "name": "sebastian/comparator",
@@ -5657,12 +5730,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/config.git",
-                "reference": "6c905bbed1e728226de656e4c07d620dfe9e80d9"
+                "reference": "65791be28189e2c3d2d289d1b0b23d1f1e521c65"
             },
             "dist": {
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/config/zipball/65791be28189e2c3d2d289d1b0b23d1f1e521c65",
-                "reference": "6c905bbed1e728226de656e4c07d620dfe9e80d9",
+                "reference": "65791be28189e2c3d2d289d1b0b23d1f1e521c65",
                 "shasum": ""
             },
             "require": {
@@ -5853,22 +5926,20 @@
     "minimum-stability": "dev",
     "stability-flags": {
         "tokenly/bitcoin-address-lib": 20,
-        "tokenly/bitcoin-currency-lib": 20,
         "tokenly/counterparty-asset-info-cache": 20,
         "tokenly/bitcoin-payer": 20,
         "tokenly/counterparty-sender": 20,
         "tokenly/counterparty-transaction-parser": 20,
-        "tokenly/hmac-auth": 20,
         "tokenly/pusher-client": 20,
         "tokenly/token-generator": 20,
         "tokenly/xcpd-client": 20,
-        "tokenly/laravel-api-provider": 20,
         "tokenly/laravel-event-log": 20,
         "tokenly/xcaller-client": 20,
         "tokenly/laravel-blocking-beanstalkd": 20,
         "tokenly/consul-health-daemon": 20,
         "tokenly/laravel-record-lock": 20,
         "tokenly/counterparty-transaction-composer": 20,
+        "tokenly/laravel-api-provider": 20,
         "satooshi/php-coveralls": 20
     },
     "prefer-stable": true,
