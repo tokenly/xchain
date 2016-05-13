@@ -47,6 +47,7 @@ class CreateSendRequest extends APIRequest {
             'requestId'          => 'max:36',
             'account'            => 'max:127',
             'unconfirmed'        => 'boolean',
+            'utxo_override'      => '',
         ];
     }
 

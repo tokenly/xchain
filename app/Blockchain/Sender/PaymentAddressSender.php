@@ -114,8 +114,8 @@ class PaymentAddressSender {
         return $this->sweepBTCByRequestID($request_id, $payment_address, $destination, $float_fee);
     }
 
-    public function sendByRequestID($request_id, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false) {
-        $composed_transaction_model = $this->generateSignedTransactionModelAndUpdateUTXORecords($request_id, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep);
+    public function sendByRequestID($request_id, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false, $custom_inputs=false) {
+        $composed_transaction_model = $this->generateSignedTransactionModelAndUpdateUTXORecords($request_id, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep, $custom_inputs);
         if (!$composed_transaction_model) { return null;}
 
         $signed_transaction_hex = $composed_transaction_model['transaction'];
@@ -221,15 +221,16 @@ class PaymentAddressSender {
     ////////////////////////////////////////////////////////////////////////
     // Protected
 
-    protected function generateSignedTransactionModelAndUpdateUTXORecords($request_id, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep) {
+    protected function generateSignedTransactionModelAndUpdateUTXORecords($request_id, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep, $custom_inputs=false) {
         // check to see if this signed transaction already exists in the database
         $composed_transaction_model = $this->composed_transaction_repository->getComposedTransactionByRequestID($request_id);
 
         if ($composed_transaction_model === null) {
             // build the signed transactions
             $change_address_collection = null;
-            $built_transaction_to_send = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep);
-    
+
+            $built_transaction_to_send = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep, $custom_inputs);
+
             // store the signed transactions to the database cache
             $signed_transaction_hex     = $built_transaction_to_send->getTransactionHex();
             $txid                       = $built_transaction_to_send->getTxId();
@@ -338,7 +339,7 @@ class PaymentAddressSender {
         return $this->payment_address_info_cache[$address];
     }
 
-    protected function buildComposedTransaction(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $change_address_collection=null, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false) {
+    protected function buildComposedTransaction(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $change_address_collection=null, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false, $utxo_override=false) {
         Log::debug("buildComposedTransaction \$float_quantity=".json_encode($float_quantity, 192)." \$asset=".json_encode($asset, 192)." is_sweep=".json_encode($is_sweep, 192));
         $signed_transaction = null;
 
@@ -371,7 +372,10 @@ class PaymentAddressSender {
         } else {
             if (strtoupper($asset) == 'BTC') {
                 // compose the BTC transaction
-                if ($this->isPrimeSend($payment_address, $destination)) {
+                if (is_array($utxo_override) AND count($utxo_override) > 0){
+                    $chosen_txos = $this->txo_chooser->chooseSpecificUTXOs($payment_address, $utxo_override);
+                    $debug_strategy_text = 'custom';
+                } else if ($this->isPrimeSend($payment_address, $destination)) {
                     $float_prime_size = $this->getPrimeSendSize($destination, $float_quantity);
                     $chosen_txos = $this->txo_chooser->chooseUTXOsForPriming($payment_address, $float_quantity, $float_fee, null, $float_prime_size);
                     $debug_strategy_text = 'prime';
@@ -404,23 +408,29 @@ class PaymentAddressSender {
                 }
 
             } else {
+                //counterparty transaction
+                
                 // calculate the quantity
                 $is_divisible = $this->asset_cache->isDivisible($asset);
                 $quantity = new Quantity($float_quantity, $is_divisible);
 
                 // compose the Counterpary and BTC transaction
-                $chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_btc_dust_size, $float_fee);
-                // Log::debug("Counterparty send Chosen UTXOs: ".$this->debugDumpUTXOs($chosen_txos));
+                if (is_array($utxo_override) AND count($utxo_override) > 0){
+                    $chosen_txos = $this->txo_chooser->chooseSpecificUTXOs($payment_address, $utxo_override);
+                } else {
+                    $chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_btc_dust_size, $float_fee);
+                }
+                Log::info('Txos: '.json_encode($chosen_txos));
+                Log::debug("Counterparty send Chosen UTXOs: ".$this->debugDumpUTXOs($chosen_txos));
 
                 // build the change
                 if ($change_address_collection === null) { $change_address_collection = $payment_address['address']; }
                 $composed_transaction = $this->transaction_composer->composeSend($asset, $quantity, $destination, $wif_private_key, $chosen_txos, $change_address_collection, $float_fee, $float_btc_dust_size);
 
-
                 // debug
                 try {
                     $_debug_parsed_tx = app('\TransactionComposerHelper')->parseCounterpartyTransaction($composed_transaction->getTransactionHex());
-                    // Log::debug("Counterparty send: \$_debug_parsed_tx=".json_encode($_debug_parsed_tx, 192));
+                     Log::debug("Counterparty send: \$_debug_parsed_tx=".json_encode($_debug_parsed_tx, 192));
                 } catch (Exception $e) {
                     $qty_desc = (($quantity instanceof Quantity) ? $quantity->getRawValue() : $quantity);
                     $msg = "Error parsing new send of $qty_desc $asset to $destination";
@@ -432,7 +442,6 @@ class PaymentAddressSender {
                     ]);
                     throw $e;
                 }
-
             }
         }
 
