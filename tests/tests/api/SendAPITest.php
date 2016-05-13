@@ -266,6 +266,31 @@ class SendAPITest extends TestCase {
 
 
     }
+    
+    public function testAPISendWithSpecificUTXOs()
+    {
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        
+        
+        list($address, $created_accounts, $api_test_helper, $utxos) = $this->setupBalancesForTransfer();
+        
+        $api_test_helper->callAPIAndValidateResponse('POST', '/api/v1/sends/'.$address['uuid'], $this->sendHelper()->samplePostVars([
+            'quantity' => 1,
+            'asset'    => 'LTBCOIN',
+            'account'  => 'accountfour',
+            'utxo_override' => $utxos,
+        ]));        
+       
+        // accountfour should now have funds moved into sent
+        $ledger_entry_repo = app('App\Repositories\LedgerEntryRepository');
+
+        $account_four_balances = $ledger_entry_repo->accountBalancesByAsset($created_accounts[4], null, true); //get in satoshis to avoid float funkyness
+        PHPUnit::assertEquals([
+            'unconfirmed' => [],
+            'confirmed'   => ['LTBCOIN' => 999900000000, 'BTC' => 99984570],
+            'sending'     => ['LTBCOIN' =>  100000000, 'BTC' => 15430],
+        ], $account_four_balances);        
+    }
 
     public function testAPISendUnconfirmedFromAccount()
     {
@@ -462,6 +487,7 @@ class SendAPITest extends TestCase {
         $created_accounts[] = $this->newSampleAccount($address, 'accountone');
         $created_accounts[] = $this->newSampleAccount($address, 'accounttwo');
         $created_accounts[] = $this->newSampleAccount($address, 'accountthree');
+        $created_accounts[] = $this->newSampleAccount($address, 'accountfour');
         $inactive_account = app('AccountHelper')->newSampleAccount($address, ['name' => 'Inactive 1', 'active' => 0]);
 
         // add balances to each
@@ -480,10 +506,19 @@ class SendAPITest extends TestCase {
         // add UTXOs
         $float_btc_balance = 110 + 100 - 10 + 20 + 20 + 0.01 + 20;
         app('PaymentAddressHelper')->addUTXOToPaymentAddress($float_btc_balance, $address);
+        
+        //setup a new account and few more utxos for utxo_override testing
+        $txo_helper = app('SampleTXOHelper');
+        $sample_tx = $txo_helper->nextTXID();
+        $ledger_entry_repo->addCredit(1, 'BTC', $created_accounts[4], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $sample_tx);
+        $ledger_entry_repo->addCredit(10000, 'LTBCOIN', $created_accounts[4], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $sample_tx);
+        $extra_utxos = array();
+        $extra_utxos[] = $txo_helper->createSampleTXO($address, ['txid' => $txid, 'amount' => 100000000,  'n' => 0]);
+        
 
         $api_test_helper = app('APITestHelper')->useUserHelper(app('UserHelper'));
 
-        return [$address, $created_accounts, $api_test_helper];
+        return [$address, $created_accounts, $api_test_helper, $extra_utxos];
     }
 
 }
