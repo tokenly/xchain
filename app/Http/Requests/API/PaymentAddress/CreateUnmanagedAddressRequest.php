@@ -15,7 +15,8 @@ class CreateUnmanagedAddressRequest extends CreatePaymentAddressRequest {
     public function rules()
     {
         return [
-            'address' => 'required',
+            'address'         => 'required',
+            'webhookEndpoint' => 'sometimes|url',
         ];
     }
 

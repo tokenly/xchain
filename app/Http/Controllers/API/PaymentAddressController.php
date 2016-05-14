@@ -10,6 +10,7 @@ use App\Http\Requests\API\PaymentAddress\UpdatePaymentAddressRequest;
 use App\Models\APICall;
 use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\APICallRepository;
+use App\Repositories\MonitoredAddressRepository;
 use App\Repositories\PaymentAddressRepository;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
@@ -36,7 +37,8 @@ class PaymentAddressController extends APIController {
      */
     public function store(APIControllerHelper $helper, CreatePaymentAddressRequest $request, PaymentAddressRepository $payment_address_respository, Guard $auth)
     {
-        return $this->buildNewPaymentAddressFromRequest($helper, $request, $payment_address_respository, $auth, true);
+        $attributes = $request->only(array_keys($request->rules()));
+        return $helper->transformResourceForOutput($this->buildNewPaymentAddressFromRequestAttributes($attributes, $payment_address_respository, $auth, true));
     }
 
     /**
@@ -44,7 +46,7 @@ class PaymentAddressController extends APIController {
      *
      * @return Response
      */
-    public function createUnmanaged(APIControllerHelper $helper, CreateUnmanagedAddressRequest $request, PaymentAddressRepository $payment_address_respository, BlockchainBalanceReconciler $blockchain_balance_reconciler, APICallRepository $api_call_repository, Guard $auth) {
+    public function createUnmanaged(APIControllerHelper $helper, CreateUnmanagedAddressRequest $request, PaymentAddressRepository $payment_address_respository, MonitoredAddressRepository $address_respository, BlockchainBalanceReconciler $blockchain_balance_reconciler, APICallRepository $api_call_repository, Guard $auth) {
         $user = $auth->getUser();
         if (!$user) { throw new Exception("User not found", 1); }
 
@@ -57,7 +59,35 @@ class PaymentAddressController extends APIController {
             ],
         ]);
 
-        return $this->buildNewPaymentAddressFromRequest($helper, $request, $payment_address_respository, $auth, false, $blockchain_balance_reconciler, $api_call);
+        $payment_address_attributes = $request_attributes;
+        unset($payment_address_attributes['webhookEndpoint']);
+        $payment_address = $this->buildNewPaymentAddressFromRequestAttributes($payment_address_attributes, $payment_address_respository, $auth, false, $blockchain_balance_reconciler, $api_call);
+        $output = $payment_address->serializeForAPI();
+
+
+        // if webhook endpoint was specified, create monitors and add their IDs to the response
+        if (strlen($request_attributes['webhookEndpoint'])) {
+            $monitor_vars = [
+                'address'         => $request_attributes['address'],
+                'webhookEndpoint' => $request_attributes['webhookEndpoint'],
+                'monitorType'     => 'receive',
+                'active'          => true,
+                'user_id'         => $user['id'],
+            ];
+            // receive monitor
+            $receive_monitor = $address_respository->create($monitor_vars);
+            EventLog::log('monitor.created', json_decode(json_encode($receive_monitor)));
+
+            // send monitor
+            $monitor_vars['monitorType'] = 'send';
+            $send_monitor = $address_respository->create($monitor_vars);
+            EventLog::log('monitor.created', json_decode(json_encode($send_monitor)));
+
+            $output['receiveMonitorId'] = $receive_monitor['uuid'];
+            $output['sendMonitorId']    = $send_monitor['uuid'];
+        }
+
+        return $helper->buildJSONResponse($output);
     }
 
     /**
@@ -95,11 +125,11 @@ class PaymentAddressController extends APIController {
 
     // ------------------------------------------------------------------------
 
-    protected function buildNewPaymentAddressFromRequest(APIControllerHelper $helper, Request $request, PaymentAddressRepository $payment_address_respository, Guard $auth, $is_managed, BlockchainBalanceReconciler $blockchain_balance_reconciler=null, APICall $api_call=null) {
+    protected function buildNewPaymentAddressFromRequestAttributes($attributes, PaymentAddressRepository $payment_address_respository, Guard $auth, $is_managed, BlockchainBalanceReconciler $blockchain_balance_reconciler=null, APICall $api_call=null) {
         $user = $auth->getUser();
         if (!$user) { throw new Exception("User not found", 1); }
 
-        $attributes = $request->only(array_keys($request->rules()));
+        // add the user id
         $attributes['user_id'] = $user['id'];
 
         $payment_address = $payment_address_respository->create($attributes);
@@ -121,7 +151,7 @@ class PaymentAddressController extends APIController {
             $blockchain_balance_reconciler->reconcileDifferences($balance_differences, $payment_address, $api_call);
         }
 
-        return $helper->transformResourceForOutput($payment_address);
+        return $payment_address;
     }
 
 }
