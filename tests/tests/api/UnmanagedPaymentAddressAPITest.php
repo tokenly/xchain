@@ -55,6 +55,38 @@ class UnmanagedPaymentAddressAPITest extends TestCase {
         PHPUnit::assertEquals(true, $loaded_send_monitor_model['active']);
         PHPUnit::assertEquals($address, $loaded_send_monitor_model['address']);
         PHPUnit::assertEquals(app('UserHelper')->getSampleUser()['id'], $loaded_send_monitor_model['user_id']);
+    }
+
+    public function testAPIRemoveUnmanagedAndMonitoredPaymentAddress() {
+        // install the counterparty client mock
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $api_tester = $this->getAPITester();
+
+        list($private_key, $address) = $this->generateUnmanagedAddress();
+
+        $posted_vars = $this->paymentAddressHelper()->samplePostVars(['address' => $address, 'webhookEndpoint' => 'http://mysite.foo/callback', ]);
+        $create_api_response = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/unmanaged/addresses', $posted_vars);
+
+        $loaded_resource_model = app('App\Repositories\PaymentAddressRepository')->findByUuid($create_api_response['id']);
+        PHPUnit::assertNotEmpty($loaded_resource_model);
+
+        $monitor_respository = app('App\Repositories\MonitoredAddressRepository');
+        $loaded_receive_monitor_model = $monitor_respository->findByUuid($create_api_response['receiveMonitorId']);
+        $loaded_send_monitor_model    = $monitor_respository->findByUuid($create_api_response['sendMonitorId']);
+
+        // now destroy it
+        $api_tester->callAPIWithAuthenticationAndReturnJSONContent('DELETE', '/api/v1/unmanaged/addresses/'.$loaded_resource_model['uuid'], [], 204);
+
+        // check that it is gone
+        $loaded_resource_model = app('App\Repositories\PaymentAddressRepository')->findByUuid($create_api_response['id']);
+        PHPUnit::assertEmpty($loaded_resource_model);
+
+        // check that the monitors are gone too
+        PHPUnit::assertEmpty($monitor_respository->findByUuid($create_api_response['receiveMonitorId']));
+        PHPUnit::assertEmpty($monitor_respository->findByUuid($create_api_response['sendMonitorId']));
+        
+
 
     }
 

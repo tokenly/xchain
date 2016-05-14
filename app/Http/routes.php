@@ -19,6 +19,8 @@ $router->get('api/v1/transactions/{addressId}', 'API\TransactionController@index
 
 // create an unmanaged address
 $router->post('api/v1/unmanaged/addresses', 'API\PaymentAddressController@createUnmanaged');
+// delete an unmanaged address
+$router->delete('api/v1/unmanaged/addresses/{addressId}', 'API\PaymentAddressController@destroyUnmanaged');
 
 // create a send
 $router->post('api/v1/sends/{addressId}', 'API\SendController@create');

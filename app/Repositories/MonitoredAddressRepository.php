@@ -76,6 +76,10 @@ class MonitoredAddressRepository implements APIResourceRepositoryContract
         return MonitoredAddress::where('address', $address);
     }
 
+    public function findByAddressAndUserId($address, $user_id) {
+        return MonitoredAddress::where('address', $address)->where('user_id', $user_id);
+    }
+
     public function findByAddresses($addresses, $active=null) {
         $query = MonitoredAddress::whereIn('address', $addresses);
         if ($active !== null) { $query->where('active', $active); }

@@ -45,6 +45,18 @@ class MonitoredAddressRepositoryTest extends TestCase {
         $loaded_address_models = $monitored_address_repo->findByAddresses(['1recipient222222222222222222222222','1recipient333333333333333333333333'], false);
         PHPUnit::assertEquals(1, $loaded_address_models->count());
         PHPUnit::assertEquals('1recipient222222222222222222222222', $loaded_address_models->get()[0]['address']);
+
+        // load from repo (with user_id)
+        $monitored_address_repo->create($monitored_address_helper->sampleDBVars(['address' => '1recipient555555555555555555555555', 'user_id' => 10001]));
+        $loaded_address_models = $monitored_address_repo->findByAddressAndUserId('1recipient222222222222222222222222', 999999);
+        PHPUnit::assertEquals(0, $loaded_address_models->count());
+        $loaded_address_models = $monitored_address_repo->findByAddressAndUserId('1recipient222222222222222222222222', app('UserHelper')->getSampleUser()['id']);
+        PHPUnit::assertEquals(1, $loaded_address_models->count());
+        PHPUnit::assertEquals('1recipient222222222222222222222222', $loaded_address_models->get()[0]['address']);
+        $loaded_address_models = $monitored_address_repo->findByAddressAndUserId('1recipient555555555555555555555555', 10001);
+        PHPUnit::assertEquals(1, $loaded_address_models->count());
+        PHPUnit::assertEquals('1recipient555555555555555555555555', $loaded_address_models->get()[0]['address']);
+
     }
 
     public function testFindMonitoredAddressesOnly()

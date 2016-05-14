@@ -14,6 +14,7 @@ use App\Repositories\MonitoredAddressRepository;
 use App\Repositories\PaymentAddressRepository;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Tokenly\LaravelApiProvider\Helpers\APIControllerHelper;
 use Tokenly\LaravelEventLog\Facade\EventLog;
@@ -90,6 +91,29 @@ class PaymentAddressController extends APIController {
         return $helper->buildJSONResponse($output);
     }
 
+
+    /**
+     * Destroy a new unmanaged address
+     *
+     * @return Response
+     */
+    public function destroyUnmanaged(APIControllerHelper $helper, PaymentAddressRepository $payment_address_respository, MonitoredAddressRepository $monitor_respository, Guard $auth, $id) {
+        $user = $auth->getUser();
+        if (!$user) { throw new Exception("User not found", 1); }
+
+        // delete any monitors
+        $address_model = $payment_address_respository->findByUuid($id);
+        if ($address_model) {
+            foreach ($monitor_respository->findByAddressAndUserId($address_model['address'], $user['id'])->get() as $monitor) {
+                EventLog::log('monitor.deleteUnmanagedMonitor', $monitor->serializeForAPI());
+                $monitor_respository->delete($monitor);
+            }
+
+            EventLog::log('address.deleteUnmanaged', $address_model->serializeForAPI());
+        }
+        return $helper->destroy($payment_address_respository, $id, $user['id']);
+    }
+
     /**
      * Display the specified resource.
      *
@@ -120,7 +144,7 @@ class PaymentAddressController extends APIController {
      */
     public function destroy(APIControllerHelper $helper, PaymentAddressRepository $payment_address_respository, $id)
     {
-        return $helper->destroy($payment_address_respository, $id);
+        return $helper->destroy($payment_address_respository, $id, Auth::user()['id']);
     }
 
     // ------------------------------------------------------------------------
