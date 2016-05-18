@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "eca68fd61029975b5c912def1e345275",
-    "content-hash": "680124fd634cc7eff64332578de8d139",
+    "hash": "0f6fb2e9f8ec9464e87bd21fc1e308bf",
+    "content-hash": "3797c44fcd481075859103128fb2c0f3",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
@@ -3757,16 +3757,16 @@
         },
         {
             "name": "tokenly/hmac-auth",
-            "version": "v1.0.4",
+            "version": "v1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/hmac-auth.git",
-                "reference": "afd81cc0e080835e47aee6c294fbc72a7b85195c"
+                "reference": "86dcf9e21890f5e4ca61f76f793a8b418bbb346a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/afd81cc0e080835e47aee6c294fbc72a7b85195c",
-                "reference": "afd81cc0e080835e47aee6c294fbc72a7b85195c",
+                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/86dcf9e21890f5e4ca61f76f793a8b418bbb346a",
+                "reference": "86dcf9e21890f5e4ca61f76f793a8b418bbb346a",
                 "shasum": ""
             },
             "require": {
@@ -3805,20 +3805,20 @@
                 }
             ],
             "description": "HMAC authentication for Tokenly APIs",
-            "time": "2016-05-12 02:10:40"
+            "time": "2016-05-18 03:10:19"
         },
         {
             "name": "tokenly/laravel-api-provider",
-            "version": "dev-master",
+            "version": "v0.1.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/laravel-api-provider.git",
-                "reference": "08840532d5729b9b4ba1155df0d380d70ceed6dd"
+                "reference": "9edb5f6e4fc8b53852be6033c1bef4cbf19ab869"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/08840532d5729b9b4ba1155df0d380d70ceed6dd",
-                "reference": "08840532d5729b9b4ba1155df0d380d70ceed6dd",
+                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/9edb5f6e4fc8b53852be6033c1bef4cbf19ab869",
+                "reference": "9edb5f6e4fc8b53852be6033c1bef4cbf19ab869",
                 "shasum": ""
             },
             "require": {
@@ -3849,7 +3849,7 @@
                 }
             ],
             "description": "An API service provider for Laravel",
-            "time": "2016-05-07 16:14:01"
+            "time": "2016-05-18 03:09:27"
         },
         {
             "name": "tokenly/laravel-blocking-beanstalkd",
@@ -5939,7 +5939,6 @@
         "tokenly/consul-health-daemon": 20,
         "tokenly/laravel-record-lock": 20,
         "tokenly/counterparty-transaction-composer": 20,
-        "tokenly/laravel-api-provider": 20,
         "satooshi/php-coveralls": 20
     },
     "prefer-stable": true,

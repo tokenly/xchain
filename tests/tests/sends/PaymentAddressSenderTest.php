@@ -33,7 +33,7 @@ class PaymentAddressSenderTest extends TestCase {
         PHPUnit::assertNotEmpty($composed_tx_model['txid']);
         PHPUnit::assertNotEmpty($composed_tx_model['transaction']);
         PHPUnit::assertNotEmpty($composed_tx_model['utxos']);
-        PHPUnit::assertEquals($input_utxos[6]['txid'].':'.$input_utxos[6]['n'], $composed_tx_model['utxos'][0]);
+        PHPUnit::assertEquals($input_utxos[6]['txid'].':'.$input_utxos[6]['n'], $composed_tx_model['utxos'][0]['txid'].':'.$composed_tx_model['utxos'][0]['n']);
         PHPUnit::assertEquals('request001', $composed_tx_model['request_id']);
 
     }

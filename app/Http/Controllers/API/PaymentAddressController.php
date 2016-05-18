@@ -10,9 +10,12 @@ use App\Http\Requests\API\PaymentAddress\UpdatePaymentAddressRequest;
 use App\Models\APICall;
 use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\APICallRepository;
+use App\Repositories\AccountRepository;
+use App\Repositories\LedgerEntryRepository;
 use App\Repositories\MonitoredAddressRepository;
 use App\Repositories\PaymentAddressRepository;
 use Illuminate\Contracts\Auth\Guard;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -97,21 +100,37 @@ class PaymentAddressController extends APIController {
      *
      * @return Response
      */
-    public function destroyUnmanaged(APIControllerHelper $helper, PaymentAddressRepository $payment_address_respository, MonitoredAddressRepository $monitor_respository, Guard $auth, $id) {
+    public function destroyUnmanaged(APIControllerHelper $helper, LedgerEntryRepository $ledger, AccountRepository $account_repository, PaymentAddressRepository $payment_address_respository, MonitoredAddressRepository $monitor_respository, Guard $auth, $payment_address_uuid) {
         $user = $auth->getUser();
         if (!$user) { throw new Exception("User not found", 1); }
 
-        // delete any monitors
-        $address_model = $payment_address_respository->findByUuid($id);
-        if ($address_model) {
-            foreach ($monitor_respository->findByAddressAndUserId($address_model['address'], $user['id'])->get() as $monitor) {
-                EventLog::log('monitor.deleteUnmanagedMonitor', $monitor->serializeForAPI());
-                $monitor_respository->delete($monitor);
-            }
+        $address_model = $payment_address_respository->findByUuid($payment_address_uuid);
+        if (!$address_model) { return new JsonResponse(['message' => 'Not found'], 404); }
 
-            EventLog::log('address.deleteUnmanaged', $address_model->serializeForAPI());
+        // verify owner
+        if ($address_model['user_id'] != $user['id']) { return new JsonResponse(['message' => 'Not authorized to delete this address'], 403); }
+
+        // delete any monitors
+        foreach ($monitor_respository->findByAddressAndUserId($address_model['address'], $user['id'])->get() as $monitor) {
+            EventLog::log('monitor.deleteUnmanagedMonitor', $monitor->serializeForAPI());
+            $monitor_respository->delete($monitor);
         }
-        return $helper->destroy($payment_address_respository, $id, $user['id']);
+
+        // delete each ledger entry and accounts first
+        $accounts = $account_repository->findByAddressAndUserID($address_model['id'], $user['id']);
+        foreach($accounts as $account) {
+            EventLog::log('monitor.deleteUnmanagedAccount', $account->serializeForAPI());
+
+            // delete the ledger entries
+            $ledger->deleteByAccount($account);
+
+            // delete the account
+            $account_repository->delete($account);
+        }
+
+        // delete payment address
+        EventLog::log('address.deleteUnmanaged', $address_model->serializeForAPI());
+        return $helper->destroy($payment_address_respository, $payment_address_uuid, $user['id']);
     }
 
     /**

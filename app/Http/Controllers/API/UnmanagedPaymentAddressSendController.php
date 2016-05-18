@@ -30,7 +30,7 @@ class UnmanagedPaymentAddressSendController extends APIController {
      *
      * @return Response
      */
-    public function composeSend(APIControllerHelper $helper, ComposeSendRequest $request, SendComposer $send_composer, APICallRepository $api_call_repository, PaymentAddressRepository $payment_address_repository, Guard $auth, $address_uuid) {
+    public function composeSend(APIControllerHelper $helper, ComposeSendRequest $request, SendComposer $send_composer, APICallRepository $api_call_repository, SendRepository $send_respository, PaymentAddressRepository $payment_address_repository, Guard $auth, $address_uuid) {
         // attributes
         $request_attributes = $request->only(array_keys($request->rules()));
 
@@ -50,7 +50,13 @@ class UnmanagedPaymentAddressSendController extends APIController {
             $record_lock_key = $this->buildRecordLockKey($payment_address);
             $wait_time = (app()->environment() == 'testing' ? 1 : 5);
             $acquired_lock = RecordLock::acquireOnce($record_lock_key, $wait_time);
-            if (!$acquired_lock) { throw new HttpResponseException(new JsonResponse(['message' => 'Unable to compose a new transaction for this address.  Please sign submit or revoke any previous composed transactions.'], 400)); }
+            if (!$acquired_lock) { throw new HttpResponseException(new JsonResponse(['message' => 'Unable to compose a new transaction for this address.  Please submit or revoke any previously composed transactions.'], 400)); }
+
+
+            // see if there is any send already pending
+            $unsigned_transactions_exist = $send_respository->findUnsignedTransactionsByPaymentAddressID($payment_address['id'])->count() > 0;
+            Log::debug("\$unsigned_transactions_exist=".json_encode($unsigned_transactions_exist, 192));
+            if ($unsigned_transactions_exist) { throw new HttpResponseException(new JsonResponse(['message' => 'Unable to compose a new transaction for this address because one already exists.  Please submit or revoke any previously composed transactions.'], 400)); }
 
             $send_model = $send_composer->composeWithNewLockedSend($payment_address, $user, $request_attributes, function($locked_send) use ($api_call_repository, $request, $user, $request_attributes) {
                 // called back from the send composer
@@ -64,8 +70,8 @@ class UnmanagedPaymentAddressSendController extends APIController {
                 ]);
             });
 
-            // hold the lock
-            RecordLock::refresh($record_lock_key, self::COMPOSE_LOCK_TIME);
+            // release the lock
+            RecordLock::release($record_lock_key);
         } catch (Exception $e) {
             EventLog::logError('composeSend.error', $e, $request_attributes);
 
@@ -108,9 +114,6 @@ class UnmanagedPaymentAddressSendController extends APIController {
 
             // revoke the composed send
             $send_composer->revokeSend($composed_send, $payment_address);
-
-            // unlock the previous compose lock
-            RecordLock::release($this->buildRecordLockKey($payment_address));
 
             // done - return an empty response
             return $helper->buildJSONResponse([], 204);
@@ -164,8 +167,8 @@ class UnmanagedPaymentAddressSendController extends APIController {
                 throw new HttpResponseException(new JsonResponse(['message' => $e->getMessage()], 500));
             }
 
-            // unlock the previous compose lock
-            RecordLock::release($this->buildRecordLockKey($payment_address));
+            // update the unsigned transaction
+            $send_respository->update($composed_send, ['unsigned_tx' => null, 'utxos' => null, 'unsigned' => false]);
 
             // done - return an empty response
             return $helper->buildJSONResponse(['txid' => $txid], 200);

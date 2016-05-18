@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Rhumsaa\Uuid\Uuid;
 use Tokenly\LaravelApiProvider\Contracts\APIResourceRepositoryContract;
 use Tokenly\LaravelApiProvider\Filter\RequestFilter;
@@ -45,6 +46,12 @@ class SendRepository implements APIResourceRepositoryContract
 
     public function findByTXID($txid) {
         return Send::where('txid', $txid)->first();
+    }
+
+    public function findUnsignedTransactionsByPaymentAddressID($payment_address_id) {
+        return Send::where('payment_address_id', $payment_address_id)
+            ->where('unsigned', 1)
+            ->get();
     }
 
     public function findByRequestID($request_id) {
@@ -88,10 +95,20 @@ class SendRepository implements APIResourceRepositoryContract
             } catch (QueryException $e) {
                 if ($e->errorInfo[0] == 23000) {
                     $locked_send = $this->findByRequestID($request_id);
+                    Log::debug("\$locked_send not found by request_id.  looking up by txid ".(isset($create_attributes['txid']) ? $create_attributes['txid'] : null));
+
+                    // this could also be a txid conflict
+                    if (!$locked_send AND isset($create_attributes['txid'])) {
+                        $locked_send = $this->findByTXID($create_attributes['txid']);
+                    }
+
                 } else {
                     // some other kind of query exception
                     throw $e;
                 }
+            } catch (Exception $e) {
+                throw $e;
+                
             }
 
             return $this->executeWithLockedSend($locked_send, $func, $timeout);

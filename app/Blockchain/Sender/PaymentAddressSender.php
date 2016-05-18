@@ -119,7 +119,7 @@ class PaymentAddressSender {
         if (!$composed_transaction_model) { return null;}
 
         $signed_transaction_hex = $composed_transaction_model['transaction'];
-        $utxo_identifiers       = $composed_transaction_model['utxos'];
+        $utxo_identifiers       = $this->buildUTXOIdentifiersFromUTXOs($composed_transaction_model['utxos']);
 
         $sent_tx_id = $this->pushSignedTransaction($signed_transaction_hex, $composed_transaction_model['txid'], $utxo_identifiers, $request_id);
         return $sent_tx_id;
@@ -192,12 +192,12 @@ class PaymentAddressSender {
         $built_transaction_to_send = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep);
 
         // get the transaction variables
-        $txid             = $built_transaction_to_send->getTxId();
-        $transaction_hex  = $built_transaction_to_send->getTransactionHex();
-        $utxo_identifiers = $this->buildUTXOIdentifiersFromUTXOs($built_transaction_to_send->getInputUtxos());
-        $is_signed        = $built_transaction_to_send->getSigned();
+        $txid            = $built_transaction_to_send->getTxId();
+        $transaction_hex = $built_transaction_to_send->getTransactionHex();
+        $utxos           = $this->normalizeUTXOsForStorage($built_transaction_to_send->getInputUtxos());
+        $is_signed       = $built_transaction_to_send->getSigned();
 
-        $composed_transaction_data = $this->composed_transaction_repository->storeOrFetchComposedTransaction($request_id, $txid, $transaction_hex, $utxo_identifiers, $is_signed);
+        $composed_transaction_data = $this->composed_transaction_repository->storeOrFetchComposedTransaction($request_id, $txid, $transaction_hex, $utxos, $is_signed);
         return $composed_transaction_data;
     }
 
@@ -235,8 +235,9 @@ class PaymentAddressSender {
             $signed_transaction_hex     = $built_transaction_to_send->getTransactionHex();
             $txid                       = $built_transaction_to_send->getTxId();
             $is_signed                  = $built_transaction_to_send->getSigned();
-            $utxo_identifiers           = $this->buildUTXOIdentifiersFromUTXOs($built_transaction_to_send->getInputUtxos());
-            $composed_transaction_model = $this->composed_transaction_repository->storeOrFetchComposedTransaction($request_id, $txid, $signed_transaction_hex, $utxo_identifiers, $is_signed);
+            $utxos                      = $this->normalizeUTXOsForStorage($built_transaction_to_send->getInputUtxos());
+            Log::debug("\$utxos=".json_encode($utxos, 192));
+            $composed_transaction_model = $this->composed_transaction_repository->storeOrFetchComposedTransaction($request_id, $txid, $signed_transaction_hex, $utxos, $is_signed);
 
             $this->updateTXORecordsFromComposedTransaction($payment_address, $built_transaction_to_send);
         }
@@ -248,6 +249,7 @@ class PaymentAddressSender {
     protected function updateTXORecordsFromComposedTransaction(PaymentAddress $payment_address, ComposedTransaction $built_transaction_to_send) {
         // get the utxo identifiers
         $utxo_identifiers = $this->buildUTXOIdentifiersFromUTXOs($built_transaction_to_send->getInputUtxos());
+        Log::debug("\updateTXORecordsFromComposedTransaction \$utxo_identifiers=".json_encode($utxo_identifiers, 192));
 
         // mark each UTXO as spent
         $this->txo_repository->updateByTXOIdentifiers($utxo_identifiers, ['spent' => 1]);
@@ -357,7 +359,7 @@ class PaymentAddressSender {
             if (strtoupper($asset) != 'BTC') { throw new Exception("Sweep is only allowed for BTC.", 1); }
             
             // compose the BTC transaction
-            $chosen_txos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::UNCONFIRMED, TXO::CONFIRMED], true);
+            $chosen_txos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::UNCONFIRMED, TXO::CONFIRMED], true)->toArray();
             $float_utxo_sum = CurrencyUtil::satoshisToValue($this->sumUTXOs($chosen_txos));
             if ($float_utxo_sum < self::MINIMUM_DUST_SIZE) {
                 throw new Exception("BTC amount is too small to sweep", 1);
@@ -482,10 +484,31 @@ class PaymentAddressSender {
         $utxo_identifiers = [];
         if ($utxos) {
             foreach ($utxos as $utxo) {
-                $utxo_identifiers[] = $utxo['txid'].':'.$utxo['n'];
+                if (is_array($utxo) OR is_object($utxo)) {
+                    $utxo_identifiers[] = $utxo['txid'].':'.$utxo['n'];
+                } else {
+                    // UTXOs used to be stored as just a string identifier
+                    //   handle these legacy cases here
+                    $utxo_identifiers[] = $utxo;
+                }
             }
         }
         return $utxo_identifiers;
+    }
+
+    protected function normalizeUTXOsForStorage($utxos) {
+        $normalized_utxos = [];
+        if ($utxos) {
+            foreach ($utxos as $utxo) {
+                $normalized_utxos[] = [
+                    'txid'   => $utxo['txid'],
+                    'n'      => $utxo['n'],
+                    'amount' => $utxo['amount'],
+                    'script' => $utxo['script'],
+                ];
+            }
+        }
+        return $normalized_utxos;
     }
 
     protected function buildInputUTXOIdentifiersFromTransaction(TransactionInterface $transaction) {

@@ -18,17 +18,17 @@ class ComposedTransactionRepository
             ->table('composed_transactions')
             ->where(['request_id' => $request_id])
             ->first();
-        if (!$loaded_object) { return null; }
-
-        return $this->unserializeTransactionModelFromDatabase([
-            'txid'        => $loaded_object->txid,
-            'transaction' => $loaded_object->transaction,
-            'utxos'       => $loaded_object->utxos,
-            'request_id'  => $loaded_object->request_id,
-            'signed'      => $loaded_object->signed,
-            'created_at'  => $loaded_object->created_at,
-        ]);
+        return $this->unserializeResult($loaded_object);
     }
+
+    public function getComposedTransactionByTXID($txid) {
+        $loaded_object = DB::connection('untransacted')
+            ->table('composed_transactions')
+            ->where(['txid' => $txid])
+            ->first();
+        return $this->unserializeResult($loaded_object);
+    }
+
 
     public function storeOrFetchComposedTransaction($request_id, $txid, $transaction_hex, Array $utxos, $signed) {
 
@@ -37,7 +37,16 @@ class ComposedTransactionRepository
         } catch (QueryException $e) {
             if ($e->errorInfo[0] == 23000) {
                 // fetch the existing one instead of adding a duplicate
-                return $this->getComposedTransactionByRequestID($request_id);
+                $composed_transaction = $this->getComposedTransactionByRequestID($request_id);
+
+                // this could also be a txid conflict
+                if (!$composed_transaction AND $txid) {
+                    $composed_transaction = $this->getComposedTransactionByTXID($txid);
+                }
+
+                if ($composed_transaction) {
+                    return $composed_transaction;
+                }
             }
 
             throw $e;
@@ -72,6 +81,22 @@ class ComposedTransactionRepository
 
         return $result;
     }
+
+    // ------------------------------------------------------------------------
+    
+    protected function unserializeResult($loaded_object) {
+        if (!$loaded_object) { return null; }
+
+        return $this->unserializeTransactionModelFromDatabase([
+            'txid'        => $loaded_object->txid,
+            'transaction' => $loaded_object->transaction,
+            'utxos'       => $loaded_object->utxos,
+            'request_id'  => $loaded_object->request_id,
+            'signed'      => $loaded_object->signed,
+            'created_at'  => $loaded_object->created_at,
+        ]);
+    }
+
 
     protected function unserializeTransactionModelFromDatabase($raw_model) {
         return [

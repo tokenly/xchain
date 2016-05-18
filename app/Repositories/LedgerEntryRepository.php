@@ -116,6 +116,16 @@ class LedgerEntryRepository extends APIRepository
         return $query->get();
     }
 
+    public function deleteByAccount(Account $account) {
+        return $this->deleteByAccountId($account['id']);
+    }
+
+    public function deleteByAccountId($account_id) {
+        return $this->prototype_model
+            ->where('account_id', $account_id)
+            ->delete();
+    }
+
     public function accountBalance(Account $account, $asset, $type, $in_satoshis=false) {
         $account_id = $account['id'];
 

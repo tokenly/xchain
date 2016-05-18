@@ -15,6 +15,8 @@ class Send extends APIModel
 
     protected $casts = [
         'destinations' => 'json',
+        'utxos'        => 'json',
+        'unsigned'     => 'boolean',
     ];
 
     /**
@@ -27,7 +29,7 @@ class Send extends APIModel
     protected static $unguarded = true;
 
     protected $api_attributes = ['id', 'destination', 'destinations', 'quantity', 'asset', 'sweep', 'txid', 'request_id', ];
-    protected $api_attributes_composed = ['id', 'destination', 'destinations', 'quantity', 'asset', 'sweep', 'txid', 'request_id', 'unsigned_tx', ];
+    protected $api_attributes_composed = ['id', 'destination', 'destinations', 'quantity', 'asset', 'sweep', 'txid', 'request_id', 'unsigned_tx', 'utxos', ];
 
     public function setSendDataAttribute($send_data) { $this->attributes['send_data'] = json_encode($send_data); }
     public function getSendDataAttribute() { return json_decode($this->attributes['send_data'], true); }

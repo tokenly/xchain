@@ -18,21 +18,21 @@ $router->resource('api/v1/monitors', 'API\MonitorController', ['except' => ['cre
 $router->get('api/v1/transactions/{addressId}', 'API\TransactionController@index');
 
 // create an unmanaged address
-$router->post('api/v1/unmanaged/addresses', 'API\PaymentAddressController@createUnmanaged');
+$router->post('api/v1/unmanaged/addresses', ['as' => 'createUnmanagedAddress', 'uses' => 'API\PaymentAddressController@createUnmanaged']);
 // delete an unmanaged address
-$router->delete('api/v1/unmanaged/addresses/{addressId}', 'API\PaymentAddressController@destroyUnmanaged');
+$router->delete('api/v1/unmanaged/addresses/{addressId}', ['as' => 'deleteUnmanagedAddress', 'uses' => 'API\PaymentAddressController@destroyUnmanaged']);
 
 // create a send
 $router->post('api/v1/sends/{addressId}', 'API\SendController@create');
 $router->post('api/v1/multisends/{addressId}', 'API\SendController@createMultisend');
 
 // create an unsigned send
-$router->post('api/v1/unsigned/sends/{addressId}', 'API\UnmanagedPaymentAddressSendController@composeSend');
-$router->delete('api/v1/unsigned/sends/{sendId}', 'API\UnmanagedPaymentAddressSendController@revokeSend');
+$router->post('api/v1/unsigned/sends/{addressId}', ['as' => 'composeSend', 'uses' => 'API\UnmanagedPaymentAddressSendController@composeSend']);
+$router->delete('api/v1/unsigned/sends/{sendId}', ['as' => 'revokeSend', 'uses' => 'API\UnmanagedPaymentAddressSendController@revokeSend']);
 
 // submit an externally signed send
 $router->post('api/v1/signed/send/{sendId}', 'API\UnmanagedPaymentAddressSendController@submitSend');
-$router->post('api/v1/signed/sends/{sendId}', 'API\UnmanagedPaymentAddressSendController@submitSend');
+$router->post('api/v1/signed/sends/{sendId}', ['as' => 'submitSend', 'uses' => 'API\UnmanagedPaymentAddressSendController@submitSend']);
 
 
 // prime address
@@ -51,7 +51,7 @@ $router->get('api/v1/account/{accountId}', 'API\AccountController@show');
 
 
 // account balances
-$router->get('api/v1/accounts/balances/{addressId}', 'API\AccountBalancesController@balances');       # combined and by account
+$router->get('api/v1/accounts/balances/{addressId}', ['as' => 'accountBalance', 'uses' => 'API\AccountBalancesController@balances']);       # combined and by account
 
 
 // transfer
@@ -59,7 +59,7 @@ $router->post('api/v1/accounts/transfer/{addressId}', 'API\AccountBalancesContro
 
 
 // get asset info
-$router->get('api/v1/assets/{asset}', 'API\AssetController@get');
+$router->get('api/v1/assets/{asset}', ['as' => 'assetInfo', 'uses' => 'API\AssetController@get']);
 
 // health check
 $router->get('/healthcheck/{checkType}', '\Tokenly\ConsulHealthDaemon\HealthController\HealthController@healthcheck');
@@ -67,7 +67,7 @@ $router->get('/healthcheck/{checkType}', '\Tokenly\ConsulHealthDaemon\HealthCont
 //verify signed messages and validate addresses
 $router->get('api/v1/message/verify/{address}', 'API\AddressController@verifyMessage');
 $router->post('api/v1/message/sign/{address}', 'API\AddressController@signMessage');
-$router->get('api/v1/validate/{address}', 'API\AddressController@validateAddress');
+$router->get('api/v1/validate/{address}', ['as' => 'validateAddress', 'uses' => 'API\AddressController@validateAddress']);
 
 // estimate fee
 $router->post('api/v1/estimatefee/{addressId}', 'API\SendController@estimateFee');

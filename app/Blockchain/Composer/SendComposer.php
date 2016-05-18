@@ -14,6 +14,7 @@ use Exception;
 use Illuminate\Auth\Guard;
 use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Rhumsaa\Uuid\Uuid;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use Tokenly\LaravelEventLog\Facade\EventLog;
@@ -130,6 +131,7 @@ class SendComposer {
                 $composed_transaction_data = $this->address_sender->composeUnsignedTransactionByRequestID($request_id, $payment_address, ($is_multisend ? $destinations : $destination), $float_quantity, $asset, $float_fee, $dust_size);
                 $txid        = $composed_transaction_data['txid'];
                 $unsigned_tx = $composed_transaction_data['transaction'];
+                $utxos       = $composed_transaction_data['utxos'];
 
                 EventLog::log('compose.complete', ['txid' => $txid, 'request_id' => $request_id, 'address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset, 'destination' => ($is_multisend ? $destinations : $destination)]);
 
@@ -162,8 +164,11 @@ class SendComposer {
             $update_vars = [];
             $update_vars['txid']        = $txid;
             $update_vars['unsigned_tx'] = $unsigned_tx;
+            $update_vars['utxos']       = $utxos;
+            $update_vars['unsigned']    = true;
 
             // update and send response
+            Log::debug("updating locked_send \$update_vars=".json_encode($update_vars, 192));
             $this->send_respository->update($locked_send, $update_vars);
 
             return $locked_send;
