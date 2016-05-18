@@ -18,6 +18,11 @@ return [
             'route' => $API_PREFIX.'/assets/{asset}',
         ],
 
+        'validateAddress' => [
+            'host'  => env('ALLOWED_API_SUBSTITION_HOST'),
+            'route' => $API_PREFIX.'/validate/{address}',
+        ],
+
         'createUnmanagedAddress' => [
             'host'  => env('ALLOWED_API_SUBSTITION_HOST'),
             'route' => $API_PREFIX.'/addresses',
