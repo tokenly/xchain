@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Blockchain\Reconciliation\BlockchainBalanceReconciler;
+use App\Blockchain\Reconciliation\BlockchainTXOReconciler;
 use App\Http\Controllers\API\Base\APIController;
 use App\Http\Requests\API\PaymentAddress\CreatePaymentAddressRequest;
 use App\Http\Requests\API\PaymentAddress\CreateUnmanagedAddressRequest;
@@ -50,7 +51,7 @@ class PaymentAddressController extends APIController {
      *
      * @return Response
      */
-    public function createUnmanaged(APIControllerHelper $helper, CreateUnmanagedAddressRequest $request, PaymentAddressRepository $payment_address_respository, MonitoredAddressRepository $address_respository, BlockchainBalanceReconciler $blockchain_balance_reconciler, APICallRepository $api_call_repository, Guard $auth) {
+    public function createUnmanaged(APIControllerHelper $helper, CreateUnmanagedAddressRequest $request, PaymentAddressRepository $payment_address_respository, MonitoredAddressRepository $address_respository, BlockchainBalanceReconciler $blockchain_balance_reconciler, BlockchainTXOReconciler $blockchain_txo_reconciler, APICallRepository $api_call_repository, Guard $auth) {
         $user = $auth->getUser();
         if (!$user) { throw new Exception("User not found", 1); }
 
@@ -65,7 +66,7 @@ class PaymentAddressController extends APIController {
 
         $payment_address_attributes = $request_attributes;
         unset($payment_address_attributes['webhookEndpoint']);
-        $payment_address = $this->buildNewPaymentAddressFromRequestAttributes($payment_address_attributes, $payment_address_respository, $auth, false, $blockchain_balance_reconciler, $api_call);
+        $payment_address = $this->buildNewPaymentAddressFromRequestAttributes($payment_address_attributes, $payment_address_respository, $auth, false, $blockchain_balance_reconciler, $blockchain_txo_reconciler, $api_call);
         $output = $payment_address->serializeForAPI();
 
 
@@ -168,7 +169,7 @@ class PaymentAddressController extends APIController {
 
     // ------------------------------------------------------------------------
 
-    protected function buildNewPaymentAddressFromRequestAttributes($attributes, PaymentAddressRepository $payment_address_respository, Guard $auth, $is_managed, BlockchainBalanceReconciler $blockchain_balance_reconciler=null, APICall $api_call=null) {
+    protected function buildNewPaymentAddressFromRequestAttributes($attributes, PaymentAddressRepository $payment_address_respository, Guard $auth, $is_managed, BlockchainBalanceReconciler $blockchain_balance_reconciler=null, BlockchainTXOReconciler $blockchain_txo_reconciler=null, APICall $api_call=null) {
         $user = $auth->getUser();
         if (!$user) { throw new Exception("User not found", 1); }
 
@@ -189,9 +190,15 @@ class PaymentAddressController extends APIController {
         // reconcile the address balances from the daemon on creation
         if (!$is_managed) {
             if (!$blockchain_balance_reconciler) { throw new Exception("Balance reconciler not found", 1); }
+            if (!$blockchain_txo_reconciler) { throw new Exception("Balance TXO reconciler not found", 1); }
+
+            // reconcile balances
             $balance_differences = $blockchain_balance_reconciler->buildDifferences($payment_address);
-            // Log::debug("\$balance_differences=".json_encode($balance_differences, 192));
             $blockchain_balance_reconciler->reconcileDifferences($balance_differences, $payment_address, $api_call);
+
+            // reconcile TXOs
+            $txo_differences = $blockchain_txo_reconciler->buildDifferences($payment_address);
+            $blockchain_txo_reconciler->reconcileDifferences($txo_differences, $payment_address, $api_call);
         }
 
         return $payment_address;

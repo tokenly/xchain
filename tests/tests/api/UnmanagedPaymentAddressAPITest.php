@@ -109,7 +109,7 @@ class UnmanagedPaymentAddressAPITest extends TestCase {
         ]);
     }
 
-    public function testNewUnmanagedPaymentAddressLoadsExistingBalances() {
+    public function testNewUnmanagedPaymentAddressLoadsExistingBalancesAndTXOs() {
         $api_tester = $this->getAPITester();
 
         // install the counterparty client mock
@@ -137,6 +137,13 @@ class UnmanagedPaymentAddressAPITest extends TestCase {
         PHPUnit::assertEquals(0.235, $api_response[0]['balances']['BTC']);
         PHPUnit::assertEquals(100, $api_response[0]['balances']['FOOCOIN']);
         PHPUnit::assertEquals(200, $api_response[0]['balances']['BARCOIN']);
+
+        // make sure TXOs were added
+        $txo_repository = app('App\Repositories\TXORepository');
+        $loaded_txos = $txo_repository->findByPaymentAddress($loaded_address_model)->toArray();
+        PHPUnit::assertNotEmpty($loaded_txos);
+        PHPUnit::assertCount(2, $loaded_txos);
+
     }
 
 
