@@ -54,7 +54,7 @@ class ShowTXOsCommand extends Command {
     protected function getOptions()
     {
         return [
-            ['spent', 's', InputOption::VALUE_NONE, 'Inclucde spent TXOs'],
+            ['spent', 's', InputOption::VALUE_NONE, 'Include spent TXOs'],
         ];
     }
 
