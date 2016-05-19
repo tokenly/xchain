@@ -150,48 +150,21 @@ class AccountHandler {
             DB::transaction(function() use ($payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
 
                 list($txid, $dust_size, $btc_fees) = $this->extractDataFromParsedTransaction($parsed_tx);
-                // Log::debug("send: $txid, $dust_size, $btc_fees  \$confirmations=$confirmations");
+                Log::debug("send: $txid, $dust_size, $btc_fees  \$confirmations=$confirmations");
 
-                // Log::debug("send $quantity $asset \$txid=$txid \$confirmations=".json_encode($confirmations, 192));
                 if ($confirmations >= self::SEND_CONFIRMATIONS_REQUIRED) {
                     // confirmed send
+                    $any_sending_funds_found = $this->debitFundsFromSendingLedgerByTXID($payment_address, $txid);
 
-                    // find any sending funds and debit them
-                    $any_sending_funds_found = false;
-                    $sent_balances_by_account_id = $this->ledger_entry_repository->accountBalancesByTXID($txid, LedgerEntry::SENDING);
-                    // Log::debug("\$sent_balances_by_account_id=".json_encode($sent_balances_by_account_id, 192));
-                    foreach($sent_balances_by_account_id as $account_id => $balances) {
-                        $any_sending_funds_found = true;
-                        $account = $this->account_repository->findByID($account_id);
-
-                        // this account must belong to the payment address
-                        if ($account['payment_address_id'] != $payment_address['id']) { continue; }
-
-                        foreach($balances as $asset => $quantity) {
-                            if ($quantity > 0) {
-                                $this->ledger_entry_repository->addDebit($quantity, $asset, $account, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
-                            }
-                        }
+                    if (!$any_sending_funds_found) {
+                        // the funds were not marked as sending yet - so do that now and then immediately debit them from sending
+                        $this->moveConfimedFundsToSendingLedgerByTXID($payment_address, $txid, $quantity, $asset, $btc_fees, $dust_size);
+                        $this->debitFundsFromSendingLedgerByTXID($payment_address, $txid);
                     }
 
                 } else {
                     // unconfirmed send
-
-                    // get the default account
-                    $default_account = $this->getAccount($payment_address);
-
-                    // if there are any entries for this txid and payment address and type already, then
-                    //  don't add anything new
-                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, $payment_address['id'], null, LedgerEntry::DIRECTION_SEND);
-                    if (count($existing_ledger_entries) > 0) {
-                        if ($confirmations == 0) { EventLog::log('account.send.alreadyRecorded', ['txid' => $txid, 'existingLedgerEntries' => count($existing_ledger_entries)]); }
-                        return;
-                    }
-
-                    // change type
-                    foreach ($this->buildSendBalances($quantity, $asset, $btc_fees, $dust_size) as $asset_sent => $quantity_sent) {
-                        $this->ledger_entry_repository->changeType($quantity_sent, $asset_sent, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
-                    }
+                    $this->moveConfimedFundsToSendingLedgerByTXID($payment_address, $txid, $quantity, $asset, $btc_fees, $dust_size);
                 }
 
             });
@@ -503,5 +476,45 @@ class AccountHandler {
         return $destination_account;
     }
 
+
+    protected function debitFundsFromSendingLedgerByTXID($payment_address, $txid) {
+        // find any sending funds and debit them
+        $any_sending_funds_found = false;
+        $sent_balances_by_account_id = $this->ledger_entry_repository->accountBalancesByTXID($txid, LedgerEntry::SENDING);
+        // Log::debug("\$sent_balances_by_account_id=".json_encode($sent_balances_by_account_id, 192));
+        foreach($sent_balances_by_account_id as $account_id => $balances) {
+            $any_sending_funds_found = true;
+            $account = $this->account_repository->findByID($account_id);
+
+            // this account must belong to the payment address
+            if ($account['payment_address_id'] != $payment_address['id']) { continue; }
+
+            foreach($balances as $asset => $quantity) {
+                if ($quantity > 0) {
+                    $this->ledger_entry_repository->addDebit($quantity, $asset, $account, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
+                }
+            }
+        }
+
+        return $any_sending_funds_found;
+    }
+
+    protected function moveConfimedFundsToSendingLedgerByTXID($payment_address, $txid, $quantity, $asset, $btc_fees, $dust_size) {
+        // get the default account
+        $default_account = $this->getAccount($payment_address);
+
+        // if there are any entries for this txid and payment address and type already, then
+        //  don't add anything new
+        $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, $payment_address['id'], null, LedgerEntry::DIRECTION_SEND);
+        if (count($existing_ledger_entries) > 0) {
+            if ($confirmations == 0) { EventLog::log('account.send.alreadyRecorded', ['txid' => $txid, 'existingLedgerEntries' => count($existing_ledger_entries)]); }
+            return;
+        }
+
+        // change type
+        foreach ($this->buildSendBalances($quantity, $asset, $btc_fees, $dust_size) as $asset_sent => $quantity_sent) {
+            $this->ledger_entry_repository->changeType($quantity_sent, $asset_sent, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
+        }
+    }
 
 }

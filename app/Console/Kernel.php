@@ -22,6 +22,7 @@ class Kernel extends ConsoleKernel {
         \App\Console\Commands\Development\SendManualNotificationCommand::class,
         \App\Console\Commands\Development\ExportWIFCommand::class,
         \App\Console\Commands\Development\ShowEnhancedBitcoinTransactionCommand::class,
+        \App\Console\Commands\Development\ShowRawBitcoinTransactionCommand::class,
         \App\Console\Commands\Development\ReindexTransactionAddressesCommand::class,
 
         // Other

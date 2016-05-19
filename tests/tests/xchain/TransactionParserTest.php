@@ -62,4 +62,19 @@ class TransactionParserTest extends TestCase {
         PHPUnit::assertEquals($expected_fingerprint, $parsed_data['transactionFingerprint']);
     }
 
+    public function testBitcoinParserForPrimeSend() {
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        
+        $enhanced_builder = app('App\Handlers\XChain\Network\Bitcoin\EnhancedBitcoindTransactionBuilder');
+        $bitcoin_data = $enhanced_builder->buildTransactionData('2c528f4fe794f90307f3f7863586bf0f644f21e81eccde69112f3eb32faf2fda');
+
+        $builder = app('App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionEventBuilder');
+        $ts = time() * 1000;
+        $parsed_data = $builder->buildParsedTransactionData($bitcoin_data, $ts);
+
+        PHPUnit::assertEmpty($parsed_data['counterpartyTx']);
+        PHPUnit::assertEquals(21000, $parsed_data['bitcoinTx']['feesSat']);
+    }
+
+
 }
