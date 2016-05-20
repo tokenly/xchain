@@ -4,7 +4,9 @@ namespace App\Repositories;
 
 use App\Models\PaymentAddress;
 use App\Models\User;
+use App\Repositories\PaymentAddressArchiveRepository;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Rhumsaa\Uuid\Uuid;
 use Tokenly\BitcoinAddressLib\BitcoinAddressGenerator;
 use Tokenly\LaravelApiProvider\Contracts\APIResourceRepositoryContract;
@@ -18,8 +20,9 @@ use \Exception;
 class PaymentAddressRepository implements APIResourceRepositoryContract
 {
 
-    public function __construct(BitcoinAddressGenerator $address_generator) {
+    public function __construct(BitcoinAddressGenerator $address_generator, PaymentAddressArchiveRepository $payment_address_archive_repository) {
         $this->address_generator = $address_generator;
+        $this->payment_address_archive_repository = $payment_address_archive_repository;
     }
 
     public function createWithUser(User $user, $attributes) {
@@ -93,6 +96,18 @@ class PaymentAddressRepository implements APIResourceRepositoryContract
     }
 
     public function delete(Model $address) {
+        // old payment addresses never die...
+        //   they just get moved to the archive
+
+        return DB::transaction(function() use ($address) {
+            $this->payment_address_archive_repository->create($address->getAttributes());
+
+            // now delete it
+            return $address->delete();
+        });
+    }
+
+    public function hardDelete(Model $address) {
         return $address->delete();
     }
 

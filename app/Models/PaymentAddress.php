@@ -26,4 +26,8 @@ class PaymentAddress extends APIModel
     public function isManaged() {
         return (strlen($this['private_key_token']) > 0);
     }
+
+    public function isArchived() {
+        return false;
+    }
 }
