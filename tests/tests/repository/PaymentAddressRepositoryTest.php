@@ -47,4 +47,49 @@ class PaymentAddressRepositoryTest extends TestCase {
     }
 
 
+    public function testDestroyPaymentAddressClearsArtifacts()
+    {
+        // insert
+        $payment_address_helper = $this->app->make('\PaymentAddressHelper');
+        $user_helper = $this->app->make('UserHelper');
+        $monitored_address_helper = $this->app->make('MonitoredAddressHelper');
+        $payment_address_repo = $this->app->make('App\Repositories\PaymentAddressRepository');
+        $payment_address_archive_repo = $this->app->make('App\Repositories\PaymentAddressArchiveRepository');
+        $ledger_entry_repository = $this->app->make('App\Repositories\LedgerEntryRepository');
+        $account_repository = $this->app->make('App\Repositories\AccountRepository');
+        $monitor_respository = $this->app->make('App\Repositories\MonitoredAddressRepository');
+
+        // create sample address
+        $address = $payment_address_helper->createSamplePaymentAddress();
+
+        // create monitors
+        $mon1 = $monitored_address_helper->createSampleMonitoredAddress(null, ['address' => $address['address'], 'monitorType' => 'receive']);
+        $mon2 = $monitored_address_helper->createSampleMonitoredAddress(null, ['address' => $address['address'], 'monitorType' => 'send']);
+
+        // destroy the address
+        Auth::setUser($user_helper->getSampleUser());
+        $controller = app('App\Http\Controllers\API\PaymentAddressController');
+        $controller->destroy(app('Tokenly\LaravelApiProvider\Helpers\APIControllerHelper'), $payment_address_repo, $monitor_respository, $account_repository, $ledger_entry_repository, $address['uuid']);
+
+
+        // ensure it was deleted
+        $all_addresses = $payment_address_repo->findAll();
+        PHPUnit::assertCount(0, $all_addresses);
+
+
+        // load from the archive repository
+        $all_archived_addresses = $payment_address_archive_repo->findAll();
+        PHPUnit::assertCount(1, $all_archived_addresses);
+
+        // make sure accounts and ledger entries are clear
+        PHPUnit::assertCount(0, $account_repository->findAll());
+        PHPUnit::assertCount(0, $ledger_entry_repository->findAll());
+
+        // make sure monitors are clear
+        PHPUnit::assertCount(0, $monitor_respository->findAll());
+
+
+    }
+
+
 }

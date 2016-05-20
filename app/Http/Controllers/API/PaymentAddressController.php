@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Tokenly\LaravelApiProvider\Helpers\APIControllerHelper;
 use Tokenly\LaravelEventLog\Facade\EventLog;
+use Exception;
 
 class PaymentAddressController extends APIController {
 
@@ -162,9 +163,34 @@ class PaymentAddressController extends APIController {
      * @param  int  $id
      * @return Response
      */
-    public function destroy(APIControllerHelper $helper, PaymentAddressRepository $payment_address_respository, $id)
+    public function destroy(APIControllerHelper $helper, PaymentAddressRepository $payment_address_respository, MonitoredAddressRepository $monitor_respository, AccountRepository $account_repository, LedgerEntryRepository $ledger, $payment_address_uuid)
     {
-        return $helper->destroy($payment_address_respository, $id, Auth::user()['id']);
+        $user = Auth::user();
+        if (!$user) { throw new Exception("User not found", 1); }
+
+        $address_model = $payment_address_respository->findByUuid($payment_address_uuid);
+        if (!$address_model) { return new JsonResponse(['message' => 'Not found'], 404); }
+
+        // delete any monitors for this address and user ID
+        foreach ($monitor_respository->findByAddressAndUserId($address_model['address'], $user['id'])->get() as $monitor) {
+            EventLog::log('monitor.deleteMonitor', $monitor->serializeForAPI());
+            $monitor_respository->delete($monitor);
+        }
+
+        // delete ledger entries and accounts first
+        $accounts = $account_repository->findByAddressAndUserID($address_model['id'], $user['id']);
+        foreach($accounts as $account) {
+            EventLog::log('monitor.deleteAccount', $account->serializeForAPI());
+
+            // delete the ledger entries
+            $ledger->deleteByAccount($account);
+
+            // delete the account
+            $account_repository->delete($account);
+        }
+
+        EventLog::log('monitor.deleteManagedAddress', $address_model->serializeForAPI());
+        return $helper->destroy($payment_address_respository, $payment_address_uuid, $user['id']);
     }
 
     // ------------------------------------------------------------------------
