@@ -2,9 +2,9 @@ language: php
 php:
   - "5.6"
 script:
-  - phpunit --coverage-clover build/logs/clover.xml
+  - phpunit -v --debug --coverage-clover build/logs/clover.xml
 before_script:
-  - composer self-update
+  - composer self-update --stable
   - composer --dev --prefer-source install
 after_script:
   - php vendor/bin/coveralls -v
