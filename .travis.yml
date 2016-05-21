@@ -1,6 +1,7 @@
 language: php
 php:
   - "5.6"
+  - "7.0"
 script:
   - phpunit -v --debug --coverage-clover build/logs/clover.xml
 before_script:
