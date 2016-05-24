@@ -3893,16 +3893,16 @@
         },
         {
             "name": "tokenly/laravel-event-log",
-            "version": "v1.1.0",
+            "version": "v1.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/laravel-event-log.git",
-                "reference": "7d8f3f58b65192e5b419f75ae1209eb09ceb8341"
+                "reference": "5abdc480415b776cbc09a06e90828ac1bad8a57a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-event-log/zipball/7d8f3f58b65192e5b419f75ae1209eb09ceb8341",
-                "reference": "7d8f3f58b65192e5b419f75ae1209eb09ceb8341",
+                "url": "https://api.github.com/repos/tokenly/laravel-event-log/zipball/5abdc480415b776cbc09a06e90828ac1bad8a57a",
+                "reference": "5abdc480415b776cbc09a06e90828ac1bad8a57a",
                 "shasum": ""
             },
             "require": {
@@ -3929,7 +3929,7 @@
                 }
             ],
             "description": "An event logger provider for Laravel.",
-            "time": "2016-05-24 17:28:25"
+            "time": "2016-05-24 17:49:34"
         },
         {
             "name": "tokenly/laravel-record-lock",
