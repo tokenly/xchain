@@ -19,7 +19,7 @@
         "tokenly/pusher-client": "dev-master",
         "tokenly/token-generator": "dev-master@dev",
         "tokenly/xcpd-client": "dev-master@dev",
-        "tokenly/laravel-event-log": "dev-master@dev",
+        "tokenly/laravel-event-log": "^1.1",
 		"phpunit/php-timer": "1.0.*",
 		"tokenly/xcaller-client": "dev-master",
 		"tokenly/laravel-blocking-beanstalkd": "dev-master",
@@ -28,7 +28,7 @@
 		"bitwasp/bitcoin": "v0.0.18",
 		"tokenly/counterparty-transaction-composer": "dev-master",
 		"tokenly/hmac-auth": "^1",
-		"tokenly/laravel-api-provider": "^0.1",
+		"tokenly/laravel-api-provider": "^0.2",
 		"guzzlehttp/guzzle": "~5"
 	},
 	"require-dev": {

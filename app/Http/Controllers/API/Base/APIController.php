@@ -12,6 +12,9 @@ class APIController extends Controller {
     }
 
     public function addMiddleware() {
+        // log all API calls
+        $this->middleware('api.logApiCalls');
+
         // catch all errors and return a JSON response
         $this->middleware('api.catchErrors');
 
