@@ -4,6 +4,7 @@ namespace App\Blockchain\Reconciliation;
 
 use App\Models\APICall;
 use App\Models\PaymentAddress;
+use App\Models\TXO;
 use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\TXORepository;
 use Exception;
@@ -44,7 +45,7 @@ class BlockchainTXOReconciler {
         if ($all_utxos) {
             foreach($all_utxos as $utxo) {
                 if (!$utxo['confirmed']) { continue; }
-                $filtered_utxo = ['txid' => $utxo['txid'], 'n' => $utxo['vout'], 'script' => $utxo['script'], 'amount' => CurrencyUtil::valueToSatoshis($utxo['amount']),];
+                $filtered_utxo = ['txid' => $utxo['txid'], 'n' => $utxo['vout'], 'script' => $utxo['script'], 'amount' => CurrencyUtil::valueToSatoshis($utxo['amount']), 'confirmations' => $utxo['confirmations'], ];
                 $daemon_utxos_map[$utxo['txid'].':'.$utxo['vout']] = $filtered_utxo;
             }
         }
@@ -71,17 +72,19 @@ class BlockchainTXOReconciler {
                     }
                 }
 
-                if (isset($difference['daemon'])) {
+                if (isset($difference['daemon']) AND $difference['daemon']['confirmations'] >= 2) {
                     $utxo = $difference['daemon'];
                     Log::debug('Adding daemon UTXO: '.json_encode($utxo, 192));
 
-                    // add the daemon's utxo
-                    $this->txo_repository->create($payment_address, $account, [
+                    // add (or update) the daemon's utxo
+                    $this->txo_repository->updateOrCreate([
                         'txid'   => $utxo['txid'],
                         'n'      => $utxo['n'],
                         'script' => $utxo['script'],
                         'amount' => $utxo['amount'],
-                    ]);
+                        'type'   => TXO::CONFIRMED,
+                        'spent'  => false,
+                    ], $payment_address, $account);
                 }
             }
         } else {
@@ -108,6 +111,7 @@ class BlockchainTXOReconciler {
                 $any_differences = true;
             } else {
                 if ($this->utxosAreDifferent($daemon_utxos_map[$xchain_utxo_key], $xchain_utxos_map[$xchain_utxo_key])) {
+                    Log::debug("difference found: ".$this->debugExplainDifference($daemon_utxos_map[$xchain_utxo_key], $xchain_utxos_map[$xchain_utxo_key]));
                     $differences[$xchain_utxo_key] = ['xchain' => $xchain_utxos_map[$xchain_utxo_key], 'daemon' => $daemon_utxos_map[$xchain_utxo_key]];
                     $any_differences = true;
                 }
@@ -120,11 +124,23 @@ class BlockchainTXOReconciler {
 
     protected function utxosAreDifferent($utxo1, $utxo2) {
         return (
-            $utxo1['amount'] != $utxo2['amount']
+               $utxo1['amount'] != $utxo2['amount']
             OR $utxo1['script'] != $utxo2['script']
-            OR $utxo1['txid'] != $utxo2['txid']
-            OR $utxo1['n'] != $utxo2['n']
+            OR $utxo1['txid']   != $utxo2['txid']
+            OR $utxo1['n']      != $utxo2['n']
         );
+    }
+
+    protected function debugExplainDifference($utxo1, $utxo2) {
+        $difference_text = '';
+        if ($utxo1['amount'] != $utxo2['amount']) { $difference_text .= " amounts were different ({$utxo1['amount']} != {$utxo2['amount']})"; }
+        if ($utxo1['script'] != $utxo2['script']) { $difference_text .= " scripts were different ({$utxo1['script']} != {$utxo2['script']})"; }
+        if ($utxo1['txid']   != $utxo2['txid'])   { $difference_text .= " txid were different ({$utxo1['txid']} != {$utxo2['txid']})"; }
+        if ($utxo1['n']      != $utxo2['n'])      { $difference_text .= " n was different ({$utxo1['n']} != {$utxo2['n']})"; }
+        if (!strlen($difference_text)) {
+            return "No differences found";
+        }
+        return trim($difference_text);
     }
 
 }
