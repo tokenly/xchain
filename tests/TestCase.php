@@ -63,6 +63,11 @@ class TestCase extends Illuminate\Foundation\Testing\TestCase {
 
     public function setUpRealSQLiteDb()
     {
+        if (stristr(env('DATABASE_DRIVER'), 'real') !== false) {
+            \Illuminate\Support\Facades\Log::debug("NOT overriding database driver: ".env('DATABASE_DRIVER'));
+            return;
+        }
+
         $app = app();
 
         // set the untransacted database driver to be a mirror of the default driver

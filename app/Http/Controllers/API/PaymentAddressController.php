@@ -14,15 +14,18 @@ use App\Repositories\APICallRepository;
 use App\Repositories\AccountRepository;
 use App\Repositories\LedgerEntryRepository;
 use App\Repositories\MonitoredAddressRepository;
+use App\Repositories\NotificationRepository;
 use App\Repositories\PaymentAddressRepository;
+use App\Repositories\TXORepository;
+use Exception;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Tokenly\LaravelApiProvider\Helpers\APIControllerHelper;
 use Tokenly\LaravelEventLog\Facade\EventLog;
-use Exception;
 
 class PaymentAddressController extends APIController {
 
@@ -102,7 +105,7 @@ class PaymentAddressController extends APIController {
      *
      * @return Response
      */
-    public function destroyUnmanaged(APIControllerHelper $helper, LedgerEntryRepository $ledger, AccountRepository $account_repository, PaymentAddressRepository $payment_address_respository, MonitoredAddressRepository $monitor_respository, Guard $auth, $payment_address_uuid) {
+    public function destroyUnmanaged(APIControllerHelper $helper, LedgerEntryRepository $ledger, AccountRepository $account_repository, PaymentAddressRepository $payment_address_respository, MonitoredAddressRepository $monitor_respository, NotificationRepository $notification_repository, TXORepository $txo_repository, Guard $auth, $payment_address_uuid) {
         $user = $auth->getUser();
         if (!$user) { throw new Exception("User not found", 1); }
 
@@ -112,27 +115,13 @@ class PaymentAddressController extends APIController {
         // verify owner
         if ($address_model['user_id'] != $user['id']) { return new JsonResponse(['message' => 'Not authorized to delete this address'], 403); }
 
-        // delete any monitors
-        foreach ($monitor_respository->findByAddressAndUserId($address_model['address'], $user['id'])->get() as $monitor) {
-            EventLog::log('monitor.deleteUnmanagedMonitor', $monitor->serializeForAPI());
-            $monitor_respository->delete($monitor);
-        }
+        return DB::transaction(function() use ($helper, $payment_address_respository, $payment_address_uuid, $address_model, $user, $ledger, $account_repository, $monitor_respository, $notification_repository, $txo_repository) {
+            $this->destroyPaymentAddressDependencies($address_model, $user, $ledger, $account_repository, $monitor_respository, $notification_repository, $txo_repository);
 
-        // delete each ledger entry and accounts first
-        $accounts = $account_repository->findByAddressAndUserID($address_model['id'], $user['id']);
-        foreach($accounts as $account) {
-            EventLog::log('monitor.deleteUnmanagedAccount', $account->serializeForAPI());
-
-            // delete the ledger entries
-            $ledger->deleteByAccount($account);
-
-            // delete the account
-            $account_repository->delete($account);
-        }
-
-        // delete payment address
-        EventLog::log('address.deleteUnmanaged', $address_model->serializeForAPI());
-        return $helper->destroy($payment_address_respository, $payment_address_uuid, $user['id']);
+            // delete payment address
+            EventLog::log('address.deleteUnmanaged', $address_model->serializeForAPI());
+            return $helper->destroy($payment_address_respository, $payment_address_uuid, $user['id']);
+        });
     }
 
     /**
@@ -163,7 +152,7 @@ class PaymentAddressController extends APIController {
      * @param  int  $id
      * @return Response
      */
-    public function destroy(APIControllerHelper $helper, PaymentAddressRepository $payment_address_respository, MonitoredAddressRepository $monitor_respository, AccountRepository $account_repository, LedgerEntryRepository $ledger, $payment_address_uuid)
+    public function destroy(APIControllerHelper $helper, PaymentAddressRepository $payment_address_respository, MonitoredAddressRepository $monitor_respository, AccountRepository $account_repository, LedgerEntryRepository $ledger, NotificationRepository $notification_repository, TXORepository $txo_repository, $payment_address_uuid)
     {
         $user = Auth::user();
         if (!$user) { throw new Exception("User not found", 1); }
@@ -171,26 +160,14 @@ class PaymentAddressController extends APIController {
         $address_model = $payment_address_respository->findByUuid($payment_address_uuid);
         if (!$address_model) { return new JsonResponse(['message' => 'Not found'], 404); }
 
-        // delete any monitors for this address and user ID
-        foreach ($monitor_respository->findByAddressAndUserId($address_model['address'], $user['id'])->get() as $monitor) {
-            EventLog::log('monitor.deleteMonitor', $monitor->serializeForAPI());
-            $monitor_respository->delete($monitor);
-        }
+        return DB::transaction(function() use ($helper, $payment_address_respository, $payment_address_uuid, $address_model, $user, $ledger, $account_repository, $monitor_respository, $notification_repository, $txo_repository) {
+            $this->destroyPaymentAddressDependencies($address_model, $user, $ledger, $account_repository, $monitor_respository, $notification_repository, $txo_repository);
 
-        // delete ledger entries and accounts first
-        $accounts = $account_repository->findByAddressAndUserID($address_model['id'], $user['id']);
-        foreach($accounts as $account) {
-            EventLog::log('monitor.deleteAccount', $account->serializeForAPI());
+            // delete payment address
+            EventLog::log('monitor.deleteManagedAddress', $address_model->serializeForAPI());
+            return $helper->destroy($payment_address_respository, $payment_address_uuid, $user['id']);
+        });
 
-            // delete the ledger entries
-            $ledger->deleteByAccount($account);
-
-            // delete the account
-            $account_repository->delete($account);
-        }
-
-        EventLog::log('monitor.deleteManagedAddress', $address_model->serializeForAPI());
-        return $helper->destroy($payment_address_respository, $payment_address_uuid, $user['id']);
     }
 
     // ------------------------------------------------------------------------
@@ -228,6 +205,34 @@ class PaymentAddressController extends APIController {
         }
 
         return $payment_address;
+    }
+
+    protected function destroyPaymentAddressDependencies($address_model, $user, LedgerEntryRepository $ledger, AccountRepository $account_repository, MonitoredAddressRepository $monitor_respository, NotificationRepository $notification_repository, TXORepository $txo_repository) {
+        // delete any monitors
+        foreach ($monitor_respository->findByAddressAndUserId($address_model['address'], $user['id'])->get() as $monitor) {
+            // archive all notifications first
+            $notification_repository->findByMonitoredAddressId($address_model['id'])->each(function($notification) use ($notification_repository) {
+                $notification_repository->archive($notification);
+            });
+
+            EventLog::log('monitor.deleteUnmanagedMonitor', $monitor->serializeForAPI());
+            $monitor_respository->delete($monitor);
+        }
+
+        // delete each ledger entry and accounts first
+        $accounts = $account_repository->findByAddressAndUserID($address_model['id'], $user['id']);
+        foreach($accounts as $account) {
+            EventLog::log('monitor.deleteUnmanagedAccount', $account->serializeForAPI());
+
+            // delete the ledger entries
+            $ledger->deleteByAccount($account);
+
+            // delete the txo entries
+            $txo_repository->deleteByAccount($account);
+
+            // delete the account
+            $account_repository->delete($account);
+        }
     }
 
 }

@@ -85,9 +85,44 @@ class UnmanagedPaymentAddressAPITest extends TestCase {
         // check that the monitors are gone too
         PHPUnit::assertEmpty($monitor_respository->findByUuid($create_api_response['receiveMonitorId']));
         PHPUnit::assertEmpty($monitor_respository->findByUuid($create_api_response['sendMonitorId']));
-        
+    }
+
+    public function testAPIRemoveNotificationsForUnmanagedAndMonitoredPaymentAddress() {
+        // install the counterparty client mock
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $api_tester = $this->getAPITester();
+
+        list($private_key, $address) = $this->generateUnmanagedAddress();
+
+        $posted_vars = $this->paymentAddressHelper()->samplePostVars(['address' => $address, 'webhookEndpoint' => 'http://mysite.foo/callback', ]);
+        $create_api_response = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/unmanaged/addresses', $posted_vars);
+
+        $payment_address_model = app('App\Repositories\PaymentAddressRepository')->findByUuid($create_api_response['id']);
+        $original_payment_address_model = $payment_address_model;
+        PHPUnit::assertNotEmpty($payment_address_model);
+
+        $monitor_respository = app('App\Repositories\MonitoredAddressRepository');
+        $loaded_receive_monitor_model = $monitor_respository->findByUuid($create_api_response['receiveMonitorId']);
+        $loaded_send_monitor_model    = $monitor_respository->findByUuid($create_api_response['sendMonitorId']);
+
+        // create a notification for this address
+        app('NotificationHelper')->createSampleNotification($loaded_receive_monitor_model);
 
 
+        // now destroy it
+        $api_tester->callAPIWithAuthenticationAndReturnJSONContent('DELETE', '/api/v1/unmanaged/addresses/'.$payment_address_model['uuid'], [], 204);
+
+        // check that it is gone
+        $payment_address_model = app('App\Repositories\PaymentAddressRepository')->findByUuid($create_api_response['id']);
+        PHPUnit::assertEmpty($payment_address_model);
+
+        // check that the monitors are gone too
+        PHPUnit::assertEmpty($monitor_respository->findByUuid($create_api_response['receiveMonitorId']));
+        PHPUnit::assertEmpty($monitor_respository->findByUuid($create_api_response['sendMonitorId']));
+
+        // check that notifications are gone
+        PHPUnit::assertCount(0, app('App\Repositories\NotificationRepository')->findByMonitoredAddressId($original_payment_address_model['id']));
     }
 
     public function testAPIErrorsAddUnmanagedPaymentAddress()

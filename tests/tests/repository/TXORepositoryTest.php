@@ -187,6 +187,29 @@ class TXORepositoryTest extends TestCase {
     }
 
 
+
+    public function testDeleteByAccountID()
+    {
+        // add one
+        $txo_repository = $this->app->make('App\Repositories\TXORepository');
+        $txid = $this->TXOHelper()->nextTXID();
+
+        $payment_address = app('PaymentAddressHelper')->createSamplePaymentAddressWithoutInitialBalances();
+        $sample_txo   = $this->TXOHelper()->createSampleTXO($payment_address, ['txid' => $txid,   'n' => 0]);
+        $sample_txo_2 = $this->TXOHelper()->createSampleTXO($payment_address, ['txid' => $txid,   'n' => 1]);
+
+        // verify existence
+        PHPUnit::assertEquals($sample_txo->toArray(), $txo_repository->findByID($sample_txo['id'])->toArray());
+        PHPUnit::assertEquals($sample_txo_2->toArray(), $txo_repository->findByID($sample_txo_2['id'])->toArray());
+
+        // delete and verify deletion
+        $account = AccountHandler::getAccount($payment_address);
+        $txo_repository->deleteByAccount($account);
+        PHPUnit::assertEmpty($txo_repository->findByID($sample_txo['id']));
+        PHPUnit::assertEmpty($txo_repository->findByID($sample_txo_2['id']));
+    }
+
+
     /**
      * @expectedException        Illuminate\Database\QueryException
      * @expectedExceptionMessage UNIQUE constraint failed

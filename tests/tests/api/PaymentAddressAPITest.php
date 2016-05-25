@@ -119,12 +119,54 @@ class PaymentAddressAPITest extends TestCase {
     }
 */
 
+    public function testAPIRemoveNotificationsForManagedAndMonitoredPaymentAddress() {
+        // install the counterparty client mock
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $api_tester = $this->getAPITester();
+
+        $posted_vars = [];
+        $create_api_response = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/addresses', $posted_vars);
+
+        $payment_address_model = app('App\Repositories\PaymentAddressRepository')->findByUuid($create_api_response['id']);
+        $original_payment_address_model = $payment_address_model;
+        PHPUnit::assertNotEmpty($payment_address_model);
+
+        $monitor_respository = app('App\Repositories\MonitoredAddressRepository');
+        // create monitors
+        $loaded_receive_monitor_model = app('MonitoredAddressHelper')->createSampleMonitoredAddress(null, ['monitorType' => 'receive', 'address' => $payment_address_model['address']]);
+        $loaded_send_monitor_model    = app('MonitoredAddressHelper')->createSampleMonitoredAddress(null, ['monitorType' => 'send', 'address' => $payment_address_model['address']]);
+
+        // create a notification for this address
+        app('NotificationHelper')->createSampleNotification($loaded_receive_monitor_model);
+
+        // now destroy it
+        $api_tester->callAPIWithAuthenticationAndReturnJSONContent('DELETE', '/api/v1/addresses/'.$payment_address_model['uuid'], [], 204);
+
+        // check that it is gone
+        $payment_address_model = app('App\Repositories\PaymentAddressRepository')->findByUuid($create_api_response['id']);
+        PHPUnit::assertEmpty($payment_address_model);
+
+        // check that the monitors are gone too
+        PHPUnit::assertEmpty($monitor_respository->findById($loaded_receive_monitor_model['id']));
+        PHPUnit::assertEmpty($monitor_respository->findById($loaded_send_monitor_model['id']));
+
+        // check that notifications are gone
+        PHPUnit::assertCount(0, app('App\Repositories\NotificationRepository')->findByMonitoredAddressId($original_payment_address_model['id']));
+    }
+
+
     ////////////////////////////////////////////////////////////////////////
     
     protected function getAPITester() {
         $api_tester = $this->app->make('SimpleAPITester', [$this->app, '/api/v1/addresses', $this->app->make('App\Repositories\PaymentAddressRepository')]);
         $api_tester->ensureAuthenticatedUser();
         return $api_tester;
+    }
+
+    protected function paymentAddressHelper() {
+        if (!isset($this->payment_address_helper)) { $this->payment_address_helper = app('PaymentAddressHelper'); }
+        return $this->payment_address_helper;
     }
 
     protected function sendHelper() {

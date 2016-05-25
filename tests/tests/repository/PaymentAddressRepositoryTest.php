@@ -69,7 +69,11 @@ class PaymentAddressRepositoryTest extends TestCase {
         // destroy the address
         Auth::setUser($user_helper->getSampleUser());
         $controller = app('App\Http\Controllers\API\PaymentAddressController');
-        $controller->destroy(app('Tokenly\LaravelApiProvider\Helpers\APIControllerHelper'), $payment_address_repo, $monitor_respository, $account_repository, $ledger_entry_repository, $address['uuid']);
+        $controller->destroy(
+            app('Tokenly\LaravelApiProvider\Helpers\APIControllerHelper'), 
+            $payment_address_repo, $monitor_respository, $account_repository, $ledger_entry_repository, app('App\Repositories\NotificationRepository'), app('App\Repositories\TXORepository'),
+            $address['uuid']
+        );
 
 
         // ensure it was deleted

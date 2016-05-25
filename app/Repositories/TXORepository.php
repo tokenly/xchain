@@ -92,6 +92,16 @@ class TXORepository
         return $affected_rows;
     }
 
+    public function deleteByAccount(Account $account) {
+        return $this->deleteByAccountId($account['id']);
+    }
+
+    public function deleteByAccountId($account_id) {
+        return $this->prototype_model
+            ->where('account_id', $account_id)
+            ->delete();
+    }
+
     public function delete(TXO $model) {
         return $model->delete();
     }
