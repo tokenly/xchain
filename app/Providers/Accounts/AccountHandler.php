@@ -97,7 +97,9 @@ class AccountHandler {
                                 }
 
                                 // start by moving all the unconfirmed funds we can
-                                $this->ledger_entry_repository->changeType($unconfirmed_amount_to_move, $unconfirmed_txid_asset, $account, LedgerEntry::UNCONFIRMED, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
+                                if ($unconfirmed_amount_to_move > 0) {
+                                    $this->ledger_entry_repository->changeType($unconfirmed_amount_to_move, $unconfirmed_txid_asset, $account, LedgerEntry::UNCONFIRMED, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
+                                }
 
                                 if ($unconfirmed_funds_already_sent > 0) {
                                     // these funds were already moved from unconfirmed to sent
@@ -227,7 +229,9 @@ class AccountHandler {
         $balances_sent = $this->buildSendBalances($quantity, $asset, $float_fee, $dust_size);
         foreach($balances_sent as $sent_asset => $sent_quantity) {
             // Log::debug("changeType $sent_quantity $sent_asset to SENDING with txid $txid");
-            $this->ledger_entry_repository->changeType($sent_quantity, $sent_asset, $account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
+            if ($sent_quantity > 0) {
+                $this->ledger_entry_repository->changeType($sent_quantity, $sent_asset, $account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
+            }
         }
     }
 
@@ -263,7 +267,9 @@ class AccountHandler {
 
 
                 // quantity and asset
-                $this->ledger_entry_repository->transfer($quantity, $asset, $from_account, $to_account, $type, $txid, $api_call);
+                if ($quantity > 0) {
+                    $this->ledger_entry_repository->transfer($quantity, $asset, $from_account, $to_account, $type, $txid, $api_call);
+                }
 
                 // done
                 return;
@@ -293,7 +299,9 @@ class AccountHandler {
                     foreach($balances as $asset => $quantity) {
                         // quantity and asset
                         // Log::debug("Transfer $quantity $asset from {$from_account['name']} to {$to_account['name']}");
-                        $this->ledger_entry_repository->transfer($quantity, $asset, $from_account, $to_account, $type, $txid, $api_call);
+                        if ($quantity > 0) {
+                            $this->ledger_entry_repository->transfer($quantity, $asset, $from_account, $to_account, $type, $txid, $api_call);
+                        }
                         $any_found = true;
                     }
                 }
@@ -513,7 +521,9 @@ class AccountHandler {
 
         // change type
         foreach ($this->buildSendBalances($quantity, $asset, $btc_fees, $dust_size) as $asset_sent => $quantity_sent) {
-            $this->ledger_entry_repository->changeType($quantity_sent, $asset_sent, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
+            if ($quantity_sent > 0) {
+                $this->ledger_entry_repository->changeType($quantity_sent, $asset_sent, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
+            }
         }
     }
 
