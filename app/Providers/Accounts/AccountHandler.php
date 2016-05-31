@@ -507,7 +507,7 @@ class AccountHandler {
         //  don't add anything new
         $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, $payment_address['id'], null, LedgerEntry::DIRECTION_SEND);
         if (count($existing_ledger_entries) > 0) {
-            if ($confirmations == 0) { EventLog::log('account.send.alreadyRecorded', ['txid' => $txid, 'existingLedgerEntries' => count($existing_ledger_entries)]); }
+            EventLog::log('account.send.alreadyRecorded', ['txid' => $txid, 'existingLedgerEntries' => count($existing_ledger_entries)]);
             return;
         }
 
