@@ -452,7 +452,7 @@ class AccountHandler {
     protected function extractDataFromParsedTransaction($parsed_tx) {
         $txid = $parsed_tx['txid'];
         $dust_size = 0;
-        if ($parsed_tx['network'] == 'counterparty') {
+        if ($parsed_tx['network'] == 'counterparty' AND isset($parsed_tx['counterpartyTx']['dustSize'])) {
             $dust_size = $parsed_tx['counterpartyTx']['dustSize'];
         }
         if (isset($parsed_tx['bitcoinTx']['fees'])) {
