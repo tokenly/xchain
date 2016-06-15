@@ -93,8 +93,12 @@ class NotificationRepository
             $create_vars = $notification->getOriginal();
 
             // set the block hash
-            $block = app('App\Repositories\BlockRepository')->findByID($create_vars['block_id']);
-            $create_vars['block_hash'] = $block['hash'];
+            if ($create_vars['block_id']) {
+                $block = app('App\Repositories\BlockRepository')->findByID($create_vars['block_id']);
+                $create_vars['block_hash'] = $block['hash'];
+            } else {
+                $create_vars['block_hash'] = '';
+            }
 
             // clear the unused variables
             unset($create_vars['block_id']);
