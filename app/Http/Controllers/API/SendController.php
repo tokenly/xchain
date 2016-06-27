@@ -152,8 +152,7 @@ class SendController extends APIController {
                     $lock_acquired = AccountHandler::acquirePaymentAddressLock($payment_address);
                     if ($lock_acquired) { $lock_must_be_released = true; }
 
-                    list($txid, $float_balance_sent) = $address_sender->sweepAllAssets($payment_address, $request_attributes['destination'], $float_fee);
-                    $quantity_sat_sent = CurrencyUtil::valueToSatoshis($float_balance_sent);
+                    $txid = $address_sender->sweepAllAssets($payment_address, $request_attributes['destination'], $float_fee);
 
                     // clear all balances from all accounts
                     AccountHandler::zeroAllBalances($payment_address, $api_call);
