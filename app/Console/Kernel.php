@@ -40,6 +40,9 @@ class Kernel extends ConsoleKernel {
         \App\Console\Commands\Accounts\CloseAccountCommand::class,
         \App\Console\Commands\Accounts\BalanceLedgerCommand::class,
 
+        // address
+        \App\Console\Commands\Address\FindAddressCommand::class,
+
         // TXOs
         \App\Console\Commands\TXO\ReconcileTXOsCommand::class,
         \App\Console\Commands\TXO\ShowTXOsCommand::class,
