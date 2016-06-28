@@ -47,8 +47,9 @@ class ValidateConfirmedCounterpartydTxJob
 
         // validate from counterpartyd
         // xcp_command -c get_sends -p '{"filters": {"field": "tx_hash", "op": "==", "value": "address"}}'
-        $parsed_tx = $data['tx'];
-        $tx_hash = $parsed_tx['txid'];
+        $parsed_tx   = $data['tx'];
+        $tx_hash     = $parsed_tx['txid'];
+        $modified_tx = $parsed_tx;
 
         try {
             $sends = $this->xcpd_client->get_sends(['filters' => ['field' => 'tx_hash', 'op' => '==', 'value' => $tx_hash]]);
@@ -83,7 +84,22 @@ class ValidateConfirmedCounterpartydTxJob
 
                     // compare send quantity
                     $parsed_quantity_sat = CurrencyUtil::valueToSatoshis($parsed_tx['values'][$send['destination']]);
-                    if ($xcpd_quantity_sat != $parsed_quantity_sat) { throw new Exception("mismatched quantity: {$xcpd_quantity_sat} (xcpd) != {$parsed_quantity_sat} (parsed)", 1); }
+                    if ($xcpd_quantity_sat != $parsed_quantity_sat) {
+                        EventLog::warning('counterparty.mismatchedQuantity', [
+                            'txid'        => $tx_hash,
+                            'xchain_qty'  => $xcpd_quantity_sat,
+                            'parsed_qty'  => $parsed_quantity_sat,
+                            'asset'       => $send['asset'],
+                            'destination' => $send['destination'],
+                        ]);
+
+                        // keep the bitcoin the same, but reset the asset quantity to 0
+                        $modified_tx['counterpartyTx']['quantity'] = 0;
+                        // set all values to 0
+                        $modified_tx['values'] = collect($modified_tx['values'])->map(function($value, $k) {
+                            return 0;
+                        })->toArray();
+                    }
 
 
                     // check asset
@@ -141,14 +157,14 @@ class ValidateConfirmedCounterpartydTxJob
 
         } else if ($is_valid === true) {
             // valid send - return it
-            $data['tx']['counterpartyTx']['validated'] = true;
+            $modified_tx['counterpartyTx']['validated'] = true;
 
             // handle the parsed tx now
             $block = $this->block_repository->findByID($data['block_id']);
             if (!$block) { throw new Exception("Block not found: {$data['block_id']}", 1); }
 
             try {
-                $this->events->fire('xchain.tx.confirmed', [$data['tx'], $data['confirmations'], $data['block_seq'], $block]);
+                $this->events->fire('xchain.tx.confirmed', [$modified_tx, $data['confirmations'], $data['block_seq'], $block]);
             } catch (Exception $e) {
                 EventLog::logError('error.confirmingTx', $e);
                 usleep(500000); // sleep 0.5 seconds to prevent runaway errors
