@@ -7,8 +7,10 @@ use App\Http\Controllers\API\Base\APIController;
 use App\Http\Requests\API\Monitor\CreateMonitorRequest;
 use App\Http\Requests\API\Monitor\UpdateMonitorRequest;
 use App\Repositories\MonitoredAddressRepository;
+use App\Repositories\NotificationRepository;
 use Exception;
 use Illuminate\Contracts\Auth\Guard;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Tokenly\LaravelApiProvider\Helpers\APIControllerHelper;
 use Tokenly\LaravelEventLog\Facade\EventLog;
@@ -75,9 +77,25 @@ class MonitorController extends APIController {
      * @param  int  $id
      * @return Response
      */
-    public function destroy(APIControllerHelper $helper, MonitoredAddressRepository $address_respository, $id)
+    public function destroy(APIControllerHelper $helper, MonitoredAddressRepository $monitored_address_respository, NotificationRepository $notification_repository, Guard $auth, $monitored_address_uuid)
     {
-        return $helper->destroy($address_respository, $id);
+        $user = $auth->getUser();
+        if (!$user) { throw new Exception("User not found", 1); }
+
+        return DB::transaction(function() use ($helper, $monitored_address_respository, $notification_repository, $monitored_address_uuid, $user) {
+            // get the monitor
+            $monitor = $monitored_address_respository->findByUuid($monitored_address_uuid);
+
+            // archive all notifications first
+            $notification_repository->findByMonitoredAddressId($monitor['id'])->each(function($notification) use ($notification_repository) {
+                $notification_repository->archive($notification);
+            });
+
+            // delete the monitor
+            EventLog::log('monitor.deleteMonitor', $monitor->serializeForAPI());
+            return $helper->destroy($monitored_address_respository, $monitored_address_uuid, $user['id']);
+        });
+
     }
 
 }
