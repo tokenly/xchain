@@ -56,7 +56,7 @@ class ReconcileAccountsCommand extends Command {
     protected function getOptions()
     {
         return [
-            // ['inactive', 'i', InputOption::VALUE_NONE, 'Include inactive accounts'],
+            ['compact', 'c', InputOption::VALUE_NONE, 'Show multiple addresses in compact format'],
         ];
     }
 
@@ -78,6 +78,7 @@ class ReconcileAccountsCommand extends Command {
         $asset_info_cache     = app('Tokenly\CounterpartyAssetInfoCache\Cache');
 
         $payment_address_uuid = $this->input->getArgument('payment-address-uuid');
+        $is_compact           = !!$this->input->getOption('compact');
 
         if ($payment_address_uuid) {
             $payment_address = $payment_address_repo->findByUuid($payment_address_uuid);
@@ -138,9 +139,13 @@ class ReconcileAccountsCommand extends Command {
             // compare
             $differences = $this->buildDifferences($combined_xchain_balances, $daemon_balances);
             if ($differences['any']) {
-                $this->comment("Differences found for {$payment_address['address']} ({$payment_address['uuid']})");
-                $this->line(json_encode($differences, 192));
-                $this->line('');
+                if ($is_compact) {
+                    $this->line($payment_address['uuid']);
+                } else {
+                    $this->comment("Differences found for {$payment_address['address']} ({$payment_address['uuid']})");
+                    $this->line(json_encode($differences, 192));
+                    $this->line('');
+                }
             } else {
                 Log::debug("no differences for {$payment_address['address']} ({$payment_address['uuid']})");
 

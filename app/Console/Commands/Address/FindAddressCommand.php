@@ -72,7 +72,7 @@ class FindAddressCommand extends Command {
             $this->info("found {$payment_addresses->count()} address".($payment_addresses->count() > 1 ? "es" : ""));
 
             $payment_addresses->each(function($payment_address) {
-                $this->comment("Address {$payment_address['address']} ({$payment_address['uuid']})");
+                $this->comment("Address {$payment_address['address']} (UUID: {$payment_address['uuid']} ID: {$payment_address['id']})");
             });
         });
 
