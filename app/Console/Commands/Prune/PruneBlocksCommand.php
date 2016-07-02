@@ -38,7 +38,7 @@ class PruneBlocksCommand extends Command {
     protected function getArguments()
     {
         return [
-            ['blocks', InputArgument::OPTIONAL, 'Number of blocks to keep', 300],
+            ['blocks', InputArgument::OPTIONAL, 'Number of blocks to keep', 600],
         ];
     }
 

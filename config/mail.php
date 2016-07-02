@@ -15,7 +15,7 @@ return [
 	|
 	*/
 
-	'driver' => 'smtp',
+	'driver' => env('MAIL_DRIVER', 'mandrill'),
 
 	/*
 	|--------------------------------------------------------------------------
@@ -54,7 +54,7 @@ return [
 	|
 	*/
 
-	'from' => ['address' => null, 'name' => null],
+	'from' => ['address' => env('EMAIL_FROM_EMAIL', 'no-reply@tokenly.com'), 'name' => env('EMAIL_FROM_NAME', 'XChain')],
 
 	/*
 	|--------------------------------------------------------------------------
@@ -119,6 +119,6 @@ return [
 	|
 	*/
 
-	'pretend' => false,
+	'pretend' => env('EMAIL_PRETEND', false),
 
 ];

@@ -66,7 +66,9 @@ class Kernel extends ConsoleKernel {
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('xchain:prune-transactions')->daily();
+        $schedule->command('xchain:prune-blocks')->daily();
 
+        $schedule->command('xchain:reconcile-accounts -l -e devon@tokenly.com')->cron('* */4 * * * *')->withoutOverlapping();
     }
 
 }
