@@ -68,7 +68,7 @@ class Kernel extends ConsoleKernel {
         $schedule->command('xchain:prune-transactions')->daily();
         $schedule->command('xchain:prune-blocks')->daily();
 
-        $schedule->command('xchain:reconcile-accounts -l -e devon@tokenly.com')->cron('* */4 * * * *')->withoutOverlapping();
+        $schedule->command('xchain:reconcile-accounts -l -e devon@tokenly.com')->cron('15 */4 * * * *')->withoutOverlapping();
     }
 
 }
