@@ -170,7 +170,7 @@ class ReconcileAccountsCommand extends Command {
             Mail::raw($mail_body, function($message) use ($email, $date, $summary, $results) {
                 $message
                     ->to($email)
-                    ->subject('XChain Reconciliation Report for '.$date.'- '.$summary)
+                    ->subject('['.env('APP_SERVER','unknown').'] XChain Reconciliation Report for '.$date.'- '.$summary)
                     ->from('no-replay@tokenly.com', 'XChain Reconciler')
                     ->attachData(json_encode($results, 192), 'unreconciledAddresses.json', ['mime' => 'application/json'])
                     ;
