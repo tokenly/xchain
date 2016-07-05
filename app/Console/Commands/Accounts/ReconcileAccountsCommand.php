@@ -91,7 +91,7 @@ class ReconcileAccountsCommand extends Command {
         if ($payment_address_uuid) {
             $payment_address = $payment_address_repo->findByUuid($payment_address_uuid);
             if (!$payment_address) { throw new Exception("Payment address not found", 1); }
-            $payment_addresses = [$payment_address];
+            $payment_addresses = collect([$payment_address]);
         } else {
             $payment_addresses = $payment_address_repo->findAll();
         }
