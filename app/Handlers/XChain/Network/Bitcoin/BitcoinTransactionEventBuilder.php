@@ -61,36 +61,14 @@ class BitcoinTransactionEventBuilder
                 $parsed_transaction_data['destinations']       = $xcp_data['destinations'];
 
                 if ($xcp_data['type'] === 'send') {
-                    $is_divisible = $this->asset_cache->isDivisible($xcp_data['asset']);
-
-                    // if the asset info doesn't exist, assume it is divisible
-                    if ($is_divisible === null) { $is_divisible = true; }
-
-                    if ($is_divisible) {
-                        $quantity_sat   = $xcp_data['quantity'];
-                        $quantity_float = CurrencyUtil::satoshisToValue($xcp_data['quantity']);
-                    } else {
-                        $quantity_sat   = CurrencyUtil::valueToSatoshis($xcp_data['quantity']);
-                        $quantity_float = intval($xcp_data['quantity']);
-                    }
-                    $xcp_data['quantity']    = $quantity_float;
-                    $xcp_data['quantitySat'] = $quantity_sat;
-
-                    $destination = $xcp_data['destinations'][0];
-                    $parsed_transaction_data['values']     = [$destination => $quantity_float];
-                    $parsed_transaction_data['asset']      = $xcp_data['asset'];
-
-                    // dustSize
-                    // dustSizeSat
-                    list($sources, $quantity_by_destination) = $this->extractSourcesAndDestinations($bitcoin_transaction_data);
-                    $dust_size_float = (isset($quantity_by_destination[$destination]) ? $quantity_by_destination[$destination] : 0);
-
-                    $xcp_data['dustSize'] = $dust_size_float;
-                    $xcp_data['dustSizeSat'] = CurrencyUtil::valueToSatoshis($dust_size_float);
+                    $parsed_transaction_data = $this->buildParsedTransactionData_send($bitcoin_transaction_data, $xcp_data, $parsed_transaction_data);
+                } else if ($xcp_data['type'] === 'issuance') {
+                    $parsed_transaction_data = $this->buildParsedTransactionData_issuance($bitcoin_transaction_data, $xcp_data, $parsed_transaction_data);
+                } else {
+                    // default
+                    $parsed_transaction_data['counterpartyTx'] = $xcp_data;
                 }
 
-                // Log::debug("\$xcp_data=".json_encode($xcp_data, 192));
-                $parsed_transaction_data['counterpartyTx'] = $xcp_data;
 
 
 
@@ -126,6 +104,74 @@ class BitcoinTransactionEventBuilder
 
     }
 
+    protected function buildParsedTransactionData_send($bitcoin_transaction_data, $xcp_data, $parsed_transaction_data) {
+        $is_divisible = $this->asset_cache->isDivisible($xcp_data['asset']);
+
+        // if the asset info doesn't exist, assume it is divisible
+        if ($is_divisible === null) { $is_divisible = true; }
+
+        if ($is_divisible) {
+            $quantity_sat   = $xcp_data['quantity'];
+            $quantity_float = CurrencyUtil::satoshisToValue($xcp_data['quantity']);
+        } else {
+            $quantity_sat   = CurrencyUtil::valueToSatoshis($xcp_data['quantity']);
+            $quantity_float = intval($xcp_data['quantity']);
+        }
+        $xcp_data['quantity']    = $quantity_float;
+        $xcp_data['quantitySat'] = $quantity_sat;
+
+        $destination = $xcp_data['destinations'][0];
+        $parsed_transaction_data['values']     = [$destination => $quantity_float];
+        $parsed_transaction_data['asset']      = $xcp_data['asset'];
+
+        // dustSize
+        // dustSizeSat
+        list($sources, $quantity_by_destination) = $this->extractSourcesAndDestinations($bitcoin_transaction_data);
+        $dust_size_float = (isset($quantity_by_destination[$destination]) ? $quantity_by_destination[$destination] : 0);
+
+        $xcp_data['dustSize'] = $dust_size_float;
+        $xcp_data['dustSizeSat'] = CurrencyUtil::valueToSatoshis($dust_size_float);
+
+        $parsed_transaction_data['counterpartyTx'] = $xcp_data;
+
+        return $parsed_transaction_data;
+    }
+
+    protected function buildParsedTransactionData_issuance($bitcoin_transaction_data, $xcp_data, $parsed_transaction_data) {
+        $is_divisible = $this->asset_cache->isDivisible($xcp_data['asset']);
+
+        // if the asset info doesn't exist, assume it is divisible
+        if ($is_divisible === null) { $is_divisible = true; }
+        echo "\$is_divisible: ".json_encode($is_divisible, 192)."\n";
+
+        if ($is_divisible) {
+            $quantity_sat   = $xcp_data['quantity'];
+            $quantity_float = CurrencyUtil::satoshisToValue($xcp_data['quantity']);
+        } else {
+            $quantity_sat   = CurrencyUtil::valueToSatoshis($xcp_data['quantity']);
+            $quantity_float = intval($xcp_data['quantity']);
+        }
+        $xcp_data['quantity']    = $quantity_float;
+        $xcp_data['quantitySat'] = $quantity_sat;
+
+        // for an issuance, there is no source 
+        //   and we assign the source to the destination
+        $destination = $xcp_data['sources'][0];
+        $parsed_transaction_data['values']     = [$destination => $quantity_float];
+        $parsed_transaction_data['asset']      = $xcp_data['asset'];
+        $xcp_data['sources'] = [];
+        $xcp_data['destinations'] = [$destination];
+        $parsed_transaction_data['sources'] = [];
+        $parsed_transaction_data['destinations'] = [$destination];
+
+        // dustSize
+        $xcp_data['dustSize'] = 0;
+        $xcp_data['dustSizeSat'] = 0;
+
+        $parsed_transaction_data['counterpartyTx'] = $xcp_data;
+
+        return $parsed_transaction_data;
+    }
 
     protected function extractSourcesAndDestinations($tx) {
         $sources_map = [];

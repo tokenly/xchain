@@ -42,6 +42,50 @@ class AccountUpdaterTest extends TestCase {
 
     }
 
+    public function testIssuanceTransactionUpdatesAccount() {
+        $user = $this->app->make('\UserHelper')->createSampleUser();
+
+        $address = '1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j';
+        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user, ['address' => $address, 'private_key_token' => '',]);
+        $my_address = $payment_address['address'];
+        $default_account = AccountHandler::getAccount($payment_address);
+
+        // test balances before
+        $ledger_entry_repo = app('App\Repositories\LedgerEntryRepository');
+        $balances = $ledger_entry_repo->accountBalancesByAsset($default_account, null);
+        PHPUnit::assertEquals(1, $balances['confirmed']['BTC']);
+
+
+        // $tx_helper = app('SampleTransactionsHelper');
+        // $bitcoin_data = $tx_helper->loadSampleTransaction('issuance01-raw.json', []);
+        // $builder = app('App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionEventBuilder');
+        // $ts = time() * 1000;
+        // $parsed_data = $builder->buildParsedTransactionData($bitcoin_data, $ts);
+        // echo "\$parsed_data: ".json_encode($parsed_data, 192)."\n";
+
+        // build and send the issuance transaction
+        $tx_helper = app('SampleTransactionsHelper');
+        $sample_txid_offset = 101;
+        $parsed_transaction = $tx_helper->loadSampleTransaction('issuance01.json', ['txid' => str_repeat('5', 60).sprintf('%04d', $sample_txid_offset)]);
+        $this->sendTransactionWithConfirmations($parsed_transaction, 0);
+
+        // test balances after
+        $ledger_entry_repo = app('App\Repositories\LedgerEntryRepository');
+        $balances = $ledger_entry_repo->accountBalancesByAsset($default_account, null);
+        // echo "\$balances: ".json_encode($balances, 192)."\n";
+        PHPUnit::assertEquals(1409527.13, $balances['unconfirmed']['LTBCOIN']);
+
+        // confirm it
+        $this->sendTransactionWithConfirmations($parsed_transaction, 2, true);
+
+
+        // test balances after
+        $ledger_entry_repo = app('App\Repositories\LedgerEntryRepository');
+        $balances = $ledger_entry_repo->accountBalancesByAsset($default_account, null);
+        PHPUnit::assertEquals(1409527.13, $balances['confirmed']['LTBCOIN']);
+    }
+
+
     // ------------------------------------------------------------------------
 
 
@@ -83,15 +127,15 @@ class AccountUpdaterTest extends TestCase {
         return $parsed_tx;
     }
 
-    protected function sendTransactionWithConfirmations($parsed_tx, $confirmations) {
+    protected function sendTransactionWithConfirmations($parsed_tx, $confirmations, $confirm_counterparty_tx=null) {
         if ($confirmations == 0) {
             Event::fire('xchain.tx.received', [$parsed_tx, 0, null, null, ]);
         } else {
-            $this->sendConfirmationEvents($confirmations, [$parsed_tx]);
+            $this->sendConfirmationEvents($confirmations, [$parsed_tx], $confirm_counterparty_tx);
         }
     }
     
-    protected function sendConfirmationEvents($confirmations, $parsed_txs) {
+    protected function sendConfirmationEvents($confirmations, $parsed_txs, $confirm_counterparty_tx=null) {
         $block_height = 333299 + $confirmations;
         $block = app('SampleBlockHelper')->createSampleBlock('default_parsed_block_01.json', ['hash' => 'BLOCKHASH'.$block_height, 'height' => $block_height, 'parsed_block' => ['height' => $block_height]]);
 
@@ -99,6 +143,11 @@ class AccountUpdaterTest extends TestCase {
 
         foreach($parsed_txs as $offset => $parsed_tx) {
             $parsed_tx['confirmations'] = $confirmations;
+
+            if ($confirm_counterparty_tx === true) {
+                $parsed_tx['counterpartyTx']['validated'] = true;
+            }
+
             Event::fire('xchain.tx.confirmed', [$parsed_tx, $confirmations, 100+$offset, $block, $block_event_context]);
         }
     }

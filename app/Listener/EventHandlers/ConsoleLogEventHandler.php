@@ -43,6 +43,15 @@ class ConsoleLogEventHandler
                     'asset' => $xcp_data['asset'],
                     'txid'  => $tx_event['txid'],
                 ]);
+            } else if ($xcp_data['type'] == 'issuance') {
+                // $this->wlog("from: {$xcp_data['sources'][0]} to {$xcp_data['destinations'][0]}: {$xcp_data['quantity']} {$xcp_data['asset']} [{$tx_event['txid']}]");
+                EventLog::info('xcp.issuance', [
+                    'type'    => $xcp_data['type'],
+                    'address' => $xcp_data['destinations'][0],
+                    'qty'     => $xcp_data['quantity'],
+                    'asset'   => $xcp_data['asset'],
+                    'txid'    => $tx_event['txid'],
+                ]);
             } else {
                 EventLog::info('xcp.other', [
                     'type'  => $xcp_data['type'],
