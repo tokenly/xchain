@@ -39,6 +39,8 @@ class Kernel extends ConsoleKernel {
         \App\Console\Commands\Accounts\ForceSyncAddressAccountsCommand::class,
         \App\Console\Commands\Accounts\CloseAccountCommand::class,
         \App\Console\Commands\Accounts\BalanceLedgerCommand::class,
+        \App\Console\Commands\Accounts\ExpirePendingTransactionsCommand::class,
+        
 
         // address
         \App\Console\Commands\Address\FindAddressCommand::class,
@@ -47,6 +49,7 @@ class Kernel extends ConsoleKernel {
         \App\Console\Commands\TXO\ReconcileTXOsCommand::class,
         \App\Console\Commands\TXO\ShowTXOsCommand::class,
         \App\Console\Commands\TXO\PruneSpentUTXOs::class,
+        \App\Console\Commands\TXO\TXOsCacheCommand::class,
 
         // vendor commands
         \Tokenly\ConsulHealthDaemon\Console\ConsulHealthMonitorCommand::class,

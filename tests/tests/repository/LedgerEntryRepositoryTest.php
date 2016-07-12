@@ -2,6 +2,8 @@
 
 use App\Models\Account;
 use App\Models\LedgerEntry;
+use App\Providers\Accounts\Facade\AccountHandler;
+use Carbon\Carbon;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use \PHPUnit_Framework_Assert as PHPUnit;
 
@@ -254,6 +256,79 @@ class LedgerEntryRepositoryTest extends TestCase {
         $this->assertFound([1], $entries, $repo->findByTXID($txid_1,     $address['id'], null,                   LedgerEntry::DIRECTION_SEND));
         $this->assertFound([2,3,4], $entries, $repo->findByTXID($txid_1, $address['id'], null,                   LedgerEntry::DIRECTION_OTHER));
 
+    }
+
+    public function testFindUnreconciledTransactionEntries() {
+        $helper = $this->createRepositoryTestHelper();
+        $helper->cleanup();
+
+        $address = app('PaymentAddressHelper')->createSamplePaymentAddress();
+        $account = app('AccountHelper')->newSampleAccount($address);
+        $txids = [];
+        for ($i=0; $i < 99; $i++) { 
+            $txids[] = 'deadbeef00000000000000000000000000000000000000000000000000000'.sprintf('%03d', $i);
+        }
+
+        // add entries
+        $entries = [];
+        $repo = app('App\Repositories\LedgerEntryRepository');
+        $entries[] = $repo->addCredit(5,   'BTC',     $account,     LedgerEntry::CONFIRMED,   LedgerEntry::DIRECTION_RECEIVE, $txids[0]);
+        $entries[] = $repo->addCredit(10,  'BTC',     $account,     LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txids[1]);
+        $entries[] = $repo->addCredit(11,  'BTC',     $account,     LedgerEntry::SENDING,     LedgerEntry::DIRECTION_RECEIVE, $txids[2]);
+        $entries[] = $repo->addDebit (11,  'BTC',     $account,     LedgerEntry::SENDING,     LedgerEntry::DIRECTION_RECEIVE, $txids[2]);
+        $entries[] = $repo->addCredit(12,  'BTC',     $account,     LedgerEntry::SENDING,     LedgerEntry::DIRECTION_RECEIVE, $txids[3]);
+
+
+        // find unreconciled transaction entries
+        $results = $repo->findUnreconciledTransactionEntries($account);
+        PHPUnit::assertCount(2, $results);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(10), $results[0]['total']);
+        PHPUnit::assertEquals($txids[1], $results[0]['txid']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(12), $results[1]['total']);
+        PHPUnit::assertEquals($txids[3], $results[1]['txid']);
+    }
+
+    public function testExpireTimedOutTransactionEntries() {
+        $helper = $this->createRepositoryTestHelper();
+        $helper->cleanup();
+
+        $address = app('PaymentAddressHelper')->createSamplePaymentAddressWithoutInitialBalances();
+        $account = AccountHandler::getAccount($address);
+        $txids = [];
+        for ($i=0; $i < 99; $i++) { 
+            $txids[] = 'deadbeef00000000000000000000000000000000000000000000000000000'.sprintf('%03d', $i);
+        }
+
+        // add entries
+        $entries = [];
+        $repo = app('App\Repositories\LedgerEntryRepository');
+        $entries[] = $repo->addCredit(5,   'BTC',     $account,     LedgerEntry::CONFIRMED,   LedgerEntry::DIRECTION_RECEIVE, $txids[0]);
+        $entries[] = $repo->addCredit(10,  'BTC',     $account,     LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txids[1]);
+        $entries[] = $repo->addCredit(11,  'BTC',     $account,     LedgerEntry::SENDING,     LedgerEntry::DIRECTION_RECEIVE, $txids[2]);
+        $entries[] = $repo->addDebit (11,  'BTC',     $account,     LedgerEntry::SENDING,     LedgerEntry::DIRECTION_RECEIVE, $txids[2]);
+        $entries[] = $repo->addCredit(12,  'BTC',     $account,     LedgerEntry::SENDING,     LedgerEntry::DIRECTION_RECEIVE, $txids[3]);
+
+        // time out all the entries
+        DB::table('ledger_entries')
+            ->where('payment_address_id', $address['id'])
+            ->update(['created_at' => Carbon::now()->subHours(5)->toDateTimeString()]);
+
+        // make txids 0 and 2 legit
+        $transaction_helper = app('SampleTransactionsHelper');
+        $transaction = $transaction_helper->createSampleTransaction('sample_btc_parsed_01.json', ['txid' => $txids[0]]);
+        $transaction = $transaction_helper->createSampleTransaction('sample_btc_parsed_01.json', ['txid' => $txids[2]]);
+
+
+        // call the console command
+        $this->app['Illuminate\Contracts\Console\Kernel']->call('xchain:expire-pending-transactions', ['payment-address-uuid' => $address['uuid']]);
+
+        // only 3 entries remain
+        $all_entries = $repo->findByAccount($account);
+        PHPUnit::assertCount(3, $all_entries);
+
+        // find NO unreconciled transaction entries
+        $results = $repo->findUnreconciledTransactionEntries($account);
+        PHPUnit::assertEmpty($results);
     }
 
 

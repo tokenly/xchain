@@ -293,6 +293,26 @@ class LedgerEntryRepository extends APIRepository
         return $query->delete();
     }
 
+    public function findUnreconciledTransactionEntries(Account $account, $type=null) {
+        $account_id = $account['id'];
+
+        if ($type === null) {
+            $types = [LedgerEntry::UNCONFIRMED, LedgerEntry::SENDING, ];
+        } else {
+            $types = [LedgerEntry::validateTypeInteger($type)];
+        }
+
+        $query = $this->prototype_model
+            ->where('account_id', $account_id)
+            ->whereIn('type', $types)
+            ->groupBy('txid', 'type')
+            ->havingRaw('SUM(amount) != 0')
+            ->select('txid', 'type', DB::raw('SUM(amount) AS total') );
+
+        return 
+            $query->get();
+    }
+
     ////////////////////////////////////////////////////////////////////////
     
     protected function addEntryForAccount($float_amount, $asset, Account $account, $type, $direction, $txid=null, $api_call_id=null) {
