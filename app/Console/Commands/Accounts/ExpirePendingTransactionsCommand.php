@@ -166,9 +166,19 @@ class ExpirePendingTransactionsCommand extends Command {
             if ($any_timed_out) {
                 try {
                     $loaded_transaction = $transaction_store->getTransaction($txid);
+                    Log::debug("$txid \$loaded_transaction:".json_encode(!!$loaded_transaction, 192));
+
+                    if ($loaded_transaction AND $loaded_transaction['is_mempool']) {
+                        // force a reload from bitcoind
+                        Log::debug("loading mempool transaction $txid from bitcoind");
+                        $loaded_transaction = $transaction_store->getParsedTransactionFromBitcoind($txid);
+                        Log::debug("$txid after mempool reload: \$loaded_transaction:".json_encode(!!$loaded_transaction, 192));
+                    }
                 } catch (Exception $e) {
                     // -5 is returned when bitcoind knows nothing about the transaction
-                    if ($e->getCode() != -5) {
+                    if ($e->getCode() == -5) {
+                        Log::debug("txid $txid was not found by bitcoind");
+                    } else {
                         EventLog::logError('expirePending.error', $e, ['txid' => $txid, 'paymentAddressId' => $payment_address['id']]);
                         throw $e;
                     }
