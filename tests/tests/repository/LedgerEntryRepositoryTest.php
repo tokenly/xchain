@@ -289,6 +289,16 @@ class LedgerEntryRepositoryTest extends TestCase {
     }
 
     public function testExpireTimedOutTransactionEntries() {
+        // install mocks
+        app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this, ['getrawtransaction' => function($txid) {
+            if (substr($txid, 0, 12) == 'deadbeef0000') {
+                // throw a -5 error
+                throw new Exception("Bitcoind could not find this txid", -5);
+            }
+            // everything else is ok
+            return '000000001';
+        }]);
+
         $helper = $this->createRepositoryTestHelper();
         $helper->cleanup();
 
