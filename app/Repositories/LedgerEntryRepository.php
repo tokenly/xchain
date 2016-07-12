@@ -293,7 +293,7 @@ class LedgerEntryRepository extends APIRepository
         return $query->delete();
     }
 
-    public function findUnreconciledTransactionEntries(Account $account, $type=null) {
+    public function findTransactionIDsByType(Account $account, $type=null) {
         $account_id = $account['id'];
 
         if ($type === null) {
@@ -306,8 +306,7 @@ class LedgerEntryRepository extends APIRepository
             ->where('account_id', $account_id)
             ->whereIn('type', $types)
             ->groupBy('txid', 'type')
-            ->havingRaw('SUM(amount) != 0')
-            ->select('txid', 'type', DB::raw('SUM(amount) AS total') );
+            ->select('txid', 'type', 'created_at', DB::raw('SUM(amount) AS total') );
 
         return 
             $query->get();

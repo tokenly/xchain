@@ -258,7 +258,7 @@ class LedgerEntryRepositoryTest extends TestCase {
 
     }
 
-    public function testFindUnreconciledTransactionEntries() {
+    public function testFindTransactionIDsByType() {
         $helper = $this->createRepositoryTestHelper();
         $helper->cleanup();
 
@@ -280,12 +280,12 @@ class LedgerEntryRepositoryTest extends TestCase {
 
 
         // find unreconciled transaction entries
-        $results = $repo->findUnreconciledTransactionEntries($account);
-        PHPUnit::assertCount(2, $results);
+        $results = $repo->findTransactionIDsByType($account);
+        PHPUnit::assertCount(3, $results, json_encode($results, 192));
         PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(10), $results[0]['total']);
         PHPUnit::assertEquals($txids[1], $results[0]['txid']);
-        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(12), $results[1]['total']);
-        PHPUnit::assertEquals($txids[3], $results[1]['txid']);
+        PHPUnit::assertEquals($txids[2], $results[1]['txid']);
+        PHPUnit::assertEquals($txids[3], $results[2]['txid']);
     }
 
     public function testExpireTimedOutTransactionEntries() {
@@ -326,9 +326,9 @@ class LedgerEntryRepositoryTest extends TestCase {
         $all_entries = $repo->findByAccount($account);
         PHPUnit::assertCount(3, $all_entries);
 
-        // find NO unreconciled transaction entries
-        $results = $repo->findUnreconciledTransactionEntries($account);
-        PHPUnit::assertEmpty($results);
+        // find only the legit send left (txids[2])
+        $results = $repo->findTransactionIDsByType($account);
+        PHPUnit::assertCount(1, $results);
     }
 
 

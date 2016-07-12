@@ -149,9 +149,11 @@ class ExpirePendingTransactionsCommand extends Command {
         $timed_out_txids = [];
 
         // look for unconfirmed incoming transactions
-        $results = $ledger->findUnreconciledTransactionEntries($default_account);
+        $results = $ledger->findTransactionIDsByType($default_account);
         foreach($results as $result) {
             $txid = $result['txid'];
+            if (!$txid) { continue; }
+
             $ledger_entries = $ledger->findByTXID($txid, $payment_address['id'], $result['type']);
             $any_timed_out = false;
             foreach ($ledger_entries as $ledger_entry) {
@@ -165,9 +167,12 @@ class ExpirePendingTransactionsCommand extends Command {
                 try {
                     $loaded_transaction = $transaction_store->getTransaction($txid);
                 } catch (Exception $e) {
+                    // -5 is returned when bitcoind knows nothing about the transaction
                     if ($e->getCode() != -5) {
                         EventLog::logError('expirePending.error', $e, ['txid' => $txid, 'paymentAddressId' => $payment_address['id']]);
+                        throw $e;
                     }
+
                     $loaded_transaction = false;
                 }
                 if (!$loaded_transaction) {
