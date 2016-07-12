@@ -93,12 +93,8 @@ class ValidateConfirmedCounterpartydTxJob
                             'destination' => $send['destination'],
                         ]);
 
-                        // keep the bitcoin the same, but reset the asset quantity to 0
-                        $modified_tx['counterpartyTx']['quantity'] = 0;
-                        // set all values to 0
-                        $modified_tx['values'] = collect($modified_tx['values'])->map(function($value, $k) {
-                            return 0;
-                        })->toArray();
+                        // reset to zero, but keep bitcoin transaction
+                        $modified_tx = $this->zeroTransactionQuantity($modified_tx);
                     }
 
 
@@ -156,20 +152,7 @@ class ValidateConfirmedCounterpartydTxJob
             
 
         } else if ($is_valid === true) {
-            // valid send - return it
-            $modified_tx['counterpartyTx']['validated'] = true;
-
-            // handle the parsed tx now
-            $block = $this->block_repository->findByID($data['block_id']);
-            if (!$block) { throw new Exception("Block not found: {$data['block_id']}", 1); }
-
-            try {
-                $this->events->fire('xchain.tx.confirmed', [$modified_tx, $data['confirmations'], $data['block_seq'], $block]);
-            } catch (Exception $e) {
-                EventLog::logError('error.confirmingTx', $e);
-                usleep(500000); // sleep 0.5 seconds to prevent runaway errors
-                throw $e;
-            }
+            $this->fireCompletedTransactionEvent($modified_tx, $data);
 
             // if all went well, delete the job
             $job->delete();
@@ -192,9 +175,15 @@ class ValidateConfirmedCounterpartydTxJob
                         'txid'     => $tx_hash,
                         'attempts' => $attempts,
                     ]);
+
+                    // reset the counterparty asset quantities to zero, but keep bitcoin transaction (and fee)
+                    $modified_tx = $this->zeroTransactionQuantity($modified_tx);
+                    $this->fireCompletedTransactionEvent($modified_tx, $data);
+
                     $job->delete();
                 } else {
                     $release_time = ($attempts > 2 ? 10 : 2);
+                    if ($attempts > 4) { $release_time = 20; }
                     // Log::debug("Send $tx_hash was not found by counterpartyd after attempt ".$attempts.". Trying again in {$release_time} seconds.");
                     $msg = "Send was not found by counterpartyd after attempt ".$attempts.". Trying again in {$release_time} seconds.";
                     EventLog::debug('counterparty.sendUnconfirmed.retry', [
@@ -208,6 +197,36 @@ class ValidateConfirmedCounterpartydTxJob
                 }
             }
 
+        }
+    }
+
+    protected function zeroTransactionQuantity($tx) {
+        $modified_tx = $tx;
+
+        // keep the bitcoin the same, but reset the asset quantity to 0
+        $modified_tx['counterpartyTx']['quantity'] = 0;
+        // set all values to 0
+        $modified_tx['values'] = collect($modified_tx['values'])->map(function($value, $k) {
+            return 0;
+        })->toArray();
+
+        return $modified_tx;
+    }
+
+    protected function fireCompletedTransactionEvent($modified_tx, $data) {
+        // valid send - return it
+        $modified_tx['counterpartyTx']['validated'] = true;
+
+        // handle the parsed tx now
+        $block = $this->block_repository->findByID($data['block_id']);
+        if (!$block) { throw new Exception("Block not found: {$data['block_id']}", 1); }
+
+        try {
+            $this->events->fire('xchain.tx.confirmed', [$modified_tx, $data['confirmations'], $data['block_seq'], $block]);
+        } catch (Exception $e) {
+            EventLog::logError('error.confirmingTx', $e);
+            usleep(500000); // sleep 0.5 seconds to prevent runaway errors
+            throw $e;
         }
     }
 
