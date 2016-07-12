@@ -166,7 +166,7 @@ class ExpirePendingTransactionsCommand extends Command {
                     $loaded_transaction = $transaction_store->getTransaction($txid);
                 } catch (Exception $e) {
                     if ($e->getCode() != -5) {
-                        EventLog::warn("bitcoind returned error: (".$e->getCode().") ".$e->getMessage());
+                        EventLog::warning("bitcoind returned error: (".$e->getCode().") ".$e->getMessage());
                     }
                     $loaded_transaction = false;
                 }
