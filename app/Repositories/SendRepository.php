@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\PaymentAddress;
 use App\Models\Send;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -58,8 +59,12 @@ class SendRepository implements APIResourceRepositoryContract
         return Send::where('request_id', $request_id)->first();
     }
 
-    public function update(Model $address, $attributes) {
-        return $address->update($attributes);
+    public function findByPaymentAddress(PaymentAddress $payment_address) {
+        return Send::where('payment_address_id', $payment_address['id'])->get();
+    }
+
+    public function update(Model $send, $attributes) {
+        return $send->update($attributes);
     }
     public function updateByUuid($uuid, $attributes) { throw new Exception("Sends cannot be updated", 1); }
 
@@ -68,6 +73,11 @@ class SendRepository implements APIResourceRepositoryContract
     }
     public function deleteByUuid($uuid) { throw new Exception("Sends cannot be deleted", 1); }
 
+    public function deleteByPaymentAddress(PaymentAddress $payment_address) {
+        return 
+            Send::where('payment_address_id', $payment_address['id'])
+            ->delete();
+    }
 
     // locks the send, then executes $func inside the lock
     //   does not modify the passed Send

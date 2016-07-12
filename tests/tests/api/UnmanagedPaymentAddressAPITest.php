@@ -109,6 +109,10 @@ class UnmanagedPaymentAddressAPITest extends TestCase {
         // create a notification for this address
         app('NotificationHelper')->createSampleNotification($loaded_receive_monitor_model);
 
+        // create a send for this address
+        app('SampleSendsHelper')->createSampleSendWithPaymentAddress($payment_address_model);
+        PHPUnit::assertCount(1, app('App\Repositories\SendRepository')->findByPaymentAddress($payment_address_model));
+
 
         // now destroy it
         $api_tester->callAPIWithAuthenticationAndReturnJSONContent('DELETE', '/api/v1/unmanaged/addresses/'.$payment_address_model['uuid'], [], 204);
@@ -123,6 +127,9 @@ class UnmanagedPaymentAddressAPITest extends TestCase {
 
         // check that notifications are gone
         PHPUnit::assertCount(0, app('App\Repositories\NotificationRepository')->findByMonitoredAddressId($original_payment_address_model['id']));
+
+        // check that sends are gone
+        PHPUnit::assertCount(0, app('App\Repositories\SendRepository')->findByPaymentAddress($original_payment_address_model));
     }
 
     public function testAPIErrorsAddUnmanagedPaymentAddress()

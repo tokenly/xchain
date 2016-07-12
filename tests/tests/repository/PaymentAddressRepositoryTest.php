@@ -71,7 +71,7 @@ class PaymentAddressRepositoryTest extends TestCase {
         $controller = app('App\Http\Controllers\API\PaymentAddressController');
         $controller->destroy(
             app('Tokenly\LaravelApiProvider\Helpers\APIControllerHelper'), 
-            $payment_address_repo, $monitor_respository, $account_repository, $ledger_entry_repository, app('App\Repositories\NotificationRepository'), app('App\Repositories\TXORepository'),
+            $payment_address_repo, $monitor_respository, $account_repository, $ledger_entry_repository, app('App\Repositories\NotificationRepository'), app('App\Repositories\TXORepository'), app('App\Repositories\SendRepository'),
             $address['uuid']
         );
 
