@@ -39,12 +39,12 @@ class LedgerEntryRepositoryTest extends TestCase {
 
         $loaded_models = array_values(iterator_to_array($repo->findByAccount($account_one)));
         PHPUnit::assertCount(2, $loaded_models);
-        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(100), $loaded_models[0]['amount']);
-        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(-20), $loaded_models[1]['amount']);
+        PHPUnit::assertEquals(100, $loaded_models[0]['amount']);
+        PHPUnit::assertEquals(-20, $loaded_models[1]['amount']);
 
         $loaded_models = array_values(iterator_to_array($repo->findByAccount($account_two)));
         PHPUnit::assertCount(1, $loaded_models);
-        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(20), $loaded_models[0]['amount']);
+        PHPUnit::assertEquals(20, $loaded_models[0]['amount']);
     }
 
     /**
@@ -102,9 +102,9 @@ class LedgerEntryRepositoryTest extends TestCase {
 
         $loaded_models = array_values(iterator_to_array($repo->findByAccount($account)));
         PHPUnit::assertCount(3, $loaded_models);
-        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(100), $loaded_models[0]['amount']);
-        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(200), $loaded_models[1]['amount']);
-        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(-300), $loaded_models[2]['amount']);
+        PHPUnit::assertEquals(100, $loaded_models[0]['amount']);
+        PHPUnit::assertEquals(200, $loaded_models[1]['amount']);
+        PHPUnit::assertEquals(-300, $loaded_models[2]['amount']);
     }
 
     public function testAccountBalance() {
@@ -282,7 +282,7 @@ class LedgerEntryRepositoryTest extends TestCase {
         // find unreconciled transaction entries
         $results = $repo->findTransactionIDsByType($account);
         PHPUnit::assertCount(3, $results, json_encode($results, 192));
-        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(10), $results[0]['total']);
+        PHPUnit::assertEquals(10, $results[0]['total']);
         PHPUnit::assertEquals($txids[1], $results[0]['txid']);
         PHPUnit::assertEquals($txids[2], $results[1]['txid']);
         PHPUnit::assertEquals($txids[3], $results[2]['txid']);
@@ -339,6 +339,30 @@ class LedgerEntryRepositoryTest extends TestCase {
         // find only the legit send left (txids[2])
         $results = $repo->findTransactionIDsByType($account);
         PHPUnit::assertCount(1, $results);
+    }
+
+
+    public function testLargeIndivisibleAssets() {
+        $helper = $this->createRepositoryTestHelper();
+        $helper->cleanup();
+
+        $account = app('AccountHelper')->newSampleAccount();
+        $txid = 'deadbeef00000000000000000000000000000000000000000000000000000001';
+
+        // add credit
+        $repo = app('App\Repositories\LedgerEntryRepository');
+        // 100,000,000,000
+        $repo->addCredit(100000000000, 'BIGASSET', $account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
+
+        $loaded_models = array_values(iterator_to_array($repo->findByAccount($account)));
+        PHPUnit::assertCount(1, $loaded_models);
+        PHPUnit::assertGreaterThan(0, $loaded_models[0]['amount']);
+        PHPUnit::assertEquals(100000000000, $loaded_models[0]['amount']);
+
+
+        $repo->addCredit(0.00000001, 'BIGASSET', $account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
+        $balances = $repo->accountBalancesByAsset($account, LedgerEntry::CONFIRMED);
+        PHPUnit::assertEquals(100000000000.00000001, $balances['BIGASSET']);
     }
 
 

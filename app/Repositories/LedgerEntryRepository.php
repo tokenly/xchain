@@ -58,8 +58,8 @@ class LedgerEntryRepository extends APIRepository
         return DB::transaction(function() use ($float_amount, $asset, $account, $type, $direction, $txid, $api_call) {
             // ensure sufficient asset balance in account
             $existing_balance = $this->accountBalance($account, $asset, $type, true);
-            if ($existing_balance <= 0 OR $existing_balance < CurrencyUtil::valueToSatoshis($float_amount)) {
-                throw new AccountException('ERR_INSUFFICIENT_FUNDS', 400, "Balance of ".CurrencyUtil::satoshisToValue($existing_balance)." was insufficient to debit $float_amount (".LedgerEntry::typeIntegerToString($type).") $asset from {$account['name']}");
+            if ($existing_balance <= 0 OR $existing_balance < $float_amount) {
+                throw new AccountException('ERR_INSUFFICIENT_FUNDS', 400, "Balance of ".$existing_balance." was insufficient to debit $float_amount (".LedgerEntry::typeIntegerToString($type).") $asset from {$account['name']}");
             }
 
             return $this->addEntryForAccount(0 - $float_amount, $asset, $account, $type, $direction, $txid, $api_call ? $api_call['id'] : null);
@@ -137,11 +137,11 @@ class LedgerEntryRepository extends APIRepository
             $query->where('type', LedgerEntry::validateTypeInteger($type));
         }
 
-        $satoshis_sum = $query->sum('amount');
+        $float_sum = $query->sum('amount');
 
-        if ($in_satoshis) { return $satoshis_sum; }
+        if ($in_satoshis) { return $float_sum; }
 
-        return CurrencyUtil::satoshisToValue($satoshis_sum);
+        return $float_sum;
     }
 
     // if type is not specified:
@@ -161,7 +161,7 @@ class LedgerEntryRepository extends APIRepository
     //    BTC = 0.12
     //    SOUP => 10
     // ]
-    public function accountBalancesByAsset(Account $account, $type, $in_satoshis=false) {
+    public function accountBalancesByAsset(Account $account, $type) {
         $account_id = $account['id'];
 
         $query = $this->prototype_model
@@ -175,7 +175,7 @@ class LedgerEntryRepository extends APIRepository
 
         $results = $query->get();
 
-        $sums = $this->assembleAccountBalances($results, $in_satoshis);
+        $sums = $this->assembleAccountBalances($results);
 
         if ($type !== null) {
             return $sums[LedgerEntry::typeIntegerToString($type)];
@@ -185,7 +185,7 @@ class LedgerEntryRepository extends APIRepository
     }
 
 
-    public function combinedAccountBalancesByAsset(PaymentAddress $payment_address, $type, $in_satoshis=false) {
+    public function combinedAccountBalancesByAsset(PaymentAddress $payment_address, $type) {
         $query = $this->prototype_model
             ->where('payment_address_id', '=', $payment_address['id'])
             ->groupBy('asset', 'type')
@@ -197,7 +197,7 @@ class LedgerEntryRepository extends APIRepository
 
         $results = $query->get();
 
-        $sums = $this->assembleAccountBalances($results, $in_satoshis);
+        $sums = $this->assembleAccountBalances($results);
 
         if ($type !== null) {
             return $sums[LedgerEntry::typeIntegerToString($type)];
@@ -218,7 +218,7 @@ class LedgerEntryRepository extends APIRepository
     //        'LTBCOIN' => 900,
     //   ],
     // ]
-    public function accountBalancesByTXID($txid, $type, $in_satoshis=false) {
+    public function accountBalancesByTXID($txid, $type) {
         $query = $this->prototype_model
             ->where('txid', $txid)
             ->groupBy('account_id', 'asset')
@@ -231,12 +231,7 @@ class LedgerEntryRepository extends APIRepository
 
         $sums = [];
         foreach($results as $result) {
-            if ($in_satoshis) {
-                $value = $result['total_amount'];
-            } else {
-                $value = CurrencyUtil::satoshisToValue($result['total_amount']);
-            }
-
+            $value = $result['total_amount'];
             $sums[$result['account_id']][$result['asset']] = $value;
         }
 
@@ -323,42 +318,23 @@ class LedgerEntryRepository extends APIRepository
             'txid'               => $txid,
             'api_call_id'        => $api_call_id,
 
-            'amount'             => CurrencyUtil::valueToSatoshis($float_amount),
+            'amount'             => $float_amount,
             'asset'              => $asset,
         ];
 
         return $this->create($create_vars);
     }
 
-    protected function assembleAccountBalances($results, $in_satoshis=false) {
+    protected function assembleAccountBalances($results) {
         $sums = array_fill_keys(LedgerEntry::allTypeStrings(), []);
 
         foreach($results as $result) {
-            if ($in_satoshis) {
-                $sums[LedgerEntry::typeIntegerToString($result['type'])][$result['asset']] = $result['total_amount'];
-            } else {
-                $sums[LedgerEntry::typeIntegerToString($result['type'])][$result['asset']] = CurrencyUtil::satoshisToValue($result['total_amount']);
-            }
+            $sums[LedgerEntry::typeIntegerToString($result['type'])][$result['asset']] = $result['total_amount'];
         }
 
         return $sums;
     }
 
-    protected function assembleAccountBalancesWithTXID($results, $in_satoshis=false) {
-        $sums = array_fill_keys(LedgerEntry::allTypeStrings(), []);
-
-        foreach($results as $result) {
-            $txid = $result['txid'];
-            if (!$txid) { $txid = 'none'; }
-            if ($in_satoshis) {
-                $sums[LedgerEntry::typeIntegerToString($result['type'])][$txid][$result['asset']] = $result['total_amount'];
-            } else {
-                $sums[LedgerEntry::typeIntegerToString($result['type'])][$txid][$result['asset']] = CurrencyUtil::satoshisToValue($result['total_amount']);
-            }
-        }
-
-        return $sums;
-    }
 
 
 }

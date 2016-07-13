@@ -16,7 +16,7 @@ class CreateLedgerEntriesTable extends Migration
             $table->increments('id');
             $table->char('uuid', 36)->unique();
 
-            $table->integer('payment_address_id')->unsigned();
+            $table->integer('payment_address_id')->unsigned()->index();
             $table->foreign('payment_address_id')->references('id')->on('payment_address');
 
             $table->integer('type')->unsigned();

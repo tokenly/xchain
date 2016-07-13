@@ -284,11 +284,11 @@ class SendAPITest extends TestCase {
         // accountfour should now have funds moved into sent
         $ledger_entry_repo = app('App\Repositories\LedgerEntryRepository');
 
-        $account_four_balances = $ledger_entry_repo->accountBalancesByAsset($created_accounts[4], null, true); //get in satoshis to avoid float funkyness
+        $account_four_balances = $ledger_entry_repo->accountBalancesByAsset($created_accounts[4], null);
         PHPUnit::assertEquals([
             'unconfirmed' => [],
-            'confirmed'   => ['LTBCOIN' => 999900000000, 'BTC' => 99984570],
-            'sending'     => ['LTBCOIN' =>  100000000, 'BTC' => 15430],
+            'confirmed'   => ['LTBCOIN' => 9999, 'BTC' => 0.99984570],
+            'sending'     => ['LTBCOIN' =>  1, 'BTC' => 0.00015430],
         ], $account_four_balances);        
     }
 
