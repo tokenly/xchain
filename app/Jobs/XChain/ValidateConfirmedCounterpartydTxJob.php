@@ -25,101 +25,33 @@ class ValidateConfirmedCounterpartydTxJob
     }
 
     public function fire($job, $data) {
-        // Log::debug("ValidateConfirmedCounterpartydTxJob called.\ntxid=".json_encode($data['tx']['txid'], 192));
+        $parsed_tx           = $data['tx'];
+        $txid                = $parsed_tx['txid'];
+        $modified_tx         = $parsed_tx;
+        $counterparty_action = $parsed_tx['counterpartyTx']['type'];
 
-        // $data = [
-        //     'tx'            => $parsed_tx,
-        //     'confirmations' => $confirmations,
-        //     'block_seq'     => $block_seq,
-        //     'block_id'      => $block_id,
-        // ];
+        $was_found = false;
+        $is_valid  = null;
+        switch ($counterparty_action) {
+            case 'send':
+                list($was_found, $is_valid, $modified_tx) = $this->validateSend($parsed_tx, $data);
+                break;
 
-        // {
-        //     "destination": "1H42mKvwutzE4DAip57tkAc9KEKMGBD2bB",
-        //     "source": "1MFHQCPGtcSfNPXAS6NryWja3TbUN9239Y",
-        //     "quantity": 1050000000000,
-        //     "block_index": 355675,
-        //     "tx_hash": "5cbaf7995e7a8337861a30a65f5d751550127f63fccdb8a9b307efc26e6aa28b",
-        //     "tx_index": 234609,
-        //     "status": "valid",
-        //     "asset": "LTBCOIN"
-        // }
-
-        // validate from counterpartyd
-        // xcp_command -c get_sends -p '{"filters": {"field": "tx_hash", "op": "==", "value": "address"}}'
-        $parsed_tx   = $data['tx'];
-        $tx_hash     = $parsed_tx['txid'];
-        $modified_tx = $parsed_tx;
-
-        try {
-            $sends = $this->xcpd_client->get_sends(['filters' => ['field' => 'tx_hash', 'op' => '==', 'value' => $tx_hash]]);
-
-            // not valid by default
-            $is_valid = false;
-
-            // not found by default
-            $was_found = false;
-        } catch (Exception $e) {
-            EventLog::logError('error.counterparty', $e);
-
-            // received no result from counterparty
-            $sends = null;
-            $is_valid = null;
-        }
-
-        if ($sends) {
-            $send = $sends[0];
-            if ($send) {
-                $is_valid = true;
-                $was_found = true;
-                try {
-                    if ($send['destination'] != $parsed_tx['destinations'][0]) { throw new Exception("mismatched destination: {$send['destination']} (xcpd) != {$parsed_tx['destinations'][0]} (parsed)", 1); }
-
-                    $xcpd_quantity_sat = $send['quantity'];
-
-                    // if token is not divisible, adjust to satoshis
-                    $is_divisible = $this->asset_cache->isDivisible($send['asset']);
-                    if (!$is_divisible) { $xcpd_quantity_sat = CurrencyUtil::valueToSatoshis($xcpd_quantity_sat); }
-
-
-                    // compare send quantity
-                    $parsed_quantity_sat = CurrencyUtil::valueToSatoshis($parsed_tx['values'][$send['destination']]);
-                    if ($xcpd_quantity_sat != $parsed_quantity_sat) {
-                        EventLog::warning('counterparty.mismatchedQuantity', [
-                            'txid'        => $tx_hash,
-                            'xchain_qty'  => $xcpd_quantity_sat,
-                            'parsed_qty'  => $parsed_quantity_sat,
-                            'asset'       => $send['asset'],
-                            'destination' => $send['destination'],
-                        ]);
-
-                        // reset to zero, but keep bitcoin transaction
-                        $modified_tx = $this->zeroTransactionQuantity($modified_tx);
-                    }
-
-
-                    // check asset
-                    if ($send['asset'] != $parsed_tx['asset']) { throw new Exception("mismatched asset: {$send['asset']} (xcpd) != {$parsed_tx['asset']} (parsed)", 1); }
-
-                    // Log::debug("Send $tx_hash was confirmed by counterpartyd.  {$xcpd_quantity_sat} {$send['asset']} to {$send['destination']}");
-                    EventLog::debug('counterparty.sendConfirmed', [
-                        'qty'         => $xcpd_quantity_sat,
-                        'asset'       => $send['asset'],
-                        'destination' => $send['destination'],
-                    ]);
-
-                } catch (Exception $e) {
-                    EventLog::logError('error.counterpartyConfirm', $e, ['txid' => $tx_hash]);
-                    $is_valid = false;
-                }
-            }
+            default:
+                EventLog::warning('counterparty.jobUnknownType', [
+                    'msg'    => 'Unknown counterparty action',
+                    'action' => $counterparty_action,
+                ]);
+                $was_found = false;
+                $is_valid = false;
+                break;
         }
 
         if ($is_valid === null) {
             // no response from conterpartyd
             if ($job->attempts() > 240) {
                 // permanent failure
-                EventLog::logError('counterparty.job.failed.permanent', ['txid' => $tx_hash,]);
+                EventLog::logError('counterparty.job.failed.permanent', ['txid' => $txid, 'action' => $counterparty_action, ]);
                 $job->delete();
 
             } else {
@@ -139,12 +71,13 @@ class ValidateConfirmedCounterpartydTxJob
                 }
 
                 // put it back in the queue
-                $msg = "Send not confirmed.  No response from counterpartyd.";
-                // Log::debug("Send $tx_hash was not confirmed by counterpartyd yet.  putting it back in the queue for $release_time seconds.  \$sends=".json_encode($sends, 192));
-                EventLog::warning('counterparty.sendUnconfirmed', [
-                    'msg'            => $msg,
-                    'txid'           => $tx_hash,
-                    'release'        => $release_time,
+                $msg = "counterparty job not confirmed.  No response from counterpartyd.";
+
+                EventLog::warning('counterparty.jobUnconfirmed', [
+                    'msg'     => $msg,
+                    'action'  => $counterparty_action,
+                    'txid'    => $txid,
+                    'release' => $release_time,
                 ]);
                 $job->release($release_time);
             }
@@ -168,11 +101,12 @@ class ValidateConfirmedCounterpartydTxJob
                 $attempts = $job->attempts();
                 if ($attempts >= 4) {
                     // we've already tried 4 times - give up
-                    // Log::debug("Send $tx_hash was not found by counterpartyd after attempt ".$attempts.". Giving up.");
-                    $msg = "Send was not found by counterpartyd after attempt ".$attempts.". Giving up.";
-                    EventLog::warning('counterparty.sendUnconfirmed.failure', [
+                    // Log::debug("Send $txid was not found by counterpartyd after attempt ".$attempts.". Giving up.");
+                    $msg = "Job was not found by counterpartyd after attempt ".$attempts.". Giving up.";
+                    EventLog::warning('counterparty.jobUnconfirmed.failure', [
                         'msg'      => $msg,
-                        'txid'     => $tx_hash,
+                        'action'   => $counterparty_action,
+                        'txid'     => $txid,
                         'attempts' => $attempts,
                     ]);
 
@@ -184,11 +118,12 @@ class ValidateConfirmedCounterpartydTxJob
                 } else {
                     $release_time = ($attempts > 2 ? 10 : 2);
                     if ($attempts > 4) { $release_time = 20; }
-                    // Log::debug("Send $tx_hash was not found by counterpartyd after attempt ".$attempts.". Trying again in {$release_time} seconds.");
-                    $msg = "Send was not found by counterpartyd after attempt ".$attempts.". Trying again in {$release_time} seconds.";
-                    EventLog::debug('counterparty.sendUnconfirmed.retry', [
+                    // Log::debug("Send $txid was not found by counterpartyd after attempt ".$attempts.". Trying again in {$release_time} seconds.");
+                    $msg = "$counterparty_action was not found by counterpartyd after attempt ".$attempts.". Trying again in {$release_time} seconds.";
+                    EventLog::debug('counterparty.jobUnconfirmed.retry', [
                         'msg'      => $msg,
-                        'txid'     => $tx_hash,
+                        'action'   => $counterparty_action,
+                        'txid'     => $txid,
                         'attempts' => $attempts,
                         'release'  => $release_time,
                     ]);
@@ -199,6 +134,101 @@ class ValidateConfirmedCounterpartydTxJob
 
         }
     }
+
+    protected function validateSend($parsed_tx, $data) {
+
+        // $data = [
+        //     'tx'            => $parsed_tx,
+        //     'confirmations' => $confirmations,
+        //     'block_seq'     => $block_seq,
+        //     'block_id'      => $block_id,
+        // ];
+
+        // {
+        //     "destination": "1H42mKvwutzE4DAip57tkAc9KEKMGBD2bB",
+        //     "source": "1MFHQCPGtcSfNPXAS6NryWja3TbUN9239Y",
+        //     "quantity": 1050000000000,
+        //     "block_index": 355675,
+        //     "tx_hash": "5cbaf7995e7a8337861a30a65f5d751550127f63fccdb8a9b307efc26e6aa28b",
+        //     "tx_index": 234609,
+        //     "status": "valid",
+        //     "asset": "LTBCOIN"
+        // }
+
+        // validate from counterpartyd
+        // xcp_command -c get_sends -p '{"filters": {"field": "tx_hash", "op": "==", "value": "address"}}'
+        $txid        = $parsed_tx['txid'];
+        $modified_tx = $parsed_tx;
+
+        $was_found = false;
+        $is_valid  = false;
+
+        try {
+            $sends = $this->xcpd_client->get_sends(['filters' => ['field' => 'tx_hash', 'op' => '==', 'value' => $txid]]);
+
+        } catch (Exception $e) {
+            EventLog::logError('error.counterparty', $e);
+
+            // received no result from counterparty
+            $sends    = null;
+            $is_valid = null;
+        }
+
+        if ($sends) {
+            $send = $sends[0];
+            if ($send) {
+                $is_valid  = true;
+                $was_found = true;
+                try {
+                    if ($send['destination'] != $parsed_tx['destinations'][0]) { throw new Exception("mismatched destination: {$send['destination']} (xcpd) != {$parsed_tx['destinations'][0]} (parsed)", 1); }
+
+                    $xcpd_quantity_sat = $send['quantity'];
+
+                    // if token is not divisible, adjust to satoshis
+                    $is_divisible = $this->asset_cache->isDivisible($send['asset']);
+                    if (!$is_divisible) { $xcpd_quantity_sat = CurrencyUtil::valueToSatoshis($xcpd_quantity_sat); }
+
+
+                    // compare send quantity
+                    $parsed_quantity_sat = CurrencyUtil::valueToSatoshis($parsed_tx['values'][$send['destination']]);
+                    if ($xcpd_quantity_sat != $parsed_quantity_sat) {
+                        EventLog::warning('counterparty.mismatchedQuantity', [
+                            'txid'        => $txid,
+                            'xchain_qty'  => $xcpd_quantity_sat,
+                            'parsed_qty'  => $parsed_quantity_sat,
+                            'asset'       => $send['asset'],
+                            'destination' => $send['destination'],
+                        ]);
+
+                        // reset to zero, but keep bitcoin transaction
+                        $modified_tx = $this->zeroTransactionQuantity($modified_tx);
+                    }
+
+
+                    // check asset
+                    if ($send['asset'] != $parsed_tx['asset']) { throw new Exception("mismatched asset: {$send['asset']} (xcpd) != {$parsed_tx['asset']} (parsed)", 1); }
+
+                    // Log::debug("Send $txid was confirmed by counterpartyd.  {$xcpd_quantity_sat} {$send['asset']} to {$send['destination']}");
+                    EventLog::debug('counterparty.sendConfirmed', [
+                        'qty'         => $xcpd_quantity_sat,
+                        'asset'       => $send['asset'],
+                        'destination' => $send['destination'],
+                    ]);
+
+                } catch (Exception $e) {
+                    EventLog::logError('error.counterpartyConfirm', $e, ['txid' => $txid]);
+                    $is_valid = false;
+                }
+            }
+        }    
+
+        return [$was_found, $is_valid, $modified_tx];
+    }
+
+
+
+
+    // ------------------------------------------------------------------------
 
     protected function zeroTransactionQuantity($tx) {
         $modified_tx = $tx;

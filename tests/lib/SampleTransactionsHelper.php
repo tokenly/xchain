@@ -16,6 +16,12 @@ class SampleTransactionsHelper
         $data = json_decode(file_get_contents(base_path().'/tests/fixtures/transactions/'.$filename), true);
         if ($data === null) { throw new Exception("file not found: $filename", 1); }
 
+        if (isset($parsed_tx_overrides['txid'])) {
+            if (!isset($parsed_tx_overrides['bitcoinTx']) OR !isset($parsed_tx_overrides['bitcoinTx']['txid'])) {
+                $parsed_tx_overrides['bitcoinTx']['txid'] = $parsed_tx_overrides['txid'];
+            }
+        }
+
         $data = array_replace_recursive($data, $parsed_tx_overrides);
 
         return $data;

@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Log;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 use Tokenly\XcallerClient\Client;
+use Exception;
 
 class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
@@ -126,19 +127,103 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             
             $is_source      = in_array($payment_address['address'], $sources);
             $is_destination = in_array($payment_address['address'], $destinations);
+            $log_data = ['address_id' => $payment_address['id'], 'address' => $payment_address['address'], 'quantity' => 0, 'asset' => $parsed_tx['asset'],];
 
             if ($is_source) {
-                // this address sent something
-                $quantity = $this->buildQuantityForEventType('send', $parsed_tx, $payment_address['address']);
-                AccountHandler::send($payment_address, $quantity, $parsed_tx['asset'], $parsed_tx, $confirmations);
+                try {
+                    // this address sent something
+                    $quantity = $this->buildQuantityForEventType('send', $parsed_tx, $payment_address['address']);
+                    $log_data['quantity'] = $quantity;
+                    AccountHandler::send($payment_address, $quantity, $parsed_tx['asset'], $parsed_tx, $confirmations);
+                    EventLog::debug('account.updated', array_merge($log_data, ['direction'  => 'send',]));
+                } catch (Exception $e) {
+                    EventLog::logError('accountUpdate.error', $e, array_merge($log_data, ['direction'  => 'send',]));
+                    throw $e;;
+                }
             }
 
             if ($is_destination) {
-                // this address received something
-                //   Note that the same address might be both the sender and the receiver
-                $quantity = $this->buildQuantityForEventType('receive', $parsed_tx, $payment_address['address']);
-                AccountHandler::receive($payment_address, $quantity, $parsed_tx['asset'], $parsed_tx, $confirmations);
+                try {
+                    // this address received something
+                    //   Note that the same address might be both the sender and the receiver
+                    $quantity = $this->buildQuantityForEventType('receive', $parsed_tx, $payment_address['address']);
+                    $log_data['quantity'] = $quantity;
+                    AccountHandler::receive($payment_address, $quantity, $parsed_tx['asset'], $parsed_tx, $confirmations);
+                    EventLog::debug('account.updated', array_merge($log_data, ['direction'  => 'receive',]));
+                } catch (Exception $e) {
+                    EventLog::logError('accountUpdate.error', $e, array_merge($log_data, ['direction'  => 'receive',]));
+                    throw $e;;
+                }
             }
+        }
+    }
+
+    public function updateAccountBalancesFromBalanceChangeEvent($found_addresses, $balance_change_event, $confirmations, Block $block=null) {
+        foreach($found_addresses['payment_addresses'] as $payment_address) {
+
+            $quantity = $balance_change_event['quantity'];
+            $log_data = ['address_id' => $payment_address['id'], 'address' => $payment_address['address'], 'quantity' => $quantity, 'asset' => $balance_change_event['asset'],];
+
+            if ($balance_change_event['event'] == 'debit') {
+                try {
+                    // this address had assets debited
+                    AccountHandler::balanceChangeDebit($payment_address, $quantity, $balance_change_event['asset'], $balance_change_event['fingerprint'], $confirmations);
+                    EventLog::debug('account.updated', array_merge($log_data, ['direction'  => 'debit',]));
+                } catch (Exception $e) {
+                    EventLog::logError('accountUpdate.error', $e, array_merge($log_data, ['direction'  => 'debit',]));
+                    throw $e;;
+                }
+            } else if ($balance_change_event['event'] == 'credit') {
+                try {
+                    // this address had assets credited
+                    AccountHandler::balanceChangeCredit($payment_address, $quantity, $balance_change_event['asset'], $balance_change_event['fingerprint'], $confirmations);
+                    EventLog::debug('account.updated', array_merge($log_data, ['direction'  => 'credit',]));
+                } catch (Exception $e) {
+                    EventLog::logError('accountUpdate.error', $e, array_merge($log_data, ['direction'  => 'credit',]));
+                    throw $e;;
+                }
+            }
+
+        }
+
+    }
+
+    public function sendNotificationsFromBalanceChangeEvent($found_addresses, $balance_change_event, $confirmations, $block) {
+        $confirmation_timestamp = $block ? $block['parsed_block']['time'] : null;
+
+        // send notifications to monitored addresses
+        if ($found_addresses['matched_monitored_addresses']) {
+            // loop through all matched monitored addresses
+            foreach($found_addresses['matched_monitored_addresses'] as $monitored_address) {
+                // build the notification
+                $event_type = $balance_change_event['event'];
+                $notification = [
+                    'event'                  => $event_type,
+
+                    'network'                => $balance_change_event['network'],
+                    'asset'                  => $balance_change_event['asset'],
+                    'quantity'               => $balance_change_event['quantity'],
+                    'quantitySat'            => CurrencyUtil::valueToSatoshis($balance_change_event['quantity']),
+
+                    'address'                => $balance_change_event['address'],
+
+                    'notificationId'         => null,
+                    'transactionTime'        => DateTimeUtil::ISO8601Date($balance_change_event['timestamp']),
+                    'confirmed'              => ($confirmations > 0 ? true : false),
+                    'confirmations'          => $confirmations,
+                    'confirmationTime'       => $confirmation_timestamp ? DateTimeUtil::ISO8601Date($confirmation_timestamp) : '',
+
+                    'notifiedAddress'        => $monitored_address['address'],
+                    'notifiedAddressId'      => $monitored_address['uuid'],
+
+                    'counterpartyData'       => $balance_change_event['counterpartyData'],
+
+                    'transactionFingerprint' => isset($balance_change_event['fingerprint']) ? $balance_change_event['fingerprint'] : null,
+                ];
+
+                $this->sendNotification($notification, $monitored_address, $balance_change_event['fingerprint'], $confirmations, $block, $event_type);
+            }
+
         }
     }
 
@@ -183,7 +268,6 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             $this->preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block);
             return;
         }
-
 
         // send notifications to monitored addresses
         if ($found_addresses['matched_monitored_addresses']) {
@@ -240,6 +324,31 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
     }
 
+    public function findMonitoredAndPaymentAddressesByBalanceChangeEvent($balance_change_event) {
+        $address = $balance_change_event['address'];
+        $is_send = $balance_change_event['event'] == 'debit';
+
+        // get monitored addresses that we care about
+        $monitored_addresses = $this->monitored_address_repository->findByAddress($address)->get();
+
+        // determine the matched monitored addresses based on the monitor type
+        $matched_monitored_addresses = $monitored_addresses->filter(function($monitored_address) use ($is_send) {
+            if ($monitored_address['monitor_type'] == 'send' AND $is_send) { return true; }
+            if ($monitored_address['monitor_type'] == 'receive' AND !$is_send) { return true; }
+            return false;
+        });
+
+        // find all payment addresses matching those in the sources or destinations
+        $payment_addresses = $this->payment_address_repository->findByAddress($address)->get();
+
+        return [
+            'monitored_addresses'         => $monitored_addresses,
+            'matched_monitored_addresses' => $matched_monitored_addresses,
+            'payment_addresses'           => $payment_addresses,
+        ];
+
+    }
+
     ////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////
     
@@ -259,48 +368,48 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
             // build the notification
             $notification = $this->buildNotification($event_type, $parsed_tx, $quantity, $sources, $destinations, $confirmations, $block, $block_seq, $monitored_address);
-
-            $this->wlog("\$parsed_tx['timestamp']={$parsed_tx['timestamp']} transactionTime=".$notification['transactionTime']);
-
-
-            // create a notification
-            $notification_vars_for_model = $notification;
-            unset($notification_vars_for_model['notificationId']);
-
-            try {
-                // Log::debug("creating notification: ".json_encode(['txid' => $parsed_tx['txid'], 'confirmations' => $confirmations, 'block_id' => $block ? $block['id'] : null,], 192));
-                $notification_model = $this->notification_repository->createForMonitoredAddress(
-                    $monitored_address,
-                    [
-                        'txid'          => $parsed_tx['txid'],
-                        'confirmations' => $confirmations,
-                        'notification'  => $notification_vars_for_model,
-                        'block_id'      => $block ? $block['id'] : null,
-                        'event_type'    => $event_type,
-                    ]
-                );
-            } catch (QueryException $e) {
-                if ($e->errorInfo[0] == 23000) {
-                    EventLog::logError('notification.duplicate.error', $e, ['txid' => $parsed_tx['txid'], 'monitored_address_id' => $monitored_address['id'], 'confirmations' => $confirmations, 'event_type' => $event_type]);
-                    continue;
-                } else {
-                    throw $e;
-                }
-            }
-
-            // apply user API token and key
-            $user = $this->userByID($monitored_address['user_id']);
-
-            // update notification
-            $notification['notificationId'] = $notification_model['uuid'];
-
-            // put notification in the queue
-            EventLog::log('notification.out', ['event'=>$notification['event'], 'txid'=>$notification['txid'], 'confirmations' => $confirmations, 'asset'=>$notification['asset'], 'quantity'=>$notification['quantity'], 'sources'=>$notification['sources'], 'destinations'=>$notification['destinations'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
-
-            $this->xcaller_client->sendWebhook($notification, $monitored_address['webhookEndpoint'], $notification_model['uuid'], $user['apitoken'], $user['apisecretkey']);
+            $this->sendNotification($notification, $monitored_address, $parsed_tx['txid'], $confirmations, $block, $event_type);
         }
 
     }
+
+    protected function sendNotification($notification, $monitored_address, $txid, $confirmations, $block, $event_type) {
+        try {
+            $notification_vars_for_model = $notification;
+            unset($notification_vars_for_model['notificationId']);
+
+            // Log::debug("creating notification: ".json_encode(['txid' => $parsed_tx['txid'], 'confirmations' => $confirmations, 'block_id' => $block ? $block['id'] : null,], 192));
+            $notification_model = $this->notification_repository->createForMonitoredAddress(
+                $monitored_address,
+                [
+                    'txid'          => $txid,
+                    'confirmations' => $confirmations,
+                    'notification'  => $notification_vars_for_model,
+                    'block_id'      => $block ? $block['id'] : null,
+                    'event_type'    => $event_type,
+                ]
+            );
+        } catch (QueryException $e) {
+            if ($e->errorInfo[0] == 23000) {
+                EventLog::logError('notification.duplicate.error', $e, ['txid' => $txid, 'monitored_address_id' => $monitored_address['id'], 'confirmations' => $confirmations, 'event_type' => $event_type]);
+                return;
+            } else {
+                throw $e;
+            }
+        }
+
+        // apply user API token and key
+        $user = $this->userByID($monitored_address['user_id']);
+
+        // update notification
+        $notification['notificationId'] = $notification_model['uuid'];
+
+        // put notification in the queue
+        EventLog::log('notification.out', ['event'=>$notification['event'], 'txid' => $txid, 'confirmations' => $confirmations, 'asset'=>$notification['asset'], 'quantity'=>$notification['quantity'], 'sources'=>(isset($notification['sources']) ? $notification['sources'] : []), 'destinations'=>(isset($notification['destinations']) ? $notification['destinations'] : []), 'address' => $notification['notifiedAddress'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
+
+        $this->xcaller_client->sendWebhook($notification, $monitored_address['webhookEndpoint'], $notification_model['uuid'], $user['apitoken'], $user['apisecretkey']);
+    }
+
 
     // if this returns true, then pre-processing is necessary and don't send the notificatoin
     protected function willNeedToPreprocessSendNotification($parsed_tx, $confirmations) {

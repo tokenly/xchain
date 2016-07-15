@@ -72,6 +72,19 @@ class CounterpartySenderMockBuilder
                 return [$send];
             }
 
+            if ($name == 'get_credits' OR $name == 'get_debits') {
+                $argstring = implode(
+                    "-",
+                    collect($arguments[0]['filters'])->map(function($arg) { return str_replace(' ', '_', is_array($arg['value']) ? implode('_', $arg['value']) : $arg['value']); })->toArray()
+                );
+                $filepath = base_path()."/tests/fixtures/{$name}/{$argstring}.json";
+                if (!file_exists($filepath)) {
+                    Log::debug("NOTE: $name fixture not found at $filepath");
+                    return [];
+                }
+                return json_decode(file_get_contents($filepath), true);
+            }
+
             return $transaction_hex;
         })); 
         $app->bind('Tokenly\XCPDClient\Client', function() use ($mock) {

@@ -56,11 +56,48 @@ class XChainTransactionHandler {
         return;
     }
 
+    public function handleConfirmedBalanceChange($balance_change_event, $confirmations, Block $block) {
+        $transaction_handler = $this->network_handler_factory->buildTransactionHandler($balance_change_event['network']);
+
+        $found_addresses = $transaction_handler->findMonitoredAndPaymentAddressesByBalanceChangeEvent($balance_change_event);
+
+        try {
+            $transaction_handler->updateAccountBalancesFromBalanceChangeEvent($found_addresses, $balance_change_event, $confirmations, $block);
+            $transaction_handler->sendNotificationsFromBalanceChangeEvent($found_addresses, $balance_change_event, $confirmations, $block);
+        } catch (Exception $e) {
+            EventLog::logError('handleConfirmedBalanceChange.error', $e, $balance_change_event);
+        }
+
+        return;
+        /*
+        {
+            "event": "debit",
+            "network": "counterparty",
+            "blockheight": 332995,
+            "time": 1468451006,
+            "asset": "XCP",
+            "quantity": 200,
+            "quantitySat": 20000000000,
+            "address": "1NwzrWxTAfvF5iszezDnhEV6kpMnPedq5L",
+            "counterpartyData": {
+                "type": "debit",
+                "action": "open order",
+                "asset": "XCP",
+                "quantity": 20000000000,
+                "address": "1NwzrWxTAfvF5iszezDnhEV6kpMnPedq5L",
+                "event": "2222000000000000000000000000000000000000000000000000000000000000",
+                "block_index": 332995
+            }
+        }
+        */
+    }
+
     // ------------------------------------------------------------------------------------
 
     public function subscribe($events) {
-        $events->listen('xchain.tx.received', 'App\Handlers\XChain\XChainTransactionHandler@handleUnconfirmedTransaction');
-        $events->listen('xchain.tx.confirmed', 'App\Handlers\XChain\XChainTransactionHandler@handleConfirmedTransaction');
+        $events->listen('xchain.tx.received',             'App\Handlers\XChain\XChainTransactionHandler@handleUnconfirmedTransaction');
+        $events->listen('xchain.tx.confirmed',            'App\Handlers\XChain\XChainTransactionHandler@handleConfirmedTransaction');
+        $events->listen('xchain.balanceChange.confirmed', 'App\Handlers\XChain\XChainTransactionHandler@handleConfirmedBalanceChange');
     }
 
 

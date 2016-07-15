@@ -19,6 +19,7 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use PHP_Timer;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 use Tokenly\XcallerClient\Client;
@@ -99,6 +100,14 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
             if ($_debugLogTxTiming = Config::get('xchain.debugLogTxTiming')) { PHP_Timer::start(); }
             $this->generateAndSendNotifications($block_event, $block_confirmations, $block);
             if ($_debugLogTxTiming) { Log::debug("[".getmypid()."] Time for generateAndSendNotifications: ".PHP_Timer::secondsToTimeString(PHP_Timer::stop())); }
+
+            // push a credit/debit check for this block to the queue
+            $data = [
+                'block_id'     => $block['id'],
+                'block_height' => $block['height'],
+            ];
+            Queue::connection('blockingbeanstalkd')
+                ->push('App\Jobs\XChain\ApplyDebitsAndCreditsCounterpartyJob', $data, 'validate_counterpartytx');
 
         } catch (Exception $e) {
 

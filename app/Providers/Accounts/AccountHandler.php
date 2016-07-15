@@ -22,8 +22,10 @@ use Tokenly\RecordLock\Facade\RecordLock;
 
 class AccountHandler {
 
-    const RECEIVED_CONFIRMATIONS_REQUIRED = 2;
-    const SEND_CONFIRMATIONS_REQUIRED     = 1;
+    const RECEIVED_CONFIRMATIONS_REQUIRED       = 2;
+    const SEND_CONFIRMATIONS_REQUIRED           = 1;
+    
+    const BALANCE_CHANGE_CONFIRMATIONS_REQUIRED = 2;
 
     const SEND_LOCK_TIMEOUT = 300; // 5 minutes
 
@@ -172,6 +174,55 @@ class AccountHandler {
             });
         }, self::SEND_LOCK_TIMEOUT);
     }
+
+
+    public function balanceChangeCredit(PaymentAddress $payment_address, $quantity, $asset, $fingerprint, $confirmations) {
+        return RecordLock::acquireAndExecute($payment_address['uuid'], function() use ($payment_address, $quantity, $asset, $fingerprint, $confirmations) {
+            DB::transaction(function() use ($payment_address, $quantity, $asset, $fingerprint, $confirmations) {
+                // get the default account
+                $default_account = $this->getAccount($payment_address);
+
+                if ($confirmations >= self::BALANCE_CHANGE_CONFIRMATIONS_REQUIRED) {
+                    // if there are any confirmed entries for this fingerprint already, then 
+                    //  don't add anything new
+                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($fingerprint, $payment_address['id'], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_RECEIVE);
+                    if (count($existing_ledger_entries) > 0) { return; }
+
+                    // credit the asset(s)
+                    $this->ledger_entry_repository->addCredit($quantity, $asset, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $fingerprint);
+
+                } else {
+                    // unconfirmed credit
+                    //  don't do anything
+                }
+            });
+        }, self::SEND_LOCK_TIMEOUT);
+    }
+
+    public function balanceChangeDebit(PaymentAddress $payment_address, $quantity, $asset, $fingerprint, $confirmations) {
+        return RecordLock::acquireAndExecute($payment_address['uuid'], function() use ($payment_address, $quantity, $asset, $fingerprint, $confirmations) {
+            DB::transaction(function() use ($payment_address, $quantity, $asset, $fingerprint, $confirmations) {
+                // get the default account
+                $default_account = $this->getAccount($payment_address);
+
+                if ($confirmations >= self::BALANCE_CHANGE_CONFIRMATIONS_REQUIRED) {
+                    // if there are any confirmed entries for this fingerprint already, then 
+                    //  don't add anything new
+                    $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($fingerprint, $payment_address['id'], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_SEND);
+                    if (count($existing_ledger_entries) > 0) { return; }
+
+                    // debit the asset(s)
+                    $this->ledger_entry_repository->addDebit($quantity, $asset, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_SEND, $fingerprint);
+
+                } else {
+                    // unconfirmed credit
+                    //  don't do anything
+                }
+            });
+        }, self::SEND_LOCK_TIMEOUT);
+    }
+
+
 
     public function invalidate($parsed_tx) {
         DB::transaction(function() use ($parsed_tx) {

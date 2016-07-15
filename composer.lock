@@ -3719,12 +3719,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-parser.git",
-                "reference": "8a3d0524dcd6715a54c55f65851665d15742c8af"
+                "reference": "e31df06b5c33732646665bdaee983b7a3e18c563"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/8a3d0524dcd6715a54c55f65851665d15742c8af",
-                "reference": "8a3d0524dcd6715a54c55f65851665d15742c8af",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/e31df06b5c33732646665bdaee983b7a3e18c563",
+                "reference": "e31df06b5c33732646665bdaee983b7a3e18c563",
                 "shasum": ""
             },
             "require": {
@@ -3753,7 +3753,7 @@
                 }
             ],
             "description": "A counterparty transaction parser",
-            "time": "2016-07-05 16:45:36"
+            "time": "2016-07-13 13:02:26"
         },
         {
             "name": "tokenly/hmac-auth",
@@ -4731,6 +4731,7 @@
                 "rest",
                 "web service"
             ],
+            "abandoned": "guzzlehttp/guzzle",
             "time": "2015-03-18 18:23:50"
         },
         {

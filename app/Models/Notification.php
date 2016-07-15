@@ -18,6 +18,8 @@ class Notification extends Model
     const EVENT_SEND         = 1;
     const EVENT_RECEIVE      = 2;
     const EVENT_INVALIDATION = 3;
+    const EVENT_CREDIT       = 4;
+    const EVENT_DEBIT        = 5;
 
 
     /**
@@ -41,7 +43,7 @@ class Notification extends Model
 
     public function statusTextToStatusID($type_text) {
         switch ($type_text) {
-            case 'new': return self::STATUS_NEW;
+            case 'new':     return self::STATUS_NEW;
             case 'success': return self::STATUS_SUCCESS;
             case 'failure': return self::STATUS_FAILURE;
         }
@@ -50,9 +52,9 @@ class Notification extends Model
 
     public function statusIDToStatusText($type_id) {
         switch ($type_id) {
-            case self::STATUS_NEW: return 'new';
+            case self::STATUS_NEW:     return 'new';
             case self::STATUS_SUCCESS: return 'success';
-            case self::STATUS_FAILURE: return'failure';
+            case self::STATUS_FAILURE: return 'failure';
         }
         return null;
     }
@@ -63,6 +65,8 @@ class Notification extends Model
             case 'send':         return self::EVENT_SEND;
             case 'receive':      return self::EVENT_RECEIVE;
             case 'invalidation': return self::EVENT_INVALIDATION;
+            case 'credit':       return self::EVENT_CREDIT;
+            case 'debit':        return self::EVENT_DEBIT;
         }
         return null;
     }
@@ -71,7 +75,9 @@ class Notification extends Model
         switch ($type_id) {
             case self::EVENT_SEND:         return 'send';
             case self::EVENT_RECEIVE:      return 'receive';
-            case self::EVENT_INVALIDATION: return'invalidation';
+            case self::EVENT_INVALIDATION: return 'invalidation';
+            case self::EVENT_CREDIT:       return 'credit';
+            case self::EVENT_DEBIT:        return 'debit';
         }
         return null;
     }
