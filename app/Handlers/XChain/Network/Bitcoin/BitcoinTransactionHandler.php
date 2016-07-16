@@ -127,7 +127,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             
             $is_source      = in_array($payment_address['address'], $sources);
             $is_destination = in_array($payment_address['address'], $destinations);
-            $log_data = ['address_id' => $payment_address['id'], 'address' => $payment_address['address'], 'quantity' => 0, 'asset' => $parsed_tx['asset'],];
+            $log_data = ['address_id' => $payment_address['id'], 'address' => $payment_address['address'], 'quantity' => 0, 'asset' => $parsed_tx['asset'], 'txid' => $parsed_tx['txid'], ];
 
             if ($is_source) {
                 try {
