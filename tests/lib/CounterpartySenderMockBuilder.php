@@ -145,6 +145,7 @@ class CounterpartySenderMockBuilder
                     if ($this->apiFixtureExists('_getrawtransaction_'.$txid.'.json')) {
                         $data = $this->loadAPIFixture('_getrawtransaction_'.$txid.'.json');
                     } else {
+                        Log::debug("NOTE: using _getrawtransaction_sample.json for $txid");
                         $data = $this->loadAPIFixture('_getrawtransaction_sample.json');
 
                     }

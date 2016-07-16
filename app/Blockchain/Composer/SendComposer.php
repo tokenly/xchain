@@ -2,6 +2,7 @@
 
 namespace App\Blockchain\Composer;
 
+use App\Blockchain\Composer\ComposerUtil;
 use App\Blockchain\Sender\PaymentAddressSender;
 use App\Models\PaymentAddress;
 use App\Models\Send;
@@ -115,10 +116,11 @@ class SendComposer {
                 $allow_unconfirmed = isset($request_attributes['unconfirmed']) ? $request_attributes['unconfirmed'] : false;
 
                 // validate that the funds are available
+                $assets_to_send = ComposerUtil::buildAssetQuantities($float_quantity, $asset, $float_fee, $dust_size);
                 if ($allow_unconfirmed) {
-                    $has_enough_funds = AccountHandler::accountHasSufficientFunds($account, $float_quantity, $asset, $float_fee, $dust_size);
+                    $has_enough_funds = AccountHandler::accountHasSufficientFunds($account, $assets_to_send);
                 } else {
-                    $has_enough_funds = AccountHandler::accountHasSufficientConfirmedFunds($account, $float_quantity, $asset, $float_fee, $dust_size);
+                    $has_enough_funds = AccountHandler::accountHasSufficientConfirmedFunds($account, $assets_to_send);
                 }
                 if (!$has_enough_funds) {
                     EventLog::logError('error.send.insufficient', ['address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset]);

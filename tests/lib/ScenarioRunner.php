@@ -1,5 +1,6 @@
 <?php
 
+use App\Blockchain\Composer\ComposerUtil;
 use App\Models\LedgerEntry;
 use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\BlockRepository;
@@ -417,6 +418,12 @@ class ScenarioRunner
             $normalized_transaction_event['bitcoinTx']['txid'] = $raw_transaction_event['txid'];
         }
 
+        // Asset first
+        if (isset($raw_transaction_event['asset'])) { $normalized_transaction_event['asset'] = $raw_transaction_event['asset']; }
+        $asset = $normalized_transaction_event['asset'];
+
+        $original_sender = isset($raw_transaction_event['sender']) ? $raw_transaction_event['sender'] : $normalized_transaction_event['sources'][0];
+        $original_recipient = isset($raw_transaction_event['recipient']) ? $raw_transaction_event['recipient'] : $normalized_transaction_event['destinations'][0];
         if (isset($raw_transaction_event['sender'])) {
             $normalized_transaction_event['sources'] = [$raw_transaction_event['sender']];
         }
@@ -435,6 +442,13 @@ class ScenarioRunner
                 }
             }
 
+            if (isset($normalized_transaction_event['counterpartyTx']) AND $normalized_transaction_event['counterpartyTx']) {
+                $received_assets = ComposerUtil::buildAssetQuantities($raw_transaction_event['quantity'], $normalized_transaction_event['asset'], 0, $normalized_transaction_event['counterpartyTx']['dustSize']);
+            } else {
+                $received_assets = ComposerUtil::buildAssetQuantities($raw_transaction_event['quantity'], $normalized_transaction_event['asset']);
+            }
+            $normalized_transaction_event['receivedAssets'] = [$raw_transaction_event['recipient'] => $received_assets];
+
         }
         
         // if (isset($raw_transaction_event['isCounterpartyTx'])) {
@@ -445,9 +459,6 @@ class ScenarioRunner
         //     }
         // }
 
-
-        if (isset($raw_transaction_event['asset'])) { $normalized_transaction_event['asset'] = $raw_transaction_event['asset']; }
-
         if (isset($raw_transaction_event['quantity'])) {
             // $normalized_transaction_event['quantity'] = $raw_transaction_event['quantity'];
             // $normalized_transaction_event['quantitySat'] = CurrencyUtil::valueToSatoshis($raw_transaction_event['quantity']);
@@ -455,6 +466,8 @@ class ScenarioRunner
             if (isset($normalized_transaction_event['counterpartyTx']) AND $normalized_transaction_event['counterpartyTx']) {
                 $normalized_transaction_event['counterpartyTx']['quantity'] = $raw_transaction_event['quantity'];
                 $normalized_transaction_event['counterpartyTx']['quantitySat'] = CurrencyUtil::valueToSatoshis($raw_transaction_event['quantity']);
+
+                $normalized_transaction_event['spentAssets'] = [$original_sender => ComposerUtil::buildAssetQuantities($raw_transaction_event['quantity'], $normalized_transaction_event['asset'], $normalized_transaction_event['bitcoinTx']['fees'], $normalized_transaction_event['counterpartyTx']['dustSize'])];
             } else {
                 // adjust utxos
                 foreach ($normalized_transaction_event['bitcoinTx']['vout'] as $offset => $vout) {
@@ -464,6 +477,9 @@ class ScenarioRunner
                     }
                     $normalized_transaction_event['bitcoinTx']['vout'][$offset] = $vout;
                 }
+
+                // 
+                $normalized_transaction_event['spentAssets'] = [$original_sender => ComposerUtil::buildAssetQuantities($raw_transaction_event['quantity'], 'BTC', $normalized_transaction_event['bitcoinTx']['fees'])];
             }
         }
 
@@ -495,6 +511,7 @@ class ScenarioRunner
         $normalized_transaction_event['txid'] = str_replace('%%last_send_txid%%', $this->last_send_txid, $normalized_transaction_event['txid']);
         
 
+        // echo "\$normalized_transaction_event: ".json_encode($normalized_transaction_event, 192)."\n";
         return $normalized_transaction_event;
     }
 

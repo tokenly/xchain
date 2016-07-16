@@ -14,6 +14,9 @@ use \Exception;
 */
 class BitcoinTransactionEventBuilder
 {
+
+    const XCP_ISSUANCE_FEE = 0.5;  // 0.5 XCP issuance fee
+
     public function __construct(Parser $parser, BlockChainStore $blockchain_store, Cache $asset_cache)
     {
         $this->parser           = $parser;
@@ -34,6 +37,8 @@ class BitcoinTransactionEventBuilder
 
                 'sources'            => [],
                 'destinations'       => [],
+                'spentAssets'        => [],
+                'receivedAssets'     => [],
                 'values'             => [],
                 'asset'              => false,
 
@@ -74,13 +79,15 @@ class BitcoinTransactionEventBuilder
 
             } else  {
                 // this is just a bitcoin transaction
-                list($sources, $quantity_by_destination) = $this->extractSourcesAndDestinations($bitcoin_transaction_data);
+                list($sources, $quantity_by_destination, $asset_quantities_by_source, $asset_quantities_by_destination) = $this->extractSourcesAndDestinations($bitcoin_transaction_data);
 
-                $parsed_transaction_data['network']      = 'bitcoin';
-                $parsed_transaction_data['sources']      = $sources;
-                $parsed_transaction_data['destinations'] = array_keys($quantity_by_destination);
-                $parsed_transaction_data['values']       = $quantity_by_destination;
-                $parsed_transaction_data['asset']        = 'BTC';
+                $parsed_transaction_data['network']        = 'bitcoin';
+                $parsed_transaction_data['sources']        = $sources;
+                $parsed_transaction_data['destinations']   = array_keys($quantity_by_destination);
+                $parsed_transaction_data['values']         = $quantity_by_destination;
+                $parsed_transaction_data['spentAssets']    = $asset_quantities_by_source;
+                $parsed_transaction_data['receivedAssets'] = $asset_quantities_by_destination;
+                $parsed_transaction_data['asset']          = 'BTC';
             }
 
             // add a blockheight
@@ -124,9 +131,27 @@ class BitcoinTransactionEventBuilder
         $parsed_transaction_data['values']     = [$destination => $quantity_float];
         $parsed_transaction_data['asset']      = $xcp_data['asset'];
 
+        list($sources, $quantity_by_destination, $asset_quantities_by_source, $asset_quantities_by_destination) = $this->extractSourcesAndDestinations($bitcoin_transaction_data);
+
+        // add the XCP assets to the spent and received assets
+
+        // spent
+        $parsed_transaction_data['spentAssets'] = $asset_quantities_by_source;
+        $source_address = $xcp_data['sources'][0];
+        if (!isset($parsed_transaction_data['spentAssets'][$source_address])) {
+            $parsed_transaction_data['spentAssets'][$source_address] = [];
+        }
+        $parsed_transaction_data['spentAssets'][$source_address][$xcp_data['asset']] = $quantity_float;
+
+        // received assets
+        $parsed_transaction_data['receivedAssets'] = $asset_quantities_by_destination;
+        if (!isset($parsed_transaction_data['receivedAssets'][$destination])) {
+            $parsed_transaction_data['receivedAssets'][$destination] = [];
+        }
+        $parsed_transaction_data['receivedAssets'][$destination][$xcp_data['asset']] = $quantity_float;
+
         // dustSize
         // dustSizeSat
-        list($sources, $quantity_by_destination) = $this->extractSourcesAndDestinations($bitcoin_transaction_data);
         $dust_size_float = (isset($quantity_by_destination[$destination]) ? $quantity_by_destination[$destination] : 0);
 
         $xcp_data['dustSize'] = $dust_size_float;
@@ -142,7 +167,6 @@ class BitcoinTransactionEventBuilder
 
         // if the asset info doesn't exist, assume it is divisible
         if ($is_divisible === null) { $is_divisible = true; }
-        echo "\$is_divisible: ".json_encode($is_divisible, 192)."\n";
 
         if ($is_divisible) {
             $quantity_sat   = $xcp_data['quantity'];
@@ -156,6 +180,7 @@ class BitcoinTransactionEventBuilder
 
         // for an issuance, there is no source 
         //   and we assign the source to the destination
+        $issuing_address = $xcp_data['sources'][0];
         $destination = $xcp_data['sources'][0];
         $parsed_transaction_data['values']     = [$destination => $quantity_float];
         $parsed_transaction_data['asset']      = $xcp_data['asset'];
@@ -163,6 +188,26 @@ class BitcoinTransactionEventBuilder
         $xcp_data['destinations'] = [$destination];
         $parsed_transaction_data['sources'] = [];
         $parsed_transaction_data['destinations'] = [$destination];
+
+        // get the sources and spent assets
+        list($sources, $quantity_by_destination, $asset_quantities_by_source, $asset_quantities_by_destination) = $this->extractSourcesAndDestinations($bitcoin_transaction_data);
+
+        // deduct the XCP fee for issuance
+        $parsed_transaction_data['spentAssets'] = $asset_quantities_by_source;
+        if (!isset($parsed_transaction_data['spentAssets'][$issuing_address])) {
+            $parsed_transaction_data['spentAssets'][$issuing_address] = [];
+        }
+        if (substr($xcp_data['asset'], 0, 1) !== 'A') {
+            $parsed_transaction_data['spentAssets'][$issuing_address]['XCP'] = self::XCP_ISSUANCE_FEE;
+        }
+
+        // received assets
+        $parsed_transaction_data['receivedAssets'] = $asset_quantities_by_destination;
+        if (!isset($parsed_transaction_data['receivedAssets'][$destination])) {
+            $parsed_transaction_data['receivedAssets'][$destination] = [];
+        }
+        $parsed_transaction_data['receivedAssets'][$destination][$xcp_data['asset']] = $quantity_float;
+
 
         // dustSize
         $xcp_data['dustSize'] = 0;
@@ -174,28 +219,42 @@ class BitcoinTransactionEventBuilder
     }
 
     protected function extractSourcesAndDestinations($tx) {
-        $sources_map = [];
+        $asset_quantities_by_source = [];
         foreach ($tx['vin'] as $vin) {
             if (isset($vin['addr'])) {
-                $sources_map[$vin['addr']] = true;
+                if (!isset($asset_quantities_by_source[$vin['addr']])) {
+                    $asset_quantities_by_source[$vin['addr']] = ['BTC' => 0];
+                }
+                $asset_quantities_by_source[$vin['addr']]['BTC'] += $vin['value'];
             }
         }
 
         $quantity_by_destination = [];
+        $asset_quantities_by_destination = [];
         foreach ($tx['vout'] as $vout) {
             if (isset($vout['scriptPubKey']) AND isset($vout['scriptPubKey']['addresses'])) {
                 if ($vout['scriptPubKey']['type'] == 'pubkeyhash' OR $vout['scriptPubKey']['type'] == 'scripthash') {
                     foreach($vout['scriptPubKey']['addresses'] as $destination_address) {
-                        // ignore change
-                        if (isset($sources_map[$destination_address])) { continue; }
+                        // handle change
+                        if (isset($asset_quantities_by_source[$destination_address])) {
+                            // subtract the change from the quantity by source
+                            $asset_quantities_by_source[$destination_address]['BTC'] -= $vout['value'];
+                            continue;
+                        }
 
-                        $quantity_by_destination[$destination_address] = (isset($quantity_by_destination[$destination_address]) ? $quantity_by_destination[$destination_address] : 0) + $vout['value'];
+                        if (!isset($quantity_by_destination[$destination_address])) {
+                            $quantity_by_destination[$destination_address] = 0;
+                            $asset_quantities_by_destination[$destination_address] = ['BTC' => 0];
+                        }
+
+                        $quantity_by_destination[$destination_address] += $vout['value'];
+                        $asset_quantities_by_destination[$destination_address]['BTC'] += $vout['value'];
                     }
                 }
             }
         }
 
-        return [array_keys($sources_map), $quantity_by_destination];
+        return [array_keys($asset_quantities_by_source), $quantity_by_destination, $asset_quantities_by_source, $asset_quantities_by_destination];
     }
 
     protected function buildFingerprint($bitcoin_tx) {

@@ -31,7 +31,6 @@ class AccountUpdaterTest extends TestCase {
                 [ $my_address, 0.3996, ],
             ]
         );
-        // echo "\$parsed_transaction: ".json_encode($parsed_transaction, 192)."\n";
         $this->sendTransactionWithConfirmations($parsed_transaction, 0);
 
         // test balances after
@@ -72,7 +71,6 @@ class AccountUpdaterTest extends TestCase {
         // test balances after
         $ledger_entry_repo = app('App\Repositories\LedgerEntryRepository');
         $balances = $ledger_entry_repo->accountBalancesByAsset($default_account, null);
-        // echo "\$balances: ".json_encode($balances, 192)."\n";
         PHPUnit::assertEquals(1409527.13, $balances['unconfirmed']['LTBCOIN']);
 
         // confirm it
@@ -87,8 +85,6 @@ class AccountUpdaterTest extends TestCase {
 
 
     // ------------------------------------------------------------------------
-
-
 
     protected function buildTransaction($send_amount, $source, $destinations, $sample_txid_offset=100, $filename='sample_btc_parsed_01.json') {
         $tx_helper = app('SampleTransactionsHelper');
@@ -105,16 +101,24 @@ class AccountUpdaterTest extends TestCase {
 
         $tx_destinations = [];
         $values = [];
+        $received_assets = [];
         $total_sent = 0;
+        $total_sent_to_self = 0;
         foreach($destinations as $destination_pair) {
             $dest_address = $destination_pair[0];
             $dest_amount = $destination_pair[1];
             $total_sent += $dest_amount;
 
-            if ($dest_address == $source) { continue; }
+            if ($dest_address == $source) {
+                $total_sent_to_self += $dest_amount;
+                continue;
+            }
 
             if (!isset($values[$dest_address])) { $values[$dest_address] = 0; }
             $values[$dest_address] += $dest_amount;
+
+            if (!isset($received_assets[$dest_address])) { $received_assets[$dest_address]['BTC'] = 0; }
+            $received_assets[$dest_address]['BTC'] += $dest_amount;
 
         }
         
@@ -123,6 +127,10 @@ class AccountUpdaterTest extends TestCase {
 
         $parsed_tx['fees'] = $send_amount - $total_sent;
         $parsed_tx['bitcoinTx']['fees'] = $send_amount - $total_sent;
+
+        // fix spentAssets and receivedAssets
+        $parsed_tx['spentAssets'] = [ $source => ['BTC' => $send_amount - $total_sent_to_self] ];
+        $parsed_tx['receivedAssets'] = $received_assets;
 
         return $parsed_tx;
     }

@@ -1,12 +1,23 @@
 {
     "txid": "d9f3f3e592e1427a25cfe18c1e15d4fd5dc8db494e855b7f5cb650c638f74319",
     "network": "counterparty",
-    "timestamp": 1467747898,
+    "timestamp": 1468705354,
     "counterPartyTxType": "issuance",
     "sources": [],
     "destinations": [
         "1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j"
     ],
+    "spentAssets": {
+        "1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j": {
+            "BTC": 0.0001,
+            "XCP": 0.5
+        }
+    },
+    "receivedAssets": {
+        "1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j": {
+            "LTBCOIN": 1409527.13
+        }
+    },
     "values": {
         "1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j": 1409527.13
     },
@@ -56,7 +67,7 @@
             }
         ],
         "blockhash": "0000000000000000053ad78773db9405f92c0c979c90c65076fc7824b6c9426d",
-        "confirmations": 377,
+        "confirmations": 1981,
         "time": 1467521389,
         "blocktime": 1467521389,
         "valueIn": 0.0066398,

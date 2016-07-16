@@ -1,7 +1,7 @@
 {
     "network": "counterparty",
     "txid": "1886737bb2a4be1af89b1d0e5af427ef2a7fc439e2ed10a42d3efeb1f71b69aa",
-    "timestamp": 1421375512,
+    "timestamp": 1468705678,
     "isCounterpartyTx": true,
     "counterPartyTxType": "send",
     "sources": [
@@ -10,80 +10,93 @@
     "destinations": [
         "1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD"
     ],
+    "spentAssets": {
+        "1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz": {
+            "LTBCOIN": 533.83451959,
+            "BTC": 0.00008930
+        }
+    },
+    "receivedAssets": {
+        "1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD": {
+            "LTBCOIN": 533.83451959,
+            "BTC": 0.00003500
+        }
+    },
     "values": {
         "1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD": 533.83451959
     },
     "asset": "LTBCOIN",
     "bitcoinTx": {
-        "fees": 3.5e-5,
-        "locktime": 0,
-        "size": 306,
-        "time": 1416091287,
+        "hex": "010000000188767d04fc200fa899f754dc99288be1ac649a03bc240c3d508dc633493ebc26020000006b483045022100b1514287d58b56c8bb2df00349cdebd1c7fded0d7fe92320743dd631836ef62002200f56062249ce5a64b81d0921ac65151633c1c54dea3a93bc51844863d201d87301210370a00e36f0ca37c2d80631e0209ede134dbd927d50a364c6747f9c5f3c2c7a9cffffffff03e2040000000000001976a914c56cb39f9b289c0ec4ef6943fa107c904820fe0988ace2040000000000004751210370a00e36f0ca37c2d80631e0209ede134dbd927d50a364c6747f9c5f3c2c7a9c211c434e5452505254590000000000000000d806c1d50000000c6de6d5370000000052ae20fa8a00000000001976a9149b2c0c5f30a2dde09c2a9d3618ba390c9a68875488ac00000000",
         "txid": "1886737bb2a4be1af89b1d0e5af427ef2a7fc439e2ed10a42d3efeb1f71b69aa",
-        "valueIn": 0.09114,
-        "valueOut": 0.091105,
         "version": 1,
+        "locktime": 0,
         "vin": [
             {
-                "addr": "1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz",
-                "doubleSpentTxID": null,
-                "n": 0,
+                "txid": "26bc3e4933c68d503d0c24bc039a64ace18b2899dc54f799a80f20fc047d7688",
+                "vout": 2,
                 "scriptSig": {
                     "asm": "3045022100b1514287d58b56c8bb2df00349cdebd1c7fded0d7fe92320743dd631836ef62002200f56062249ce5a64b81d0921ac65151633c1c54dea3a93bc51844863d201d87301 0370a00e36f0ca37c2d80631e0209ede134dbd927d50a364c6747f9c5f3c2c7a9c",
-                    "hex": "483045022100a37bcfd3087fa4ba9480ce09c7adf02ba3ce2208d6170b42e50b5b2633b91ee6022025d409d3d9dae0a159982c7ab079787948b6b6c5f87fa583d3886ebf1e074c89012102f4aef682535628a7e0492b2b5db1aa312348c3095e0258e26b275b25b10290e6"
+                    "hex": "483045022100b1514287d58b56c8bb2df00349cdebd1c7fded0d7fe92320743dd631836ef62002200f56062249ce5a64b81d0921ac65151633c1c54dea3a93bc51844863d201d87301210370a00e36f0ca37c2d80631e0209ede134dbd927d50a364c6747f9c5f3c2c7a9c"
                 },
                 "sequence": 4294967295,
-                "txid": "26bc3e4933c68d503d0c24bc039a64ace18b2899dc54f799a80f20fc047d7688",
+                "n": 0,
+                "addr": "1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz",
                 "value": 0.09114,
-                "valueSat": 9114000,
-                "vout": 2
+                "valueSat": 9114000
             }
         ],
         "vout": [
             {
+                "value": 1.25e-5,
                 "n": 0,
                 "scriptPubKey": {
+                    "asm": "OP_DUP OP_HASH160 c56cb39f9b289c0ec4ef6943fa107c904820fe09 OP_EQUALVERIFY OP_CHECKSIG",
+                    "hex": "76a914c56cb39f9b289c0ec4ef6943fa107c904820fe0988ac",
+                    "reqSigs": 1,
+                    "type": "pubkeyhash",
                     "addresses": [
                         "1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD"
-                    ],
-                    "asm": "OP_DUP OP_HASH160 c56cb39f9b289c0ec4ef6943fa107c904820fe09 OP_EQUALVERIFY OP_CHECKSIG",
-                    "hex": "thehexishere",
-                    "reqSigs": 1,
-                    "type": "pubkeyhash"
-                },
-                "value": "0.00001250"
+                    ]
+                }
             },
             {
+                "value": 1.25e-5,
                 "n": 1,
                 "scriptPubKey": {
-                    "addresses": [
-                        "1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz",
-                        "1HT7xU2Ngenf7D4yocz2SAcnNLW7rK8d4E"
-                    ],
                     "asm": "1 0370a00e36f0ca37c2d80631e0209ede134dbd927d50a364c6747f9c5f3c2c7a9c 1c434e5452505254590000000000000000d806c1d50000000c6de6d53700000000 2 OP_CHECKMULTISIG",
-                    "hex": "thehexishere",
+                    "hex": "51210370a00e36f0ca37c2d80631e0209ede134dbd927d50a364c6747f9c5f3c2c7a9c211c434e5452505254590000000000000000d806c1d50000000c6de6d5370000000052ae",
                     "reqSigs": 1,
-                    "type": "multisig"
-                },
-                "value": "0.00001250"
-            },
-            {
-                "n": 2,
-                "scriptPubKey": {
+                    "type": "multisig",
                     "addresses": [
                         "1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz"
-                    ],
+                    ]
+                }
+            },
+            {
+                "value": 0.09108,
+                "n": 2,
+                "scriptPubKey": {
                     "asm": "OP_DUP OP_HASH160 9b2c0c5f30a2dde09c2a9d3618ba390c9a688754 OP_EQUALVERIFY OP_CHECKSIG",
-                    "hex": "thehexishere",
+                    "hex": "76a9149b2c0c5f30a2dde09c2a9d3618ba390c9a68875488ac",
                     "reqSigs": 1,
-                    "type": "pubkeyhash"
-                },
-                "spentIndex": 0,
-                "spentTs": 1416091287,
-                "spentTxId": "fbd318eb157becef3e26460756eaee2f4910d8995d23414ce1938563ecc61784",
-                "value": "0.09108000"
+                    "type": "pubkeyhash",
+                    "addresses": [
+                        "1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz"
+                    ]
+                }
             }
-        ]
+        ],
+        "confirmations": 0,
+        "time": 1416091287,
+        "blocktime": 1416091287,
+        "valueIn": 0.09114,
+        "valueInSat": 9114000,
+        "valueOut": 0.091105,
+        "valueOutSat": 9110500,
+        "fees": 3.5e-5,
+        "feesSat": 3500,
+        "blockheight": null
     },
     "counterpartyTx": {
         "type": "send",
@@ -93,10 +106,12 @@
         "destinations": [
             "1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD"
         ],
-        "quantity": 53383451959,
+        "quantity": 533.83451959,
+        "quantitySat": 53383451959,
         "asset": "LTBCOIN",
         "dustSize": 0.00005430,
         "dustSizeSat": 5430
+
     },
-    "transactionFingerprint": "1234567890123456789012345678901234567890123456789012345678901234"
+    "transactionFingerprint": "0bc67fff7a32de4dc89e801cecd3f44cd9a145849d11eeb74e08de0fa0e2aba2"
 }

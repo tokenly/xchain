@@ -61,7 +61,7 @@ class AccountHandler {
                 // get the default account
                 $default_account = $this->getAccount($payment_address);
 
-                list($txid, $dust_size) = $this->extractDataFromParsedTransaction($parsed_tx);
+                $txid = $parsed_tx['txid'];
 
                 // Log::debug("receive $quantity $asset \$txid=$txid \$confirmations=".json_encode($confirmations, 192));
                 if ($confirmations >= self::RECEIVED_CONFIRMATIONS_REQUIRED) {
@@ -113,8 +113,8 @@ class AccountHandler {
 
                     // handle a situation where unconfirmed funds were not already added
                     if (!$any_unconfirmed_funds_found) {
-                        // credit the asset(s) including the BTC dust
-                        foreach ($this->buildReceiveBalances($quantity, $asset, $dust_size) as $asset_received => $quantity_received) {
+                        // credit all the asset(s)
+                        foreach ($this->buildReceiveBalances($parsed_tx, $payment_address) as $asset_received => $quantity_received) {
                             $this->ledger_entry_repository->addCredit($quantity_received, $asset_received, $default_account, $type, LedgerEntry::DIRECTION_RECEIVE, $txid);
                         }
                     }
@@ -133,7 +133,7 @@ class AccountHandler {
                     }
 
                     // credit the asset(s) including the BTC dust
-                    foreach ($this->buildReceiveBalances($quantity, $asset, $dust_size) as $asset_received => $quantity_received) {
+                    foreach ($this->buildReceiveBalances($parsed_tx, $payment_address) as $asset_received => $quantity_received) {
                         $this->ledger_entry_repository->addCredit($quantity_received, $asset_received, $default_account, LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
                     }
                 }
@@ -153,8 +153,7 @@ class AccountHandler {
         return RecordLock::acquireAndExecute($payment_address['uuid'], function() use ($payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
             DB::transaction(function() use ($payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
 
-                list($txid, $dust_size, $btc_fees) = $this->extractDataFromParsedTransaction($parsed_tx);
-                Log::debug("send: $txid, $dust_size, $btc_fees  \$confirmations=$confirmations");
+                $txid = $parsed_tx['txid'];
 
                 if ($confirmations >= self::SEND_CONFIRMATIONS_REQUIRED) {
                     // confirmed send
@@ -162,13 +161,13 @@ class AccountHandler {
 
                     if (!$any_sending_funds_found) {
                         // the funds were not marked as sending yet - so do that now and then immediately debit them from sending
-                        $this->moveConfimedFundsToSendingLedgerByTXID($payment_address, $txid, $quantity, $asset, $btc_fees, $dust_size);
+                        $this->moveConfimedFundsToSendingLedgerByTXID($payment_address, $txid, $parsed_tx);
                         $this->debitFundsFromSendingLedgerByTXID($payment_address, $txid);
                     }
 
                 } else {
                     // unconfirmed send
-                    $this->moveConfimedFundsToSendingLedgerByTXID($payment_address, $txid, $quantity, $asset, $btc_fees, $dust_size);
+                    $this->moveConfimedFundsToSendingLedgerByTXID($payment_address, $txid, $parsed_tx);
                 }
 
             });
@@ -253,8 +252,8 @@ class AccountHandler {
 
 
     // this method assumes the account is already locked
-    public function markAccountFundsAsSending(Account $account, $quantity, $asset, $float_fee, $dust_size, $txid) {
-        $balances_sent = $this->buildSendBalances($quantity, $asset, $float_fee, $dust_size);
+    public function markAccountFundsAsSending(Account $account, $balances_sent, $txid) {
+
         foreach($balances_sent as $asset_to_send => $confirmed_and_unconfirmed_quantity_to_send) {
             // try confirmed first
             $confirmed_quantity_available = $this->ledger_entry_repository->accountBalance($account, $asset_to_send, LedgerEntry::CONFIRMED);
@@ -276,8 +275,7 @@ class AccountHandler {
     }
 
     // this method assumes the account is already locked
-    public function markConfirmedAccountFundsAsSending(Account $account, $quantity, $asset, $float_fee, $dust_size, $txid) {
-        $balances_sent = $this->buildSendBalances($quantity, $asset, $float_fee, $dust_size);
+    public function markConfirmedAccountFundsAsSending(Account $account, $balances_sent, $txid) {
         foreach($balances_sent as $sent_asset => $sent_quantity) {
             // Log::debug("changeType $sent_quantity $sent_asset to SENDING with txid $txid");
             if ($sent_quantity > 0) {
@@ -432,12 +430,12 @@ class AccountHandler {
         return $this->account_repository->findByName($name, $payment_address['id']);
     }
 
-    public function accountHasSufficientConfirmedFunds(Account $account, $quantity, $asset, $float_fee, $dust_size) {
+    public function accountHasSufficientConfirmedFunds(Account $account, $assets_to_send) {
         $actual_balances = $this->ledger_entry_repository->accountBalancesByAsset($account, LedgerEntry::CONFIRMED);
-        return $this->hasSufficientFunds($actual_balances, $quantity, $asset, $float_fee, $dust_size);
+        return $this->hasSufficientFunds($actual_balances, $assets_to_send);
     }
 
-    public function accountHasSufficientFunds(Account $account, $quantity, $asset, $float_fee, $dust_size) {
+    public function accountHasSufficientFunds(Account $account, $assets_to_send) {
         $confirmed_actual_balances = $this->ledger_entry_repository->accountBalancesByAsset($account, LedgerEntry::CONFIRMED);
         $unconfirmed_actual_balances = $this->ledger_entry_repository->accountBalancesByAsset($account, LedgerEntry::UNCONFIRMED);
         $actual_balances = $confirmed_actual_balances;
@@ -445,11 +443,8 @@ class AccountHandler {
             if (!isset($actual_balances[$unconfirmed_asset])) { $actual_balances[$unconfirmed_asset] = 0.0; }
             $actual_balances[$unconfirmed_asset] += $unconfirmed_quantity;
         }
-        // Log::debug("\$actual_balances=".json_encode($actual_balances, 192));
-        // Log::debug("\$unconfirmed_actual_balances=".json_encode($unconfirmed_actual_balances, 192));
-        // Log::debug("\$confirmed_actual_balances=".json_encode($confirmed_actual_balances, 192));
 
-        return $this->hasSufficientFunds($actual_balances, $quantity, $asset, $float_fee, $dust_size);
+        return $this->hasSufficientFunds($actual_balances, $assets_to_send);
     }
 
     public function zeroAllBalances(PaymentAddress $payment_address, APICall $api_call) {
@@ -468,10 +463,9 @@ class AccountHandler {
 
     ////////////////////////////////////////////////////////////////////////
 
-    protected function hasSufficientFunds($actual_balances, $quantity, $asset, $float_fee, $dust_size) {
+    protected function hasSufficientFunds($actual_balances, $balances_required) {
         // build required balances with fees
-        $balances_required = $this->buildSendBalances($quantity, $asset, $float_fee, $dust_size);
-        // Log::debug("hasSufficientFunds quantity=$quantity asset=$asset) \$balances_required=".json_encode($balances_required, 192));
+        // Log::debug("hasSufficientFunds) \$balances_required=".json_encode($balances_required, 192));
 
         // check actual balances
         $has_sufficient_funds = true;
@@ -484,37 +478,33 @@ class AccountHandler {
         return $has_sufficient_funds;
     }
 
-    protected function buildSendBalances($quantity, $asset, $float_fee, $dust_size) {
-        $send_balances = [$asset => $quantity];
-        if ($asset != 'BTC') { $send_balances['BTC'] = $dust_size; }
-        $send_balances['BTC'] = $send_balances['BTC'] + $float_fee;
-        return $send_balances;
-    }
-
-    protected function buildReceiveBalances($quantity, $asset, $dust_size) {
-        $receive_balances = [$asset => $quantity];
-        if ($asset != 'BTC' AND $dust_size > 0) {
-            $receive_balances['BTC'] = $dust_size;
-        }
-        return $receive_balances;
-    }
-
-
-    protected function extractDataFromParsedTransaction($parsed_tx) {
-        $txid = $parsed_tx['txid'];
-        $dust_size = 0;
-        if ($parsed_tx['network'] == 'counterparty' AND isset($parsed_tx['counterpartyTx']['dustSize'])) {
-            $dust_size = $parsed_tx['counterpartyTx']['dustSize'];
-        }
-        if (isset($parsed_tx['bitcoinTx']['fees'])) {
-            $fee = $parsed_tx['bitcoinTx']['fees'];
-        } else {
-            Log::warning("no fees found in bitcoinTx for parsed tx: ".json_encode($parsed_tx, 192));
-            $fee = 0;
+    protected function buildSendBalances($parsed_tx, $payment_address) {
+        $address = $payment_address['address'];
+        if (isset($parsed_tx['spentAssets']) AND isset($parsed_tx['spentAssets'][$address])) {
+            return $parsed_tx['spentAssets'][$address];
         }
 
-        return [$txid, $dust_size, $fee];
+        return [];
+        // $send_balances = [$asset => $quantity];
+        // if ($asset != 'BTC') { $send_balances['BTC'] = $dust_size; }
+        // $send_balances['BTC'] = $send_balances['BTC'] + $float_fee;
+        // return $send_balances;
     }
+
+    protected function buildReceiveBalances($parsed_tx, $payment_address) {
+        $address = $payment_address['address'];
+        if (isset($parsed_tx['receivedAssets']) AND isset($parsed_tx['receivedAssets'][$address])) {
+            return $parsed_tx['receivedAssets'][$address];
+        }
+
+        return [];
+        // $receive_balances = [$asset => $quantity];
+        // if ($asset != 'BTC' AND $dust_size > 0) {
+        //     $receive_balances['BTC'] = $dust_size;
+        // }
+        // return $receive_balances;
+    }
+
 
     protected function determineTypeFromTXID($txid) {
         // get the last credit for this txid and use that type
@@ -558,7 +548,7 @@ class AccountHandler {
         return $any_sending_funds_found;
     }
 
-    protected function moveConfimedFundsToSendingLedgerByTXID($payment_address, $txid, $quantity, $asset, $btc_fees, $dust_size) {
+    protected function moveConfimedFundsToSendingLedgerByTXID($payment_address, $txid, $parsed_tx) {
         // get the default account
         $default_account = $this->getAccount($payment_address);
 
@@ -571,7 +561,7 @@ class AccountHandler {
         }
 
         // change type
-        foreach ($this->buildSendBalances($quantity, $asset, $btc_fees, $dust_size) as $asset_sent => $quantity_sent) {
+        foreach ($this->buildSendBalances($parsed_tx, $payment_address) as $asset_sent => $quantity_sent) {
             if ($quantity_sent > 0) {
                 $this->ledger_entry_repository->changeType($quantity_sent, $asset_sent, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
             }

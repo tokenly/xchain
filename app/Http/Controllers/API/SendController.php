@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Blockchain\Composer\ComposerUtil;
 use App\Blockchain\Sender\PaymentAddressSender;
 use App\Http\Controllers\API\Base\APIController;
 use App\Http\Requests\API\Send\CleanupRequest;
@@ -187,10 +188,11 @@ class SendController extends APIController {
 
                     // validate that the funds are available, bypass this if custom_inputs used
                     if(!$custom_inputs){
+                        $assets_to_send = ComposerUtil::buildAssetQuantities($float_quantity, $asset, $float_fee, $dust_size);
                         if ($allow_unconfirmed) {
-                            $has_enough_funds = AccountHandler::accountHasSufficientFunds($account, $float_quantity, $asset, $float_fee, $dust_size);
+                            $has_enough_funds = AccountHandler::accountHasSufficientFunds($account, $assets_to_send);
                         } else {
-                            $has_enough_funds = AccountHandler::accountHasSufficientConfirmedFunds($account, $float_quantity, $asset, $float_fee, $dust_size);
+                            $has_enough_funds = AccountHandler::accountHasSufficientConfirmedFunds($account, $assets_to_send);
                         }
                         if (!$has_enough_funds) {
                             EventLog::logError('error.send.insufficient', ['address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset]);
@@ -206,10 +208,11 @@ class SendController extends APIController {
 
 
                     // tag funds as sent with the txid
+                    $assets_to_send = ComposerUtil::buildAssetQuantities($float_quantity, $asset, $float_fee, $dust_size);
                     if ($allow_unconfirmed) {
-                        AccountHandler::markAccountFundsAsSending($account, $float_quantity, $asset, $float_fee, $dust_size, $txid);
+                        AccountHandler::markAccountFundsAsSending($account, $assets_to_send, $txid);
                     } else {
-                        AccountHandler::markConfirmedAccountFundsAsSending($account, $float_quantity, $asset, $float_fee, $dust_size, $txid);
+                        AccountHandler::markConfirmedAccountFundsAsSending($account, $assets_to_send, $txid);
                         // Log::debug("After marking confirmed funds as sent, all accounts for ${account['name']}: ".json_encode(app('App\Repositories\LedgerEntryRepository')->accountBalancesByAsset($account, null), 192));
                         // Log::debug("After marking confirmed funds as sent, all accounts for default: ".json_encode(app('App\Repositories\LedgerEntryRepository')->accountBalancesByAsset(AccountHandler::getAccount($payment_address), null), 192));
                     }
@@ -310,10 +313,11 @@ class SendController extends APIController {
 
             // validate that the funds are available (with a fee of 0)
             $float_fee = 0;
+            $assets_to_send = ComposerUtil::buildAssetQuantities($float_quantity, $asset, $float_fee, $dust_size);
             if ($allow_unconfirmed) {
-                $has_enough_funds = AccountHandler::accountHasSufficientFunds($account, $float_quantity, $asset, $float_fee, $dust_size);
+                $has_enough_funds = AccountHandler::accountHasSufficientFunds($account, $assets_to_send);
             } else {
-                $has_enough_funds = AccountHandler::accountHasSufficientConfirmedFunds($account, $float_quantity, $asset, $float_fee, $dust_size);
+                $has_enough_funds = AccountHandler::accountHasSufficientConfirmedFunds($account, $assets_to_send);
             }
             if (!$has_enough_funds) {
                 EventLog::logError('error.send.insufficient', ['address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset]);
