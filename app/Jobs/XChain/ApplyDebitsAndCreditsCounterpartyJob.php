@@ -112,7 +112,7 @@ class ApplyDebitsAndCreditsCounterpartyJob
                     ['field' => 'block_index', 'op' => '>=', 'value' => $recent_block_height],
                     ['field' => 'block_index', 'op' => '<=', 'value' => $block_height],
                     ['field' => 'calling_function', 'op' => 'IN', 'value' => [
-                        'order match','filled','cancel order','order cancelled','order expired',
+                        'order match','filled','cancel order','order cancelled','order expired','dividend',
                     ]],
                 ]
             ]);
