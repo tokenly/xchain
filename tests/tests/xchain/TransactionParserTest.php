@@ -148,4 +148,20 @@ class TransactionParserTest extends TestCase {
         PHPUnit::assertEquals(100, $parsed_data['receivedAssets']['1KiswqEUc9PjyGxgu7d7ypqgikNErkzfkb']['DUELPOINTS']);
     }
 
+    public function testParserForCounterpartyOrder() {
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        
+        $enhanced_builder = app('App\Handlers\XChain\Network\Bitcoin\EnhancedBitcoindTransactionBuilder');
+        $bitcoin_data = $enhanced_builder->buildTransactionData('f783cac74813dc5d1fcbc597849dfc243e36d7153ed67e3f473a5e8e2dcdf1ad');
+
+        $builder = app('App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionEventBuilder');
+        $ts = time() * 1000;
+        $parsed_data = $builder->buildParsedTransactionData($bitcoin_data, $ts);
+        // echo "\$parsed_data['spentAssets']: ".json_encode($parsed_data['spentAssets'], 192)."\n";
+
+        PHPUnit::assertArrayHasKey('spentAssets', $parsed_data);
+        PHPUnit::assertArrayHasKey('1ADHMo6KGgJZRxrPUYUUVGFYeZ2noAfDRQ', $parsed_data['spentAssets']);
+        PHPUnit::assertEquals(0.00020000, $parsed_data['spentAssets']['1ADHMo6KGgJZRxrPUYUUVGFYeZ2noAfDRQ']['BTC']);
+    }
+
 }

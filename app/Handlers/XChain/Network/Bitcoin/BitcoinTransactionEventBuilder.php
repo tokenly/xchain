@@ -51,11 +51,11 @@ class BitcoinTransactionEventBuilder
                 // ensure 1 source and 1 desination
                 if (!isset($xcp_data['sources'][0])) {
                     $xcp_data['sources'] = ['unknown'];
-                    Log::error("No source found in transaction: ".((isset($bitcoin_transaction_data) AND isset($bitcoin_transaction_data['txid'])) ? $bitcoin_transaction_data['txid'] : "unknown"));
+                    Log::debug("No source found in transaction: ".((isset($bitcoin_transaction_data) AND isset($bitcoin_transaction_data['txid'])) ? $bitcoin_transaction_data['txid'] : "unknown"));
                 }
                 if (!isset($xcp_data['destinations'][0])) {
                     $xcp_data['destinations'] = ['unknown'];
-                    Log::error("No destination found in transaction: ".((isset($bitcoin_transaction_data) AND isset($bitcoin_transaction_data['txid'])) ? $bitcoin_transaction_data['txid'] : "unknown"));
+                    Log::debug("No destination found in transaction: ".((isset($bitcoin_transaction_data) AND isset($bitcoin_transaction_data['txid'])) ? $bitcoin_transaction_data['txid'] : "unknown"));
                 }
 
                 // this is a counterparty transaction
@@ -71,7 +71,7 @@ class BitcoinTransactionEventBuilder
                     $parsed_transaction_data = $this->buildParsedTransactionData_issuance($bitcoin_transaction_data, $xcp_data, $parsed_transaction_data);
                 } else {
                     // default
-                    $parsed_transaction_data['counterpartyTx'] = $xcp_data;
+                    $parsed_transaction_data = $this->buildParsedTransactionData_other($bitcoin_transaction_data, $xcp_data, $parsed_transaction_data);
                 }
 
 
@@ -213,6 +213,32 @@ class BitcoinTransactionEventBuilder
         $xcp_data['dustSize'] = 0;
         $xcp_data['dustSizeSat'] = 0;
 
+        $parsed_transaction_data['counterpartyTx'] = $xcp_data;
+
+        return $parsed_transaction_data;
+    }
+
+    protected function buildParsedTransactionData_other($bitcoin_transaction_data, $xcp_data, $parsed_transaction_data) {
+        // treat like just a bitcoin transaction
+        list($sources, $quantity_by_destination, $asset_quantities_by_source, $asset_quantities_by_destination) = $this->extractSourcesAndDestinations($bitcoin_transaction_data);
+
+        $parsed_transaction_data['sources']        = $sources;
+        $parsed_transaction_data['destinations']   = array_keys($quantity_by_destination);
+        $parsed_transaction_data['values']         = $quantity_by_destination;
+        $parsed_transaction_data['spentAssets']    = $asset_quantities_by_source;
+        $parsed_transaction_data['receivedAssets'] = $asset_quantities_by_destination;
+        $parsed_transaction_data['asset']          = 'BTC';
+
+        // set default xcp data
+        $xcp_data['quantity']    = 0;
+        $xcp_data['quantitySat'] = 0;
+        $xcp_data['dustSize'] = 0;
+        $xcp_data['dustSizeSat'] = 0;
+
+        // clear destinations
+        if (count($xcp_data['destinations']) == 1 AND $xcp_data['destinations'][0] == 'unknown') {
+            $xcp_data['destinations'] = [];
+        }
         $parsed_transaction_data['counterpartyTx'] = $xcp_data;
 
         return $parsed_transaction_data;
