@@ -39,11 +39,18 @@ class ValidateConfirmedCounterpartydTxJob
 
             default:
                 EventLog::warning('counterparty.jobUnknownType', [
-                    'msg'    => 'Unknown counterparty action',
+                    'msg'    => 'Unhandled counterparty action',
                     'action' => $counterparty_action,
+                    'txid'   => $txid,
                 ]);
-                $was_found = false;
-                $is_valid = false;
+
+                // zero out the counterparty action data, but keep the bitcoin transaction
+                //  the counterparty data will be picked up with a 
+                //  ApplyDebitsAndCreditsCounterpartyJob after the transaction is confirmed
+                $modified_tx = $this->zeroTransactionQuantity($modified_tx);
+
+                $was_found = true;
+                $is_valid = true;
                 break;
         }
 
