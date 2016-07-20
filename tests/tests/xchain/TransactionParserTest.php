@@ -193,7 +193,7 @@ class TransactionParserTest extends TestCase {
         // check the ledger
         $ledger = app('App\Repositories\LedgerEntryRepository');
         $balances = $ledger->accountBalancesByAsset($default_account, LedgerEntry::CONFIRMED);
-        echo "\$balances: ".json_encode($balances, 192)."\n";
+        // echo "\$balances: ".json_encode($balances, 192)."\n";
         PHPUnit::assertEquals(200, $balances['KRAKENCARD']);
 
     }
