@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\LedgerEntry;
+use App\Providers\Accounts\Facade\AccountHandler;
 use Illuminate\Support\Facades\Log;
 use \PHPUnit_Framework_Assert as PHPUnit;
 
@@ -162,6 +164,38 @@ class TransactionParserTest extends TestCase {
         PHPUnit::assertArrayHasKey('spentAssets', $parsed_data);
         PHPUnit::assertArrayHasKey('1ADHMo6KGgJZRxrPUYUUVGFYeZ2noAfDRQ', $parsed_data['spentAssets']);
         PHPUnit::assertEquals(0.00020000, $parsed_data['spentAssets']['1ADHMo6KGgJZRxrPUYUUVGFYeZ2noAfDRQ']['BTC']);
+    }
+
+    public function testParserForCounterpartySendIndivisible() {
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $payment_address = app('PaymentAddressHelper')->createSamplePaymentAddress(null, ['address' => '1MYNxBbNN44Zo6tfSZFKjeWC462ferRvqa', 'private_key_token' => '',]);
+        $default_account = AccountHandler::getAccount($payment_address);
+
+        $enhanced_builder = app('App\Handlers\XChain\Network\Bitcoin\EnhancedBitcoindTransactionBuilder');
+        $bitcoin_data = $enhanced_builder->buildTransactionData('5075c83b50131667c2e51842b3196286194ee475163c2aabbcc7877d1ff9af1d');
+
+        $builder = app('App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionEventBuilder');
+        $ts = time() * 1000;
+        $parsed_tx = $builder->buildParsedTransactionData($bitcoin_data, $ts);
+
+        PHPUnit::assertArrayHasKey('spentAssets', $parsed_tx);
+        PHPUnit::assertEquals(0.00005470, $parsed_tx['receivedAssets']['1MYNxBbNN44Zo6tfSZFKjeWC462ferRvqa']['BTC']);
+        PHPUnit::assertEquals(200, $parsed_tx['receivedAssets']['1MYNxBbNN44Zo6tfSZFKjeWC462ferRvqa']['KRAKENCARD']);
+
+        // apply the transaction
+        $parsed_tx['counterpartyTx']['validated'] = true;
+        $confirmations = 3;
+        $block = app('SampleBlockHelper')->createSampleBlock('default_parsed_block_01.json');
+        $block_event_context = app('App\Handlers\XChain\Network\Bitcoin\Block\BlockEventContextFactory')->newBlockEventContext();
+        Event::fire('xchain.tx.confirmed', [$parsed_tx, $confirmations, 101, $block, $block_event_context]);
+
+        // check the ledger
+        $ledger = app('App\Repositories\LedgerEntryRepository');
+        $balances = $ledger->accountBalancesByAsset($default_account, LedgerEntry::CONFIRMED);
+        echo "\$balances: ".json_encode($balances, 192)."\n";
+        PHPUnit::assertEquals(200, $balances['KRAKENCARD']);
+
     }
 
 }

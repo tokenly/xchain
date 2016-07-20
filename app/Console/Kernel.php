@@ -25,6 +25,7 @@ class Kernel extends ConsoleKernel {
         \App\Console\Commands\Development\ShowRawBitcoinTransactionCommand::class,
         \App\Console\Commands\Development\ReindexTransactionAddressesCommand::class,
         \App\Console\Commands\Development\ShowParsedBitcoinTransactionCommand::class,
+        \App\Console\Commands\Development\AssetInfoCacheCommand::class,
 
         // Other
         \App\Console\Commands\Experiment\ExperimentCommand::class,

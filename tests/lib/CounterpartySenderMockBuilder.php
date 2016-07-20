@@ -51,6 +51,13 @@ class CounterpartySenderMockBuilder
             //   will accept any asset, but returns the details below
             if ($name == 'get_asset_info') {
                 $asset = $arguments[0]['assets'][0];
+
+                $filepath = base_path()."/tests/fixtures/get_asset_info/".implode('_', $arguments[0]['assets']).".json";
+                if (file_exists($filepath)) {
+                    $asset_infos = json_decode(file_get_contents($filepath), true);
+                    return $asset_infos;
+                }
+
                 return [
                     0 => [
                         'issuer'      => "1Hso4cqKAyx9bsan8b5nbPqMTNNce8ZDto",

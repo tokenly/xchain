@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "86778e5668f0b37d62b1ee69c51df340",
-    "content-hash": "f21eed8c6311234e81a10da20c46acb7",
+    "hash": "e7b45c00dec5a57a98c4d5e48d7e24d7",
+    "content-hash": "801ac267bf1ed20e8f74e3f2ed02a76e",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
@@ -3581,16 +3581,16 @@
         },
         {
             "name": "tokenly/counterparty-asset-info-cache",
-            "version": "dev-master",
+            "version": "v1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-asset-info-cache.git",
-                "reference": "bb4a245fc8de0d5988a021cf1313a9e1bd82de5e"
+                "reference": "26e914aba968b97d8b5d039d2baf1ea4426239d2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-asset-info-cache/zipball/bb4a245fc8de0d5988a021cf1313a9e1bd82de5e",
-                "reference": "bb4a245fc8de0d5988a021cf1313a9e1bd82de5e",
+                "url": "https://api.github.com/repos/tokenly/counterparty-asset-info-cache/zipball/26e914aba968b97d8b5d039d2baf1ea4426239d2",
+                "reference": "26e914aba968b97d8b5d039d2baf1ea4426239d2",
                 "shasum": ""
             },
             "require": {
@@ -3624,7 +3624,7 @@
                 }
             ],
             "description": "Fetches and caches counterparty asset information",
-            "time": "2015-01-16 04:28:52"
+            "time": "2016-07-20 02:59:43"
         },
         {
             "name": "tokenly/counterparty-sender",
@@ -5928,7 +5928,6 @@
     "minimum-stability": "dev",
     "stability-flags": {
         "tokenly/bitcoin-address-lib": 20,
-        "tokenly/counterparty-asset-info-cache": 20,
         "tokenly/bitcoin-payer": 20,
         "tokenly/counterparty-sender": 20,
         "tokenly/counterparty-transaction-parser": 20,
