@@ -49,12 +49,12 @@ class PaymentAddressHelper
         return $this->addBalancesToPaymentAddressAccount($balances, $payment_address, false, $account_name, $txid);
     }
 
-    public function addBalancesToPaymentAddressAccount($balances, $payment_address, $with_utxos=true, $account_name='default', $txid='SAMPLE01') {
+    public function addBalancesToPaymentAddressAccount($balances, $payment_address, $with_utxos=true, $account_name='default', $txid='SAMPLE01', $type=LedgerEntry::CONFIRMED) {
         if (!$balances) { return; }
 
         $account = AccountHandler::getAccount($payment_address, $account_name);
         foreach($balances as $asset => $quantity) {
-            $this->ledger_entry_repository->addCredit($quantity, $asset, $account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, $txid);
+            $this->ledger_entry_repository->addCredit($quantity, $asset, $account, $type, LedgerEntry::DIRECTION_OTHER, $txid);
         }
 
         if ($with_utxos) {

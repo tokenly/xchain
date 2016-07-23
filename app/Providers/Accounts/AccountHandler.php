@@ -167,7 +167,7 @@ class AccountHandler {
 
                 } else {
                     // unconfirmed send
-                    $this->moveConfimedFundsToSendingLedgerByTXID($payment_address, $txid, $parsed_tx);
+                    $this->moveConfimedAndUnconfirmedFundsToSendingLedgerByTXID($payment_address, $txid, $parsed_tx);
                 }
 
             });
@@ -548,7 +548,15 @@ class AccountHandler {
         return $any_sending_funds_found;
     }
 
+    protected function moveConfimedAndUnconfirmedFundsToSendingLedgerByTXID($payment_address, $txid, $parsed_tx) {
+        return $this->moveFundsToSendingLedgerByTXID($payment_address, $txid, $parsed_tx, false);
+    }
+
     protected function moveConfimedFundsToSendingLedgerByTXID($payment_address, $txid, $parsed_tx) {
+        return $this->moveFundsToSendingLedgerByTXID($payment_address, $txid, $parsed_tx, true);
+    }
+
+    protected function moveFundsToSendingLedgerByTXID($payment_address, $txid, $parsed_tx, $confirmed_only=false) {
         // get the default account
         $default_account = $this->getAccount($payment_address);
 
@@ -560,10 +568,37 @@ class AccountHandler {
             return;
         }
 
-        // change type
+        // get the balances
+        $confirmed_balances = $this->ledger_entry_repository->accountBalancesByAsset($default_account, LedgerEntry::CONFIRMED);
+        $unconfirmed_balances = $this->ledger_entry_repository->accountBalancesByAsset($default_account, LedgerEntry::UNCONFIRMED);
+
+        Log::debug("buildSendBalances for address {$payment_address['address']} ".json_encode($this->buildSendBalances($parsed_tx, $payment_address), 192));
         foreach ($this->buildSendBalances($parsed_tx, $payment_address) as $asset_sent => $quantity_sent) {
             if ($quantity_sent > 0) {
-                $this->ledger_entry_repository->changeType($quantity_sent, $asset_sent, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
+                if ($confirmed_only) {
+                    Log::debug("changeType (CONFIRMED) $quantity_sent $asset_sent");
+                    $this->ledger_entry_repository->changeType($quantity_sent, $asset_sent, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
+                } else {
+                    // try confirmed first, then unconfirmed
+                    $confirmed_quantity_available = isset($confirmed_balances[$asset_sent]) ? $confirmed_balances[$asset_sent] : 0;
+                    $unconfirmed_quantity_available = isset($unconfirmed_balances[$asset_sent]) ? $unconfirmed_balances[$asset_sent] : 0;
+                    $total_available = $confirmed_quantity_available + $unconfirmed_quantity_available;
+
+                    $confirmed_quantity_to_change = min($quantity_sent, $confirmed_quantity_available);
+                    $unconfirmed_quantity_to_change = min($quantity_sent - $confirmed_quantity_to_change, $unconfirmed_quantity_available);
+                    $total_to_change = $confirmed_quantity_to_change + $unconfirmed_quantity_to_change;
+                    if ($total_to_change < $quantity_sent) {
+                        throw new Exception("Available balance of $total_available $asset_sent ($confirmed_quantity_available confirmed, $unconfirmed_quantity_available unconfirmed) was insufficient to debit $quantity_sent $asset_sent from default account.", 1);
+                    }
+
+                    if ($confirmed_quantity_to_change > 0) {
+                        $this->ledger_entry_repository->changeType($confirmed_quantity_to_change, $asset_sent, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
+                    }
+                    if ($unconfirmed_quantity_to_change > 0) {
+                        $this->ledger_entry_repository->changeType($unconfirmed_quantity_to_change, $asset_sent, $default_account, LedgerEntry::UNCONFIRMED, LedgerEntry::SENDING, LedgerEntry::DIRECTION_SEND, $txid);
+                    }
+                }
+
             }
         }
     }

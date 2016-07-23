@@ -29,15 +29,15 @@ class AccountHelper  {
 
     // creates a bot
     //   directly in the repository (no validation)
-    public function newSampleAccount(PaymentAddress $address=null, $account_vars_or_name=[]) {
+    public function newSampleAccount(PaymentAddress $payment_address=null, $account_vars_or_name=[]) {
         $account_vars = $account_vars_or_name;
         if ($account_vars_or_name AND !is_array($account_vars_or_name)) { $account_vars = ['name' => $account_vars_or_name]; }
         $attributes = array_replace_recursive($this->sampleVars(), $account_vars);
 
-        if ($address === null) { $address = app('PaymentAddressHelper')->createSamplePaymentAddress(); }
+        if ($payment_address === null) { $payment_address = app('PaymentAddressHelper')->createSamplePaymentAddress(); }
 
-        if (!isset($attributes['payment_address_id'])) { $attributes['payment_address_id'] = $address['id']; }
-        if (!isset($attributes['user_id'])) { $attributes['user_id'] = $address['user_id']; }
+        if (!isset($attributes['payment_address_id'])) { $attributes['payment_address_id'] = $payment_address['id']; }
+        if (!isset($attributes['user_id'])) { $attributes['user_id'] = $payment_address['user_id']; }
 
         $account_model = $this->account_repository->create($attributes);
         return $account_model;
