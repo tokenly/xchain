@@ -24,7 +24,7 @@ class XChainInvalidCounterpartyTest extends TestCase {
 
         // build and fire the job
         $transaction_helper = app('SampleTransactionsHelper');
-        $parsed_tx = $transaction_helper->createSampleTransaction()['parsed_tx'];
+        $parsed_tx = $transaction_helper->createSampleTransaction('default_xcp_parsed_01.json')['parsed_tx'];
         $data = [
             'tx'            => $parsed_tx,
             'confirmations' => 1,
@@ -43,6 +43,10 @@ class XChainInvalidCounterpartyTest extends TestCase {
         // check that the asset value is 0
         PHPUnit::assertEquals(0, $tx['counterpartyTx']['quantity']);
         PHPUnit::assertEquals(0, $tx['values']['1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD']);
+        PHPUnit::assertEquals(0.00008930, $tx['spentAssets']['1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz']['BTC']);
+        PHPUnit::assertEquals(0, $tx['spentAssets']['1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz']['LTBCOIN']);
+        PHPUnit::assertEquals(0.00003500, $tx['receivedAssets']['1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD']['BTC']);
+        PHPUnit::assertEquals(0, $tx['receivedAssets']['1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD']['LTBCOIN']);
 
         // check that the BTC value is still correct
         PHPUnit::assertEquals(0.00001250, $tx['bitcoinTx']['vout'][0]['value']);

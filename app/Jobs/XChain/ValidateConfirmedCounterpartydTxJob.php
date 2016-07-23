@@ -47,7 +47,7 @@ class ValidateConfirmedCounterpartydTxJob
                 // zero out the counterparty action data, but keep the bitcoin transaction
                 //  the counterparty data will be picked up with a 
                 //  ApplyDebitsAndCreditsCounterpartyJob after the transaction is confirmed
-                $modified_tx = $this->zeroTransactionQuantity($modified_tx);
+                $modified_tx = $this->modifyCounterpartyAssetTransactionQuantity($modified_tx, 0);
 
                 $was_found = true;
                 $is_valid = true;
@@ -118,7 +118,7 @@ class ValidateConfirmedCounterpartydTxJob
                     ]);
 
                     // reset the counterparty asset quantities to zero, but keep bitcoin transaction (and fee)
-                    $modified_tx = $this->zeroTransactionQuantity($modified_tx);
+                    $modified_tx = $this->modifyCounterpartyAssetTransactionQuantity($modified_tx, 0);
                     $this->fireCompletedTransactionEvent($modified_tx, $data);
 
                     $job->delete();
@@ -208,7 +208,8 @@ class ValidateConfirmedCounterpartydTxJob
                         ]);
 
                         // reset to zero, but keep bitcoin transaction
-                        $modified_tx = $this->zeroTransactionQuantity($modified_tx);
+                        $new_xcpd_quantity_sat = ($xcpd_quantity_sat < $parsed_quantity_sat ? $xcpd_quantity_sat : 0);
+                        $modified_tx = $this->modifyCounterpartyAssetTransactionQuantity($modified_tx, $new_xcpd_quantity_sat);
                     }
 
 
@@ -237,14 +238,30 @@ class ValidateConfirmedCounterpartydTxJob
 
     // ------------------------------------------------------------------------
 
-    protected function zeroTransactionQuantity($tx) {
+    protected function modifyCounterpartyAssetTransactionQuantity($tx, $new_xcpd_quantity_sat=0) {
+        $new_xcpd_quantity_float = CurrencyUtil::satoshisToValue($new_xcpd_quantity_sat);
         $modified_tx = $tx;
 
         // keep the bitcoin the same, but reset the asset quantity to 0
-        $modified_tx['counterpartyTx']['quantity'] = 0;
-        // set all values to 0
+        $modified_tx['counterpartyTx']['quantity'] = $new_xcpd_quantity_sat;
+
+        // set values to 0
         $modified_tx['values'] = collect($modified_tx['values'])->map(function($value, $k) {
             return 0;
+        })->toArray();
+
+        // set spentAssets to $new_xcpd_quantity_float
+        $modified_tx['spentAssets'] = collect($modified_tx['spentAssets'])->map(function($values, $address) use ($new_xcpd_quantity_float) {
+            return collect($values)->map(function($quantity, $asset) use ($new_xcpd_quantity_float) {
+                return ($asset == 'BTC' ? $quantity : $new_xcpd_quantity_float);
+            })->toArray();
+        })->toArray();
+
+        // set receivedAssets to 0
+        $modified_tx['receivedAssets'] = collect($modified_tx['receivedAssets'])->map(function($values, $address) use ($new_xcpd_quantity_float) {
+            return collect($values)->map(function($quantity, $asset) use ($new_xcpd_quantity_float) {
+                return ($asset == 'BTC' ? $quantity : $new_xcpd_quantity_float);
+            })->toArray();
         })->toArray();
 
         return $modified_tx;
