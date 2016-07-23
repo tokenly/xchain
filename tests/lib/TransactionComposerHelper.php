@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\TXO;
-use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\TXORepository;
 use BitWasp\Bitcoin\Address\AddressFactory;
 use BitWasp\Bitcoin\Address\ScriptHashAddress;

@@ -2,7 +2,6 @@
 
 use App\Models\LedgerEntry;
 use App\Models\PaymentAddress;
-use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\TXORepository;
 use Illuminate\Support\Facades\DB;
 use Tokenly\CurrencyLib\CurrencyUtil;

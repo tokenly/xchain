@@ -3,7 +3,6 @@
 use App\Blockchain\Sender\PaymentAddressSender;
 use App\Models\LedgerEntry;
 use App\Models\PaymentAddress;
-use App\Providers\Accounts\Facade\AccountHandler;
 use Tokenly\CurrencyLib\CurrencyUtil;
 use \PHPUnit_Framework_Assert as PHPUnit;
 
