@@ -83,6 +83,40 @@ class AccountUpdaterTest extends TestCase {
         PHPUnit::assertEquals(1409527.13, $balances['confirmed']['LTBCOIN']);
     }
 
+    public function testIssuanceTransactionForIndivisibleAsset() {
+        $user = $this->app->make('\UserHelper')->createSampleUser();
+
+        $address = '1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j';
+        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user, ['address' => $address, 'private_key_token' => '',]);
+        $my_address = $payment_address['address'];
+        $default_account = AccountHandler::getAccount($payment_address);
+
+        // test balances before
+        $ledger_entry_repo = app('App\Repositories\LedgerEntryRepository');
+        $balances = $ledger_entry_repo->accountBalancesByAsset($default_account, null);
+        PHPUnit::assertEquals(1, $balances['confirmed']['BTC']);
+
+        // build and send the issuance transaction
+        $tx_helper = app('SampleTransactionsHelper');
+        $sample_txid_offset = 101;
+        $parsed_transaction = $tx_helper->loadSampleTransaction('issuance02.json', ['txid' => str_repeat('5', 60).sprintf('%04d', $sample_txid_offset)]);
+        $this->sendTransactionWithConfirmations($parsed_transaction, 0);
+
+        // test balances after
+        $ledger_entry_repo = app('App\Repositories\LedgerEntryRepository');
+        $balances = $ledger_entry_repo->accountBalancesByAsset($default_account, null);
+        PHPUnit::assertEquals(1000, $balances['unconfirmed']['TESTASSET']);
+
+        // confirm it
+        $this->sendTransactionWithConfirmations($parsed_transaction, 2, true);
+
+
+        // test balances after
+        $ledger_entry_repo = app('App\Repositories\LedgerEntryRepository');
+        $balances = $ledger_entry_repo->accountBalancesByAsset($default_account, null);
+        PHPUnit::assertEquals(1000, $balances['confirmed']['TESTASSET']);
+    }
+
 
     // ------------------------------------------------------------------------
 

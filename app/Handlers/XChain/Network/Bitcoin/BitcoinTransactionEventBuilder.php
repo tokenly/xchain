@@ -163,10 +163,15 @@ class BitcoinTransactionEventBuilder
     }
 
     protected function buildParsedTransactionData_issuance($bitcoin_transaction_data, $xcp_data, $parsed_transaction_data) {
-        $is_divisible = $this->asset_cache->isDivisible($xcp_data['asset']);
+        // first use the divisible key in the xcp_data
+        if (isset($xcp_data['divisible'])) {
+            $is_divisible = !!$xcp_data['divisible'];
+        } else {
+            $is_divisible = $this->asset_cache->isDivisible($xcp_data['asset']);
 
-        // if the asset info doesn't exist, assume it is divisible
-        if ($is_divisible === null) { $is_divisible = true; }
+            // if the asset info doesn't exist, assume it is divisible
+            if ($is_divisible === null) { $is_divisible = true; }
+        }
 
         if ($is_divisible) {
             $quantity_sat   = $xcp_data['quantity'];

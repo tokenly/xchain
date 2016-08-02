@@ -150,6 +150,19 @@ class TransactionParserTest extends TestCase {
         PHPUnit::assertEquals(100, $parsed_data['receivedAssets']['1KiswqEUc9PjyGxgu7d7ypqgikNErkzfkb']['DUELPOINTS']);
     }
 
+    public function testQuantityParserForIndivisibleCounterpartyIssuance() {
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        
+        $enhanced_builder = app('App\Handlers\XChain\Network\Bitcoin\EnhancedBitcoindTransactionBuilder');
+        $bitcoin_data = $enhanced_builder->buildTransactionData('4487362612b0028b8c33e0499aa63d1663466f5265984f15f528819ee99dec15');
+
+        $builder = app('App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionEventBuilder');
+        $ts = time() * 1000;
+        $parsed_data = $builder->buildParsedTransactionData($bitcoin_data, $ts);
+
+        PHPUnit::assertEquals(1000, $parsed_data['receivedAssets']['1AE4vfkDX4S49kxsuCve7zJDS5s5RtHYNs']['PIKATOSHI']);
+    }
+
     public function testParserForCounterpartyOrder() {
         $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
         
