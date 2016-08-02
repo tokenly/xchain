@@ -134,7 +134,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
                     // this address sent something
                     $quantity = $this->buildQuantityForEventType('send', $parsed_tx, $payment_address['address']);
                     $log_data['quantity'] = $quantity;
-                    AccountHandler::send($payment_address, $quantity, $parsed_tx['asset'], $parsed_tx, $confirmations);
+                    AccountHandler::send($payment_address, $parsed_tx, $confirmations);
                     EventLog::debug('account.updated', array_merge($log_data, ['direction'  => 'send',]));
                 } catch (Exception $e) {
                     EventLog::logError('accountUpdate.error', $e, array_merge($log_data, ['direction'  => 'send',]));
@@ -148,7 +148,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
                     //   Note that the same address might be both the sender and the receiver
                     $quantity = $this->buildQuantityForEventType('receive', $parsed_tx, $payment_address['address']);
                     $log_data['quantity'] = $quantity;
-                    AccountHandler::receive($payment_address, $quantity, $parsed_tx['asset'], $parsed_tx, $confirmations);
+                    AccountHandler::receive($payment_address, $parsed_tx, $confirmations);
                     EventLog::debug('account.updated', array_merge($log_data, ['direction'  => 'receive',]));
                 } catch (Exception $e) {
                     EventLog::logError('accountUpdate.error', $e, array_merge($log_data, ['direction'  => 'receive',]));

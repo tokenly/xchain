@@ -28,7 +28,7 @@ class AccountHandlerTest extends TestCase {
         $asset = 'FOOCOIN';
         $transaction_model = app('SampleTransactionsHelper')->createSampleCounterpartySendTransaction($source, $dest=null, $asset, $quantity);
         $parsed_tx = $transaction_model['parsed_tx'];
-        AccountHandler::send($payment_address, $quantity, $asset, $parsed_tx, $confirmations);
+        AccountHandler::send($payment_address, $parsed_tx, $confirmations);
 
 
         // check the ledger entries
@@ -59,7 +59,7 @@ class AccountHandlerTest extends TestCase {
         $asset = 'FOOCOIN';
         $transaction_model = app('SampleTransactionsHelper')->createSampleCounterpartySendTransaction($source, $dest=null, $asset, $quantity);
         $parsed_tx = $transaction_model['parsed_tx'];
-        AccountHandler::send($payment_address, $quantity, $asset, $parsed_tx, $confirmations);
+        AccountHandler::send($payment_address, $parsed_tx, $confirmations);
 
 
         // check the ledger entries

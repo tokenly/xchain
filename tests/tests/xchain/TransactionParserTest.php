@@ -144,10 +144,12 @@ class TransactionParserTest extends TestCase {
 
         PHPUnit::assertArrayHasKey('spentAssets', $parsed_data);
         PHPUnit::assertEquals(0.00008374, $parsed_data['spentAssets']['1KiswqEUc9PjyGxgu7d7ypqgikNErkzfkb']['BTC']);
-        PHPUnit::assertEquals(0.5, $parsed_data['spentAssets']['1KiswqEUc9PjyGxgu7d7ypqgikNErkzfkb']['XCP']);
+        // PHPUnit::assertEquals(0.5, $parsed_data['spentAssets']['1KiswqEUc9PjyGxgu7d7ypqgikNErkzfkb']['XCP']);
 
         PHPUnit::assertArrayNotHasKey('BTC', $parsed_data['receivedAssets']['1KiswqEUc9PjyGxgu7d7ypqgikNErkzfkb']);
         PHPUnit::assertEquals(100, $parsed_data['receivedAssets']['1KiswqEUc9PjyGxgu7d7ypqgikNErkzfkb']['DUELPOINTS']);
+
+        PHPUnit::assertContains('1KiswqEUc9PjyGxgu7d7ypqgikNErkzfkb', $parsed_data['sources']);
     }
 
     public function testQuantityParserForIndivisibleCounterpartyIssuance() {
@@ -161,6 +163,20 @@ class TransactionParserTest extends TestCase {
         $parsed_data = $builder->buildParsedTransactionData($bitcoin_data, $ts);
 
         PHPUnit::assertEquals(1000, $parsed_data['receivedAssets']['1AE4vfkDX4S49kxsuCve7zJDS5s5RtHYNs']['PIKATOSHI']);
+        // PHPUnit::assertEquals(0.5, $parsed_data['spentAssets']['1AE4vfkDX4S49kxsuCve7zJDS5s5RtHYNs']['XCP']);
+    }
+
+    public function testNoFeePaidForCounterpartyReissuance() {
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        
+        $enhanced_builder = app('App\Handlers\XChain\Network\Bitcoin\EnhancedBitcoindTransactionBuilder');
+        $bitcoin_data = $enhanced_builder->buildTransactionData('a71d18112f0b0496e0ef274a1454f56b8e62c9307ccd08487ca3e6dc619f2a2b');
+
+        $builder = app('App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionEventBuilder');
+        $ts = time() * 1000;
+        $parsed_data = $builder->buildParsedTransactionData($bitcoin_data, $ts);
+
+        PHPUnit::assertArrayNotHasKey('XCP', $parsed_data['spentAssets']['1Hso4cqKAyx9bsan8b5nbPqMTNNce8ZDto']);
     }
 
     public function testParserForCounterpartyOrder() {

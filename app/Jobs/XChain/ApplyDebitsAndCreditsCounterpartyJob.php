@@ -97,12 +97,14 @@ class ApplyDebitsAndCreditsCounterpartyJob
         $recent_block_height = $block_height - 6;
 
         try {
-            // get all debits (open order)
+            // get all debits (open order, issuance fee)
             $debits = $this->xcpd_client->get_debits([
                 'filters' => [
                     ['field' => 'block_index', 'op' => '>=', 'value' => $recent_block_height],
                     ['field' => 'block_index', 'op' => '<=', 'value' => $block_height],
-                    ['field' => 'action', 'op' => '==', 'value' => 'open order'],
+                    ['field' => 'action', 'op' => 'IN', 'value' => [
+                        'open order', 'issuance fee',
+                    ]],
                 ]
             ]);
 

@@ -15,8 +15,6 @@ use \Exception;
 class BitcoinTransactionEventBuilder
 {
 
-    const XCP_ISSUANCE_FEE = 0.5;  // 0.5 XCP issuance fee
-
     public function __construct(Parser $parser, BlockChainStore $blockchain_store, Cache $asset_cache)
     {
         $this->parser           = $parser;
@@ -186,24 +184,25 @@ class BitcoinTransactionEventBuilder
         // for an issuance, there is no source 
         //   and we assign the source to the destination
         $issuing_address = $xcp_data['sources'][0];
-        $destination = $xcp_data['sources'][0];
-        $parsed_transaction_data['values']     = [$destination => $quantity_float];
-        $parsed_transaction_data['asset']      = $xcp_data['asset'];
-        $xcp_data['sources'] = [];
-        $xcp_data['destinations'] = [$destination];
-        $parsed_transaction_data['sources'] = [];
+        $destination     = $issuing_address;
+
+        $parsed_transaction_data['values'] = [$destination => $quantity_float];
+        $parsed_transaction_data['asset']  = $xcp_data['asset'];
+
+        // the issuing address spends some BTC, so it is a source as well as a destination
+        $xcp_data['sources']                     = [$issuing_address];
+        $xcp_data['destinations']                = [$destination];
+        $parsed_transaction_data['sources']      = [$issuing_address];
         $parsed_transaction_data['destinations'] = [$destination];
 
         // get the sources and spent assets
         list($sources, $quantity_by_destination, $asset_quantities_by_source, $asset_quantities_by_destination) = $this->extractSourcesAndDestinations($bitcoin_transaction_data);
 
-        // deduct the XCP fee for issuance
+        // spent assets
+        //   Note: The XCP issuance fee is picked up by debits and credits job so it is ignored here
         $parsed_transaction_data['spentAssets'] = $asset_quantities_by_source;
         if (!isset($parsed_transaction_data['spentAssets'][$issuing_address])) {
             $parsed_transaction_data['spentAssets'][$issuing_address] = [];
-        }
-        if (substr($xcp_data['asset'], 0, 1) !== 'A') {
-            $parsed_transaction_data['spentAssets'][$issuing_address]['XCP'] = self::XCP_ISSUANCE_FEE;
         }
 
         // received assets

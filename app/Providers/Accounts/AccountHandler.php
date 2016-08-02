@@ -48,7 +48,7 @@ class AccountHandler {
         return $this->getAccount($payment_address, $name);
     }
 
-    public function receive(PaymentAddress $payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
+    public function receive(PaymentAddress $payment_address, $parsed_tx, $confirmations) {
         // when migrating, we need to ignore the transactions already confirmed
         if ($confirmations > 0 AND $parsed_tx['bitcoinTx']['blockheight'] < Config::get('xchain.accountsIgnoreBeforeBlockHeight')) {
             EventLog::log('account.receive.ignored', ['blockheight' => $parsed_tx['bitcoinTx']['blockheight'], 'confirmations' => $confirmations, 'ignoredBefore' => Config::get('xchain.accountsIgnoreBeforeBlockHeight')]);
@@ -56,14 +56,13 @@ class AccountHandler {
         }
 
 
-        return RecordLock::acquireAndExecute($payment_address['uuid'], function() use ($payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
-            DB::transaction(function() use ($payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
+        return RecordLock::acquireAndExecute($payment_address['uuid'], function() use ($payment_address, $parsed_tx, $confirmations) {
+            DB::transaction(function() use ($payment_address, $parsed_tx, $confirmations) {
                 // get the default account
                 $default_account = $this->getAccount($payment_address);
 
                 $txid = $parsed_tx['txid'];
 
-                // Log::debug("receive $quantity $asset \$txid=$txid \$confirmations=".json_encode($confirmations, 192));
                 if ($confirmations >= self::RECEIVED_CONFIRMATIONS_REQUIRED) {
                     // confirmed receive
                     $type = LedgerEntry::CONFIRMED;
@@ -143,15 +142,15 @@ class AccountHandler {
         }, self::SEND_LOCK_TIMEOUT);
     }
 
-    public function send(PaymentAddress $payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
+    public function send(PaymentAddress $payment_address, $parsed_tx, $confirmations) {
         // when migrating, we need to ignore the transactions already confirmed
         if ($confirmations > 0 AND $parsed_tx['bitcoinTx']['blockheight'] < Config::get('xchain.accountsIgnoreBeforeBlockHeight')) {
             EventLog::log('account.receive.ignored', ['blockheight' => $parsed_tx['bitcoinTx']['blockheight'], 'confirmations' => $confirmations, 'ignoredBefore' => Config::get('xchain.accountsIgnoreBeforeBlockHeight')]);
             return;
         }
 
-        return RecordLock::acquireAndExecute($payment_address['uuid'], function() use ($payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
-            DB::transaction(function() use ($payment_address, $quantity, $asset, $parsed_tx, $confirmations) {
+        return RecordLock::acquireAndExecute($payment_address['uuid'], function() use ($payment_address, $parsed_tx, $confirmations) {
+            DB::transaction(function() use ($payment_address, $parsed_tx, $confirmations) {
 
                 $txid = $parsed_tx['txid'];
 
