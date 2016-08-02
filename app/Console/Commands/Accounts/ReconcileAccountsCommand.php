@@ -127,7 +127,8 @@ class ReconcileAccountsCommand extends Command {
                     } else {
                         if ($with_progress) { $this->line(''); }
                         $this->comment("Differences found for {$payment_address['address']} ({$payment_address['uuid']})");
-                        $this->line(json_encode($differences, 192));
+                        $this->line($this->formatDifferencesForOutput($differences));
+                        // $this->line(json_encode($differences, 192));
                         $this->line('');
                     }
                 }
@@ -178,6 +179,28 @@ class ReconcileAccountsCommand extends Command {
         }
 
         $this->info('done');
+    }
+
+    protected function formatDifferencesForOutput($differences) {
+        $out = '';
+        $f = function($raw) {
+            if ($raw == '[NULL]' OR $raw === null) { return 0; }
+            return floatval($raw);
+        };
+        foreach ($differences['differences'] as $asset => $difference_entry) {
+            $diff_float = $f($difference_entry['xchain']) - $f($difference_entry['daemon']);
+            $diff_text = CurrencyUtil::valueToFormattedString($diff_float);
+            $width = strlen($diff_text);
+
+            $out .= "     Asset: $asset\n";
+            $out .= "    XChain: {$difference_entry['xchain']}\n";
+            $out .= "Blockchain: {$difference_entry['daemon']}\n";
+            // $out .= "------------".str_repeat('-', $width)."\n";
+            $out .= "            ".str_repeat('-', $width)."\n";
+            $out .= "Difference: {$diff_text}\n";
+        }
+
+        return $out;
     }
 
 }
