@@ -192,6 +192,7 @@ class ReconcileAccountsCommand extends Command {
             $diff_text = CurrencyUtil::valueToFormattedString($diff_float);
             $width = strlen($diff_text);
 
+            if (strlen($out)) { $out .= "\n"; }
             $out .= "     Asset: $asset\n";
             $out .= "    XChain: {$difference_entry['xchain']}\n";
             $out .= "Blockchain: {$difference_entry['daemon']}\n";
