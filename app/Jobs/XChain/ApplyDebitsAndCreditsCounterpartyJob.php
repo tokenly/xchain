@@ -103,7 +103,7 @@ class ApplyDebitsAndCreditsCounterpartyJob
                     ['field' => 'block_index', 'op' => '>=', 'value' => $recent_block_height],
                     ['field' => 'block_index', 'op' => '<=', 'value' => $block_height],
                     ['field' => 'action', 'op' => 'IN', 'value' => [
-                        'open order', 'issuance fee',
+                        'open order', 'issuance fee', 'dividend', 'dividend fee',
                     ]],
                 ]
             ]);
