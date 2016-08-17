@@ -13,7 +13,7 @@ class XChainErrorCounterTest extends TestCase {
         PHPUnit::assertEquals(2, app('XChainErrorCounter')->getErrorCount());
 
         PHPUnit::assertFalse(app('XChainErrorCounter')->maxErrorCountReached());
-        app('XChainErrorCounter')->incrementErrorCount(10);
+        app('XChainErrorCounter')->incrementErrorCount(250);
         PHPUnit::assertTrue(app('XChainErrorCounter')->maxErrorCountReached());
     }
 

@@ -49,7 +49,7 @@ class LedgerEntryRepositoryTest extends TestCase {
 
     /**
      * @expectedException        Exception
-     * @expectedExceptionMessage Balance of 100 was insufficient to debit 110 (confirmed) BTC from Test Account
+     * @expectedExceptionMessage Balance of 100 (10000000000 sat.) was insufficient to debit 110 (11000000000 sat.)  (confirmed) BTC from Test Account
      */
     public function testTransferBalanceError() {
         $helper = $this->createRepositoryTestHelper();
@@ -71,7 +71,7 @@ class LedgerEntryRepositoryTest extends TestCase {
 
     /**
      * @expectedException        Exception
-     * @expectedExceptionMessage Balance of 0 was insufficient to debit 100 (confirmed) BTC from Test Account
+     * @expectedExceptionMessage Balance of 0 (0 sat.) was insufficient to debit 100 (10000000000 sat.)  (confirmed) BTC from Test Account
      */
     public function testDebitError() {
         $helper = $this->createRepositoryTestHelper();
