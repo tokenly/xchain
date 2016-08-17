@@ -58,8 +58,9 @@ class LedgerEntryRepository extends APIRepository
         return DB::transaction(function() use ($float_amount, $asset, $account, $type, $direction, $txid, $api_call) {
             // ensure sufficient asset balance in account
             $existing_balance = $this->accountBalance($account, $asset, $type, true);
-            if ($existing_balance <= 0 OR $existing_balance < $float_amount) {
-                throw new AccountException('ERR_INSUFFICIENT_FUNDS', 400, "Balance of ".$existing_balance." was insufficient to debit $float_amount (".LedgerEntry::typeIntegerToString($type).") $asset from {$account['name']}");
+            // if ($existing_balance <= 0 OR $existing_balance < $float_amount) {
+            if ($existing_balance <= 0 OR CurrencyUtil::valueToSatoshis($existing_balance) < CurrencyUtil::valueToSatoshis($float_amount)) {
+                throw new AccountException('ERR_INSUFFICIENT_FUNDS', 400, "Balance of ".$existing_balance." (".CurrencyUtil::valueToSatoshis($existing_balance)." sat.) was insufficient to debit $float_amount (".CurrencyUtil::valueToSatoshis($float_amount)." sat.)  (".LedgerEntry::typeIntegerToString($type).") $asset from {$account['name']}");
             }
 
             return $this->addEntryForAccount(0 - $float_amount, $asset, $account, $type, $direction, $txid, $api_call ? $api_call['id'] : null);
