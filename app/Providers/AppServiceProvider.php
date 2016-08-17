@@ -35,7 +35,7 @@ class AppServiceProvider extends ServiceProvider {
 		);
 
         $this->app->singleton('XChainErrorCounter', function ($app) {
-            return new XChainErrorCounter(env('MAX_ADDRESS_PARSE_ERRORS', 10));
+            return new XChainErrorCounter(env('MAX_ADDRESS_PARSE_ERRORS', 250));
         });
 
 	}
