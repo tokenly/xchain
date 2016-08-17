@@ -208,13 +208,19 @@ class SendController extends APIController {
 
 
                     // tag funds as sent with the txid
-                    $assets_to_send = ComposerUtil::buildAssetQuantities($float_quantity, $asset, $float_fee, $dust_size);
-                    if ($allow_unconfirmed) {
-                        AccountHandler::markAccountFundsAsSending($account, $assets_to_send, $txid);
-                    } else {
-                        AccountHandler::markConfirmedAccountFundsAsSending($account, $assets_to_send, $txid);
-                        // Log::debug("After marking confirmed funds as sent, all accounts for ${account['name']}: ".json_encode(app('App\Repositories\LedgerEntryRepository')->accountBalancesByAsset($account, null), 192));
-                        // Log::debug("After marking confirmed funds as sent, all accounts for default: ".json_encode(app('App\Repositories\LedgerEntryRepository')->accountBalancesByAsset(AccountHandler::getAccount($payment_address), null), 192));
+                    try {
+                        $assets_to_send = ComposerUtil::buildAssetQuantities($float_quantity, $asset, $float_fee, $dust_size);
+                        if ($allow_unconfirmed) {
+                            AccountHandler::markAccountFundsAsSending($account, $assets_to_send, $txid);
+                        } else {
+                            AccountHandler::markConfirmedAccountFundsAsSending($account, $assets_to_send, $txid);
+                            // Log::debug("After marking confirmed funds as sent, all accounts for ${account['name']}: ".json_encode(app('App\Repositories\LedgerEntryRepository')->accountBalancesByAsset($account, null), 192));
+                            // Log::debug("After marking confirmed funds as sent, all accounts for default: ".json_encode(app('App\Repositories\LedgerEntryRepository')->accountBalancesByAsset(AccountHandler::getAccount($payment_address), null), 192));
+                        }
+                    } catch (Exception $e) {
+                        // we must catch the error here and return a success to the client
+                        //  because the transaction was pushed to the bitcoin network already
+                        EventLog::logError('error.postPay', $e, ['txid' => $txid, 'request_id' => $request_id, 'address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset, 'destination' => ($is_multisend ? $destinations : $destination)]);
                     }
 
                     // release the account lock
