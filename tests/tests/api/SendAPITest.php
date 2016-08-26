@@ -10,8 +10,8 @@ class SendAPITest extends TestCase {
     protected $useRealSQLiteDatabase = true;
 
     public function testRequireAuthForSends() {
-        $user = $this->app->make('\UserHelper')->createSampleUser();
-        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user);
+        $user = app('\UserHelper')->createSampleUser();
+        $payment_address = app('\PaymentAddressHelper')->createSamplePaymentAddress($user);
 
         $api_tester = $this->getAPITester();
         $api_tester->testRequireAuth('POST', $payment_address['uuid']);
@@ -20,10 +20,11 @@ class SendAPITest extends TestCase {
     public function testAPIErrorsSend()
     {
         // mock the xcp sender
-        $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
-        $user = $this->app->make('\UserHelper')->createSampleUser();
-        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user);
+        $user = app('\UserHelper')->createSampleUser();
+        $payment_address = app('\PaymentAddressHelper')->createSamplePaymentAddress($user);
+        app('\PaymentAddressHelper')->createSamplePaymentAddress($user);
 
         $api_tester = $this->getAPITester();
 
@@ -69,10 +70,10 @@ class SendAPITest extends TestCase {
     public function testAPIErrorsForMultisend()
     {
         // mock the xcp sender
-        $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
-        $user = $this->app->make('\UserHelper')->createSampleUser();
-        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user);
+        $user = app('\UserHelper')->createSampleUser();
+        $payment_address = app('\PaymentAddressHelper')->createSamplePaymentAddress($user);
 
         $api_tester = $this->getAPITester('/api/v1/multisends');
 
@@ -133,10 +134,10 @@ class SendAPITest extends TestCase {
     public function testAPIAddSend()
     {
         // mock the xcp sender
-        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
-        $user = $this->app->make('\UserHelper')->createSampleUser();
-        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user);
+        $user = app('\UserHelper')->createSampleUser();
+        $payment_address = app('\PaymentAddressHelper')->createSamplePaymentAddress($user);
 
         $api_tester = $this->getAPITester();
 
@@ -165,10 +166,10 @@ class SendAPITest extends TestCase {
     public function testAPISweep()
     {
         // mock the xcp sender
-        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
-        $user = $this->app->make('\UserHelper')->createSampleUser();
-        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user);
+        $user = app('\UserHelper')->createSampleUser();
+        $payment_address = app('\PaymentAddressHelper')->createSamplePaymentAddress($user);
 
         $api_tester = $this->getAPITester();
 
@@ -203,10 +204,10 @@ class SendAPITest extends TestCase {
     public function testSecondAPISweep()
     {
         // mock the xcp sender
-        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
-        $user = $this->app->make('\UserHelper')->createSampleUser();
-        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user, [], ['BTC' => 0.00030860, 'LTBCOIN' => 75, 'TOKENLY' => 0,]);
+        $user = app('\UserHelper')->createSampleUser();
+        $payment_address = app('\PaymentAddressHelper')->createSamplePaymentAddress($user, [], ['BTC' => 0.00030860, 'LTBCOIN' => 75, 'TOKENLY' => 0,]);
 
         $api_tester = $this->getAPITester();
 
@@ -238,11 +239,50 @@ class SendAPITest extends TestCase {
     }
 
 
+    public function testSweepUnconfirmedFunds()
+    {
+        // mock the xcp sender
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $user = app('\UserHelper')->createSampleUser();
+        $payment_address = app('\PaymentAddressHelper')->createSamplePaymentAddress($user, [], ['BTC' => 0.00030860, 'LTBCOIN' => 75, 'TOKENLY' => 0,]);
+        app('PaymentAddressHelper')->addBalancesToPaymentAddressAccount(['BTC' => 6], $payment_address, true, 'default', 'SAMPLE09', LedgerEntry::UNCONFIRMED);
+
+        $api_tester = $this->getAPITester();
+
+        $posted_vars = $this->sendHelper()->samplePostVars(['sweep' => true, 'asset' => 'ALLASSETS',]);
+        unset($posted_vars['quantity']);
+        $expected_created_resource = [
+            'id'           => '{{response.id}}',
+            'destination'  => '{{response.destination}}',
+            'destinations' => '',
+            'asset'        => 'ALLASSETS',
+            'sweep'        => '{{response.sweep}}',
+            'quantity'     => '{{response.quantity}}',
+            'txid'         => '{{response.txid}}',
+            'requestId'    => '{{response.requestId}}',
+        ];
+        $api_response = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
+
+        // validate the sweep
+        PHPUnit::assertCount(2, $mock_calls['btcd']);
+        $transaction_composer_helper = app('TransactionComposerHelper');
+        $send_details = $transaction_composer_helper->parseCounterpartyTransaction($mock_calls['btcd'][0]['args'][0]);
+        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $send_details['destination']);
+        PHPUnit::assertEquals('LTBCOIN', $send_details['asset']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.00005430), $send_details['btc_amount']);
+
+        $send_details = $transaction_composer_helper->parseBTCTransaction($mock_calls['btcd'][1]['args'][0]);
+        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $send_details['destination']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.00030860 - 0.0001 - 0.0001 - 0.00005430 + 6), $send_details['btc_amount']);
+    }
+
+
 
     public function testAPISendFromAccount()
     {
         // mock the xcp sender
-        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
         list($address, $created_accounts, $api_test_helper) = $this->setupBalancesForTransfer();
 
@@ -268,7 +308,7 @@ class SendAPITest extends TestCase {
     
     public function testAPISendWithSpecificUTXOs()
     {
-        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
         
         
         list($address, $created_accounts, $api_test_helper, $utxos) = $this->setupBalancesForTransfer();
@@ -294,7 +334,7 @@ class SendAPITest extends TestCase {
     public function testAPISendUnconfirmedFromAccount()
     {
         // mock the xcp sender
-        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
         list($address, $created_accounts, $api_test_helper) = $this->setupBalancesForTransfer();
 
@@ -330,12 +370,22 @@ class SendAPITest extends TestCase {
     public function testSweepFromAccount()
     {
         // mock the xcp sender
-        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
+        // account1 => [
+        //     unconfirmed => [BTC => 20]
+        //     confirmed   => [BTC => 100]
+        // ]
+        // account2 => [
+        //     confirmed   => [BTC => 100]
+        // ]
+        // account3 => [
+        //     unconfirmed => [BTC => 20]
+        // ]
         list($address, $created_accounts, $api_test_helper) = $this->setupBalancesForTransfer();
 
         $api_test_helper->callAPIAndValidateResponse('POST', '/api/v1/sends/'.$address['uuid'], $this->sendHelper()->samplePostVars([
-            'sweep'  => True,
+            'sweep'  => true,
         ]));
 
         // accountone should now have funds moved into sent
@@ -356,7 +406,7 @@ class SendAPITest extends TestCase {
     public function testAPISendFromBadAccount()
     {
         // mock the xcp sender
-        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
         list($address, $created_accounts, $api_test_helper) = $this->setupBalancesForTransfer();
 
@@ -372,7 +422,7 @@ class SendAPITest extends TestCase {
     public function testAPISendWithInsufficientFunds()
     {
         // mock the xcp sender
-        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
         list($address, $created_accounts, $api_test_helper) = $this->setupBalancesForTransfer();
 
@@ -388,10 +438,10 @@ class SendAPITest extends TestCase {
     public function testAPIAddMultisend()
     {
         // mock the xcp sender
-        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
-        $user = $this->app->make('\UserHelper')->createSampleUser();
-        $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddress($user);
+        $user = app('\UserHelper')->createSampleUser();
+        $payment_address = app('\PaymentAddressHelper')->createSamplePaymentAddress($user);
 
         $api_tester = $this->getAPITester('/api/v1/multisends');
 
@@ -431,7 +481,7 @@ class SendAPITest extends TestCase {
     ////////////////////////////////////////////////////////////////////////
     
     protected function getAPITester($url='/api/v1/sends') {
-        $api_tester =  $this->app->make('SimpleAPITester', [$this->app, $url, $this->app->make('App\Repositories\SendRepository')]);
+        $api_tester =  app('SimpleAPITester', [$this->app, $url, app('App\Repositories\SendRepository')]);
         $api_tester->ensureAuthenticatedUser();
         return $api_tester;
     }
@@ -439,12 +489,12 @@ class SendAPITest extends TestCase {
 
 
     protected function sendHelper() {
-        if (!isset($this->sample_sends_helper)) { $this->sample_sends_helper = $this->app->make('SampleSendsHelper'); }
+        if (!isset($this->sample_sends_helper)) { $this->sample_sends_helper = app('SampleSendsHelper'); }
         return $this->sample_sends_helper;
     }
 
     protected function monitoredAddressByAddress() {
-        $address_repo = $this->app->make('App\Repositories\MonitoredAddressRepository');
+        $address_repo = app('App\Repositories\MonitoredAddressRepository');
         $payment_address = $address_repo->findByAddress('RECIPIENT01')->first();
         return $payment_address;
 

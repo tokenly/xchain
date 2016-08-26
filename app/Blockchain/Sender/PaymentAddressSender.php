@@ -57,12 +57,12 @@ class PaymentAddressSender {
         $this->fee_priority                    = $fee_priority;
     }
 
-    // returns [$transaction_id, $float_balance_sent]
+    // returns $txid
     public function sweepBTCByRequestID($request_id, PaymentAddress $payment_address, $destination, $float_fee=null) {
         return $this->sendByRequestID($request_id, $payment_address, $destination, null, 'BTC', $float_fee, null, true);
     }
 
-    // returns [$transaction_id, $float_balance_sent]
+    // returns $txid
     public function sweepBTC(PaymentAddress $payment_address, $destination, $float_fee=null) {
         $request_id = Uuid::uuid4()->toString();
         return $this->sweepBTCByRequestID($request_id, $payment_address, $destination, $float_fee);
@@ -72,7 +72,7 @@ class PaymentAddressSender {
     //    the sweep must happen after the counterparty sends are done
     // Sends all assets from the default account and then sweeps all BTC UTXOs
     //    To sweep all assets, close all accounts before calling this method
-    // returns only the last transaction ID (the BTC sweep)
+    // returns an numbered array of all transactions with [txid, balances_sent]
     public function sweepAllAssets(PaymentAddress $payment_address, $destination, $float_fee=null, $float_btc_dust_size=null) {
         $request_id = Uuid::uuid4()->toString();
         return $this->sweepAllAssetsByRequestID($request_id, $payment_address, $destination, $float_fee, $float_btc_dust_size);
@@ -97,6 +97,8 @@ class PaymentAddressSender {
         // sort assets by name to be a little deterministic
         ksort($combined_balances);
 
+        $sweep_transactions = [];
+
         // send each asset
         $offset = 0;
         foreach($combined_balances as $asset => $float_quantity) {
@@ -105,13 +107,30 @@ class PaymentAddressSender {
 
             // send this asset with a unique request ID
             $request_id_for_offset = $this->applyOffsetToRequestID($offset, $request_id);
-            $this->sendByRequestID($request_id_for_offset, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size);
+            $txid = $this->sendByRequestID($request_id_for_offset, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size);
+            $sweep_transactions[] = [
+                'balances_sent' => [
+                    $asset => $float_quantity,
+                    'BTC'  => $float_fee + $float_btc_dust_size,
+                ],
+                'txid'       => $txid,
+            ];
 
             ++$offset;
         }
 
         // sweep the remaining BTC
-        return $this->sweepBTCByRequestID($request_id, $payment_address, $destination, $float_fee);
+        $chosen_txos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::UNCONFIRMED, TXO::CONFIRMED], true)->toArray();
+        $float_utxo_sum = CurrencyUtil::satoshisToValue($this->sumUTXOs($chosen_txos));
+        $txid = $this->sweepBTCByRequestID($request_id, $payment_address, $destination, $float_fee);
+        $sweep_transactions[] = [
+            'balances_sent' => [
+                'BTC'  => $float_utxo_sum,
+            ],
+            'txid'       => $txid,
+        ];
+
+        return $sweep_transactions;
     }
 
     public function sendByRequestID($request_id, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false, $custom_inputs=false) {

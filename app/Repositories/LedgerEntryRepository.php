@@ -72,7 +72,7 @@ class LedgerEntryRepository extends APIRepository
         if ($float_amount < 0) { throw new Exception("Transfers must be a positive number", 1); }
 
         // unconfirmed transfers require a txid reference
-        if (($type == LedgerEntry::UNCONFIRMED OR $type == LedgerEntry::SENDING) AND !$txid) { throw new Exception("Unconfirmed funds require a transaction id", 1); }
+        if (($type == LedgerEntry::UNCONFIRMED OR $type == LedgerEntry::SENDING) AND !$txid AND !$api_call) { throw new Exception("Unconfirmed or sending funds require a transaction id or api call", 1); }
 
         // check type
         LedgerEntry::typeIntegerToString($type);

@@ -460,6 +460,36 @@ class AccountHandler {
         }
     }
 
+    public function consolidateAllAccounts(PaymentAddress $payment_address, APICall $api_call) {
+        RecordLock::acquireAndExecute($payment_address['uuid'], function() use ($payment_address, $api_call) {
+            return DB::transaction(function() use ($payment_address, $api_call) {
+                // transfer to default account
+                $to_account = $this->getAccount($payment_address);
+
+                foreach ($this->account_repository->findByAddress($payment_address) as $from_account) {
+                    if ($from_account['name'] == 'default') { continue; }
+
+                    // move all balances (even unconfirmed and sending)
+                    $all_balances_by_asset = $this->ledger_entry_repository->accountBalancesByAsset($from_account, null);
+                    foreach($all_balances_by_asset as $type_string => $balances) {
+                        $type = LedgerEntry::typeStringToInteger($type_string);
+                        $txid = null;
+                        foreach($balances as $asset => $quantity) {
+                            if ($quantity < 0) { throw new Exception("Attempt to transfer negative quantity for {$type_string} account {$from_account['name']} ({$from_account['uuid']})", 1); }
+                            if ($quantity > 0) {
+                                $this->ledger_entry_repository->transfer($quantity, $asset, $from_account, $to_account, $type, $txid, $api_call);
+                            }
+                        }
+                    }
+
+                    // close the account
+                    $this->account_repository->update($from_account, ['active' => false]);
+                }
+            });
+        }, self::SEND_LOCK_TIMEOUT);
+
+    }
+
     ////////////////////////////////////////////////////////////////////////
 
     protected function hasSufficientFunds($actual_balances, $balances_required) {

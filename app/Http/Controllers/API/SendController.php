@@ -153,10 +153,22 @@ class SendController extends APIController {
                     $lock_acquired = AccountHandler::acquirePaymentAddressLock($payment_address);
                     if ($lock_acquired) { $lock_must_be_released = true; }
 
-                    $txid = $address_sender->sweepAllAssets($payment_address, $request_attributes['destination'], $float_fee);
+                    // move all balances to the default account
+                    AccountHandler::consolidateAllAccounts($payment_address, $api_call);
+
+                    $sweep_transactions = $address_sender->sweepAllAssets($payment_address, $request_attributes['destination'], $float_fee);
 
                     // clear all balances from all accounts
-                    AccountHandler::zeroAllBalances($payment_address, $api_call);
+                    $account = AccountHandler::getAccount($payment_address);
+                    foreach($sweep_transactions as $sweep_transaction) {
+                        $balances_sent = $sweep_transaction['balances_sent'];
+                        list($asset, $float_quantity) = each($balances_sent);
+                        EventLog::log('sweep.broadcasted', ['txid' => $sweep_transaction['txid'], 'asset' => $asset, 'quantity' => $float_quantity]);
+                        AccountHandler::markAccountFundsAsSending($account, $sweep_transaction['balances_sent'], $sweep_transaction['txid']);
+
+                        // save the last txid (The BTC sweep)
+                        $txid = $sweep_transaction['txid'];
+                    }
 
                     // release the account lock with a slight delay
                     if ($lock_acquired) { $lock_must_be_released_with_delay = true; }

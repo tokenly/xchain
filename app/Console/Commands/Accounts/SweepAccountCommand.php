@@ -91,10 +91,13 @@ class SweepAccountCommand extends Command {
         $lock_acquired = AccountHandler::acquirePaymentAddressLock($payment_address);
 
         // do the send
-        list($txid, $float_balance_sent) = $address_sender->sweepAllAssets($payment_address, $destination, $float_fee);
+        $sweep_transactions = $address_sender->sweepAllAssets($payment_address, $destination, $float_fee);
 
         // clear all balances from all accounts
-        AccountHandler::zeroAllBalances($payment_address, $api_call);
+        $account = AccountHandler::getAccount($payment_address);
+        foreach($sweep_transactions as $sweep_transaction) {
+            AccountHandler::markAccountFundsAsSending($account, $sweep_transaction['balances_sent'], $sweep_transaction['txid']);
+        }
 
         // release the account lock
         if ($lock_acquired) { AccountHandler::releasePaymentAddressLock($payment_address); }
