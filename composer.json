@@ -28,7 +28,8 @@
 		"tokenly/counterparty-transaction-composer": "dev-master",
 		"tokenly/hmac-auth": "^1",
 		"tokenly/laravel-api-provider": "^0.2",
-		"guzzlehttp/guzzle": "~5"
+		"guzzlehttp/guzzle": "~5",
+		"tokenly/counterparty-transaction-parser": "dev-master"
 	},
 	"require-dev": {
 		"phpunit/phpunit": "^4.5",

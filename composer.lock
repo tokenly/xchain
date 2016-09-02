@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "1838b8c368eab05dc8d29874fb27392f",
-    "content-hash": "a117ae56556036978388dea1f8012aa9",
+    "hash": "de75194b4d196ea2eef8c3390e6242a6",
+    "content-hash": "576d37fadd8693d03e0e81de9fdf47f5",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
@@ -3719,12 +3719,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-parser.git",
-                "reference": "80b83f69461e70dfd1ef9722239b978e92467f71"
+                "reference": "e31df06b5c33732646665bdaee983b7a3e18c563"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/80b83f69461e70dfd1ef9722239b978e92467f71",
-                "reference": "80b83f69461e70dfd1ef9722239b978e92467f71",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/e31df06b5c33732646665bdaee983b7a3e18c563",
+                "reference": "e31df06b5c33732646665bdaee983b7a3e18c563",
                 "shasum": ""
             },
             "require": {
@@ -5938,6 +5938,7 @@
         "tokenly/consul-health-daemon": 20,
         "tokenly/laravel-record-lock": 20,
         "tokenly/counterparty-transaction-composer": 20,
+        "tokenly/counterparty-transaction-parser": 20,
         "satooshi/php-coveralls": 20
     },
     "prefer-stable": true,
