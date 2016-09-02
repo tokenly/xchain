@@ -79,6 +79,14 @@ class CounterpartySenderMockBuilder
                 return [$send];
             }
 
+            if ($name == 'get_issuances') {
+                $txid = $asset = $arguments[0]['filters']['value'];
+                $filepath = base_path()."/tests/fixtures/issuances/{$txid}.json";
+                if (!file_exists($filepath)) { throw new Exception("Send fixture not found for $txid", 1); }
+                $issuances = json_decode(file_get_contents($filepath), true);
+                return $issuances;
+            }
+
             if ($name == 'get_credits' OR $name == 'get_debits') {
                 $argstring = implode(
                     "-",

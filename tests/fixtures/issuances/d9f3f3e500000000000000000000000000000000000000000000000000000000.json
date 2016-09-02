@@ -1,0 +1,20 @@
+[
+    {
+        "locked": 0,
+        "status": "valid",
+        "call_date": 0,
+        "description": "Crypto-Rewards Program http://ltbcoin.com",
+        "fee_paid": 0,
+        "source": "1Hso4cqKAyx9bsan8b5nbPqMTNNce8ZDto",
+        "call_price": 0,
+        "block_index": 419059,
+        "quantity": 140952713000000,
+        "transfer": 0,
+        "tx_index": 505343,
+        "divisible": 1,
+        "asset": "LTBCOIN",
+        "tx_hash": "d9f3f3e592e1427a25cfe18c1e15d4fd5dc8db494e855b7f5cb650c638f74319",
+        "issuer": "1Hso4cqKAyx9bsan8b5nbPqMTNNce8ZDto",
+        "callable": 0
+    }
+]

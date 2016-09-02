@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "e7b45c00dec5a57a98c4d5e48d7e24d7",
-    "content-hash": "801ac267bf1ed20e8f74e3f2ed02a76e",
+    "hash": "1838b8c368eab05dc8d29874fb27392f",
+    "content-hash": "a117ae56556036978388dea1f8012aa9",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
@@ -3719,12 +3719,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-parser.git",
-                "reference": "e31df06b5c33732646665bdaee983b7a3e18c563"
+                "reference": "80b83f69461e70dfd1ef9722239b978e92467f71"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/e31df06b5c33732646665bdaee983b7a3e18c563",
-                "reference": "e31df06b5c33732646665bdaee983b7a3e18c563",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/80b83f69461e70dfd1ef9722239b978e92467f71",
+                "reference": "80b83f69461e70dfd1ef9722239b978e92467f71",
                 "shasum": ""
             },
             "require": {
@@ -5930,7 +5930,6 @@
         "tokenly/bitcoin-address-lib": 20,
         "tokenly/bitcoin-payer": 20,
         "tokenly/counterparty-sender": 20,
-        "tokenly/counterparty-transaction-parser": 20,
         "tokenly/pusher-client": 20,
         "tokenly/token-generator": 20,
         "tokenly/xcpd-client": 20,

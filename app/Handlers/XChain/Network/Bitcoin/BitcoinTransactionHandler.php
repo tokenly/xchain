@@ -448,8 +448,13 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
                 'transactionFingerprint' => isset($parsed_tx['transactionFingerprint']) ? $parsed_tx['transactionFingerprint'] : null,
             ];
         } else {
+            $notified_event_type = $event_type;
+            if ($event_type == 'receive' AND $parsed_tx['network'] == 'counterparty' AND $parsed_tx['counterpartyTx']['type'] == 'issuance') {
+                $notified_event_type = 'issuance';
+            }
+
             $notification = [
-                'event'                  => $event_type,
+                'event'                  => $notified_event_type,
 
                 'network'                => $parsed_tx['network'],
                 'asset'                  => $parsed_tx['asset'],

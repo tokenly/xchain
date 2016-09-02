@@ -37,6 +37,10 @@ class ValidateConfirmedCounterpartydTxJob
                 list($was_found, $is_valid, $modified_tx) = $this->validateSend($parsed_tx, $data);
                 break;
 
+            case 'issuance':
+                list($was_found, $is_valid, $modified_tx) = $this->validateIssuance($parsed_tx, $data);
+                break;
+
             default:
                 EventLog::warning('counterparty.jobUnknownType', [
                     'msg'    => 'Unhandled counterparty action',
@@ -233,17 +237,127 @@ class ValidateConfirmedCounterpartydTxJob
         return [$was_found, $is_valid, $modified_tx];
     }
 
+    protected function validateIssuance($parsed_tx, $data) {
+        // $data = [
+        //     'tx'            => $parsed_tx,
+        //     'confirmations' => $confirmations,
+        //     'block_seq'     => $block_seq,
+        //     'block_id'      => $block_id,
+        // ];
 
+        // {
+        //     "destination": "1H42mKvwutzE4DAip57tkAc9KEKMGBD2bB",
+        //     "source": "1MFHQCPGtcSfNPXAS6NryWja3TbUN9239Y",
+        //     "quantity": 1050000000000,
+        //     "block_index": 355675,
+        //     "tx_hash": "5cbaf7995e7a8337861a30a65f5d751550127f63fccdb8a9b307efc26e6aa28b",
+        //     "tx_index": 234609,
+        //     "status": "valid",
+        //     "asset": "LTBCOIN"
+        // }
+
+        // validate from counterpartyd
+        $txid                    = $parsed_tx['txid'];
+        $modified_tx             = $parsed_tx;
+        $trial_counterparty_data = $parsed_tx['counterpartyTx'];
+
+        $was_found = false;
+        $is_valid  = false;
+
+        try {
+            $issuances = $this->xcpd_client->get_issuances(['filters' => ['field' => 'tx_hash', 'op' => '==', 'value' => $txid]]);
+
+        } catch (Exception $e) {
+            EventLog::logError('error.counterparty', $e);
+
+            // received no result from counterparty
+            $issuances = null;
+            $is_valid  = null;
+        }
+
+        if ($issuances) {
+            $issuance = $issuances[0];
+            if ($issuance) {
+                $is_valid  = true;
+                $was_found = true;
+                try {
+                    if ($issuance['issuer'] != $trial_counterparty_data['sources'][0]) {
+                        throw new Exception("mismatched source: {$issuance['source']} (xcpd) != {$trial_counterparty_data['sources'][0]} (parsed)", 1);
+                    }
+
+                    $xcpd_quantity_sat = $issuance['quantity'];
+
+                    // if token is not divisible, adjust to satoshis
+                    $is_divisible = !!$issuance['divisible'];
+                    if (!$is_divisible) { $xcpd_quantity_sat = CurrencyUtil::valueToSatoshis($xcpd_quantity_sat); }
+
+                    // compare issuance quantity
+                    if ($xcpd_quantity_sat != $trial_counterparty_data['quantitySat']) {
+                        EventLog::warning('counterparty.issuanceMismatchedQuantity', [
+                            'txid'       => $txid,
+                            'xcpd_qty'   => $xcpd_quantity_sat,
+                            'parsed_qty' => $trial_counterparty_data['quantitySat'],
+                            'asset'      => $issuance['asset'],
+                            'issuer'     => $issuance['issuer'],
+                        ]);
+                        throw new Exception("mismatched quantity: {$xcpd_quantity_sat} (xcpd) != {$trial_counterparty_data['quantitySat']} (parsed)", 1);
+
+                        // reset to zero, but keep bitcoin transaction
+                        $modified_tx = $this->modifyCounterpartyAssetTransactionQuantity($modified_tx, 0);
+                    }
+
+                    // check asset
+                    if ($issuance['asset'] != $trial_counterparty_data['asset']) {
+                        throw new Exception("mismatched asset: {$issuance['asset']} (xcpd) != {$trial_counterparty_data['asset']} (parsed)", 1);
+                    }
+
+                    // check description
+                    if ($issuance['description'] != $trial_counterparty_data['description']) {
+                        throw new Exception("mismatched description: {$issuance['description']} (xcpd) != {$trial_counterparty_data['description']} (parsed)", 1);
+                    }
+
+                    EventLog::debug('counterparty.issuanceConfirmed', [
+                        'issuer' => $issuance['issuer'],
+                        'qty'    => $xcpd_quantity_sat,
+                        'asset'  => $issuance['asset'],
+                    ]);
+
+
+                    // we'll let the credits and debits process pick this up
+                    //   but still send the notification
+                    $modified_tx = $this->modifyAssetAndValueQuantities($modified_tx, 0);
+
+                } catch (Exception $e) {
+                    EventLog::logError('error.counterpartyConfirm', $e, ['txid' => $txid]);
+                    $is_valid = false;
+                }
+            }
+        }    
+
+        return [$was_found, $is_valid, $modified_tx];
+    }
 
 
     // ------------------------------------------------------------------------
+
+    protected function modifyAssetAndValueQuantities($tx, $new_xcpd_quantity_sat=0) {
+        $old_counterparty_tx = $tx['counterpartyTx'];
+        $old_values          = $tx['values'];
+
+        $modified_tx = $this->modifyCounterpartyAssetTransactionQuantity($tx, $new_xcpd_quantity_sat);
+        $modified_tx['counterpartyTx'] = $old_counterparty_tx;
+        $modified_tx['values']         = $old_values;
+
+        return $modified_tx;
+    }
 
     protected function modifyCounterpartyAssetTransactionQuantity($tx, $new_xcpd_quantity_sat=0) {
         $new_xcpd_quantity_float = CurrencyUtil::satoshisToValue($new_xcpd_quantity_sat);
         $modified_tx = $tx;
 
         // keep the bitcoin the same, but reset the asset quantity to 0
-        $modified_tx['counterpartyTx']['quantity'] = $new_xcpd_quantity_sat;
+        $modified_tx['counterpartyTx']['quantitySat'] = $new_xcpd_quantity_sat;
+        $modified_tx['counterpartyTx']['quantity'] = CurrencyUtil::satoshisToValue($new_xcpd_quantity_sat);
 
         // set values to 0
         $modified_tx['values'] = collect($modified_tx['values'])->map(function($value, $k) {
