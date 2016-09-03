@@ -5,16 +5,16 @@
         "call_date": 0,
         "description": "NEWCOIN Description here",
         "fee_paid": 0,
-        "source": "1Hso4cqKAyx9bsan8b5nbPqMTNNce8ZDto",
+        "source": "SENDER01",
         "call_price": 0,
-        "block_index": 419059,
+        "block_index": 300000,
         "quantity": 100000000000,
         "transfer": 0,
         "tx_index": 505343,
         "divisible": 1,
         "asset": "NEWCOIN",
-        "tx_hash": "d9f3f3e592e1427a25cfe18c1e15d4fd5dc8db494e855b7f5cb650c638f74319",
-        "issuer": "1Hso4cqKAyx9bsan8b5nbPqMTNNce8ZDto",
+        "tx_hash": "0000000000000000000000000000000000000000000000000000000022222222",
+        "issuer": "SENDER01",
         "callable": 0
     }
 ]

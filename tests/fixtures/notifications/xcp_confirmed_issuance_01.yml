@@ -1,0 +1,17 @@
+# a simple XCP notification
+
+txid: "0000000000000000000000000000000000000000000000000000000022222222"
+network: counterparty
+event: issuance
+notifiedAddress: SENDER01
+sources: SENDER01
+destinations: SENDER01
+confirmed: true
+confirmations: 1
+asset: NEWCOIN
+quantity: 1000
+blockId: 300000
+counterpartyTx:
+    quantity: 1000
+    quantitySat: 100000000000
+

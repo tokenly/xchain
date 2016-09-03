@@ -426,9 +426,15 @@ class ScenarioRunner
         $original_recipient = isset($raw_transaction_event['recipient']) ? $raw_transaction_event['recipient'] : $normalized_transaction_event['destinations'][0];
         if (isset($raw_transaction_event['sender'])) {
             $normalized_transaction_event['sources'] = [$raw_transaction_event['sender']];
+            if (isset($normalized_transaction_event['counterpartyTx']) AND isset($normalized_transaction_event['counterpartyTx']['sources'])) {
+                $normalized_transaction_event['counterpartyTx']['sources'] = [$raw_transaction_event['sender']];
+            }
         }
         if (isset($raw_transaction_event['recipient'])) {
             $normalized_transaction_event['destinations'] = [$raw_transaction_event['recipient']];
+            if (isset($normalized_transaction_event['counterpartyTx']) AND isset($normalized_transaction_event['counterpartyTx']['destinations'])) {
+                $normalized_transaction_event['counterpartyTx']['destinations'] = [$raw_transaction_event['recipient']];
+            }
 
             // vouts
             if (isset($normalized_transaction_event['bitcoinTx']['vout'])) {

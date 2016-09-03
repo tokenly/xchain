@@ -10,10 +10,22 @@ class CounterpartyTransactionHandler extends BitcoinTransactionHandler {
 
 
     protected function buildNotification($event_type, $parsed_tx, $quantity, $sources, $destinations, $confirmations, $block, $block_seq, $monitored_address) {
+        $counterparty_event_type = $event_type;
+        if ($event_type AND $parsed_tx['network'] == 'counterparty' AND $parsed_tx['counterpartyTx']['type'] == 'issuance') {
+            $counterparty_event_type = 'issuance';
+        }
+        if ($event_type == 'send' AND $counterparty_event_type == 'issuance') {
+            // don't notify the send address for issuances
+            return null;
+        }
+
         $notification = parent::buildNotification($event_type, $parsed_tx, $quantity, $sources, $destinations, $confirmations, $block, $block_seq, $monitored_address);
 
         // add the counterparty Tx details
         $notification['counterpartyTx'] = $parsed_tx['counterpartyTx'];
+
+        // update the event type
+        $notification['event'] = $counterparty_event_type;
 
         return $notification;
     }

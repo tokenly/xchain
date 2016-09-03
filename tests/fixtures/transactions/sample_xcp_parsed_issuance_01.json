@@ -16,13 +16,13 @@
     },
     "receivedAssets": {
         "1Hso4cqKAyx9bsan8b5nbPqMTNNce8ZDto": {
-            "LTBCOIN": 1409527.13
+            "NEWCOIN": 1000
         }
     },
     "values": {
-        "1Hso4cqKAyx9bsan8b5nbPqMTNNce8ZDto": 1409527.13
+        "1Hso4cqKAyx9bsan8b5nbPqMTNNce8ZDto": 1000
     },
-    "asset": "LTBCOIN",
+    "asset": "NEWCOIN",
     "bitcoinTx": {
         "hex": "0100000001404746d7a3ca588e685c9c7837264a59f414193799fff758072765aea15be02b020000006b483045022100bdcc1274f03b7c11c1e36fde682cd2c43cf6677971fca5d6d8496a12ca68f65e0220230a184b058397d26685deb0603c710ee0dc70c47777b8440908685e22a97194012103429636ae01031ac5117414cea2da1b65dc50f7b86ea73c0d7c2b77a4ffacb3ddffffffff020000000000000000536a4c502d4df4adc288c989ed3c7063940ba4259cb15a558340cf2fed9be05a4899c8ec997b6d1d1377f4ee937fc3e458275dfae9bbe4ef50367a0a04b9b991d4ffc02213357e97a67c9b61b13d08223d08e3e29cfa0900000000001976a914b91d42f5ed440bfde8e67e0e009ce303ee24889188ac00000000",
         "txid": "d9f3f3e592e1427a25cfe18c1e15d4fd5dc8db494e855b7f5cb650c638f74319",
@@ -88,14 +88,14 @@
         "destinations": [
             "1Hso4cqKAyx9bsan8b5nbPqMTNNce8ZDto"
         ],
-        "quantity": 1409527.13,
-        "asset": "LTBCOIN",
+        "quantity": 1000,
+        "asset": "NEWCOIN",
         "divisible": true,
         "callable": false,
         "call_date": 0,
         "call_price": 0,
-        "description": "Crypto-Rewards Program http://ltbcoin.com",
-        "quantitySat": 140952713000000,
+        "description": "NEWCOIN Description here",
+        "quantitySat": 100000000000,
         "dustSize": 0,
         "dustSizeSat": 0
     },

@@ -1,0 +1,24 @@
+# issuance transaction notification test
+
+monitoredAddresses:
+  - address: SENDER01
+    monitor_type: receive
+
+  - address: SENDER01
+    monitor_type: send
+
+events:
+  -
+    type: transaction
+    meta: { baseFilename: sample_xcp_parsed_issuance_01.json }
+    confirmations: 1
+    txid: "0000000000000000000000000000000000000000000000000000000022222222"
+    sender: SENDER01
+    recipient: SENDER01
+    isCounterpartyTx: true
+    asset: NEWCOIN
+    quantity: 1000
+    blockId: 300000
+
+notifications:
+  - meta: { baseFilename: xcp_confirmed_issuance_01.yml }

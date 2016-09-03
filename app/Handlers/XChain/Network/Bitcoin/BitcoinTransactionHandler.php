@@ -368,7 +368,9 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
             // build the notification
             $notification = $this->buildNotification($event_type, $parsed_tx, $quantity, $sources, $destinations, $confirmations, $block, $block_seq, $monitored_address);
-            $this->sendNotification($notification, $monitored_address, $parsed_tx['txid'], $confirmations, $block, $event_type);
+            if ($notification) {
+                $this->sendNotification($notification, $monitored_address, $parsed_tx['txid'], $confirmations, $block, $event_type);
+            }
         }
 
     }
@@ -405,6 +407,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         $notification['notificationId'] = $notification_model['uuid'];
 
         // put notification in the queue
+        // Log::debug("\$notification=".json_encode($notification, 192)." ".format_debug_backtrace(debug_backtrace()));
         EventLog::log('notification.out', ['event'=>$notification['event'], 'txid' => $txid, 'confirmations' => $confirmations, 'asset'=>$notification['asset'], 'quantity'=>$notification['quantity'], 'sources'=>(isset($notification['sources']) ? $notification['sources'] : []), 'destinations'=>(isset($notification['destinations']) ? $notification['destinations'] : []), 'address' => $notification['notifiedAddress'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
 
         $this->xcaller_client->sendWebhook($notification, $monitored_address['webhookEndpoint'], $notification_model['uuid'], $user['apitoken'], $user['apisecretkey']);
@@ -448,13 +451,9 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
                 'transactionFingerprint' => isset($parsed_tx['transactionFingerprint']) ? $parsed_tx['transactionFingerprint'] : null,
             ];
         } else {
-            $notified_event_type = $event_type;
-            if ($event_type == 'receive' AND $parsed_tx['network'] == 'counterparty' AND $parsed_tx['counterpartyTx']['type'] == 'issuance') {
-                $notified_event_type = 'issuance';
-            }
 
             $notification = [
-                'event'                  => $notified_event_type,
+                'event'                  => $event_type,
 
                 'network'                => $parsed_tx['network'],
                 'asset'                  => $parsed_tx['asset'],

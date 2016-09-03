@@ -90,8 +90,8 @@ class XChainValidateCounterpartyJobTest extends TestCase {
 
         // check the values
         $counterparty_data = $tx['counterpartyTx'];
-        PHPUnit::assertEquals("LTBCOIN", $counterparty_data['asset']);
-        PHPUnit::assertEquals("Crypto-Rewards Program http://ltbcoin.com", $counterparty_data['description']);
+        PHPUnit::assertEquals("NEWCOIN", $counterparty_data['asset']);
+        PHPUnit::assertEquals("NEWCOIN Description here", $counterparty_data['description']);
         PHPUnit::assertEquals(true, $counterparty_data['divisible']);
     }
 
