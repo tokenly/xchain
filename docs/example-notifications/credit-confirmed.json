@@ -1,0 +1,25 @@
+{
+    "address": "1Na5Z6ZsKrD6TyhGZNRxsK75caiWqpwTCK",
+    "asset": "SCOTCOIN",
+    "confirmationTime": "2016-09-03T00:31:57+0000",
+    "confirmations": 1,
+    "confirmed": true,
+    "counterpartyData": {
+        "action": "order match",
+        "address": "1Na5Z6ZsKrD6TyhGZNRxsK75caiWqpwTCK",
+        "asset": "SCOTCOIN",
+        "block_index": 428032,
+        "event": "e2ab03d7bea7ba94901c19c0da930db07e1e2adc56dd5f92b038647f259b0bea_df642bcac4b65a710d7706f78172ab0080be58f9fbd6bf49d748a927eece72e2",
+        "fingerprint": "CRDT65fbc4e6d1ea0746a2c58ed63e62dcd80c662024240ed26c1dd593614c98",
+        "quantity": 10000000000,
+        "type": "credit"
+    },
+    "event": "credit",
+    "network": "counterparty",
+    "notifiedAddress": "1Na5Z6ZsKrD6TyhGZNRxsK75caiWqpwTCK",
+    "notifiedAddressId": "dff2c7a0-4114-4444-b087-76a2f4f346ec",
+    "quantity": 100,
+    "quantitySat": 10000000000,
+    "transactionFingerprint": "CRDT65fbc4e6d1ea0746a2c58ed63e62dcd80c662024240ed26c1dd593614c98",
+    "transactionTime": "2016-09-03T00:32:32+0000"
+}

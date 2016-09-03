@@ -1,0 +1,77 @@
+{
+    "asset": "BTC",
+    "bitcoinTx": {
+        "fees": 1.687e-05,
+        "feesSat": 1687,
+        "hex": "010000000112af96ea7abca45244fa366179ff37706de16c2db08a6058a3cc1146d0a76f40020000006a473044022043024d1adccee18b98d33ae1cb0565e7a88ef22404b346fa80307489bc555e2602202befdcf7913d83d963452095a88d30bc681ea7e29805549e105686492259773d0121031d5080b94a4e5f3d308caf74379a7f19c3bf68bce47b16edc3370793eb342427ffffffff022fad1900000000001976a914ec9c2b4e92be3842f07a877b2ba9fe232f64d71a88ac47fd5700000000001976a91466cd6c8cc9d227cf96af5d903818239fa160076488ac00000000",
+        "locktime": 0,
+        "size": 225,
+        "txid": "ec1d403e243c4c228f6ee45638f9f3bd42546026f542611d31ca6e36bc533258",
+        "valueIn": 0.07450893,
+        "valueInSat": 7450893,
+        "valueOut": 0.07449206,
+        "valueOutSat": 7449206,
+        "version": 1,
+        "vin": [
+            {
+                "addr": "1ANa1gL1JEKUmQc1ZaSQLokF5pVPNpyi5j",
+                "n": 0,
+                "scriptSig": {
+                    "asm": "3044022043024d1adccee18b98d33ae1cb0565e7a88ef22404b346fa80307489bc555e2602202befdcf7913d83d963452095a88d30bc681ea7e29805549e105686492259773d[ALL] 031d5080b94a4e5f3d308caf74379a7f19c3bf68bce47b16edc3370793eb342427",
+                    "hex": "473044022043024d1adccee18b98d33ae1cb0565e7a88ef22404b346fa80307489bc555e2602202befdcf7913d83d963452095a88d30bc681ea7e29805549e105686492259773d0121031d5080b94a4e5f3d308caf74379a7f19c3bf68bce47b16edc3370793eb342427"
+                },
+                "sequence": 4294967295,
+                "txid": "406fa7d04611cca358608ab02d6ce16d7037ff796136fa4452a4bc7aea96af12",
+                "value": 0.07450893,
+                "valueSat": 7450893,
+                "vout": 2
+            }
+        ],
+        "vout": [
+            {
+                "n": 0,
+                "scriptPubKey": {
+                    "addresses": [
+                        "1Na5Z6ZsKrD6TyhGZNRxsK75caiWqpwTCK"
+                    ],
+                    "asm": "OP_DUP OP_HASH160 ec9c2b4e92be3842f07a877b2ba9fe232f64d71a OP_EQUALVERIFY OP_CHECKSIG",
+                    "hex": "76a914ec9c2b4e92be3842f07a877b2ba9fe232f64d71a88ac",
+                    "reqSigs": 1,
+                    "type": "pubkeyhash"
+                },
+                "value": 0.01682735
+            },
+            {
+                "n": 1,
+                "scriptPubKey": {
+                    "addresses": [
+                        "1ANa1gL1JEKUmQc1ZaSQLokF5pVPNpyi5j"
+                    ],
+                    "asm": "OP_DUP OP_HASH160 66cd6c8cc9d227cf96af5d903818239fa1600764 OP_EQUALVERIFY OP_CHECKSIG",
+                    "hex": "76a91466cd6c8cc9d227cf96af5d903818239fa160076488ac",
+                    "reqSigs": 1,
+                    "type": "pubkeyhash"
+                },
+                "value": 0.05766471
+            }
+        ]
+    },
+    "confirmationTime": "",
+    "confirmations": 0,
+    "confirmed": false,
+    "destinations": [
+        "1Na5Z6ZsKrD6TyhGZNRxsK75caiWqpwTCK"
+    ],
+    "event": "receive",
+    "network": "bitcoin",
+    "notifiedAddress": "1Na5Z6ZsKrD6TyhGZNRxsK75caiWqpwTCK",
+    "notifiedAddressId": "dff2c7a0-4114-4444-b087-76a2f4f346ec",
+    "quantity": 0.01682735,
+    "quantitySat": 1682735,
+    "sources": [
+        "1ANa1gL1JEKUmQc1ZaSQLokF5pVPNpyi5j"
+    ],
+    "transactionFingerprint": "6d65cbdfedf40ed966cb3b80fc4697b7155f4600e46e382422d1b376d9f1da44",
+    "transactionTime": "2016-09-03T07:06:23+0000",
+    "txid": "ec1d403e243c4c228f6ee45638f9f3bd42546026f542611d31ca6e36bc533258"
+}

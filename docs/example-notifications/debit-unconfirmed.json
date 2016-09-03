@@ -1,0 +1,25 @@
+{
+    "address": "1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1",
+    "asset": "XCP",
+    "confirmationTime": "2016-09-03T13:28:04+0000",
+    "confirmations": 0,
+    "confirmed": false,
+    "counterpartyData": {
+        "action": "issuance fee",
+        "address": "1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1",
+        "asset": "XCP",
+        "block_index": 428091,
+        "event": "dd75110696775138e69ff87c77ef414efe71458efdb8e1b58b6bda45525b1f5d",
+        "fingerprint": "DEBT274251ce21be546adb367f3feee2b551abbb42147091686b450341123e21",
+        "quantity": 50000000,
+        "type": "debit"
+    },
+    "event": "debit",
+    "network": "counterparty",
+    "notifiedAddress": "1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1",
+    "notifiedAddressId": "94de96f1-e115-4c53-995b-fbec5a4feb7a",
+    "quantity": 0.5,
+    "quantitySat": 50000000,
+    "transactionFingerprint": "DEBT274251ce21be546adb367f3feee2b551abbb42147091686b450341123e21",
+    "transactionTime": "2016-09-03T13:29:31+0000"
+}

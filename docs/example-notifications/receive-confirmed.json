@@ -1,0 +1,105 @@
+{
+    "asset": "WALMART",
+    "bitcoinTx": {
+        "blockhash": "00000000000000000118d0c2c5d4458187b9c99b1a46354923bd371f267e8316",
+        "blockheight": 427699,
+        "blocktime": 1472666950,
+        "fees": 0.0001781,
+        "feesSat": 17810,
+        "hex": "0100000001bd06ab83b74c1121241a8277326a4a85a84af05f3f48b297c1273a1c05ebf85d020000006b483045022100bac2fb715b2170375b058c612556bcce5d4c21bea2693a3f154a193ff49e8e5f02205b9b006340f7a9061234d8432f224be55039c03c6472cdf2db695faa0c0619340121032b0d81e6efe54f108908e7f7051c54754681e3850df05dba4bb5ec82d05b63e5ffffffff0336150000000000001976a914333e39ad580867430fb75fabd4d43bb7f8070e5f88ac00000000000000001e6a1cd07270de7f3f6f915623202801e68bfe2a3464e70588cb05feddfda4a0d10000000000001976a914cb2d5b8cc6e72a56a76e082c8ab31ae65a443ac388ac00000000",
+        "locktime": 0,
+        "size": 265,
+        "txid": "13277080111fdd1d6969d8dcdafdb8d4b84907d5c89802437927b1f79973b621",
+        "valueIn": 0.00076904,
+        "valueInSat": 76904,
+        "valueOut": 0.00059094,
+        "valueOutSat": 59094,
+        "version": 1,
+        "vin": [
+            {
+                "addr": "1KXJWSkm2CF6xMqbqNRJwxp6XxsUCjouZM",
+                "n": 0,
+                "scriptSig": {
+                    "asm": "3045022100bac2fb715b2170375b058c612556bcce5d4c21bea2693a3f154a193ff49e8e5f02205b9b006340f7a9061234d8432f224be55039c03c6472cdf2db695faa0c061934[ALL] 032b0d81e6efe54f108908e7f7051c54754681e3850df05dba4bb5ec82d05b63e5",
+                    "hex": "483045022100bac2fb715b2170375b058c612556bcce5d4c21bea2693a3f154a193ff49e8e5f02205b9b006340f7a9061234d8432f224be55039c03c6472cdf2db695faa0c0619340121032b0d81e6efe54f108908e7f7051c54754681e3850df05dba4bb5ec82d05b63e5"
+                },
+                "sequence": 4294967295,
+                "txid": "5df8eb051c3a27c197b2483f5ff04aa8854a6a3277821a2421114cb783ab06bd",
+                "value": 0.00076904,
+                "valueSat": 76904,
+                "vout": 2
+            }
+        ],
+        "vout": [
+            {
+                "n": 0,
+                "scriptPubKey": {
+                    "addresses": [
+                        "15fx1Gqe4KodZvyzN6VUSkEmhCssrM1yD7"
+                    ],
+                    "asm": "OP_DUP OP_HASH160 333e39ad580867430fb75fabd4d43bb7f8070e5f OP_EQUALVERIFY OP_CHECKSIG",
+                    "hex": "76a914333e39ad580867430fb75fabd4d43bb7f8070e5f88ac",
+                    "reqSigs": 1,
+                    "type": "pubkeyhash"
+                },
+                "value": 5.43e-05
+            },
+            {
+                "n": 1,
+                "scriptPubKey": {
+                    "asm": "OP_RETURN d07270de7f3f6f915623202801e68bfe2a3464e70588cb05feddfda4",
+                    "hex": "6a1cd07270de7f3f6f915623202801e68bfe2a3464e70588cb05feddfda4",
+                    "type": "nulldata"
+                },
+                "value": 0
+            },
+            {
+                "n": 2,
+                "scriptPubKey": {
+                    "addresses": [
+                        "1KXJWSkm2CF6xMqbqNRJwxp6XxsUCjouZM"
+                    ],
+                    "asm": "OP_DUP OP_HASH160 cb2d5b8cc6e72a56a76e082c8ab31ae65a443ac3 OP_EQUALVERIFY OP_CHECKSIG",
+                    "hex": "76a914cb2d5b8cc6e72a56a76e082c8ab31ae65a443ac388ac",
+                    "reqSigs": 1,
+                    "type": "pubkeyhash"
+                },
+                "value": 0.00053664
+            }
+        ]
+    },
+    "blockSeq": 928,
+    "confirmationTime": "2016-08-31T18:09:10+0000",
+    "confirmations": 1,
+    "confirmed": true,
+    "counterpartyTx": {
+        "asset": "WALMART",
+        "destinations": [
+            "15fx1Gqe4KodZvyzN6VUSkEmhCssrM1yD7"
+        ],
+        "dustSize": 5.43e-05,
+        "dustSizeSat": 5430,
+        "quantity": 5,
+        "quantitySat": 500000000,
+        "sources": [
+            "1KXJWSkm2CF6xMqbqNRJwxp6XxsUCjouZM"
+        ],
+        "type": "send",
+        "validated": true
+    },
+    "destinations": [
+        "15fx1Gqe4KodZvyzN6VUSkEmhCssrM1yD7"
+    ],
+    "event": "receive",
+    "network": "counterparty",
+    "notifiedAddress": "15fx1Gqe4KodZvyzN6VUSkEmhCssrM1yD7",
+    "notifiedAddressId": "21aa819e-f222-4b49-9c94-fc7fafab833e",
+    "quantity": 5,
+    "quantitySat": 500000000,
+    "sources": [
+        "1KXJWSkm2CF6xMqbqNRJwxp6XxsUCjouZM"
+    ],
+    "transactionFingerprint": "6021178aff959bed7730a1fce7fdbf6455e01f8f56db4b88469825529160c1d2",
+    "transactionTime": "2016-08-31T17:41:59+0000",
+    "txid": "13277080111fdd1d6969d8dcdafdb8d4b84907d5c89802437927b1f79973b621"
+}
