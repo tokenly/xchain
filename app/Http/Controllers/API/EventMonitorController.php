@@ -77,14 +77,14 @@ class EventMonitorController extends APIController {
      * @param  int  $id
      * @return Response
      */
-    public function destroy(APIControllerHelper $helper, EventMonitorRepository $monitored_address_respository, NotificationRepository $notification_repository, Guard $auth, $monitored_address_uuid)
+    public function destroy(APIControllerHelper $helper, EventMonitorRepository $event_monitor_repository, NotificationRepository $notification_repository, Guard $auth, $monitored_address_uuid)
     {
         $user = $auth->getUser();
         if (!$user) { throw new Exception("User not found", 1); }
 
-        return DB::transaction(function() use ($helper, $monitored_address_respository, $notification_repository, $monitored_address_uuid, $user) {
+        return DB::transaction(function() use ($helper, $event_monitor_repository, $notification_repository, $monitored_address_uuid, $user) {
             // get the monitor
-            $monitor = $monitored_address_respository->findByUuid($monitored_address_uuid);
+            $monitor = $helper->requireResourceOwnedByUser($monitored_address_uuid, $user, $event_monitor_repository);
 
             // archive all notifications first
             $notification_repository->findByEventMonitorId($monitor['id'])->each(function($notification) use ($notification_repository) {
@@ -93,7 +93,7 @@ class EventMonitorController extends APIController {
 
             // delete the monitor
             EventLog::log('eventMonitor.delete', $monitor->serializeForAPI());
-            return $helper->destroy($monitored_address_respository, $monitored_address_uuid, $user['id']);
+            return $helper->destroy($event_monitor_repository, $monitored_address_uuid, $user['id']);
         });
 
     }
