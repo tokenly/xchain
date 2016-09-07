@@ -375,7 +375,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         foreach($event_monitors as $event_monitor) {
             // calculate the quantity
             //   always treat it as a receive
-            $quantity = $this->buildQuantityForEventType('receive', $parsed_tx, $parsed_tx['destinations'][0]);
+            $quantity = $this->buildQuantityForEventType('receive', $parsed_tx, $parsed_tx['destinations'] ? $parsed_tx['destinations'][0] : null);
 
             // build the notification
             $notification = $this->buildNotification('receive', $parsed_tx, $quantity, $sources, $destinations, $confirmations, $block, $block_seq, null, $event_monitor);

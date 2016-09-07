@@ -1,0 +1,14 @@
+# a simple XCP notification
+
+txid: "0000000000000000000000000000000000000000000000000000000000003333"
+network: counterparty
+event: broadcast
+sources: SENDER01
+confirmed: false
+confirmations: 0
+message: BLOCKSCAN VERIFY-ADDRESS 7a4exlyjw97esst
+
+asset: ~
+quantity: 0
+quantitySat: 0
+destinations: []

@@ -41,6 +41,10 @@ class ValidateConfirmedCounterpartydTxJob
                 list($was_found, $is_valid, $modified_tx) = $this->validateIssuance($parsed_tx, $data);
                 break;
 
+            case 'broadcast':
+                list($was_found, $is_valid, $modified_tx) = $this->validateBroadcast($parsed_tx, $data);
+                break;
+
             default:
                 EventLog::warning('counterparty.jobUnknownType', [
                     'msg'    => 'Unhandled counterparty action',
@@ -320,6 +324,114 @@ class ValidateConfirmedCounterpartydTxJob
                         'issuer' => $issuance['issuer'],
                         'qty'    => $xcpd_quantity_sat,
                         'asset'  => $issuance['asset'],
+                    ]);
+
+
+                    // we'll let the credits and debits process pick this up
+                    //   but still send the notification
+                    $modified_tx = $this->modifyAssetAndValueQuantities($modified_tx, 0);
+
+                } catch (Exception $e) {
+                    EventLog::logError('error.counterpartyConfirm', $e, ['txid' => $txid]);
+                    $is_valid = false;
+                }
+            }
+        }    
+
+        return [$was_found, $is_valid, $modified_tx];
+    }
+
+
+    protected function validateBroadcast($parsed_tx, $data) {
+        // $data = [
+        //     'tx'            => $parsed_tx,
+        //     'confirmations' => $confirmations,
+        //     'block_seq'     => $block_seq,
+        //     'block_id'      => $block_id,
+        // ];
+
+        // [
+        //     {
+        //         "block_index": 428528,
+        //         "timestamp": 1473158100,
+        //         "locked": 0,
+        //         "source": "1Pq7HXD5i9ZXXfnt71xPmtEkyATWc57bRw",
+        //         "fee_fraction_int": 0,
+        //         "value": -1,
+        //         "text": "BLOCKSCAN VERIFY-ADDRESS 7a4exlyjw97esst",
+        //         "tx_index": 561297,
+        //         "tx_hash": "40c592beaf966697c2d052321dec817d41dd7257ec8a4ae667cb5f0af56a0496",
+        //         "status": "valid"
+        //     }
+        // ]
+
+        // {
+        //     "type": "broadcast",
+        //     "sources": [
+        //         "1FwkKA9cqpNRFTpVaokdRjT9Xamvebrwcu"
+        //     ],
+        //     "source": "1FwkKA9cqpNRFTpVaokdRjT9Xamvebrwcu",
+        //     "timestamp": 1471660320,
+        //     "value": -1,
+        //     "fee_fraction": 0,
+        //     "message": "This is a test of the emergency broadcast system. ABC123"
+        // }
+
+        // validate from counterpartyd
+        $txid                    = $parsed_tx['txid'];
+        $modified_tx             = $parsed_tx;
+        $trial_counterparty_data = $parsed_tx['counterpartyTx'];
+
+        $was_found = false;
+        $is_valid  = false;
+
+        try {
+            $broadcasts = $this->xcpd_client->get_broadcasts(['filters' => ['field' => 'tx_hash', 'op' => '==', 'value' => $txid]]);
+
+        } catch (Exception $e) {
+            EventLog::logError('error.counterparty', $e);
+
+            // received no result from counterparty
+            $broadcasts = null;
+            $is_valid  = null;
+        }
+
+        if ($broadcasts) {
+            $broadcast = $broadcasts[0];
+            if ($broadcast) {
+                $is_valid  = true;
+                $was_found = true;
+                try {
+                    if ($broadcast['source'] != $trial_counterparty_data['sources'][0]) {
+                        throw new Exception("mismatched source: {$broadcast['source']} (xcpd) != {$trial_counterparty_data['sources'][0]} (parsed)", 1);
+                    }
+                    if ($broadcast['source'] != $trial_counterparty_data['source']) {
+                        throw new Exception("mismatched source: {$broadcast['source']} (xcpd) != {$trial_counterparty_data['sources'][0]} (parsed)", 1);
+                    }
+
+                    // check timestamp
+                    if ($broadcast['timestamp'] != $trial_counterparty_data['timestamp']) {
+                        throw new Exception("mismatched timestamp: {$broadcast['timestamp']} (xcpd) != {$trial_counterparty_data['timestamp']} (parsed)", 1);
+                    }
+
+                    // check value
+                    if ($broadcast['value'] != $trial_counterparty_data['value']) {
+                        throw new Exception("mismatched value: {$broadcast['value']} (xcpd) != {$trial_counterparty_data['value']} (parsed)", 1);
+                    }
+
+                    // check fee_fraction
+                    if ($broadcast['fee_fraction_int'] != $trial_counterparty_data['fee_fraction']) {
+                        throw new Exception("mismatched fee_fraction: {$broadcast['fee_fraction_int']} (xcpd) != {$trial_counterparty_data['fee_fraction']} (parsed)", 1);
+                    }
+
+                    // check message
+                    if ($broadcast['text'] != $trial_counterparty_data['message']) {
+                        throw new Exception("mismatched message: {$broadcast['text']} (xcpd) != {$trial_counterparty_data['message']} (parsed)", 1);
+                    }
+
+                    EventLog::debug('counterparty.broadcastConfirmed', [
+                        'source' => $broadcast['source'],
+                        'message'  => $broadcast['text'],
                     ]);
 
 

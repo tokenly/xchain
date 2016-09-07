@@ -1,0 +1,17 @@
+# broadcast event monitor notification test
+
+monitoredAddresses: ~
+eventMonitors:
+    - monitorType: broadcast
+
+
+events:
+  -
+    type: transaction
+    meta: { baseFilename: sample_xcp_parsed_broadcast_01_mempool.json }
+    txid: "0000000000000000000000000000000000000000000000000000000000003333"
+    sender: SENDER01
+    blockId: 300000
+
+notifications:
+  - meta: { baseFilename: event_monitor_broadcast_notification_01.yml }

@@ -212,7 +212,6 @@ class ScenarioRunner
     protected function normalizeExpectedReceiveNotification($expected_notification, $actual_notification) {
         $normalized_expected_notification = [];
 
-
         if (isset($expected_notification['sources'])) {
             $normalized_expected_notification['sources'] = is_array($expected_notification['sources']) ? $expected_notification['sources'] : [$expected_notification['sources']];
         }
@@ -223,7 +222,9 @@ class ScenarioRunner
         ///////////////////
         // EXPECTED
         foreach (['txid','quantity','asset','notifiedAddress','event','network',] as $field) {
-            if (isset($expected_notification[$field])) { $normalized_expected_notification[$field] = $expected_notification[$field]; }
+            // if ($actual_notification['event'] == 'broadcast' AND in_array($field, ['quantity','asset'])) { continue; }
+
+            if (array_key_exists($field, $expected_notification)) { $normalized_expected_notification[$field] = $expected_notification[$field]; }
         }
         ///////////////////
 
@@ -245,14 +246,17 @@ class ScenarioRunner
         ///////////////////
         // Special
         // build satoshis
-        $normalized_expected_notification['quantitySat'] = CurrencyUtil::valueToSatoshis($normalized_expected_notification['quantity']);
+        if (isset($normalized_expected_notification['quantity'])) {
+            $normalized_expected_notification['quantitySat'] = CurrencyUtil::valueToSatoshis($normalized_expected_notification['quantity']);
+        }
         // blockhash
         if (isset($expected_notification['blockhash'])) {
             $normalized_expected_notification['bitcoinTx']['blockhash'] = $expected_notification['blockhash'];
         }
         if (isset($normalized_expected_notification['counterpartyTx']) AND $normalized_expected_notification['counterpartyTx']) {
-            $normalized_expected_notification['counterpartyTx']['quantity'] = $normalized_expected_notification['quantity'];
-            $normalized_expected_notification['counterpartyTx']['quantitySat'] = CurrencyUtil::valueToSatoshis($normalized_expected_notification['quantity']);
+            $quantity = isset($normalized_expected_notification['quantity']) ? $normalized_expected_notification['quantity'] : 0;
+            $normalized_expected_notification['counterpartyTx']['quantity'] = $quantity;
+            $normalized_expected_notification['counterpartyTx']['quantitySat'] = CurrencyUtil::valueToSatoshis($quantity);
         }
         ///////////////////
 
@@ -440,11 +444,14 @@ class ScenarioRunner
         $asset = $normalized_transaction_event['asset'];
 
         $original_sender = isset($raw_transaction_event['sender']) ? $raw_transaction_event['sender'] : $normalized_transaction_event['sources'][0];
-        $original_recipient = isset($raw_transaction_event['recipient']) ? $raw_transaction_event['recipient'] : $normalized_transaction_event['destinations'][0];
+        $original_recipient = isset($raw_transaction_event['recipient']) ? $raw_transaction_event['recipient'] : ($normalized_transaction_event['destinations'] ? $normalized_transaction_event['destinations'][0] : null);
         if (isset($raw_transaction_event['sender'])) {
             $normalized_transaction_event['sources'] = [$raw_transaction_event['sender']];
             if (isset($normalized_transaction_event['counterpartyTx']) AND isset($normalized_transaction_event['counterpartyTx']['sources'])) {
                 $normalized_transaction_event['counterpartyTx']['sources'] = [$raw_transaction_event['sender']];
+            }
+            if (isset($normalized_transaction_event['counterpartyTx']) AND isset($normalized_transaction_event['counterpartyTx']['source'])) {
+                $normalized_transaction_event['counterpartyTx']['source'] = $raw_transaction_event['sender'];
             }
         }
         if (isset($raw_transaction_event['recipient'])) {

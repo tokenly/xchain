@@ -82,9 +82,17 @@ class CounterpartySenderMockBuilder
             if ($name == 'get_issuances') {
                 $txid = $asset = $arguments[0]['filters']['value'];
                 $filepath = base_path()."/tests/fixtures/issuances/{$txid}.json";
-                if (!file_exists($filepath)) { throw new Exception("Send fixture not found for $txid", 1); }
+                if (!file_exists($filepath)) { throw new Exception("Issuance fixture not found for $txid", 1); }
                 $issuances = json_decode(file_get_contents($filepath), true);
                 return $issuances;
+            }
+
+            if ($name == 'get_broadcasts') {
+                $txid = $asset = $arguments[0]['filters']['value'];
+                $filepath = base_path()."/tests/fixtures/broadcasts/{$txid}.json";
+                if (!file_exists($filepath)) { throw new Exception("Broadcast fixture not found for $txid", 1); }
+                $broadcasts = json_decode(file_get_contents($filepath), true);
+                return $broadcasts;
             }
 
             if ($name == 'get_credits' OR $name == 'get_debits') {

@@ -48,8 +48,15 @@ class CounterpartyTransactionHandler extends BitcoinTransactionHandler {
 
     protected function buildNotification($event_type, $parsed_tx, $quantity, $sources, $destinations, $confirmations, $block, $block_seq, $monitored_address, $event_monitor=null) {
         $counterparty_event_type = $event_type;
-        if ($event_type AND $parsed_tx['network'] == 'counterparty' AND $parsed_tx['counterpartyTx']['type'] == 'issuance') {
-            $counterparty_event_type = 'issuance';
+
+        // special case for issuance and broadcast
+        if ($event_type AND $parsed_tx['network'] == 'counterparty') {
+            switch ($parsed_tx['counterpartyTx']['type']) {
+                case 'issuance':
+                case 'broadcast':
+                    $counterparty_event_type = $parsed_tx['counterpartyTx']['type'];
+                    break;
+            }
         }
         if ($event_type == 'send' AND $counterparty_event_type == 'issuance') {
             // don't notify the send address for issuances
@@ -63,6 +70,13 @@ class CounterpartyTransactionHandler extends BitcoinTransactionHandler {
 
         // update the event type
         $notification['event'] = $counterparty_event_type;
+
+        // for broadcasts, remove asset and quantity
+        if ($counterparty_event_type == 'broadcast') {
+            $notification['asset']        = null;
+            $notification['quantity']     = 0;
+            $notification['quantitySat']  = 0;
+        }
 
         return $notification;
     }
