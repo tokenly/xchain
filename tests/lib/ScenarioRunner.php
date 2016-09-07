@@ -354,7 +354,11 @@ class ScenarioRunner
         if (!$event_monitors) { return; }
         foreach($event_monitors as $raw_attributes) {
             $attributes = $raw_attributes;
-            $event_monitor = $this->event_monitor_helper->newSampleEventMonitor($this->getSampleUser(), $attributes);
+
+            // create a sample user with no default callback webhook endpoint
+            $user = $this->user_helper->createSampleUser(['webhook_endpoint' => null]);
+
+            $event_monitor = $this->event_monitor_helper->newSampleEventMonitor($user, $attributes);
         }
     }
 
@@ -613,6 +617,7 @@ class ScenarioRunner
         DB::table('transaction_address_lookup')->truncate();
         \App\Models\Notification::truncate();
         \App\Models\MonitoredAddress::truncate();
+        \App\Models\EventMonitor::truncate();
         \App\Models\PaymentAddress::truncate();
         \App\Models\Send::truncate();
         \App\Models\User::truncate();

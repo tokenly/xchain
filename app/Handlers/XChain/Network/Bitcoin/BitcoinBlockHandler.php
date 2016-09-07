@@ -8,9 +8,8 @@ use App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionStore;
 use App\Handlers\XChain\Network\Bitcoin\Block\BlockEventContextFactory;
 use App\Handlers\XChain\Network\Contracts\NetworkBlockHandler;
 use App\Models\Block;
-use App\Repositories\MonitoredAddressRepository;
+use App\Repositories\EventMonitorRepository;
 use App\Repositories\NotificationRepository;
-use App\Repositories\PaymentAddressRepository;
 use App\Repositories\TransactionRepository;
 use App\Repositories\UserRepository;
 use App\Util\DateTimeUtil;
@@ -31,7 +30,7 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
 
     const MAX_CONFIRMATIONS_TO_NOTIFY = 6;
 
-    public function __construct(BitcoinTransactionStore $transaction_store, TransactionRepository $transaction_repository, NotificationRepository $notification_repository, UserRepository $user_repository, BlockChainStore $blockchain_store, ConfirmationsBuilder $confirmations_builder, Client $xcaller_client, Dispatcher $events, BlockEventContextFactory $block_event_context_factory, MonitoredAddressRepository $monitored_address_repository, PaymentAddressRepository $payment_address_repository) {
+    public function __construct(BitcoinTransactionStore $transaction_store, TransactionRepository $transaction_repository, NotificationRepository $notification_repository, UserRepository $user_repository, BlockChainStore $blockchain_store, ConfirmationsBuilder $confirmations_builder, Client $xcaller_client, Dispatcher $events, BlockEventContextFactory $block_event_context_factory, EventMonitorRepository $event_monitor_repository) {
         $this->transaction_store            = $transaction_store;
         $this->transaction_repository       = $transaction_repository;
         $this->notification_repository      = $notification_repository;
@@ -41,8 +40,7 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
         $this->xcaller_client               = $xcaller_client;
         $this->events                       = $events;
         $this->block_event_context_factory  = $block_event_context_factory;
-        $this->monitored_address_repository = $monitored_address_repository;
-        $this->payment_address_repository   = $payment_address_repository;
+        $this->event_monitor_repository     = $event_monitor_repository;
     }
 
     public function handleNewBlock($block_event) {
@@ -191,47 +189,22 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
     }
 
 
+
     public function generateAndSendNotifications($block_event, $block_confirmations, Block $current_block) {
 
         // send a new block notification
         $notification = $this->buildNotification($block_event);
 
         // send block notifications
+
         //   create a block notification for each user
-        $notification_vars_for_model = $notification;
-        unset($notification_vars_for_model['notificationId']);
         foreach ($this->user_repository->findWithWebhookEndpoint() as $user) {
-            try {
-                $notification_model = $this->notification_repository->createForUser(
-                    $user,
-                    [
-                        'txid'          => $block_event['hash'],
-                        'confirmations' => $block_confirmations,
-                        'notification'  => $notification_vars_for_model,
-                        'block_id'      => $current_block['id'],
-                    ]
-                );
+            $this->generateAndSendNotificationForUser($user, $notification, $block_event, $block_confirmations, $current_block);
+        }
 
-                // add the id
-                $notification['notificationId'] = $notification_model['uuid'];
-
-                // put notification in the queue
-                EventLog::log('notification.out', ['event'=>$notification['event'], 'height'=>$notification['height'], 'hash'=>$notification['hash'], 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
-
-                $this->xcaller_client->sendWebhook($notification, $user['webhook_endpoint'], $notification_model['uuid'], $user['apitoken'], $user['apisecretkey']);
-            } catch (QueryException $e) {
-                if ($e->errorInfo[0] == 23000) {
-                    EventLog::logError('blockNotification.duplicate.error', $e, ['id' => $notification_model['uuid'], 'height' => $notification['height'], 'hash' => $block_event['hash'], 'user' => $user['id'],]);
-
-                } else {
-                    throw $e;
-                }
-            } catch (Exception $e) {
-
-                EventLog::logError('notification.error', $e);
-                sleep(3);
-                throw $e;
-            }
+        //   create a block notification for each event_monitor
+        foreach ($this->event_monitor_repository->findByEventType('block') as $event_monitor) {
+            $this->generateAndSendNotificationForEventMonitor($event_monitor, $notification, $block_event, $block_confirmations, $current_block);
         }
 
 
@@ -281,6 +254,62 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
 
     }
 
+    // ------------------------------------------------------------------------
+    
+    protected function generateAndSendNotificationForUser($user, $notification, $block_event, $block_confirmations, Block $current_block) {
+        return $this->generateAndSendNotification('user', $user, $notification, $block_event, $block_confirmations, $current_block);
+    }
+
+    protected function generateAndSendNotificationForEventMonitor($event_monitor, $notification, $block_event, $block_confirmations, Block $current_block) {
+        return $this->generateAndSendNotification('event_monitor', $event_monitor, $notification, $block_event, $block_confirmations, $current_block);
+    }
+
+    protected function generateAndSendNotification($model_type, $model, $notification, $block_event, $block_confirmations, Block $current_block) {
+        try {
+            $notification_vars_for_model = $notification;
+            unset($notification_vars_for_model['notificationId']);
+
+            $create_vars = [
+                'txid'          => $block_event['hash'],
+                'confirmations' => $block_confirmations,
+                'notification'  => $notification_vars_for_model,
+                'block_id'      => $current_block['id'],
+            ];
+
+            $user = null;
+            if ($model_type == 'user') {
+                $notification_model = $this->notification_repository->createForUser($model, $create_vars);
+                $user = $model;
+            } else if ($model_type == 'event_monitor') {
+                $notification_model = $this->notification_repository->createForEventMonitor($model, $create_vars);
+
+                // get the user from the event monitor
+                $user = $model->user;
+            }
+            if (!$user) { throw new Exception("Unable to find user for $model_type", 1); }
+
+            // add the id
+            $notification['notificationId'] = $notification_model['uuid'];
+
+            // put notification in the queue
+            EventLog::log('notification.out', ['event'=>$notification['event'], 'height'=>$notification['height'], 'hash'=>$notification['hash'], 'endpoint'=>$model['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
+
+            $this->xcaller_client->sendWebhook($notification, $model['webhook_endpoint'], $notification_model['uuid'], $user['apitoken'], $user['apisecretkey']);
+        } catch (QueryException $e) {
+            if ($e->errorInfo[0] == 23000) {
+                EventLog::logError('blockNotification.duplicate.error', $e, ['id' => $notification_model['uuid'], 'height' => $notification['height'], 'hash' => $block_event['hash'], 'user' => $user['id'],]);
+
+            } else {
+                throw $e;
+            }
+        } catch (Exception $e) {
+
+            EventLog::logError('notification.error', $e);
+            sleep(3);
+            throw $e;
+        }
+    }
+
     protected function wlog($text) {
         Log::info($text);
     }
@@ -301,12 +330,6 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
         return $notification;
     }
 
-    // protected function findAllMonitoredAndPaymentAddresses() {
-    //     $addresses = $this->monitored_address_repository->findAllAddresses();
-    //     $addresses = array_unique(array_merge($addresses, $this->payment_address_repository->findAllAddresses()));
-    //     return $addresses;
-    // }
-    
 }
 
 

@@ -460,7 +460,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
         // put notification in the queue
         // Log::debug("\$notification=".json_encode($notification, 192)." ".format_debug_backtrace(debug_backtrace()));
-        EventLog::log('notification.out', ['event'=>$notification['event'], 'txid' => $txid, 'confirmations' => $confirmations, 'asset'=>$notification['asset'], 'quantity'=>$notification['quantity'], 'sources'=>(isset($notification['sources']) ? $notification['sources'] : []), 'destinations'=>(isset($notification['destinations']) ? $notification['destinations'] : []), 'address' => isset($notification['notifiedAddress']) ? $notification['notifiedAddress'] : null, 'endpoint'=>$user['webhook_endpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
+        EventLog::log('notification.out', ['event'=>$notification['event'], 'txid' => $txid, 'confirmations' => $confirmations, 'asset'=>$notification['asset'], 'quantity'=>$notification['quantity'], 'sources'=>(isset($notification['sources']) ? $notification['sources'] : []), 'destinations'=>(isset($notification['destinations']) ? $notification['destinations'] : []), 'address' => isset($notification['notifiedAddress']) ? $notification['notifiedAddress'] : null, 'endpoint'=>$model['webhookEndpoint'], 'user'=>$user['id'], 'id' => $notification_model['uuid']]);
         Log::debug("\$notification=".json_encode($notification, 192));
 
         $this->xcaller_client->sendWebhook($notification, $model['webhookEndpoint'], $notification_model['uuid'], $user['apitoken'], $user['apisecretkey']);

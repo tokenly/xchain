@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Tokenly\LaravelApiProvider\Model\APIModel;
 use Exception;
+use Tokenly\LaravelApiProvider\Model\APIModel;
 
 class EventMonitor extends APIModel {
 
@@ -54,5 +54,8 @@ class EventMonitor extends APIModel {
     public function setWebhookEndpointAttribute($webhook_endpoint) { $this->attributes['webhook_endpoint'] = $webhook_endpoint; }
     public function getWebhookEndpointAttribute() { return $this->attributes['webhook_endpoint']; }
 
+    public function user() {
+        return $this->belongsTo('App\Models\User');
+    }
 
 }

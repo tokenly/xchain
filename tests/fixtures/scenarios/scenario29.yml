@@ -1,8 +1,8 @@
-# issuance transaction event monitor notification test
+# block event monitor notification test
 
 monitoredAddresses: ~
 eventMonitors:
-    - monitorType: issuance
+    - monitorType: block
 
 
 events:
@@ -15,6 +15,11 @@ events:
     asset: NEWCOIN
     quantity: 1000
     blockId: 300000
+  -
+    type: block
+    tx:
+        - f88d98717dacb985e3ad49ffa66b8562d8194f1885f58425e1c8582ce2ac5b58
+        - "0000000000000000000000000000000000000000000000000000000022222222"
 
 notifications:
-  - meta: { baseFilename: xcp_event_monitor_mempool_issuance_01.yml }
+  - meta: { baseFilename: event_monitor_block_notification_01.yml }
