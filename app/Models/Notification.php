@@ -20,6 +20,8 @@ class Notification extends Model
     const EVENT_INVALIDATION = 3;
     const EVENT_CREDIT       = 4;
     const EVENT_DEBIT        = 5;
+    const EVENT_ISSUANCE     = 6;
+    const EVENT_BROADCAST    = 7;
 
 
     /**
@@ -67,6 +69,8 @@ class Notification extends Model
             case 'invalidation': return self::EVENT_INVALIDATION;
             case 'credit':       return self::EVENT_CREDIT;
             case 'debit':        return self::EVENT_DEBIT;
+            case 'issuance':     return self::EVENT_ISSUANCE;
+            case 'broadcast':    return self::EVENT_BROADCAST;
         }
         return null;
     }
@@ -78,6 +82,8 @@ class Notification extends Model
             case self::EVENT_INVALIDATION: return 'invalidation';
             case self::EVENT_CREDIT:       return 'credit';
             case self::EVENT_DEBIT:        return 'debit';
+            case self::EVENT_ISSUANCE:     return 'issuance';
+            case self::EVENT_BROADCAST:    return 'broadcast';
         }
         return null;
     }

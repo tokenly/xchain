@@ -21,14 +21,36 @@ class XChainTransactionHandler {
 
         $transaction = $transaction_handler->storeParsedTransaction($parsed_tx);
 
-        $found_addresses = $transaction_handler->findMonitoredAndPaymentAddressesByParsedTransaction($parsed_tx);
+        // send notifications specific to monitored addresses
         try {
+            $will_need_preprocessing = false;
+            $will_need_preprocessing = $transaction_handler->willNeedToPreprocessSendNotification($parsed_tx, $confirmations);
+
+            $found_addresses = $transaction_handler->findMonitoredAndPaymentAddressesByParsedTransaction($parsed_tx);
             $transaction_handler->storeProvisionalTransaction($transaction, $found_addresses);
             $transaction_handler->updateUTXOs($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
-            $transaction_handler->updateAccountBalances($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
-            $transaction_handler->sendNotifications($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
+
+            if (!$will_need_preprocessing) {
+                $transaction_handler->updateAccountBalances($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
+                $transaction_handler->sendNotifications($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
+            }
         } catch (Exception $e) {
             EventLog::logError('handleUnconfirmedTransaction.error', $e, ['id' => $transaction['id'], 'txid' => $transaction['txid'],]);
+        }
+
+        // send event notifications not specific to any address
+        try {
+            if (!$will_need_preprocessing) {
+                $found_event_monitors = $transaction_handler->findEventMonitorsByParsedTransaction($parsed_tx);
+                $transaction_handler->sendNotificationsToEventMonitors($found_event_monitors, $parsed_tx, $confirmations, $block_seq, $block);
+            }
+        } catch (Exception $e) {
+            EventLog::logError('handleUnconfirmedTransaction.error', $e, ['id' => $transaction['id'], 'txid' => $transaction['txid'], 'eventMonitor' => 'true']);
+        }
+
+        // if this transaction needs preprocessing, then put it into the preprocess queue
+        if ($will_need_preprocessing) {
+            $transaction_handler->preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block);
         }
 
         return;
@@ -41,16 +63,37 @@ class XChainTransactionHandler {
 
         if ($block_event_context === null) { $block_event_context = $transaction_handler->newBlockEventContext(); }
 
-        $found_addresses = $transaction_handler->findMonitoredAndPaymentAddressesByParsedTransaction($parsed_tx);
-
+        // send notifications specific to monitored addresses
         try {
+            $will_need_preprocessing = false;
+            $will_need_preprocessing = $transaction_handler->willNeedToPreprocessSendNotification($parsed_tx, $confirmations);
+
+            $found_addresses = $transaction_handler->findMonitoredAndPaymentAddressesByParsedTransaction($parsed_tx);
             $transaction_handler->updateProvisionalTransaction($parsed_tx, $found_addresses, $confirmations);
             $transaction_handler->invalidateProvisionalTransactions($found_addresses, $parsed_tx, $confirmations, $block_seq, $block, $block_event_context);
             $transaction_handler->updateUTXOs($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
-            $transaction_handler->updateAccountBalances($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
-            $transaction_handler->sendNotifications($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
+
+            if (!$will_need_preprocessing) {
+                $transaction_handler->updateAccountBalances($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
+                $transaction_handler->sendNotifications($found_addresses, $parsed_tx, $confirmations, $block_seq, $block);
+            }
         } catch (Exception $e) {
             EventLog::logError('handleConfirmedTransaction.error', $e, ['txid' => $parsed_tx['txid'],]);
+        }
+
+        // send event notifications not specific to any address
+        try {
+            if (!$will_need_preprocessing) {
+                $found_event_monitors = $transaction_handler->findEventMonitorsByParsedTransaction($parsed_tx);
+                $transaction_handler->sendNotificationsToEventMonitors($found_event_monitors, $parsed_tx, $confirmations, $block_seq, $block);
+            }
+        } catch (Exception $e) {
+            EventLog::logError('handleConfirmedTransaction.error', $e, ['txid' => $parsed_tx['txid'], 'eventMonitor' => 'true']);
+        }
+
+        // if this transaction needs preprocessing, then put it into the preprocess queue
+        if ($will_need_preprocessing) {
+            $transaction_handler->preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block);
         }
 
         return;

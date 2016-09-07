@@ -25,12 +25,13 @@ class ScenarioRunner
 
     protected $last_send_txid = null;
 
-    function __construct(Application $app, Dispatcher $events, QueueManager $queue_manager, PaymentAddressRepository $payment_address_repository, PaymentAddressHelper $payment_address_helper, MonitoredAddressRepository $monitored_address_repository, MonitoredAddressHelper $monitored_address_helper, SampleBlockHelper $sample_block_helper, TransactionRepository $transaction_repository, BlockRepository $block_repository, UserRepository $user_repository, UserHelper $user_helper) {
+    function __construct(Application $app, Dispatcher $events, QueueManager $queue_manager, PaymentAddressRepository $payment_address_repository, PaymentAddressHelper $payment_address_helper, MonitoredAddressRepository $monitored_address_repository, MonitoredAddressHelper $monitored_address_helper, EventMonitorHelper $event_monitor_helper, SampleBlockHelper $sample_block_helper, TransactionRepository $transaction_repository, BlockRepository $block_repository, UserRepository $user_repository, UserHelper $user_helper) {
         $this->app                          = $app;
         $this->events                       = $events;
         $this->queue_manager                = $queue_manager;
         $this->payment_address_repository   = $payment_address_repository;
         $this->payment_address_helper       = $payment_address_helper;
+        $this->event_monitor_helper         = $event_monitor_helper;
         $this->monitored_address_repository = $monitored_address_repository;
         $this->monitored_address_helper     = $monitored_address_helper;
         $this->sample_block_helper          = $sample_block_helper;
@@ -94,6 +95,7 @@ class ScenarioRunner
 
         // set up the scenario
         $this->addMonitoredAddresses($scenario_data['monitoredAddresses']);
+        $this->addEventMonitors(isset($scenario_data['eventMonitors']) ? $scenario_data['eventMonitors'] : null);
         $this->addPaymentAddresses(isset($scenario_data['paymentAddresses']) ? $scenario_data['paymentAddresses'] : []);
 
         // process transactions
@@ -227,7 +229,7 @@ class ScenarioRunner
 
         ///////////////////
         // OPTIONAL
-        foreach (['confirmations','confirmed','counterpartyTx','bitcoinTx','transactionTime','notificationId','notifiedAddressId','webhookEndpoint','blockSeq','confirmationTime','transactionFingerprint',] as $field) {
+        foreach (['confirmations','confirmed','counterpartyTx','bitcoinTx','transactionTime','notificationId','notifiedAddressId','notifiedMonitorId','webhookEndpoint','blockSeq','confirmationTime','transactionFingerprint',] as $field) {
             if (isset($expected_notification[$field])) {
                 if (is_array($expected_notification[$field])) {
                     $normalized_expected_notification[$field] = array_replace_recursive(isset($actual_notification[$field]) ? $actual_notification[$field] : [], $expected_notification[$field]);
@@ -342,6 +344,17 @@ class ScenarioRunner
         foreach($addresses as $raw_attributes) {
             $attributes = $raw_attributes;
             $monitored_address = $this->monitored_address_repository->createWithUser($this->getSampleUser(), $this->monitored_address_helper->sampleDBVars($attributes));
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // Event Monitors
+
+    protected function addEventMonitors($event_monitors) {
+        if (!$event_monitors) { return; }
+        foreach($event_monitors as $raw_attributes) {
+            $attributes = $raw_attributes;
+            $event_monitor = $this->event_monitor_helper->newSampleEventMonitor($this->getSampleUser(), $attributes);
         }
     }
 

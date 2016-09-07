@@ -14,6 +14,9 @@ $router->resource('api/v1/addresses', 'API\PaymentAddressController', ['except' 
 // create a monitor to be notified about all send and receive transactions to a certain address
 $router->resource('api/v1/monitors', 'API\MonitorController', ['except' => ['create','edit']]);
 
+// create a notification to be notified about certain types of transactions regardless of address
+$router->resource('api/v1/event_monitors', 'API\EventMonitorController', ['except' => ['create','edit']]);
+
 // get all transactions for an address
 $router->get('api/v1/transactions/{addressId}', 'API\TransactionController@index');
 

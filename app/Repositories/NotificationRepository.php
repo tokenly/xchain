@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Block;
+use App\Models\EventMonitor;
 use App\Models\MonitoredAddress;
 use App\Models\Notification;
 use App\Models\User;
@@ -26,6 +27,15 @@ class NotificationRepository
         return $this->create($attributes);
     }
 
+    public function createForEventMonitor(EventMonitor $event_monitor, $attributes) {
+        if (isset($attributes['event_monitor_id'])) { throw new Exception("event_monitor_id not allowed", 1); }
+        if (isset($attributes['user_id'])) { throw new Exception("user_id not allowed", 1); }
+        $attributes['event_monitor_id'] = $event_monitor['id'];
+        $attributes['user_id'] = $event_monitor['user_id'];
+
+        return $this->create($attributes);
+    }
+
     public function createForUser(User $user, $attributes) {
         if (isset($attributes['monitored_address_id'])) { throw new Exception("monitored_address_id not allowed", 1); }
         if (isset($attributes['user_id'])) { throw new Exception("user_id not allowed", 1); }
@@ -38,7 +48,11 @@ class NotificationRepository
 
     public function create($attributes) {
         if (!isset($attributes['txid'])) { throw new Exception("TXID is required", 1); }
-        if (!isset($attributes['monitored_address_id']) AND !isset($attributes['user_id'])) { throw new Exception("monitored_address_id or user_id is required", 1); }
+        if (
+            !isset($attributes['monitored_address_id'])
+            AND !isset($attributes['event_monitor_id'])
+            AND !isset($attributes['user_id'])
+        ) { throw new Exception("monitored_address_id or event_monitor_id or user_id is required", 1); }
         if (!isset($attributes['confirmations'])) { throw new Exception("confirmations is required", 1); }
 
         if (!isset($attributes['uuid'])) { $attributes['uuid'] = Uuid::uuid4()->toString(); }
@@ -54,6 +68,10 @@ class NotificationRepository
 
     public function findByMonitoredAddressId($monitored_address_id) {
         return Notification::where('monitored_address_id', $monitored_address_id)->orderBy('id')->get();
+    }
+
+    public function findByEventMonitorId($event_monitor_id) {
+        return Notification::where('event_monitor_id', $event_monitor_id)->orderBy('id')->get();
     }
 
     public function findByUuid($uuid) {

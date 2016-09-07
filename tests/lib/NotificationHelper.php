@@ -17,12 +17,20 @@ class NotificationHelper
     }
 
 
-    public function createSampleNotification($address_model=null, $override_vars=[]) {
+    public function createSampleNotification($address_model=null, $override_vars=[], Block $block=null) {
         if ($address_model === null) {
             $address_model = $this->monitored_address_helper->createSampleMonitoredAddress();
         }
 
-        return $this->notification_repository->createForMonitoredAddress($address_model, array_merge($this->sampleVars(), $override_vars));
+        return $this->notification_repository->createForMonitoredAddress($address_model, $this->sampleVars($override_vars, $block));
+    }
+
+    public function createSampleNotificationForEventMonitor($event_monitor_model=null, $override_vars=[], Block $block=null) {
+        if ($event_monitor_model === null) {
+            $event_monitor_model = app('EventMonitorHelper')->newSampleEventMonitor();
+        }
+
+        return $this->notification_repository->createForEventMonitor($event_monitor_model, $this->sampleVars($override_vars, $block));
     }
 
     public function sampleVars($override_vars=[], Block $block=null) {

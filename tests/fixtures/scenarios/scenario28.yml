@@ -1,0 +1,20 @@
+# issuance transaction notification test
+
+monitoredAddresses: ~
+eventMonitors:
+    - monitorType: issuance
+
+
+events:
+  -
+    type: transaction
+    meta: { baseFilename: sample_xcp_parsed_issuance_01_mempool.json }
+    txid: "0000000000000000000000000000000000000000000000000000000022222222"
+    sender: SENDER01
+    recipient: SENDER01
+    asset: NEWCOIN
+    quantity: 1000
+    blockId: 300000
+
+notifications:
+  - meta: { baseFilename: xcp_event_monitor_mempool_issuance_01.yml }
