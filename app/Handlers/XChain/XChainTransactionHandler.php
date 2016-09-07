@@ -6,7 +6,6 @@ use App\Handlers\XChain\Network\Factory\NetworkHandlerFactory;
 use App\Models\Block;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
-use PHP_Timer;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 use \Exception;
 
@@ -24,7 +23,7 @@ class XChainTransactionHandler {
         // send notifications specific to monitored addresses
         try {
             $will_need_preprocessing = false;
-            $will_need_preprocessing = $transaction_handler->willNeedToPreprocessSendNotification($parsed_tx, $confirmations);
+            $will_need_preprocessing = $transaction_handler->willNeedToPreprocessNotification($parsed_tx, $confirmations);
 
             $found_addresses = $transaction_handler->findMonitoredAndPaymentAddressesByParsedTransaction($parsed_tx);
             $transaction_handler->storeProvisionalTransaction($transaction, $found_addresses);
@@ -50,7 +49,7 @@ class XChainTransactionHandler {
 
         // if this transaction needs preprocessing, then put it into the preprocess queue
         if ($will_need_preprocessing) {
-            $transaction_handler->preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block);
+            $transaction_handler->preprocessNotification($parsed_tx, $confirmations, $block_seq, $block);
         }
 
         return;
@@ -66,7 +65,7 @@ class XChainTransactionHandler {
         // send notifications specific to monitored addresses
         try {
             $will_need_preprocessing = false;
-            $will_need_preprocessing = $transaction_handler->willNeedToPreprocessSendNotification($parsed_tx, $confirmations);
+            $will_need_preprocessing = $transaction_handler->willNeedToPreprocessNotification($parsed_tx, $confirmations);
 
             $found_addresses = $transaction_handler->findMonitoredAndPaymentAddressesByParsedTransaction($parsed_tx);
             $transaction_handler->updateProvisionalTransaction($parsed_tx, $found_addresses, $confirmations);
@@ -93,7 +92,7 @@ class XChainTransactionHandler {
 
         // if this transaction needs preprocessing, then put it into the preprocess queue
         if ($will_need_preprocessing) {
-            $transaction_handler->preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block);
+            $transaction_handler->preprocessNotification($parsed_tx, $confirmations, $block_seq, $block);
         }
 
         return;

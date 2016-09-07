@@ -71,12 +71,12 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
 
     // if this returns true, then pre-processing is necessary and don't send the notificatoin
-    public function willNeedToPreprocessSendNotification($parsed_tx, $confirmations) {
+    public function willNeedToPreprocessNotification($parsed_tx, $confirmations) {
         // bitcoin always sends unconfirmed and confirmed notifications immediately
         return false;
     }
 
-    public function preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block) {
+    public function preprocessNotification($parsed_tx, $confirmations, $block_seq, $block) {
         // for bitcoin, always send confirmed notifications
         //   because bitcoind has already validated the confirmed transaction
 

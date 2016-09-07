@@ -42,6 +42,10 @@ class EventMonitor extends APIModel {
         throw new Exception("unknown type integer: $type_integer", 1);
     }
 
+    public static function isValidTypeString($type_string) {
+        return in_array(strtolower(trim($type_string)), self::allTypeStrings());
+    }
+
     // ------------------------------------------------------------------------
 
     public function getMonitorTypeAttribute() { return self::typeIntegerToString($this['monitor_type_int']); }

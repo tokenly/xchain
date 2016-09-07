@@ -3,13 +3,14 @@
 namespace App\Handlers\XChain\Network\Counterparty;
 
 use App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionHandler;
+use App\Models\EventMonitor;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 
 class CounterpartyTransactionHandler extends BitcoinTransactionHandler {
 
 
-    public function willNeedToPreprocessSendNotification($parsed_tx, $confirmations) {
+    public function willNeedToPreprocessNotification($parsed_tx, $confirmations) {
         // for counterparty, we need to validate all confirmed transactions with counterpartyd
         if ($confirmations == 0) {
             // unconfirmed transactions are forwarded ahead.  They will be validated when they confirm.
@@ -29,7 +30,7 @@ class CounterpartyTransactionHandler extends BitcoinTransactionHandler {
         return true;
     }
 
-    public function preprocessSendNotification($parsed_tx, $confirmations, $block_seq, $block) {
+    public function preprocessNotification($parsed_tx, $confirmations, $block_seq, $block) {
         // throw this transaction into the counterpartyd verification queue
         $data = [
             'tx'            => $parsed_tx,
@@ -70,7 +71,14 @@ class CounterpartyTransactionHandler extends BitcoinTransactionHandler {
 
     protected function getEventMonitorType($parsed_tx) {
         if (isset($parsed_tx['counterpartyTx']['type'])) {
-            return $parsed_tx['counterpartyTx']['type'];
+            $raw_event_type = $parsed_tx['counterpartyTx']['type'];
+
+            // only block, issuance, broadcast are valid
+            if (EventMonitor::isValidTypeString($raw_event_type)) {
+                return $raw_event_type;
+            }
+
+            return null;
         }
 
         return null;
