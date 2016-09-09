@@ -22,6 +22,8 @@ class EventServiceProvider extends ServiceProvider {
         \App\Handlers\XChain\XChainTransactionHandler::class,
         \App\Handlers\XChain\XChainBlockHandler::class,
         \App\Listener\EventHandlers\ConsoleLogEventHandler::class,
+        \App\Listener\EventHandlers\TransactionEventRebroadcaster::class,
+        \App\Listener\EventHandlers\Issuance\AssetInfoCacheListener::class,
         \App\Handlers\Monitoring\MonitoringHandler::class,
     ];
 
