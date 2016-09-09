@@ -165,9 +165,6 @@ return [
 		/*
 		 * Local App Service Providers...
 		 */
-		App\Providers\XChain\XChainHandlerServiceProvider::class,
-		App\Listener\XChainListenerServiceProvider::class,
-		App\Providers\Monitoring\MonitoringServiceProvider::class,
 		App\Providers\Accounts\Provider\AccountHandlerServiceProvider::class,
 		App\Providers\TXO\Provider\TXOHandlerServiceProvider::class,
 		App\Providers\XChain\SendComposerServiceProvider::class,
