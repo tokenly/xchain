@@ -72,7 +72,7 @@ class CounterpartySenderMockBuilder
             }
 
             if ($name == 'get_sends') {
-                $txid = $asset = $arguments[0]['filters']['value'];
+                $txid = $arguments[0]['filters']['value'];
                 $filepath = base_path()."/tests/fixtures/sends/{$txid}.json";
                 if (!file_exists($filepath)) { throw new Exception("Send fixture not found for $txid", 1); }
                 $send = json_decode(file_get_contents($filepath), true);
@@ -80,7 +80,12 @@ class CounterpartySenderMockBuilder
             }
 
             if ($name == 'get_issuances') {
-                $txid = $asset = $arguments[0]['filters']['value'];
+                if (isset($arguments[0]['filters']['value'])) {
+                    $txid = $arguments[0]['filters']['value'];
+                } else {
+                    $txid = '0000000000000000000000000000000000000000000000000000000022222222';
+                    Log::debug("Warning: using default get_issuances fixture ".$txid);
+                }
                 $filepath = base_path()."/tests/fixtures/issuances/{$txid}.json";
                 if (!file_exists($filepath)) { throw new Exception("Issuance fixture not found for $txid", 1); }
                 $issuances = json_decode(file_get_contents($filepath), true);
@@ -88,7 +93,7 @@ class CounterpartySenderMockBuilder
             }
 
             if ($name == 'get_broadcasts') {
-                $txid = $asset = $arguments[0]['filters']['value'];
+                $txid = $arguments[0]['filters']['value'];
                 $filepath = base_path()."/tests/fixtures/broadcasts/{$txid}.json";
                 if (!file_exists($filepath)) { throw new Exception("Broadcast fixture not found for $txid", 1); }
                 $broadcasts = json_decode(file_get_contents($filepath), true);

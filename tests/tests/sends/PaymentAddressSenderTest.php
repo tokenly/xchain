@@ -51,13 +51,13 @@ class PaymentAddressSenderTest extends TestCase {
         $sender->sendByRequestID('request001', $payment_address, '1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i', '100', 'TOKENLY', $float_fee=null, $dust_size, $is_sweep=false);
 
         // check the first sent call
-        PHPUnit::assertCount(1, $mock_calls['xcpd']); // get_asset_info
+        PHPUnit::assertCount(2, $mock_calls['xcpd']); // get_asset_info and get_issuances
         PHPUnit::assertCount(1, $mock_calls['btcd']); // sendrawtransaction
         PHPUnit::assertEquals('sendrawtransaction', $mock_calls['btcd'][0]['method']); // sendrawtransaction
 
         // send the same thing again
         $sender->sendByRequestID('request001', $payment_address, '1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i', '100', 'TOKENLY', $float_fee=null, $dust_size, $is_sweep=false);
-        PHPUnit::assertCount(1, $mock_calls['xcpd']); // get_asset_info
+        PHPUnit::assertCount(2, $mock_calls['xcpd']); // get_asset_info and get_issuances
         PHPUnit::assertCount(2, $mock_calls['btcd']); // sendrawtransaction, sendrawtransaction
         PHPUnit::assertEquals('sendrawtransaction', $mock_calls['btcd'][0]['method']); // sendrawtransaction
         PHPUnit::assertEquals('sendrawtransaction', $mock_calls['btcd'][1]['method']); // sendrawtransaction

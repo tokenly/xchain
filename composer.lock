@@ -3581,16 +3581,16 @@
         },
         {
             "name": "tokenly/counterparty-asset-info-cache",
-            "version": "v1.0.1",
+            "version": "v1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-asset-info-cache.git",
-                "reference": "a7de66d138f6981344b3825800565da6feeb13f2"
+                "reference": "65a1ebbb0fbe30b66c30fae7eda032c486e0c0d1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-asset-info-cache/zipball/a7de66d138f6981344b3825800565da6feeb13f2",
-                "reference": "a7de66d138f6981344b3825800565da6feeb13f2",
+                "url": "https://api.github.com/repos/tokenly/counterparty-asset-info-cache/zipball/65a1ebbb0fbe30b66c30fae7eda032c486e0c0d1",
+                "reference": "65a1ebbb0fbe30b66c30fae7eda032c486e0c0d1",
                 "shasum": ""
             },
             "require": {
@@ -3624,7 +3624,7 @@
                 }
             ],
             "description": "Fetches and caches counterparty asset information",
-            "time": "2016-07-20 03:17:13"
+            "time": "2016-09-10 13:26:31"
         },
         {
             "name": "tokenly/counterparty-sender",
@@ -3757,16 +3757,16 @@
         },
         {
             "name": "tokenly/hmac-auth",
-            "version": "v1.1.0",
+            "version": "v1.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/hmac-auth.git",
-                "reference": "86dcf9e21890f5e4ca61f76f793a8b418bbb346a"
+                "reference": "4221c2ca98f40e16c0153641549784d67aee21ba"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/86dcf9e21890f5e4ca61f76f793a8b418bbb346a",
-                "reference": "86dcf9e21890f5e4ca61f76f793a8b418bbb346a",
+                "url": "https://api.github.com/repos/tokenly/hmac-auth/zipball/4221c2ca98f40e16c0153641549784d67aee21ba",
+                "reference": "4221c2ca98f40e16c0153641549784d67aee21ba",
                 "shasum": ""
             },
             "require": {
@@ -3805,7 +3805,7 @@
                 }
             ],
             "description": "HMAC authentication for Tokenly APIs",
-            "time": "2016-05-18 03:10:19"
+            "time": "2016-05-18 11:51:14"
         },
         {
             "name": "tokenly/laravel-api-provider",

@@ -17,6 +17,8 @@ class AssetAPITest extends TestCase {
         $response = json_decode($api_tester->callAPIWithAuthentication('GET', '/api/v1/assets/LTBCOIN')->getContent(), true);
 
         PHPUnit::assertEquals(true, $response['divisible']);
+        PHPUnit::assertEquals('0000000000000000000000000000000000000000000000000000000022222222', $response['tx_hash']);
+        PHPUnit::assertEquals('valid', $response['status']);
 
     }
 
