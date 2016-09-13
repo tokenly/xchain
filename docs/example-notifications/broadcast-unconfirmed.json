@@ -1,0 +1,91 @@
+{
+    "event": "broadcast",
+    "network": "counterparty",
+    "asset": null,
+    "quantity": 0,
+    "quantitySat": 0,
+    "sources": [
+        "SENDER01"
+    ],
+    "destinations": [],
+    "notificationId": "d2dbb81c-a178-4b32-97f6-4def24dfdfd7",
+    "txid": "0000000000000000000000000000000000000000000000000000000000003333",
+    "transactionTime": "2016-09-07T15:55:05+0000",
+    "confirmed": false,
+    "confirmations": 0,
+    "confirmationTime": "",
+    "notifiedMonitorId": "8de89a79-bc2f-40e9-a991-b9a511e16485",
+    "bitcoinTx": {
+        "hex": "0100000001b78a8302b19b96946eadd07639eb7cba5912b0289e06651b43397eafaa5c2263000000006a47304402202bcb838d5cde360a441a3a2078c850da7d5beab07b59d0fe9c65a76cc2773ee90220243dd885f5da5d498e42f9ab9168f4ab4ee7059f2570ff98df116a13c55978fc012102bf6dd08324d2ba2dde233bd2e0679e2b9566569832a5df95e66067205cc37cfdffffffff020000000000000000476a453278869e7fd274e341da1146748d71feec55a24cac50559905938bd422261e6141e6511a4dfc44ed7def29b4ca07116be1a0bde2c0222ccb08e246ceba787d06d44f58d58d8d610100000000001976a914fa6bfacfa3fc9a6a1998ca6a88d26d168aff71f888ac00000000",
+        "txid": "0000000000000000000000000000000000000000000000000000000000003333",
+        "size": 271,
+        "version": 1,
+        "locktime": 0,
+        "vin": [
+            {
+                "txid": "63225caaaf7e39431b65069e28b01259ba7ceb3976d0ad6e94969bb102838ab7",
+                "vout": 0,
+                "scriptSig": {
+                    "asm": "304402202bcb838d5cde360a441a3a2078c850da7d5beab07b59d0fe9c65a76cc2773ee90220243dd885f5da5d498e42f9ab9168f4ab4ee7059f2570ff98df116a13c55978fc[ALL] 02bf6dd08324d2ba2dde233bd2e0679e2b9566569832a5df95e66067205cc37cfd",
+                    "hex": "47304402202bcb838d5cde360a441a3a2078c850da7d5beab07b59d0fe9c65a76cc2773ee90220243dd885f5da5d498e42f9ab9168f4ab4ee7059f2570ff98df116a13c55978fc012102bf6dd08324d2ba2dde233bd2e0679e2b9566569832a5df95e66067205cc37cfd"
+                },
+                "sequence": 4294967295,
+                "n": 0,
+                "addr": "1Pq7HXD5i9ZXXfnt71xPmtEkyATWc57bRw",
+                "value": 0.00104,
+                "valueSat": 104000
+            }
+        ],
+        "vout": [
+            {
+                "value": 0,
+                "n": 0,
+                "scriptPubKey": {
+                    "asm": "OP_RETURN 3278869e7fd274e341da1146748d71feec55a24cac50559905938bd422261e6141e6511a4dfc44ed7def29b4ca07116be1a0bde2c0222ccb08e246ceba787d06d44f58d58d",
+                    "hex": "6a453278869e7fd274e341da1146748d71feec55a24cac50559905938bd422261e6141e6511a4dfc44ed7def29b4ca07116be1a0bde2c0222ccb08e246ceba787d06d44f58d58d",
+                    "type": "nulldata"
+                }
+            },
+            {
+                "value": 0.00090509,
+                "n": 1,
+                "scriptPubKey": {
+                    "asm": "OP_DUP OP_HASH160 fa6bfacfa3fc9a6a1998ca6a88d26d168aff71f8 OP_EQUALVERIFY OP_CHECKSIG",
+                    "hex": "76a914fa6bfacfa3fc9a6a1998ca6a88d26d168aff71f888ac",
+                    "reqSigs": 1,
+                    "type": "pubkeyhash",
+                    "addresses": [
+                        "1Pq7HXD5i9ZXXfnt71xPmtEkyATWc57bRw"
+                    ]
+                }
+            }
+        ],
+        "confirmations": 0,
+        "time": 1473158671,
+        "blocktime": 1473158671,
+        "valueIn": 0.00104,
+        "valueInSat": 104000,
+        "valueOut": 0.00090509,
+        "valueOutSat": 90509,
+        "fees": 0.00013491,
+        "feesSat": 13491,
+        "blockheight": 300000
+    },
+    "transactionFingerprint": "b30b789a222a809d8626157184557e9a72a84d175935983cd6bb9b28a0a657bd",
+    "counterpartyTx": {
+        "type": "broadcast",
+        "sources": [
+            "SENDER01"
+        ],
+        "source": "SENDER01",
+        "timestamp": 1473158100,
+        "value": -1,
+        "fee_fraction": 0,
+        "message": "BLOCKSCAN VERIFY-ADDRESS 7a4exlyjw97esst",
+        "destinations": [],
+        "quantity": 0,
+        "quantitySat": 0,
+        "dustSize": 0,
+        "dustSizeSat": 0
+    }
+}
