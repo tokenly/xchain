@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Foundation\Bus\DispatchesCommands;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use LinusU\Bitcoin\AddressValidator;
@@ -22,8 +23,9 @@ use Tokenly\CurrencyLib\CurrencyUtil;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 
 class ReconcileAccountsCommand extends Command {
-
     use DispatchesCommands;
+
+    const CACHE_TTL = 43200; // 30 days (in minutes)
 
     /**
      * The console command name.
@@ -61,10 +63,11 @@ class ReconcileAccountsCommand extends Command {
     protected function getOptions()
     {
         return [
-            ['compact',  'c', InputOption::VALUE_NONE,     'Output only the unreconciled address uuid'],
-            ['email',    'e', InputOption::VALUE_OPTIONAL, 'Email the results'],
-            ['log',      'l', InputOption::VALUE_NONE,     'Log results to the event log'],
-            ['progress', 'p', InputOption::VALUE_NONE,     'With progress'],
+            ['compact',     'c', InputOption::VALUE_NONE,     'Output only the unreconciled address uuid'],
+            ['email',       'e', InputOption::VALUE_OPTIONAL, 'Email the results'],
+            ['log',         'l', InputOption::VALUE_NONE,     'Log results to the event log'],
+            ['progress',    'p', InputOption::VALUE_NONE,     'With progress'],
+            ['clear-cache', '',  InputOption::VALUE_NONE,     'Clear changed cache'],
         ];
     }
 
@@ -87,6 +90,11 @@ class ReconcileAccountsCommand extends Command {
         $for_email            = !!$email;
         $do_log               = !!$this->input->getOption('log');
         $with_progress        = !!$this->input->getOption('progress');
+        $clear_cache          = !!$this->input->getOption('clear-cache');
+
+        if ($clear_cache) {
+            $this->clearChangedCache();
+        }
 
         if ($payment_address_uuid) {
             $payment_address = $payment_address_repo->findByUuid($payment_address_uuid);
@@ -163,19 +171,30 @@ class ReconcileAccountsCommand extends Command {
         }
 
         if ($for_email) {
-            $date = Carbon::now()->toDayDateTimeString();
-            $summary = "{$results['unreconciled']} unreconciled account".($results['unreconciled'] == 1 ? '' : 's');
-            $unreconciled_addresses = implode("\n", array_column($results['unreconciledAddresses'], 'address'));
-            $mail_body = "There were {$summary}.\n\nThe unreconciled addresses are:\n$unreconciled_addresses\n\n$date\n";
+            $changed_unreconciled_addresses = $this->applyCachedRecentUnreconciledAddresses($results['unreconciledAddresses']);
+            if ($changed_unreconciled_addresses) {
+                $changed_unreconciled_addresses_count = count($changed_unreconciled_addresses);
+                $date = Carbon::now()->toDayDateTimeString();
+                $summary = "{$results['unreconciled']} unreconciled account".($results['unreconciled'] == 1 ? '' : 's')." with {$changed_unreconciled_addresses_count} new";
+                $unreconciled_addresses = implode("\n", array_column($changed_unreconciled_addresses, 'address'));
+                $mail_body = "There were {$summary}.\n\nThe unreconciled addresses are:\n$unreconciled_addresses\n\n$date\n";
 
-            Mail::raw($mail_body, function($message) use ($email, $date, $summary, $results) {
-                $message
-                    ->to($email)
-                    ->subject('['.env('APP_SERVER','unknown').'] XChain Reconciliation Report for '.$date.'- '.$summary)
-                    ->from('no-replay@tokenly.com', 'XChain Reconciler')
-                    ->attachData(json_encode($results, 192), 'unreconciledAddresses.json', ['mime' => 'application/json'])
-                    ;
-            });
+                $changed_report = $this->buildReportForEmail($changed_unreconciled_addresses);
+                $mail_body .= "\n-- Changed Report --\n\n";
+                $mail_body .= $changed_report;
+
+                Mail::raw($mail_body, function($message) use ($email, $date, $summary, $results) {
+                    $message
+                        ->to($email)
+                        ->subject('['.env('APP_SERVER','unknown').'] XChain Reconciliation Report for '.$date.'- '.$summary)
+                        ->from('no-replay@tokenly.com', 'XChain Reconciler')
+                        ->attachData(json_encode($results, 192), 'unreconciledAddresses.json', ['mime' => 'application/json'])
+                        ;
+                });
+            } else {
+                EventLog::log('reconciliation.none', []);
+            }
+
         }
 
         $this->info('done');
@@ -201,6 +220,53 @@ class ReconcileAccountsCommand extends Command {
             $out .= "Difference: {$diff_text}\n";
         }
 
+        return $out;
+    }
+
+    protected function clearChangedCache() {
+        $payment_address_repo = app('App\Repositories\PaymentAddressRepository');
+        $payment_addresses    = $payment_address_repo->findAll();
+        $this->info('begin clearing cache');
+        foreach($payment_addresses as $payment_address) {
+            $cache_key = 'unreconciled.'.$payment_address['uuid'];
+            Cache::forget($cache_key);
+        }
+        $this->info('end clearing cache');
+    }
+
+    protected function applyCachedRecentUnreconciledAddresses($all_unreconciled_addresses) {
+        $filtered_uncreconciled = [];
+
+        foreach($all_unreconciled_addresses as $unreconciled_address_entry) {
+            $cache_key = 'unreconciled.'.$unreconciled_address_entry['uuid'];
+            $cached_hash = Cache::get($cache_key);
+            $actual_hash = md5(json_encode($unreconciled_address_entry['differences']));
+
+            if (!$cached_hash OR $actual_hash != $cached_hash) {
+                $filtered_uncreconciled[] = $unreconciled_address_entry;
+
+                // store to the cache
+                Cache::put($cache_key, $actual_hash, self::CACHE_TTL);
+            }
+        }
+
+        return $filtered_uncreconciled;
+    }
+
+    protected function buildReportForEmail($unreconciled_addresses) {
+        // 'address'     => $payment_address['address'],
+        // 'id'          => $payment_address['id'],
+        // 'uuid'        => $payment_address['uuid'],
+        // 'managed'     => $payment_address->isManaged(),
+        // 'differences' => $differences,
+
+        $out = "";
+        foreach($unreconciled_addresses as $unreconciled_address) {
+            $out .= "   Address: {$unreconciled_address['address']} ({$unreconciled_address['uuid']})\n";
+            $out .= $this->formatDifferencesForOutput($unreconciled_address['differences'])."\n";
+            $out .= "\n";
+            $out .= str_repeat('-', 82)."\n";
+        }
         return $out;
     }
 
