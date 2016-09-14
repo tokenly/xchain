@@ -12,7 +12,7 @@
         "nbobtc/bitcoind-php": "1.2.*",
         "tokenly/bitcoin-address-lib": "dev-master@dev",
         "tokenly/bitcoin-currency-lib": "^1",
-        "tokenly/counterparty-asset-info-cache": "^1",
+        "tokenly/counterparty-asset-info-cache": "^1.2",
         "tokenly/bitcoin-payer": "dev-master",
         "tokenly/counterparty-sender": "dev-master",
         "tokenly/pusher-client": "dev-master",

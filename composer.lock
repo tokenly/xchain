@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "de75194b4d196ea2eef8c3390e6242a6",
-    "content-hash": "576d37fadd8693d03e0e81de9fdf47f5",
+    "hash": "20143e9a0452c92ac9a4052fe2550e34",
+    "content-hash": "4bad2a8abcf7cddb790e553ecebcf1b1",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
@@ -3581,16 +3581,16 @@
         },
         {
             "name": "tokenly/counterparty-asset-info-cache",
-            "version": "v1.1.0",
+            "version": "v1.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-asset-info-cache.git",
-                "reference": "65a1ebbb0fbe30b66c30fae7eda032c486e0c0d1"
+                "reference": "9b44610bc4984dd208e5e7128ae3864112aa4480"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-asset-info-cache/zipball/65a1ebbb0fbe30b66c30fae7eda032c486e0c0d1",
-                "reference": "65a1ebbb0fbe30b66c30fae7eda032c486e0c0d1",
+                "url": "https://api.github.com/repos/tokenly/counterparty-asset-info-cache/zipball/9b44610bc4984dd208e5e7128ae3864112aa4480",
+                "reference": "9b44610bc4984dd208e5e7128ae3864112aa4480",
                 "shasum": ""
             },
             "require": {
@@ -3624,7 +3624,7 @@
                 }
             ],
             "description": "Fetches and caches counterparty asset information",
-            "time": "2016-09-10 13:26:31"
+            "time": "2016-09-14 22:14:13"
         },
         {
             "name": "tokenly/counterparty-sender",

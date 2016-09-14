@@ -63,6 +63,7 @@ $router->post('api/v1/accounts/transfer/{addressId}', 'API\AccountBalancesContro
 
 // get asset info
 $router->get('api/v1/assets/{asset}', ['as' => 'assetInfo', 'uses' => 'API\AssetController@get']);
+$router->get('api/v1/assets', ['as' => 'multipleAssetInfo', 'uses' => 'API\AssetController@getMultiple']);
 
 // health check
 $router->get('/healthcheck/{checkType}', '\Tokenly\ConsulHealthDaemon\HealthController\HealthController@healthcheck');
