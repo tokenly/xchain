@@ -32,7 +32,7 @@ class AssetController extends APIController {
 		$errors = [];
 
 		$assets = collect(explode(',', $request->input('assets')))
-			->map('trim')
+			->map(function($asset) { return trim($asset); })
 			->reject(function($asset) { return empty($asset); })
 			->each(function($asset) use (&$errors) {
 				if (!$this->isValidAssetName($asset)) {
@@ -41,6 +41,7 @@ class AssetController extends APIController {
 			})->toArray();
 
 		if ($errors) {
+			EventLog::logError('invalidAssetName', ['assets' => $assets, 'errors' => $errors]);
 			return new JsonResponse(['message' => 'Some asset names were invalid.', 'errors' => $errors], 400);
 		}
 

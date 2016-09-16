@@ -22,7 +22,7 @@ class AssetAPITest extends TestCase {
 
     }
 
-    public function testAPIGetMultipleAsset() {
+    public function testAPIGetMultipleAssets() {
         $mock_cache = Mockery::mock('Tokenly\CounterpartyAssetInfoCache\Cache');
         $mock_cache->shouldReceive('getMultiple')->with(['XFOO','XBAR','XBAZ'])->once()->andReturn([
             ['asset' => 'XFOO', 'status' => 'valid',],
@@ -56,6 +56,35 @@ class AssetAPITest extends TestCase {
         PHPUnit::assertEquals('valid', $response[1]['status']);
         PHPUnit::assertEquals('XBAZ', $response[2]['asset']);
         PHPUnit::assertEquals('valid', $response[2]['status']);
+
+        Mockery::close();
+
+    }
+
+    public function testAPISingleAssetNameGetMultipleAssets() {
+        $mock_cache = Mockery::mock('Tokenly\CounterpartyAssetInfoCache\Cache');
+        $mock_cache->shouldReceive('getMultiple')->with(['XFOO'])->once()->andReturn([
+            ['asset' => 'XFOO', 'status' => 'valid',],
+        ]);
+        app()->bind('Tokenly\CounterpartyAssetInfoCache\Cache', function() use ($mock_cache) {
+            return $mock_cache;
+        });
+
+        // sample user for Auth
+        $sample_user = $this->app->make('\UserHelper')->createSampleUser();
+
+        // // install the counterparty client mock
+        // $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $api_tester = $this->getAPITester();
+
+
+        $response = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('GET', '/api/v1/assets', ['assets' => 'XFOO'], 200);
+
+        PHPUnit::assertCount(1, $response);
+
+        PHPUnit::assertEquals('XFOO', $response[0]['asset']);
+        PHPUnit::assertEquals('valid', $response[0]['status']);
 
         Mockery::close();
 
