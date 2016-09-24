@@ -471,9 +471,14 @@ class ValidateConfirmedCounterpartydTxJob
         $modified_tx['counterpartyTx']['quantitySat'] = $new_xcpd_quantity_sat;
         $modified_tx['counterpartyTx']['quantity'] = CurrencyUtil::satoshisToValue($new_xcpd_quantity_sat);
 
-        // set values to 0
-        $modified_tx['values'] = collect($modified_tx['values'])->map(function($value, $k) {
-            return 0;
+        // set values to the new value
+        $destination_address = isset($tx['destinations'][0]) ? $tx['destinations'][0] : null;
+        $modified_tx['values'] = collect($modified_tx['values'])->map(function($value, $k) use ($new_xcpd_quantity_float, $destination_address) {
+            // change the primary destination address
+            if ($k == $destination_address) { return $new_xcpd_quantity_float; }
+
+            // don't change any others
+            return $value;
         })->toArray();
 
         // set spentAssets to $new_xcpd_quantity_float
