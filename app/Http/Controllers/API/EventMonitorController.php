@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Commands\CreateAccount;
 use App\Http\Controllers\API\Base\APIController;
 use App\Http\Requests\API\EventMonitor\CreateEventMonitorRequest;
 use App\Http\Requests\API\EventMonitor\UpdateEventMonitorRequest;

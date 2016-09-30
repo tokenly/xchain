@@ -23,7 +23,7 @@ class BlockHandlerTest extends TestCase {
 
         // check mock calls
         PHPUnit::assertEquals('f88d98717dacb985e3ad49ffa66b8562d8194f1885f58425e1c8582ce2ac5b58', $mock_calls['btcd'][0]['args'][0]);
-        PHPUnit::assertEquals('8de3c8666c40f73ae13df0206e9caf83c075c51eb54349331aeeba130b7520c8', $mock_calls['btcd'][2]['args'][0]);
+        PHPUnit::assertEquals('8de3c8666c40f73ae13df0206e9caf83c075c51eb54349331aeeba130b7520c8', $mock_calls['btcd'][3]['args'][0]);
     }
 
 
@@ -53,7 +53,7 @@ class BlockHandlerTest extends TestCase {
 
         // check mock calls
         PHPUnit::assertEquals('f88d98717dacb985e3ad49ffa66b8562d8194f1885f58425e1c8582ce2ac5b58', $mock_calls['btcd'][0]['args'][0]);
-        PHPUnit::assertEquals('8de3c8666c40f73ae13df0206e9caf83c075c51eb54349331aeeba130b7520c8', $mock_calls['btcd'][2]['args'][0]);
+        PHPUnit::assertEquals('8de3c8666c40f73ae13df0206e9caf83c075c51eb54349331aeeba130b7520c8', $mock_calls['btcd'][3]['args'][0]);
     }
 
 
@@ -88,7 +88,7 @@ class BlockHandlerTest extends TestCase {
         // check mock calls
         $btcd_calls = $mock_calls['btcd'];
         PHPUnit::assertEquals('000000000000000000000000000000000000000000000000000000000000001a', $btcd_calls[0]['args'][0]);
-        PHPUnit::assertEquals('8de3c8666c40f73ae13df0206e9caf83c075c51eb54349331aeeba130b7520c8', $btcd_calls[2]['args'][0]);
+        PHPUnit::assertEquals('8de3c8666c40f73ae13df0206e9caf83c075c51eb54349331aeeba130b7520c8', $btcd_calls[3]['args'][0]);
 
         // check notifications out
         $notifications = $this->getActualNotifications($queue_manager);

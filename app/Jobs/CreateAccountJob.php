@@ -1,38 +1,42 @@
 <?php
 
-namespace App\Handlers\Commands;
+namespace App\Jobs;
 
-use App\Commands\CreateAccount;
+use App\Models\PaymentAddress;
 use App\Repositories\AccountRepository;
 use Illuminate\Queue\InteractsWithQueue;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 
-class CreateAccountHandler
+class CreateAccountJob
 {
+
+    var $payment_address;
+    var $attributes;
+
     /**
      * Create the command handler.
      *
      * @return void
      */
-    public function __construct(AccountRepository $account_repository)
+    public function __construct($attributes, PaymentAddress $payment_address)
     {
-        $this->account_repository = $account_repository;
+        $this->payment_address = $payment_address;
+        $this->attributes = $attributes;
     }
 
     /**
      * Handle the command.
      *
-     * @param  CreateAccount  $command
      * @return void
      */
-    public function handle(CreateAccount $command)
+    public function handle(AccountRepository $account_repository)
     {
-        $payment_address = $command->payment_address;
-        $create_vars = $command->attributes;
+        $payment_address = $this->payment_address;
+        $create_vars = $this->attributes;
         $create_vars['payment_address_id'] = $payment_address['id'];
         $create_vars['user_id'] = $payment_address['user_id'];
 
-        $account = $this->account_repository->create($create_vars);
+        $account = $account_repository->create($create_vars);
         EventLog::log('account.created', json_decode(json_encode($account)));
     }
 }

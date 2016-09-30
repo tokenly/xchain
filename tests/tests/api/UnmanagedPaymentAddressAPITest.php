@@ -2,7 +2,10 @@
 
 use App\Models\TXO;
 use BitWasp\Bitcoin\Key\PrivateKeyFactory;
+use BitWasp\Bitcoin\Script\ScriptFactory;
+use BitWasp\Bitcoin\Transaction\Factory\Signer;
 use BitWasp\Bitcoin\Transaction\TransactionFactory;
+use BitWasp\Bitcoin\Transaction\TransactionOutput;
 use \PHPUnit_Framework_Assert as PHPUnit;
 
 class UnmanagedPaymentAddressAPITest extends TestCase {
@@ -264,11 +267,15 @@ class UnmanagedPaymentAddressAPITest extends TestCase {
         // sign it
         $transaction_hex = $send_details['unsignedTx'];
         $transaction = TransactionFactory::fromHex($transaction_hex);
-        $signer = TransactionFactory::sign($transaction);
+        $signer = new Signer($transaction);
         foreach ($transaction->getInputs() as $n => $input) {
-            $signer->sign($n, $private_key, $input->getScript());
+            // $signer->sign($n, $private_key, $input->getScript());
+
+            $script_instance = ScriptFactory::fromHex($input->getScript()->getHex());
+            $prev_transaction_output = new TransactionOutput(1.23, $script_instance);
+            $signer->sign($n, $private_key, $prev_transaction_output);
         }
-        PHPUnit::assertTrue($signer->isFullySigned());
+        // PHPUnit::assertTrue($signer->isFullySigned());
         $signed_transaction = $signer->get();
 
         $signed_txid = $signed_transaction->getTxId()->getHex();
@@ -315,14 +322,19 @@ class UnmanagedPaymentAddressAPITest extends TestCase {
         $parameters = app('SampleSendsHelper')->samplePostVars(['quantity' => 80]);
         $send_details = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/unsigned/sends/'.$address_model['uuid'], $parameters);
 
+
         // sign it
         $transaction_hex = $send_details['unsignedTx'];
         $transaction = TransactionFactory::fromHex($transaction_hex);
-        $signer = TransactionFactory::sign($transaction);
+        $signer = new Signer($transaction);
         foreach ($transaction->getInputs() as $n => $input) {
-            $signer->sign($n, $private_key, $input->getScript());
+            // $signer->sign($n, $private_key, $input->getScript());
+
+            $script_instance = ScriptFactory::fromHex($input->getScript()->getHex());
+            $prev_transaction_output = new TransactionOutput(1.23, $script_instance);
+            $signer->sign($n, $private_key, $prev_transaction_output);
         }
-        PHPUnit::assertTrue($signer->isFullySigned());
+        // PHPUnit::assertTrue($signer->isFullySigned());
         $signed_transaction = $signer->get();
 
         $signed_txid = $signed_transaction->getTxId()->getHex();

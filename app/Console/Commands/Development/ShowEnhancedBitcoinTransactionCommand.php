@@ -2,10 +2,9 @@
 
 namespace App\Console\Commands\Development;
 
-use App\Commands\PruneTransactions;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Foundation\Bus\DispatchesCommands;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\Event;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
@@ -13,7 +12,7 @@ use Tokenly\LaravelEventLog\Facade\EventLog;
 
 class ShowEnhancedBitcoinTransactionCommand extends Command {
 
-    use DispatchesCommands;
+    use DispatchesJobs;
 
     /**
      * The console command name.

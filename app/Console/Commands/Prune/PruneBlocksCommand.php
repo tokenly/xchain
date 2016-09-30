@@ -2,17 +2,17 @@
 
 namespace App\Console\Commands\Prune;
 
-use App\Commands\PruneBlocks;
+use App\Jobs\PruneBlocksJob;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Foundation\Bus\DispatchesCommands;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 
 class PruneBlocksCommand extends Command {
 
-    use DispatchesCommands;
+    use DispatchesJobs;
 
     /**
      * The console command name.
@@ -68,7 +68,7 @@ class PruneBlocksCommand extends Command {
         } else {
             $this->comment('Pruning all but the last '.$blocks.' blocks.');
         }
-        $this->dispatch(new PruneBlocks($blocks));
+        $this->dispatch(new PruneBlocksJob($blocks));
         $this->comment('done');
     }
 

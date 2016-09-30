@@ -2,17 +2,17 @@
 
 namespace App\Console\Commands\Prune;
 
-use App\Commands\PruneTransactions;
+use App\Jobs\PruneTransactionsJob;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Foundation\Bus\DispatchesCommands;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 
 class PruneTransactionsCommand extends Command {
 
-    use DispatchesCommands;
+    use DispatchesJobs;
 
     /**
      * The console command name.
@@ -68,7 +68,7 @@ class PruneTransactionsCommand extends Command {
         } else {
             $this->comment('Pruning all transactions except those in the last '.$seconds.' seconds.');
         }
-        $this->dispatch(new PruneTransactions($seconds));
+        $this->dispatch(new PruneTransactionsJob($seconds));
         $this->comment('done');
     }
 

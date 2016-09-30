@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Commands\CreateAccount;
 use App\Http\Controllers\API\Base\APIController;
 use App\Http\Requests\API\Account\CreateAccountRequest;
 use App\Http\Requests\API\Account\UpdateAccountRequest;
+use App\Jobs\CreateAccountJob;
 use App\Repositories\AccountRepository;
 use App\Repositories\PaymentAddressRepository;
 use Exception;
 use Illuminate\Contracts\Auth\Guard;
-use Illuminate\Foundation\Bus\DispatchesCommands;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,7 +22,7 @@ use Tokenly\LaravelEventLog\Facade\EventLog;
 
 class AccountController extends APIController {
 
-    use DispatchesCommands;
+    use DispatchesJobs;
 
     /**
      * Display a listing of the resource.
@@ -60,7 +60,7 @@ class AccountController extends APIController {
         $uuid = Uuid::uuid4()->toString();
         $create_vars['uuid'] = $uuid;
         unset($create_vars['addressId']);
-        $this->dispatch(new CreateAccount($create_vars, $payment_address));
+        $this->dispatch(new CreateAccountJob($create_vars, $payment_address));
 
         return $helper->transformResourceForOutput($account_respository->findByUuid($uuid));
     }

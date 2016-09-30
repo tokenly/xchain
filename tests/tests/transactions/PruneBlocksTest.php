@@ -1,7 +1,7 @@
 <?php
 
-use App\Commands\PruneBlocks;
-use Illuminate\Foundation\Bus\DispatchesCommands;
+use App\Jobs\PruneBlocksJob;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\Log;
 use \PHPUnit_Framework_Assert as PHPUnit;
 
@@ -9,7 +9,7 @@ class PruneBlocksTest extends TestCase {
 
     protected $useDatabase = true;
 
-    use DispatchesCommands;
+    use DispatchesJobs;
 
     public function testPruneAllBlocks() {
         $block_helper = app('SampleBlockHelper');
@@ -19,7 +19,7 @@ class PruneBlocksTest extends TestCase {
         }
 
         // prune all
-        $this->dispatch(new PruneBlocks(0));
+        $this->dispatch(new PruneBlocksJob(0));
 
         // check that all transactions were erased
         $block_repository = app('App\Repositories\BlockRepository');
@@ -37,7 +37,7 @@ class PruneBlocksTest extends TestCase {
         }
 
         // prune last 3
-        $this->dispatch(new PruneBlocks(3));
+        $this->dispatch(new PruneBlocksJob(3));
 
         $block_repository = app('App\Repositories\BlockRepository');
         foreach($created_blocks as $offset => $created_block) {

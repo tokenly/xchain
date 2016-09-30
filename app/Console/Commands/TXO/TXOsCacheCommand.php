@@ -6,7 +6,7 @@ use App\Models\TXO;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Foundation\Bus\DispatchesCommands;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Input\InputArgument;
@@ -15,7 +15,7 @@ use Tokenly\CurrencyLib\CurrencyUtil;
 
 class TXOsCacheCommand extends Command {
 
-    use DispatchesCommands;
+    use DispatchesJobs;
 
     /**
      * The console command name.

@@ -19,7 +19,7 @@ use App\Repositories\PaymentAddressRepository;
 use App\Repositories\SendRepository;
 use App\Repositories\TXORepository;
 use Exception;
-use Illuminate\Auth\Guard;
+use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;

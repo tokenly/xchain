@@ -35,7 +35,7 @@ class SampleTXOHelper
         $attributes = array_merge([
             'txid'   => $this->nextTXID(),
             'n'      => 0,
-            'script' => $script->getBuffer()->getHex(),
+            'script' => $script->getHex(),
             'amount' => 54321,
             'type'   => TXO::CONFIRMED,
             'spent'  => false,

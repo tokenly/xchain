@@ -79,7 +79,6 @@ class LedgerEntryRepositoryTest extends TestCase {
 
         $address = app('PaymentAddressHelper')->createSamplePaymentAddress();
         $account_one = app('AccountHelper')->newSampleAccount($address);
-        $api_call = app('APICallHelper')->newSampleAPICall();
         $txid = 'deadbeef00000000000000000000000000000000000000000000000000000001';
 
         // add debit (to empty account)

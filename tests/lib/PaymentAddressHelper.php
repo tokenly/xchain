@@ -77,8 +77,8 @@ class PaymentAddressHelper
 
     public function sampleVars($override_vars=[]) {
         return array_merge([
-            'address'           => '17YdDTY9pjcrAKSZ2AnGS5reXSLhKhxfbh',
-            'private_key_token' => 'ASAMPLEKEYTOKEN',
+            'address'           => '15ZBuZnJXTTUd4Rppj1tM9wNAuP6zDtLoH',
+            'private_key_token' => 'ACwKzfjlvWQrLQhQCbalycfd2mThk7jEbfw85B1y',
             'user_id'           => 1,
         ], $override_vars);
     }

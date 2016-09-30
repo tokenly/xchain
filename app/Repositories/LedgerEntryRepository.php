@@ -139,6 +139,7 @@ class LedgerEntryRepository extends APIRepository
         }
 
         $float_sum = $query->sum('amount');
+        if ($float_sum === null) { $float_sum = 0; }
 
         if ($in_satoshis) { return $float_sum; }
 

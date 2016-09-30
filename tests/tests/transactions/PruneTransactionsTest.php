@@ -1,7 +1,8 @@
 <?php
 
-use App\Commands\PruneTransactions;
-use Illuminate\Foundation\Bus\DispatchesCommands;
+use App\Jobs\PruneTransactionsJob;
+use Carbon\Carbon;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\Log;
 use \PHPUnit_Framework_Assert as PHPUnit;
 
@@ -9,7 +10,7 @@ class PruneTransactionsTest extends TestCase {
 
     protected $useDatabase = true;
 
-    use DispatchesCommands;
+    use DispatchesJobs;
 
     public function testPruneAllTransactions() {
         $tx_helper = app('SampleTransactionsHelper');
@@ -19,7 +20,7 @@ class PruneTransactionsTest extends TestCase {
         }
 
         // prune all
-        $this->dispatch(new PruneTransactions(0));
+        $this->dispatch(new PruneTransactionsJob(0));
 
         // check that all transactions were erased
         $tx_repository = app('App\Repositories\TransactionRepository');
@@ -38,14 +39,14 @@ class PruneTransactionsTest extends TestCase {
 
         $tx_repository = app('App\Repositories\TransactionRepository');
         $created_txs[0]->timestamps = false;
-        $tx_repository->update($created_txs[0], ['updated_at' => time() - 60], ['timestamps' => false]);
+        $tx_repository->update($created_txs[0], ['updated_at' => Carbon::createFromTimestamp(time() - 60)], ['timestamps' => false]);
         $created_txs[1]->timestamps = false;
-        $tx_repository->update($created_txs[1], ['updated_at' => time() - 59], ['timestamps' => false]);
+        $tx_repository->update($created_txs[1], ['updated_at' => Carbon::createFromTimestamp(time() - 59)], ['timestamps' => false]);
         $created_txs[2]->timestamps = false;
-        $tx_repository->update($created_txs[2], ['updated_at' => time() - 5],  ['timestamps' => false]);
+        $tx_repository->update($created_txs[2], ['updated_at' => Carbon::createFromTimestamp(time() - 5)],  ['timestamps' => false]);
 
         // prune all
-        $this->dispatch(new PruneTransactions(50));
+        $this->dispatch(new PruneTransactionsJob(50));
 
         // check that all transactions were erased
         $tx_repository = app('App\Repositories\TransactionRepository');
@@ -54,7 +55,7 @@ class PruneTransactionsTest extends TestCase {
             if ($offset < 2) {
                 PHPUnit::assertNull($loaded_tx, "found unexpected tx: ".($loaded_tx ? json_encode($loaded_tx->toArray(), 192) : 'null'));
             } else {
-                PHPUnit::assertNotNull($loaded_tx, "missing tx $offset");
+                PHPUnit::assertNotNull($loaded_tx, "missing tx at offset $offset");
                 PHPUnit::assertEquals($created_tx->toArray(), $loaded_tx->toArray());
             }
         }

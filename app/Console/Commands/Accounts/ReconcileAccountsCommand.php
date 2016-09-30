@@ -9,7 +9,7 @@ use App\Util\ArrayToTextTable;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Foundation\Bus\DispatchesCommands;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -23,7 +23,7 @@ use Tokenly\CurrencyLib\CurrencyUtil;
 use Tokenly\LaravelEventLog\Facade\EventLog;
 
 class ReconcileAccountsCommand extends Command {
-    use DispatchesCommands;
+    use DispatchesJobs;
 
     const CACHE_TTL = 43200; // 30 days (in minutes)
 

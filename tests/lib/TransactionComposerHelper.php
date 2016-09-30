@@ -35,10 +35,13 @@ class TransactionComposerHelper
         $inputs = $transaction->getInputs();
         $out['inputs'] = [];
         foreach($inputs as $input) {
+
             // build the ASM
+            $script = $input->getScript();
             $asm = "";
-            $opcodes = $input->getScript()->getOpCodes();
-            foreach($input->getScript()->getScriptParser()->decode() as $op) {
+            $opcodes = $script->getOpCodes();
+            foreach($script->getScriptParser()->decode() as $op) {
+                // echo "\$op: ".get_class($op)."\n";
                 // $asm .= $opcodes->getOp($op->getOp());
                 if ($op->isPush()) {
                     $item = $op->getData()->getHex();
@@ -66,7 +69,8 @@ class TransactionComposerHelper
             //     $address = $sh_address->getAddress();
             // }
 
-            $out['inputs'][] = ['txid' => $input->getTransactionId(), 'n' => $input->getVout(), 'asm' => $asm, /* 'addr' => $address, */];
+            $outpoint = $input->getOutPoint();
+            $out['inputs'][] = ['txid' => $outpoint->getTxId()->getHex(), 'n' => $outpoint->getVout(), 'script' => $script->getHex(), 'asm' => $asm, /* 'addr' => $address, */];
 
         }
 
@@ -78,14 +82,14 @@ class TransactionComposerHelper
         $output_offset = 0;
         $outputs = $transaction->getOutputs();
         $destination = AddressFactory::getAssociatedAddress($outputs[$output_offset]->getScript());
-        $out['destination'] = $destination;
+        $out['destination'] = $destination->getAddress();
         $out['btc_amount'] = $outputs[0]->getValue();
 
         if ($is_counterparty) {
             // OP_RETURN
             ++$output_offset;
             $obfuscated_op_return_hex = $outputs[$output_offset]->getScript()->getScriptParser()->decode()[1]->getData()->getHex();
-            $hex = $this->arc4decrypt($transaction->getInput(0)->getTransactionId(), $obfuscated_op_return_hex);
+            $hex = $this->arc4decrypt($transaction->getInput(0)->getOutPoint()->getTxId()->getHex(), $obfuscated_op_return_hex);
             $counterparty_data = $this->parseTransactionData(hex2bin(substr($hex, 16)));
             $out = $counterparty_data + $out;
             $out['btc_dust_size'] = $outputs[0]->getValue();
@@ -96,11 +100,11 @@ class TransactionComposerHelper
         $change = [];
         for ($i=$output_offset; $i < count($outputs); $i++) { 
             $script = $outputs[$i]->getScript();
-            $classifier = new OutputClassifier($script);
-            $script_type = $classifier->classify();
+            $classifier = new OutputClassifier();
+            $script_type = $classifier->classify($script);
             if ($script_type == OutputClassifier::PAYTOPUBKEYHASH) {
                 $output = $outputs[$i];
-                $change[] = [AddressFactory::getAssociatedAddress($script), $output->getValue()];
+                $change[] = [AddressFactory::getAssociatedAddress($script)->getAddress(), $output->getValue()];
             }
         }
         $out['change'] = $change;

@@ -4,17 +4,14 @@ namespace App\Http\Controllers\API;
 
 use App\Blockchain\Sender\PaymentAddressSender;
 use App\Blockchain\Sender\TXOChooser;
-use App\Commands\CreateAccount;
 use App\Http\Controllers\API\Base\APIController;
-use App\Http\Requests\API\Account\CreateAccountRequest;
-use App\Http\Requests\API\Account\UpdateAccountRequest;
 use App\Models\TXO;
 use App\Repositories\AccountRepository;
 use App\Repositories\PaymentAddressRepository;
 use App\Repositories\TXORepository;
 use Exception;
 use Illuminate\Contracts\Auth\Guard;
-use Illuminate\Foundation\Bus\DispatchesCommands;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,7 +24,7 @@ use Tokenly\LaravelEventLog\Facade\EventLog;
 
 class PrimeController extends APIController {
 
-    use DispatchesCommands;
+    use DispatchesJobs;
 
     /**
      * gets a list of the current UTXOs that are primed

@@ -9,7 +9,7 @@ use App\Providers\Accounts\Facade\AccountHandler;
 use App\Util\ArrayToTextTable;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Foundation\Bus\DispatchesCommands;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use LinusU\Bitcoin\AddressValidator;
@@ -20,7 +20,7 @@ use Tokenly\LaravelEventLog\Facade\EventLog;
 
 class ForceSyncAddressAccountsCommand extends Command {
 
-    use DispatchesCommands;
+    use DispatchesJobs;
 
     /**
      * The console command name.

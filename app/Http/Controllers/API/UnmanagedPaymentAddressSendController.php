@@ -11,7 +11,7 @@ use App\Repositories\APICallRepository;
 use App\Repositories\PaymentAddressRepository;
 use App\Repositories\SendRepository;
 use Exception;
-use Illuminate\Auth\Guard;
+use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -168,7 +168,7 @@ class UnmanagedPaymentAddressSendController extends APIController {
             }
 
             // update the unsigned transaction
-            $send_respository->update($composed_send, ['unsigned_tx' => null, 'utxos' => null, 'unsigned' => false]);
+            $send_respository->update($composed_send, ['unsigned_tx' => '', 'utxos' => '', 'unsigned' => false]);
 
             // done - return an empty response
             return $helper->buildJSONResponse(['txid' => $txid], 200);

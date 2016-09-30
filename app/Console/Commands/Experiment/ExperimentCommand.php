@@ -8,6 +8,8 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 
+
+
 class ExperimentCommand extends Command {
 
     /**
@@ -33,25 +35,45 @@ class ExperimentCommand extends Command {
     {
         $this->comment("Begin experiment");
 
-        // run your experiment here
-        $route = new \Illuminate\Routing\Route(['GET'], '/foo/{bar}', []);
-        $request = \Illuminate\Http\Request::create('https://foo.local/foo/bar', 'GET');
-        echo "matches: ".json_encode($route->matches($request), 192)."\n";
+        $priv = PrivateKeyFactory::fromHex(Hash::sha256(new Buffer('abcxxx')));
+        $publicKey = $priv->getPublicKey();
 
 
-        // $result = app('Nbobtc\Bitcoind\Bitcoind')->getrawtransaction('d0010d7ddb1662e381520d29177ea83f81f87428879b57735a894cad8dcae2a2', true);
-        // echo "\$result: ".json_encode($result, 192)."\n";
+        $tx_builder = TransactionFactory::build();
 
-        // $result = app('Nbobtc\Bitcoind\Bitcoind')->getblock('00000000000000000d45b7b575aada5c6e7f45d33455683d9e37292fa916b27c', true);
-        // echo "\$result: ".json_encode($result, 192)."\n";
+        $tx_builder->input('10001234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234abcd1234', 0);
+        // $tx_builder->payToAddress(60, \BitWasp\Bitcoin\Address\AddressFactory::fromString('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD'));
+        $tx_builder->payToAddress(60, \BitWasp\Bitcoin\Address\AddressFactory::fromString('1NEwmNSC7w9nZeASngHCd43Bc5eC2FmXpn'));
+        $tx = $tx_builder->get();
+        
+        $signer = new \BitWasp\Bitcoin\Transaction\Factory\Signer($tx, \BitWasp\Bitcoin\Bitcoin::getEcAdapter());
+        $signer->sign(0, $priv, $tx->getOutput(0));
+        $signed = $signer->get();
 
-        // $index = app('Nbobtc\Bitcoind\Bitcoind')->getblockcount();
-        // $hash = app('Nbobtc\Bitcoind\Bitcoind')->getblockhash($index);
-        // echo "\$index: ".json_encode($index, 192)."\n";
-        // echo "\$hash: ".json_encode($hash, 192)."\n";
 
-        // $result = app('App\Handlers\XChain\Network\Bitcoin\EnhancedBitcoindTransactionBuilder')->buildTransactionData('1f79eda7fecb98d518d9483c7bd8a49d99afa2338bd6bd0fbfb9a3f8f7d61483');
-        // echo "\$result: ".json_encode($result, 192)."\n";
+
+        echo "\$signed input 0: ".$signed->getInput(0)->getScript()->getHex()."\n";
+        echo $signed->getHex()."\n";
+
+
+
+
+
+
+        // $tx_builder->payToAddress(60, \BitWasp\Bitcoin\Address\AddressFactory::fromString('1NEwmNSC7w9nZeASngHCd43Bc5eC2FmXpn'));
+        // $tx_builder->payToAddress(60, $publicKey2->getAddress());
+        // $tx_builder->payToAddress(60, \BitWasp\Bitcoin\Address\AddressFactory::fromString($publicKey->getAddress()->getAddress()));
+
+        // $addr_instance = \BitWasp\Bitcoin\Address\AddressFactory::fromString('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD');
+        // echo "\$addr_instance: ".get_class($addr_instance)." ".$addr_instance->getAddress()."\n";
+
+        // echo "\$addr_instance (pubkey): ".get_class($publicKey->getAddress())." ".$publicKey->getAddress()->getAddress()."\n";
+        // echo "\$addr_instance (pubkey): ".get_class(\BitWasp\Bitcoin\Address\AddressFactory::fromString($publicKey->getAddress()->getAddress()))."\n";
+
+        // $priv2 = PrivateKeyFactory::fromHex(Hash::sha256(new Buffer('abcd')));
+        // $publicKey2 = $priv2->getPublicKey();
+
+
 
         $this->comment("End experiment");
     }

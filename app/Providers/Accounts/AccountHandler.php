@@ -2,7 +2,7 @@
 
 namespace App\Providers\Accounts;
 
-use App\Commands\CreateAccount;
+use App\Jobs\CreateAccountJob;
 use App\Models\APICall;
 use App\Models\Account;
 use App\Models\LedgerEntry;
@@ -12,7 +12,7 @@ use App\Repositories\AccountRepository;
 use App\Repositories\LedgerEntryRepository;
 use App\Repositories\PaymentAddressRepository;
 use Exception;
-use Illuminate\Foundation\Bus\DispatchesCommands;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -29,7 +29,7 @@ class AccountHandler {
 
     const SEND_LOCK_TIMEOUT = 300; // 5 minutes
 
-    use DispatchesCommands;
+    use DispatchesJobs;
 
     function __construct(PaymentAddressRepository $payment_address_repository, AccountRepository $account_repository, LedgerEntryRepository $ledger_entry_repository) {
         $this->account_repository         = $account_repository;
@@ -43,7 +43,7 @@ class AccountHandler {
 
     public function createAccount(PaymentAddress $payment_address, $name) {
         // also create a default account for this address
-        $this->dispatch(new CreateAccount(['name' => $name], $payment_address));
+        $this->dispatch(new CreateAccountJob(['name' => $name], $payment_address));
 
         return $this->getAccount($payment_address, $name);
     }

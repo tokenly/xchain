@@ -414,8 +414,8 @@ class PaymentAddressSender {
                 // debug
                 try {
                     $_debug_parsed_tx = app('\TransactionComposerHelper')->parseBTCTransaction($composed_transaction->getTransactionHex());
-                    // Log::debug("BTC send: \$_debug_parsed_tx=".json_encode($_debug_parsed_tx, 192));
-                    // Log::debug("BTC send: \$signed_tx=".$composed_transaction->getTransactionHex());
+                    Log::debug("BTC send: \$_debug_parsed_tx=".json_encode($_debug_parsed_tx, 192));
+                    Log::debug("BTC send: \$signed_tx=".$composed_transaction->getTransactionHex());
                 } catch (Exception $e) {
                     $qty_desc = $float_quantity;
                     $msg = "Error parsing new send of $qty_desc $asset to $destination";
@@ -535,7 +535,8 @@ class PaymentAddressSender {
 
         // inputs
         foreach($transaction->getInputs() as $input) {
-            $utxo_identifiers[] = $input->getTransactionId().':'.$input->getVout();
+            $outpoint = $input->getOutpoint();
+            $utxo_identifiers[] = $outpoint->getTxId()->getHex().':'.$outpoint->getVout();
         }
 
         return $utxo_identifiers;

@@ -16,11 +16,11 @@ class ProvisionalTransactionRepositoryTest extends TestCase {
 
         // load the provisional transaction
         $loaded_transaction = $provisional_tx_repository->findByID($provisional_transaction['id']);
-        PHPUnit::assertEquals($provisional_transaction, $loaded_transaction);
+        PHPUnit::assertEquals($provisional_transaction->toArray(), $loaded_transaction->toArray());
 
         // load the provisional transaction by txid
         $loaded_transaction = $provisional_tx_repository->findByTXID($provisional_transaction['txid']);
-        PHPUnit::assertEquals($provisional_transaction, $loaded_transaction);
+        PHPUnit::assertEquals($provisional_transaction->toArray(), $loaded_transaction->toArray());
     }
 
 
@@ -37,7 +37,7 @@ class ProvisionalTransactionRepositoryTest extends TestCase {
 
         // load the provisional transaction
         $loaded_transaction = $provisional_tx_repository->findByID($provisional_transaction['id']);
-        PHPUnit::assertEquals($provisional_transaction, $loaded_transaction);
+        PHPUnit::assertEquals($provisional_transaction->toArray(), $loaded_transaction->toArray());
 
         // delete the provisional transaction
         $count = $provisional_tx_repository->delete($provisional_transaction);
@@ -49,7 +49,7 @@ class ProvisionalTransactionRepositoryTest extends TestCase {
 
         // provisional transaction two is good
         $loaded_transaction = $provisional_tx_repository->findByID($provisional_transaction_2['id']);
-        PHPUnit::assertEquals($provisional_transaction_2, $loaded_transaction);
+        PHPUnit::assertEquals($provisional_transaction_2->toArray(), $loaded_transaction->toArray());
 
     }
 
@@ -65,7 +65,7 @@ class ProvisionalTransactionRepositoryTest extends TestCase {
 
         // load the provisional transaction
         $loaded_transaction = $provisional_tx_repository->findByID($provisional_transaction['id']);
-        PHPUnit::assertEquals($provisional_transaction, $loaded_transaction);
+        PHPUnit::assertEquals($provisional_transaction->toArray(), $loaded_transaction->toArray());
 
         // delete the provisional transaction
         $count = $provisional_tx_repository->deleteByTXID($provisional_transaction_2['txid']);
@@ -77,7 +77,7 @@ class ProvisionalTransactionRepositoryTest extends TestCase {
 
         // provisional transaction one is good
         $loaded_transaction = $provisional_tx_repository->findByID($provisional_transaction['id']);
-        PHPUnit::assertEquals($provisional_transaction, $loaded_transaction);
+        PHPUnit::assertEquals($provisional_transaction->toArray(), $loaded_transaction->toArray());
 
     }
 

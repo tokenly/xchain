@@ -1,8 +1,7 @@
 <?php
 
-use App\Commands\PruneTransactions;
 use App\Providers\Accounts\Facade\AccountHandler;
-use Illuminate\Foundation\Bus\DispatchesCommands;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use \PHPUnit_Framework_Assert as PHPUnit;

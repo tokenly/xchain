@@ -12,7 +12,6 @@ use App\Repositories\APICallRepository;
 use App\Repositories\PaymentAddressRepository;
 use App\Repositories\SendRepository;
 use Exception;
-use Illuminate\Auth\Guard;
 use Illuminate\Http\Exception\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;

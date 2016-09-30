@@ -6,7 +6,7 @@ use App\Models\TXO;
 use App\Providers\Accounts\Facade\AccountHandler;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Foundation\Bus\DispatchesCommands;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
@@ -15,7 +15,7 @@ use Tokenly\LaravelEventLog\Facade\EventLog;
 
 class ReconcileTXOsCommand extends Command {
 
-    use DispatchesCommands;
+    use DispatchesJobs;
 
     /**
      * The console command name.

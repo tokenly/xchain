@@ -62,7 +62,8 @@ class EstimateFeesTest extends TestCase {
         $payment_address_helper = app('PaymentAddressHelper');
         $txo_helper             = app('SampleTXOHelper');
 
-        $payment_address = $payment_address_helper->createSamplePaymentAddressWithoutInitialBalances($user, ['address' => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD']);
+        // $payment_address = $payment_address_helper->createSamplePaymentAddressWithoutInitialBalances($user, ['address' => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD']);
+        $payment_address = $payment_address_helper->createSamplePaymentAddressWithoutInitialBalances($user, []);
 
         // make all TXOs (with roughly 0.5 BTC)
         $sample_txos = [];

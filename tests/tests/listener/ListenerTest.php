@@ -24,6 +24,7 @@ class ListenerTest extends TestCase
         $this->buildBTCTransactionJob()->fire($this->getQueueJob(), $data);
 
         // validate tx data
+        // echo "\$heard_tx_data: ".json_encode($heard_tx_data, 192)."\n";
         PHPUnit::assertNotNull($heard_tx_data);
         PHPUnit::assertEquals(['1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1'], $heard_tx_data['sources']);
         PHPUnit::assertEquals(['1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD'], $heard_tx_data['destinations']);
@@ -68,6 +69,7 @@ class ListenerTest extends TestCase
         $this->buildBTCTransactionJob()->fire($this->getQueueJob(), $data);
 
         // validate tx data
+        // echo "\$heard_tx_data: ".json_encode($heard_tx_data, 192)."\n";
         PHPUnit::assertNotNull($heard_tx_data);
         PHPUnit::assertEquals(['1NVddDzRUvn8bHZEG9n5W7gfMTLeBeNAHQ'], $heard_tx_data['sources']);
         PHPUnit::assertEquals(['16cES2Nxv9D5vjsMT5A4HEwhbUPDg3Nnpd'], $heard_tx_data['destinations']);

@@ -8,7 +8,7 @@ use App\Models\TXO;
 use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\TXORepository;
 use Exception;
-use Illuminate\Foundation\Bus\DispatchesCommands;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Tokenly\CurrencyLib\CurrencyUtil;
@@ -21,7 +21,7 @@ class TXOHandler {
 
     const SEND_LOCK_TIMEOUT = 300; // 5 minutes
 
-    use DispatchesCommands;
+    use DispatchesJobs;
 
     function __construct(TXORepository $txo_repository) {
         $this->txo_repository = $txo_repository;

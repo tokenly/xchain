@@ -6,7 +6,7 @@ use App\Models\LedgerEntry;
 use App\Providers\Accounts\Facade\AccountHandler;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Foundation\Bus\DispatchesCommands;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use LinusU\Bitcoin\AddressValidator;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
@@ -15,7 +15,7 @@ use Tokenly\LaravelEventLog\Facade\EventLog;
 
 class SweepAccountCommand extends Command {
 
-    use DispatchesCommands;
+    use DispatchesJobs;
 
     /**
      * The console command name.

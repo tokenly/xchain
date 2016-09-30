@@ -5,7 +5,7 @@ namespace App\Handlers\XChain\Network\Bitcoin;
 use App\Repositories\TransactionRepository;
 use BitWasp\Bitcoin\Address\ScriptHashAddress;
 use BitWasp\Bitcoin\Key\PublicKeyFactory;
-use BitWasp\Bitcoin\Script\Classifier\InputClassifier;
+use BitWasp\Bitcoin\Script\Classifier\OutputClassifier;
 use BitWasp\Bitcoin\Script\ScriptFactory;
 use BitWasp\Bitcoin\Transaction\TransactionFactory;
 use Exception;
@@ -31,7 +31,7 @@ class EnhancedBitcoindTransactionBuilder {
     public function buildTransactionData($txid) {
 
             $enhanced_bitcoind_transaction = $this->loadTransactionFromBitcoind($txid);
-                
+
             // enhance vins
             $enhanced_vins = [];
             foreach ($enhanced_bitcoind_transaction['vin'] as $n => $vin) {
@@ -103,31 +103,41 @@ class EnhancedBitcoindTransactionBuilder {
         $script_type = null;
 
         try {
-            $script = ScriptFactory::fromHex($script_hex);
-            $classifier = new InputClassifier($script);
-            $script_type = $classifier->classify();
+            // load the address from the previous output
+            $address = $this->getPreviousOutputAddressFromVin($vin);
 
-            if ($script_type == InputClassifier::PAYTOPUBKEYHASH) {
+            // $entire_tx = TransactionFactory::fromHex();
+            // echo "input {$vin['n']}: ".$entire_tx->getInput($vin['n'])->getScript()->getScriptParser()->getHumanReadable()."\n";
+            // echo "\$entire_tx: ".$entire_tx->getScript()->getScriptParser()->getHumanReadable()."\n";
 
-                $decoded = $script->getScriptParser()->decode();
-                $public_key = PublicKeyFactory::fromHex($decoded[1]->getData());
-                $address = $public_key->getAddress()->getAddress();
 
-            } else if ($script_type == InputClassifier::PAYTOSCRIPTHASH OR $script_type == InputClassifier::MULTISIG) {
+            // $script = ScriptFactory::fromHex($script_hex);
+            // $classifier = new OutputClassifier();
+            // $script_type = $classifier->classify($script);
+            // echo "\$script_type for $script_hex: ".json_encode($script_type, 192)."\n";
 
-                $decoded = $script->getScriptParser()->decode();
-                $hex_buffer = $decoded[count($decoded)-1]->getData();
-                $sh_address = new ScriptHashAddress(ScriptFactory::fromHex($hex_buffer)->getScriptHash());
-                $address = $sh_address->getAddress();
+            // if ($script_type == OutputClassifier::PAYTOPUBKEYHASH) {
 
-            } else if ($script_type == InputClassifier::PAYTOPUBKEY) {
-                // load the address from the previous output
-                $address = $this->getPreviousOutputAddressFromVin($vin);
+            //     $decoded = $script->getScriptParser()->decode();
+            //     $public_key = PublicKeyFactory::fromHex($decoded[1]->getData());
+            //     $address = $public_key->getAddress()->getAddress();
 
-            } else {
-                // unknown script type
-                Log::debug("Unable to classify script ".substr($script_hex, 0, 20)."...  classified as: ".$script_type);
-            }
+            // } else if ($script_type == OutputClassifier::PAYTOSCRIPTHASH OR $script_type == OutputClassifier::MULTISIG) {
+
+            //     $decoded = $script->getScriptParser()->decode();
+            //     $hex_buffer = $decoded[count($decoded)-1]->getData();
+            //     $sh_address = new ScriptHashAddress(ScriptFactory::fromHex($hex_buffer)->getScriptHash());
+            //     $address = $sh_address->getAddress();
+
+            // } else if ($script_type == OutputClassifier::PAYTOPUBKEY) {
+            //     // load the address from the previous output
+            //     $address = $this->getPreviousOutputAddressFromVin($vin);
+
+            // } else {
+            //     // unknown script type
+            //     Log::debug("Unable to classify script ".substr($script_hex, 0, 20)."...  classified as: ".$script_type);
+            // }
+
         } catch (Exception $e) {
             Log::error("failed to get address from script with type ".$script_type.". ".$e->getMessage());
             throw $e;
@@ -178,12 +188,20 @@ class EnhancedBitcoindTransactionBuilder {
     protected function getPreviousOutputAddressFromVin($vin) {
         $transaction_model = $this->transaction_repository->findByTXID($vin['txid']);
         if ($transaction_model) {
-            return $transaction_model['parsed_tx']['bitcoinTx']['vout'][$vin['vout']]['scriptPubKey']['addresses'][0];
+            // use cached transaction
+            $script_pub_key = $transaction_model['parsed_tx']['bitcoinTx']['vout'][$vin['vout']]['scriptPubKey'];
+        } else {
+            // load from bitcoind
+            $bitcoind_transaction = $this->loadTransactionFromBitcoind($vin['txid']);
+            $script_pub_key = $bitcoind_transaction['vout'][$vin['vout']]['scriptPubKey'];
         }
 
-        // load from bitcoind
-        $bitcoind_transaction = $this->loadTransactionFromBitcoind($vin['txid']);
-        return $bitcoind_transaction['vout'][$vin['vout']]['scriptPubKey']['addresses'][0];
+        // return the address (if it exists)
+        if (isset($script_pub_key['addresses'])) {
+            return $script_pub_key['addresses'][0];
+        }
+
+        return null;
     }
 
 }
