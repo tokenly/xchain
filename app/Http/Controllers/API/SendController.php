@@ -23,7 +23,7 @@ use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Rhumsaa\Uuid\Uuid;
+use Ramsey\Uuid\Uuid;
 use Tokenly\BitcoinPayer\Exception\PaymentException;
 use Tokenly\CounterpartySender\CounterpartySender;
 use Tokenly\CurrencyLib\CurrencyUtil;

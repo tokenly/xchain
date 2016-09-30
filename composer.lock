@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "69cf439d3e0db97ca638d0300d37a5fc",
-    "content-hash": "55aafdff6c6f6b29f63b34e6ebb43eec",
+    "hash": "cfdde04ba98dd2584ffd9a3d4f8d5567",
+    "content-hash": "1341a1d777671481524635eb1acec1eb",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
@@ -1842,46 +1842,54 @@
         },
         {
             "name": "ramsey/uuid",
-            "version": "2.9.0",
+            "version": "3.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ramsey/uuid.git",
-                "reference": "b2ef4dd9584268d73f92f752a62bc24cd534dc9a"
+                "reference": "a6d15c8618ea3951fd54d34e326b68d3d0bc0786"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ramsey/uuid/zipball/b2ef4dd9584268d73f92f752a62bc24cd534dc9a",
-                "reference": "b2ef4dd9584268d73f92f752a62bc24cd534dc9a",
+                "url": "https://api.github.com/repos/ramsey/uuid/zipball/a6d15c8618ea3951fd54d34e326b68d3d0bc0786",
+                "reference": "a6d15c8618ea3951fd54d34e326b68d3d0bc0786",
                 "shasum": ""
             },
             "require": {
                 "paragonie/random_compat": "^1.0|^2.0",
-                "php": ">=5.3.3"
+                "php": ">=5.4"
             },
             "replace": {
                 "rhumsaa/uuid": "self.version"
             },
             "require-dev": {
-                "doctrine/dbal": ">=2.3",
+                "apigen/apigen": "^4.1",
+                "codeception/aspect-mock": "1.0.0",
+                "goaop/framework": "1.0.0-alpha.2",
+                "ircmaxell/random-lib": "^1.1",
                 "jakub-onderka/php-parallel-lint": "^0.9.0",
-                "moontoast/math": "~1.1",
-                "phpunit/phpunit": "~4.1|~5.0",
-                "satooshi/php-coveralls": "~0.6",
-                "squizlabs/php_codesniffer": "^2.3",
-                "symfony/console": "~2.3|~3.0"
+                "mockery/mockery": "^0.9.4",
+                "moontoast/math": "^1.1",
+                "phpunit/phpunit": "^4.7|>=5.0 <5.4",
+                "satooshi/php-coveralls": "^0.6.1",
+                "squizlabs/php_codesniffer": "^2.3"
             },
             "suggest": {
-                "doctrine/dbal": "Allow the use of a UUID as doctrine field type.",
-                "moontoast/math": "Support for converting UUID to 128-bit integer (in string form).",
-                "symfony/console": "Support for use of the bin/uuid command line tool."
+                "ext-libsodium": "Provides the PECL libsodium extension for use with the SodiumRandomGenerator",
+                "ext-uuid": "Provides the PECL UUID extension for use with the PeclUuidTimeGenerator and PeclUuidRandomGenerator",
+                "ircmaxell/random-lib": "Provides RandomLib for use with the RandomLibAdapter",
+                "moontoast/math": "Provides support for converting UUID to 128-bit integer (in string form).",
+                "ramsey/uuid-console": "A console application for generating UUIDs with ramsey/uuid",
+                "ramsey/uuid-doctrine": "Allows the use of Ramsey\\Uuid\\Uuid as Doctrine field type."
             },
-            "bin": [
-                "bin/uuid"
-            ],
             "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.x-dev"
+                }
+            },
             "autoload": {
                 "psr-4": {
-                    "Rhumsaa\\Uuid\\": "src/"
+                    "Ramsey\\Uuid\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -1894,18 +1902,23 @@
                     "email": "marijn.huizendveld@gmail.com"
                 },
                 {
+                    "name": "Thibaud Fabre",
+                    "email": "thibaud@aztech.io"
+                },
+                {
                     "name": "Ben Ramsey",
-                    "homepage": "http://benramsey.com"
+                    "email": "ben@benramsey.com",
+                    "homepage": "https://benramsey.com"
                 }
             ],
-            "description": "A PHP 5.3+ library for generating RFC 4122 version 1, 3, 4, and 5 universally unique identifiers (UUID).",
+            "description": "Formerly rhumsaa/uuid. A PHP 5.4+ library for generating RFC 4122 version 1, 3, 4, and 5 universally unique identifiers (UUID).",
             "homepage": "https://github.com/ramsey/uuid",
             "keywords": [
                 "guid",
                 "identifier",
                 "uuid"
             ],
-            "time": "2016-03-22 18:20:19"
+            "time": "2016-08-02 18:39:32"
         },
         {
             "name": "react/promise",
@@ -3089,24 +3102,24 @@
         },
         {
             "name": "tokenly/counterparty-transaction-composer",
-            "version": "dev-master",
+            "version": "v1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-composer.git",
-                "reference": "a9f3ce78c43dd1ed1e38a446562736a71bd6ef8f"
+                "reference": "305398891c9bfcd2f0e62c845f8d58ef999d5e26"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/a9f3ce78c43dd1ed1e38a446562736a71bd6ef8f",
-                "reference": "a9f3ce78c43dd1ed1e38a446562736a71bd6ef8f",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/305398891c9bfcd2f0e62c845f8d58ef999d5e26",
+                "reference": "305398891c9bfcd2f0e62c845f8d58ef999d5e26",
                 "shasum": ""
             },
             "require": {
                 "bitwasp/bitcoin": "^0.0.30",
                 "ext-gmp": "*",
                 "ext-mcrypt": "*",
-                "php": ">=5.5.0",
-                "tokenly/counterparty-transaction-parser": "dev-master"
+                "php": ">=5.6.0",
+                "tokenly/counterparty-transaction-parser": "^1.2"
             },
             "require-dev": {
                 "phpunit/phpunit": "~4",
@@ -3130,26 +3143,26 @@
                 }
             ],
             "description": "Composes counterparty and bitcoin transactions",
-            "time": "2016-09-28 23:16:44"
+            "time": "2016-09-30 15:52:10"
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
-            "version": "dev-master",
+            "version": "v1.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-parser.git",
-                "reference": "d63ba9a7bc2b1f2c2a573e68de45b58d8137c163"
+                "reference": "568bf5696d5aaa96f3ab481f424c30e62f54c334"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/d63ba9a7bc2b1f2c2a573e68de45b58d8137c163",
-                "reference": "d63ba9a7bc2b1f2c2a573e68de45b58d8137c163",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/568bf5696d5aaa96f3ab481f424c30e62f54c334",
+                "reference": "568bf5696d5aaa96f3ab481f424c30e62f54c334",
                 "shasum": ""
             },
             "require": {
                 "ext-gmp": "*",
                 "ext-mcrypt": "*",
-                "php": ">=5.5.0"
+                "php": ">=5.6.0"
             },
             "require-dev": {
                 "phpunit/phpunit": "~4"
@@ -3172,7 +3185,7 @@
                 }
             ],
             "description": "A counterparty transaction parser",
-            "time": "2016-09-16 13:24:06"
+            "time": "2016-09-30 14:39:15"
         },
         {
             "name": "tokenly/hmac-auth",
@@ -3228,21 +3241,21 @@
         },
         {
             "name": "tokenly/laravel-api-provider",
-            "version": "v0.2.1",
+            "version": "v1.0.0-rc2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/laravel-api-provider.git",
-                "reference": "fc255637a8b76f232695693dd6d83a68d8ade173"
+                "reference": "31d4ababa79767471bfdfbc77e8c65f8da6f9a5f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/fc255637a8b76f232695693dd6d83a68d8ade173",
-                "reference": "fc255637a8b76f232695693dd6d83a68d8ade173",
+                "url": "https://api.github.com/repos/tokenly/laravel-api-provider/zipball/31d4ababa79767471bfdfbc77e8c65f8da6f9a5f",
+                "reference": "31d4ababa79767471bfdfbc77e8c65f8da6f9a5f",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.5.0",
-                "ramsey/uuid": "~2.",
+                "ramsey/uuid": "^3",
                 "tokenly/hmac-auth": "^1",
                 "tokenly/laravel-event-log": "^1",
                 "tokenly/token-generator": "dev-master"
@@ -3268,7 +3281,7 @@
                 }
             ],
             "description": "An API service provider for Laravel",
-            "time": "2016-05-24 17:37:01"
+            "time": "2016-09-30 17:15:39"
         },
         {
             "name": "tokenly/laravel-blocking-beanstalkd",
@@ -4214,16 +4227,16 @@
         },
         {
             "name": "phpdocumentor/reflection-docblock",
-            "version": "3.1.0",
+            "version": "3.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpDocumentor/ReflectionDocBlock.git",
-                "reference": "9270140b940ff02e58ec577c237274e92cd40cdd"
+                "reference": "8331b5efe816ae05461b7ca1e721c01b46bafb3e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpDocumentor/ReflectionDocBlock/zipball/9270140b940ff02e58ec577c237274e92cd40cdd",
-                "reference": "9270140b940ff02e58ec577c237274e92cd40cdd",
+                "url": "https://api.github.com/repos/phpDocumentor/ReflectionDocBlock/zipball/8331b5efe816ae05461b7ca1e721c01b46bafb3e",
+                "reference": "8331b5efe816ae05461b7ca1e721c01b46bafb3e",
                 "shasum": ""
             },
             "require": {
@@ -4255,7 +4268,7 @@
                 }
             ],
             "description": "With this component, a library can provide support for annotations via DocBlocks or otherwise retrieve information that is embedded in a DocBlock.",
-            "time": "2016-06-10 09:48:41"
+            "time": "2016-09-30 07:12:33"
         },
         {
             "name": "phpdocumentor/type-resolver",
@@ -5499,9 +5512,7 @@
         "tokenly/xcaller-client": 20,
         "tokenly/laravel-blocking-beanstalkd": 20,
         "tokenly/consul-health-daemon": 20,
-        "tokenly/laravel-record-lock": 20,
-        "tokenly/counterparty-transaction-composer": 20,
-        "tokenly/counterparty-transaction-parser": 20
+        "tokenly/laravel-record-lock": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

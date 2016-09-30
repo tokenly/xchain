@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Models\MonitoredAddress;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
-use Rhumsaa\Uuid\Uuid;
+use Ramsey\Uuid\Uuid;
 use Tokenly\LaravelApiProvider\Contracts\APIResourceRepositoryContract;
 use Tokenly\LaravelApiProvider\Filter\RequestFilter;
 use \Exception;

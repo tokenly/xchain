@@ -1,7 +1,7 @@
 <?php
 
 use App\Repositories\SendRepository;
-use Rhumsaa\Uuid\Uuid;
+use Ramsey\Uuid\Uuid;
 use Tokenly\CurrencyLib\CurrencyUtil;
 
 /**

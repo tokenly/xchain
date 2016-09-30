@@ -8,7 +8,7 @@
         "laravel/framework": "5.2.*",
         "linusu/bitcoin-address-validator": "~0",
         "pda/pheanstalk": "~3",
-        "ramsey/uuid": "~2.",
+        "ramsey/uuid": "~3",
         "nbobtc/bitcoind-php": "1.2.*",
         "tokenly/bitcoin-address-lib": "^1",
         "tokenly/bitcoin-currency-lib": "^1",
@@ -25,11 +25,11 @@
 		"tokenly/consul-health-daemon": "dev-master",
 		"tokenly/laravel-record-lock": "dev-master",
         "bitwasp/bitcoin": "^0.0.30",
-		"tokenly/counterparty-transaction-composer": "dev-master",
+		"tokenly/counterparty-transaction-composer": "^1",
 		"tokenly/hmac-auth": "^1",
-		"tokenly/laravel-api-provider": "^0.2",
+		"tokenly/laravel-api-provider": "v1.0.0-rc2",
 		"guzzlehttp/guzzle": "~5",
-		"tokenly/counterparty-transaction-parser": "dev-master"
+		"tokenly/counterparty-transaction-parser": "^1.2"
 	},
 	"require-dev": {
 		"phpunit/phpunit": "^4.5",

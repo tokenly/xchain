@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Repositories\PaymentAddressArchiveRepository;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use Rhumsaa\Uuid\Uuid;
+use Ramsey\Uuid\Uuid;
 use Tokenly\BitcoinAddressLib\BitcoinAddressGenerator;
 use Tokenly\LaravelApiProvider\Contracts\APIResourceRepositoryContract;
 use Tokenly\LaravelApiProvider\Filter\RequestFilter;

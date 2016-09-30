@@ -20,7 +20,7 @@ use BitWasp\Bitcoin\Transaction\TransactionInterface;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Nbobtc\Bitcoind\Bitcoind;
-use Rhumsaa\Uuid\Uuid;
+use Ramsey\Uuid\Uuid;
 use Tokenly\BitcoinAddressLib\BitcoinAddressGenerator;
 use Tokenly\BitcoinAddressLib\BitcoinKeyUtils;
 use Tokenly\BitcoinPayer\BitcoinPayer;
