@@ -9,9 +9,9 @@ class EventMonitor extends APIModel {
 
     protected $api_attributes = ['id','monitor_type','webhook_endpoint',];
 
-    const TYPE_BLOCK     = 1;
-    const TYPE_ISSUANCE  = 2;
-    const TYPE_BROADCAST = 3;
+    const TYPE_BLOCK           = 1;
+    const TYPE_ISSUANCE        = 2;
+    const TYPE_BROADCAST       = 3;
 
     public static function allTypeStrings() {
         return ['block','issuance','broadcast',];

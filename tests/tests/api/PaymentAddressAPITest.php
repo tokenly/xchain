@@ -18,8 +18,10 @@ class PaymentAddressAPITest extends TestCase {
 
         $posted_vars = $this->sendHelper()->samplePostVars();
         $expected_created_resource = [
-            'id'          => '{{response.id}}',
-            'address'     => '{{response.address}}'
+            'id'      => '{{response.id}}',
+            'address' => '{{response.address}}',
+            'type'    => 'p2pkh',
+            'status'  => 'ready',
         ];
         $loaded_address_model = $api_tester->testAddResource($posted_vars, $expected_created_resource);
     }

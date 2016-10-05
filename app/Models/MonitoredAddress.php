@@ -13,6 +13,7 @@ class MonitoredAddress extends APIModel
 
     const MONITOR_TYPE_SEND    = 1;
     const MONITOR_TYPE_RECEIVE = 2;
+    const MONITOR_TYPE_JOINED  = 3;
 
     /**
      * The database table used by the model.
@@ -37,16 +38,18 @@ class MonitoredAddress extends APIModel
 
     public function monitorTypeTextToMonitorTypeID($type_text) {
         switch ($type_text) {
-            case 'send': return self::MONITOR_TYPE_SEND;
+            case 'send':    return self::MONITOR_TYPE_SEND;
             case 'receive': return self::MONITOR_TYPE_RECEIVE;
+            case 'joined':  return self::MONITOR_TYPE_JOINED;
         }
         return null;
     }
 
     public function monitorTypeIDToMonitorTypeText($type_id) {
         switch ($type_id) {
-            case self::MONITOR_TYPE_SEND: return 'send';
+            case self::MONITOR_TYPE_SEND:    return 'send';
             case self::MONITOR_TYPE_RECEIVE: return 'receive';
+            case self::MONITOR_TYPE_JOINED:  return 'joined';
         }
         return null;
     }

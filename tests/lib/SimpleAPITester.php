@@ -45,8 +45,10 @@ class SimpleAPITester
         PHPUnit::assertEquals(403, $response->getStatusCode(), "Expected 403 Unauthenticated response.  Got ".$response->getStatusCode()." for $uri instead.");
     }
 
-    public function testAddResource($posted_vars, $expected_created_resource, $url_extension=null)
+    public function testAddResource($posted_vars, $expected_created_resource, $url_extension=null, $expected_loaded_resource=null)
     {
+        if ($expected_loaded_resource === null) { $expected_loaded_resource = $expected_created_resource; }
+
         // call the API
         $response = $this->callAPIWithAuthentication('POST', $this->extendURL($this->url_base, $url_extension), $posted_vars);
         PHPUnit::assertEquals(200, $response->getStatusCode(), "Response was: ".$response->getContent()."\n\nfor POST ".$this->extendURL($this->url_base, $url_extension));
@@ -61,8 +63,9 @@ class SimpleAPITester
 
         // load from repository
         $loaded_resource_model = $this->resource_repository->findByUuid($response_from_api['id']);
+        $expected_loaded_resource = $this->fillExpectedResourceWithAPIRespose($expected_loaded_resource, $response_from_api);
         PHPUnit::assertNotEmpty($loaded_resource_model);
-        PHPUnit::assertEquals($expected_created_resource, $loaded_resource_model->serializeForAPI());
+        PHPUnit::assertEquals($expected_loaded_resource, $loaded_resource_model->serializeForAPI());
 
         // return the loaded resource
         return $loaded_resource_model;

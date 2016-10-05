@@ -25,6 +25,11 @@ $router->post('api/v1/unmanaged/addresses', ['as' => 'createUnmanagedAddress', '
 // delete an unmanaged address
 $router->delete('api/v1/unmanaged/addresses/{addressId}', ['as' => 'deleteUnmanagedAddress', 'uses' => 'API\PaymentAddressController@destroyUnmanaged']);
 
+// create a multisig address
+$router->post('api/v1/multisig/addresses', ['as' => 'createMultisigAddress', 'uses' => 'API\PaymentAddressController@createMultisig']);
+// delete a multisig address
+$router->delete('api/v1/multisig/addresses/{addressId}', ['as' => 'deleteMultisigAddress', 'uses' => 'API\PaymentAddressController@destroyMultisig']);
+
 // create a send
 $router->post('api/v1/sends/{addressId}', 'API\SendController@create');
 $router->post('api/v1/multisends/{addressId}', 'API\SendController@createMultisend');

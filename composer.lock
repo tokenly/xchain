@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "cfdde04ba98dd2584ffd9a3d4f8d5567",
-    "content-hash": "1341a1d777671481524635eb1acec1eb",
+    "hash": "ff721618b0d8bb67e3d98ac4b5124acb",
+    "content-hash": "1a0a3fcebec1348cf082cc82efe85eb3",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
@@ -2016,6 +2016,55 @@
             "time": "2013-05-29 14:39:13"
         },
         {
+            "name": "rmccue/requests",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/rmccue/Requests.git",
+                "reference": "0048f3c0b33add0f924cf857961a2f02f4a802b6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/rmccue/Requests/zipball/0048f3c0b33add0f924cf857961a2f02f4a802b6",
+                "reference": "0048f3c0b33add0f924cf857961a2f02f4a802b6",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.2"
+            },
+            "require-dev": {
+                "requests/test-server": "dev-master"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Requests": "library/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "ISC"
+            ],
+            "authors": [
+                {
+                    "name": "Ryan McCue",
+                    "homepage": "http://ryanmccue.info"
+                }
+            ],
+            "description": "A HTTP library written in PHP, for human beings.",
+            "homepage": "http://github.com/rmccue/Requests",
+            "keywords": [
+                "curl",
+                "fsockopen",
+                "http",
+                "idna",
+                "ipv6",
+                "iri",
+                "sockets"
+            ],
+            "time": "2016-09-22 16:46:57"
+        },
+        {
             "name": "swiftmailer/swiftmailer",
             "version": "v5.4.3",
             "source": {
@@ -3010,6 +3059,48 @@
             ],
             "description": "A library to monitor services health and report to consul",
             "time": "2016-05-07 17:06:25"
+        },
+        {
+            "name": "tokenly/copay-client",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tokenly/copay-client.git",
+                "reference": "5eb72d58374e89b3988491124932e29d5dff18bb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tokenly/copay-client/zipball/5eb72d58374e89b3988491124932e29d5dff18bb",
+                "reference": "5eb72d58374e89b3988491124932e29d5dff18bb",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.6.0",
+                "rmccue/requests": "dev-master"
+            },
+            "require-dev": {
+                "bitwasp/bitcoin": "^0.0.30",
+                "phpunit/phpunit": "~5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Tokenly\\CopayClient\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "AGPLv3"
+            ],
+            "authors": [
+                {
+                    "name": "Devon Weller",
+                    "email": "devon@tokenly.com",
+                    "homepage": "http://tokenly.com"
+                }
+            ],
+            "description": "A Copay protocol client",
+            "time": "2016-10-05 00:41:13"
         },
         {
             "name": "tokenly/counterparty-asset-info-cache",
@@ -5512,7 +5603,8 @@
         "tokenly/xcaller-client": 20,
         "tokenly/laravel-blocking-beanstalkd": 20,
         "tokenly/consul-health-daemon": 20,
-        "tokenly/laravel-record-lock": 20
+        "tokenly/laravel-record-lock": 20,
+        "tokenly/copay-client": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

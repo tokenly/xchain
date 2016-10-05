@@ -3,6 +3,7 @@
 use App\Handlers\XChain\Error\XChainErrorCounter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
+use Tokenly\TokenGenerator\TokenGenerator;
 
 class AppServiceProvider extends ServiceProvider {
 
@@ -37,6 +38,9 @@ class AppServiceProvider extends ServiceProvider {
         $this->app->singleton('XChainErrorCounter', function ($app) {
             return new XChainErrorCounter(env('MAX_ADDRESS_PARSE_ERRORS', 250));
         });
+
+        $token_generator = new TokenGenerator();
+        $this->app->instance('Tokenly\TokenGenerator\TokenGenerator', $token_generator);
 
 	}
 

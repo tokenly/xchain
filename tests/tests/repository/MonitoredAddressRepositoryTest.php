@@ -1,5 +1,6 @@
 <?php
 
+use Ramsey\Uuid\Uuid;
 use \PHPUnit_Framework_Assert as PHPUnit;
 
 class MonitoredAddressRepositoryTest extends TestCase {
@@ -56,6 +57,33 @@ class MonitoredAddressRepositoryTest extends TestCase {
         $loaded_address_models = $monitored_address_repo->findByAddressAndUserId('1recipient555555555555555555555555', 10001);
         PHPUnit::assertEquals(1, $loaded_address_models->count());
         PHPUnit::assertEquals('1recipient555555555555555555555555', $loaded_address_models->get()[0]['address']);
+
+    }
+
+    public function testFindAddressMonitorByAddressId()
+    {
+        // insert
+        $monitored_address_helper = $this->app->make('\MonitoredAddressHelper');
+        $monitored_address_repo = $this->app->make('App\Repositories\MonitoredAddressRepository');
+        $payment_address_helper = app('PaymentAddressHelper');
+
+        $addresses = [
+            $payment_address_helper->createSamplePaymentAddress(null, ['address' => '1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j']),
+            $payment_address_helper->createSamplePaymentAddress(null, ['address' => '1AAAA2222xxxxxxxxxxxxxxxxxxy4pQ3tU']),
+            $payment_address_helper->createSamplePaymentAddress(null, ['address' => '1AAAA3333xxxxxxxxxxxxxxxxxxxsTtS6v']),
+        ];
+
+        $monitors = [
+            $monitored_address_repo->create($monitored_address_helper->sampleDBVars(['address' => '', 'payment_address_id' => $addresses[0]['id']])),
+            $monitored_address_repo->create($monitored_address_helper->sampleDBVars(['address' => '', 'payment_address_id' => $addresses[1]['id']])),
+            $monitored_address_repo->create($monitored_address_helper->sampleDBVars(['address' => '', 'payment_address_id' => $addresses[2]['id']])),
+        ];
+
+        // load from repo
+        $monitors = $monitored_address_repo->findByAddressId($addresses[0]['id']);
+        PHPUnit::assertEquals(1, $monitors->count());
+        PHPUnit::assertEquals('', $monitors[0]['address']);
+        PHPUnit::assertEquals($addresses[0]['id'], $monitors[0]['payment_address_id']);
 
     }
 

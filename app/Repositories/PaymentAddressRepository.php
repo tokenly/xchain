@@ -39,20 +39,53 @@ class PaymentAddressRepository implements APIResourceRepositoryContract
         // create a uuid
         if (!isset($attributes['uuid'])) { $attributes['uuid'] = Uuid::uuid4()->toString(); }
 
-        if (!isset($attributes['private_key_token']) AND !isset($attributes['address'])) {
-            // create a token
+        // determine type
+        if (!isset($attributes['address_type'])) {
+            $attributes['address_type'] = PaymentAddress::TYPE_P2PKH;
+        }
+        $address_type = $attributes['address_type'];
+
+        // determine if we should create a private key token and/or a new address
+        $should_create_address_token = false;
+        $should_create_address       = false;
+        if ($address_type == PaymentAddress::TYPE_P2PKH) {
+            // P2PKH address
+            if (!isset($attributes['private_key_token']) AND !isset($attributes['address'])) {
+                // new managed address
+                $should_create_address_token = true;
+                $should_create_address       = true;
+            } else if (!isset($attributes['private_key_token']) AND isset($attributes['address'])) {
+                // an address without a private key token is an unmanaged address
+                $should_create_address_token = false;
+                $should_create_address       = false;
+                $attributes['private_key_token'] = '';
+            } else if (isset($attributes['private_key_token']) AND !isset($attributes['address'])) {
+                // importing an existing private key token
+                $should_create_address_token = false;
+                $should_create_address       = true;
+            }
+
+        } else if ($address_type == PaymentAddress::TYPE_P2SH) {
+            // multisig
+            $should_create_address_token = !!isset($attributes['private_key_token']);
+            $should_create_address       = false;
+
+            $attributes['copay_status'] = PaymentAddress::COPAY_STATUS_PENDING;
+        }
+
+        // create a token
+        if ($should_create_address_token) {
             $token_generator = new TokenGenerator();
             $token = $token_generator->generateToken(40, 'A');
             $attributes['private_key_token'] = $token;
-        } else if (!isset($attributes['private_key_token']) AND isset($attributes['address'])) {
-            // an address without a private key token is an unmanaged address
-            $attributes['private_key_token'] = '';
         }
 
-        if (!isset($attributes['address']) AND $attributes['private_key_token']) {
-            // create an address
+        // create an address
+        if ($should_create_address AND $attributes['private_key_token']) {
             $new_address = $this->address_generator->publicAddress($attributes['private_key_token']);
             $attributes['address'] = $new_address;
+        } else {
+            if (!isset($attributes['address'])) { $attributes['address'] = ''; }
         }
 
         return PaymentAddress::create($attributes);

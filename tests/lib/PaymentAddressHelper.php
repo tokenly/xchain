@@ -96,5 +96,14 @@ class PaymentAddressHelper
         return array_merge($post_vars, $override_vars);
     }
 
+    public function sampleMultisigPostVars($override_vars=[]) { 
+        return [
+            'name'            => 'My multisig one',
+            'copayerName'     => 'Tokenly Testing App',
+            'multisigType'    => '2of2',
+            'webhookEndpoint' => 'http://foo.local/_callback',
+        ];
+    }
+
 
 }

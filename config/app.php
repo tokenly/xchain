@@ -160,6 +160,7 @@ return [
 		Tokenly\LaravelBlockingBeanstalkd\BlockingBeanstalkServiceProvider::class,
 		Tokenly\ConsulHealthDaemon\ServiceProvider\ConsulHealthDaemonServiceProvider::class,
 		Tokenly\RecordLock\Provider\RecordLockServiceProvider::class,
+		Tokenly\CopayClient\Provider\CopayClientServiceProvider::class,
 
 		/*
 		 * Local App Service Providers...
