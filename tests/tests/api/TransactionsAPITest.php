@@ -45,7 +45,9 @@ class TransactionsAPITest extends TestCase {
         $api_tester = $this->getAPITester();
 
         // make the current block an arbitrary high number (99)
-        $this->app->make('SampleBlockHelper')->createSampleBlock('default_parsed_block_01.json', ['hash' => 'BLOCKHASH99', 'height' => 333099, 'parsed_block' => ['height' => 333099]]);
+        $this->app->make('SampleBlockHelper')->createSampleBlock('default_parsed_block_01.json', [
+            'hash' => 'BLOCKHASH99', 'height' => 333099, 'parsed_block' => ['height' => 333099]
+        ]);
 
         // find the address
         $monitored_address = $this->monitoredAddressByAddress('RECIPIENT01');

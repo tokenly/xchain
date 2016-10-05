@@ -14,8 +14,8 @@ class PaymentAddress extends APIModel
     const TYPE_P2PKH = 1;
     const TYPE_P2SH  = 2;
 
-    const COPAY_STATUS_PENDING = 1;
-    const COPAY_STATUS_READY   = 2;
+    const COPAY_STATUS_PENDING  = 1;
+    const COPAY_STATUS_COMPLETE = 2;
 
     protected $casts = [
         'copay_data' => 'json',
@@ -58,12 +58,11 @@ class PaymentAddress extends APIModel
     public function getStatusAttribute() {
         if ($this->isMultisig()) {
             switch ($this['copay_status']) {
-                case self::COPAY_STATUS_PENDING:
-                    return 'pending';
-                    break;
+                case self::COPAY_STATUS_PENDING:  return 'pending';
+                case self::COPAY_STATUS_COMPLETE: return 'complete';
             }
         }
 
-        return 'ready';
+        return 'complete';
     }
 }

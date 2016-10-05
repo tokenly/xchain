@@ -22,6 +22,7 @@ class Notification extends Model
     const EVENT_DEBIT        = 5;
     const EVENT_ISSUANCE     = 6;
     const EVENT_BROADCAST    = 7;
+    const EVENT_JOINED       = 8;
 
 
     /**
@@ -71,6 +72,7 @@ class Notification extends Model
             case 'debit':        return self::EVENT_DEBIT;
             case 'issuance':     return self::EVENT_ISSUANCE;
             case 'broadcast':    return self::EVENT_BROADCAST;
+            case 'joined':       return self::EVENT_JOINED;
         }
         return null;
     }
@@ -84,6 +86,7 @@ class Notification extends Model
             case self::EVENT_DEBIT:        return 'debit';
             case self::EVENT_ISSUANCE:     return 'issuance';
             case self::EVENT_BROADCAST:    return 'broadcast';
+            case self::EVENT_JOINED:       return 'joined';
         }
         return null;
     }

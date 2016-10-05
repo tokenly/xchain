@@ -1,10 +1,12 @@
 <?php
 
 use App\Models\LedgerEntry;
+use App\Models\PaymentAddress;
 use App\Models\User;
 use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\LedgerEntryRepository;
 use App\Repositories\PaymentAddressRepository;
+use Tokenly\CopayClient\CopayWallet;
 use Tokenly\CurrencyLib\CurrencyUtil;
 
 /**
@@ -42,6 +44,24 @@ class PaymentAddressHelper
             $this->addBalancesToPaymentAddressAccount($initial_balances, $new_address);
         }
 
+        return $new_address;
+    }
+
+    public function createSampleMultisigPaymentAddress($user=null, $override_vars=[], $initial_balances=null) {
+        // generate the new address secret token first
+        $private_key_token = app('Tokenly\TokenGenerator\TokenGenerator')->generateToken(40, 'A');
+        $override_vars['private_key_token'] = $private_key_token;
+        $override_vars['copay_data'] = [
+            'm'            => 2,
+            'n'            => 2,
+            'name'         => 'Sample multisig wallet',
+            'copayer_name' => 'XChain Test',
+            'id'           => 'TESTWALLET000001',
+        ];
+        $override_vars['address'] = '';
+        $override_vars['address_type'] = PaymentAddress::TYPE_P2SH;
+
+        $new_address = $this->createSamplePaymentAddressWithoutInitialBalances($user, $override_vars, $initial_balances);
         return $new_address;
     }
 

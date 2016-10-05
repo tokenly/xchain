@@ -26,7 +26,7 @@ class UnmanagedPaymentAddressAPITest extends TestCase {
             'id'      => '{{response.id}}',
             'address' => $address,
             'type'    => 'p2pkh',
-            'status'  => 'ready',
+            'status'  => 'complete',
         ];
         $loaded_address_model = $api_tester->testAddResource($posted_vars, $expected_created_resource);
     }
@@ -169,7 +169,7 @@ class UnmanagedPaymentAddressAPITest extends TestCase {
             'id'      => '{{response.id}}',
             'address' => $address,
             'type'    => 'p2pkh',
-            'status'  => 'ready',
+            'status'  => 'complete',
         ];
         $loaded_address_model = $api_tester->testAddResource($posted_vars, $expected_created_resource);
 

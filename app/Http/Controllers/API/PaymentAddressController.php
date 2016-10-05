@@ -27,6 +27,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use Tokenly\CopayClient\CopayClient;
 use Tokenly\CopayClient\CopayWallet;
 use Tokenly\LaravelApiProvider\Helpers\APIControllerHelper;
@@ -209,6 +210,18 @@ class PaymentAddressController extends APIController {
             $joined_monitor = $monitored_address_repository->create($monitor_vars);
             $output['joinedMonitorId'] = $joined_monitor['uuid'];
         }
+
+        // Add a job to watch for the joined event
+        $data = [
+            'payment_address_id' => $payment_address['id'],
+            'joined_monitor_id'  => $joined_monitor['id'],
+            'start_time'         => time(),
+        ];
+        Queue::connection(env('COPAY_QUEUE_CONNECTION','blockingbeanstalkd'))
+            ->push('App\Jobs\Copay\WatchForJoinedAddressJob', $data, 'watch_for_joined_addresses');
+
+        // add the invitationCode to the response
+        $output['invitationCode'] = $wallet->getCopayerSecretInvitationCode($wallet_id);
 
         return $helper->buildJSONResponse($output);
     }
