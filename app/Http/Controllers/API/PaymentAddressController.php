@@ -149,7 +149,14 @@ class PaymentAddressController extends APIController {
         // generate the new address secret token first
         $private_key_token = app('Tokenly\TokenGenerator\TokenGenerator')->generateToken(40, 'A');
         $payment_address_attributes['private_key_token'] = $private_key_token;
+
         $wallet = CopayWallet::newWalletFromPlatformSeedAndWalletSeed(env('BITCOIN_MASTER_KEY'), $private_key_token);
+        $copay_client->withSharedEncryptionService(
+            app('Tokenly\CopayClient\EncryptionService\EncryptionServiceClient')->withEncryptionKey($wallet['sharedEncryptingKey'])
+        );
+        $copay_client->withPersonalEncryptionService(
+            app('Tokenly\CopayClient\EncryptionService\EncryptionServiceClient')->withEncryptionKey($wallet['personalEncryptingKey'])
+        );
 
         // get copayer info
         list($copayers_m, $copayers_n) = explode('of', $request_attributes['multisigType']);
