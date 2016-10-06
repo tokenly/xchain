@@ -10,6 +10,7 @@ use App\Repositories\PaymentAddressRepository;
 use App\Repositories\UserRepository;
 use App\Util\DateTimeUtil;
 use Exception;
+use Illuminate\Support\Facades\Log;
 use Tokenly\CopayClient\CopayClient;
 use Tokenly\CopayClient\CopayWallet;
 use Tokenly\LaravelEventLog\Facade\EventLog;
@@ -92,6 +93,7 @@ class WatchForJoinedAddressJob
 
         // get the wallet info
         $wallet = CopayWallet::newWalletFromPlatformSeedAndWalletSeed(env('BITCOIN_MASTER_KEY'), $payment_address['private_key_token']);
+        // Log::debug("\$data['payment_address_id']={$data['payment_address_id']} copayerId=".json_encode($wallet['copayerId'], 192));
         $wallet_info = $this->copay_client->getWallet($wallet['copayerId'], $wallet['requestPrivKey']);
         if ($wallet_info['wallet']['status'] == 'complete') {
             // get the address
@@ -115,6 +117,11 @@ class WatchForJoinedAddressJob
 
             // delete the monitor
             if ($monitor) {
+                // archive all notifications first
+                $this->notification_repository->findByMonitoredAddressId($monitor['id'])->each(function($notification) {
+                    $this->notification_repository->archive($notification);
+                });
+
                 $this->monitored_address_repository->delete($monitor);
             }
 
