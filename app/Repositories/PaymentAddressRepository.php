@@ -67,7 +67,7 @@ class PaymentAddressRepository implements APIResourceRepositoryContract
 
         } else if ($address_type == PaymentAddress::TYPE_P2SH) {
             // multisig
-            $should_create_address_token = !!isset($attributes['private_key_token']);
+            $should_create_address_token = !(isset($attributes['private_key_token']) AND strlen($attributes['private_key_token']));
             $should_create_address       = false;
 
             $attributes['copay_status'] = PaymentAddress::COPAY_STATUS_PENDING;
