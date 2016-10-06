@@ -57,7 +57,7 @@ class MultisigPaymentAddressAPITest extends TestCase {
     public function testCallCopayClientWhenAddMultisigPaymentAddress() {
         // install mocks
         app('CopayClientMockHelper')->mockTokenGenerator();
-        $mock = app('CopayClientMockHelper')->mockCopayClient(); // ->shouldIgnoreMissing();
+        $mock = app('CopayClientMockHelper')->mockCopayClient()->shouldIgnoreMissing();
         $mock->shouldReceive('createWallet')->once()
             ->with('My multisig one', ["m" => 2, "n" => 2, "pubKey" => "026e62dcae0220e34214647a6e2467d4b6543b090ab3c4e7c9771fe07f2bd8b2bd"])
             ->andReturn('DEADBEEF-00000001');
