@@ -160,6 +160,8 @@ class PaymentAddressController extends APIController {
 
         // get copayer info
         list($copayers_m, $copayers_n) = explode('of', $request_attributes['multisigType']);
+        $copayers_m = intval($copayers_m);
+        $copayers_n = intval($copayers_n);
         $copayer_name = isset($request_attributes['copayerName']) ? $request_attributes['copayerName'] : env('COPAYER_DEFAULT_NAME', 'XChain');
 
         // create a wallet on the copay server
@@ -230,6 +232,7 @@ class PaymentAddressController extends APIController {
         // add the invitationCode to the response
         $output['invitationCode'] = $wallet->getCopayerSecretInvitationCode($wallet_id);
 
+        // Log::debug("\$output=".json_encode($output, 192));
         return $helper->buildJSONResponse($output);
     }
 
