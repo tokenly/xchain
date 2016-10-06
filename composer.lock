@@ -3066,12 +3066,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/copay-client.git",
-                "reference": "5eb72d58374e89b3988491124932e29d5dff18bb"
+                "reference": "184000e1bac3e6cd6ebe52e6713b656928d3c546"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/copay-client/zipball/5eb72d58374e89b3988491124932e29d5dff18bb",
-                "reference": "5eb72d58374e89b3988491124932e29d5dff18bb",
+                "url": "https://api.github.com/repos/tokenly/copay-client/zipball/184000e1bac3e6cd6ebe52e6713b656928d3c546",
+                "reference": "184000e1bac3e6cd6ebe52e6713b656928d3c546",
                 "shasum": ""
             },
             "require": {
@@ -3100,7 +3100,7 @@
                 }
             ],
             "description": "A Copay protocol client",
-            "time": "2016-10-05 00:41:13"
+            "time": "2016-10-06 00:23:10"
         },
         {
             "name": "tokenly/counterparty-asset-info-cache",
