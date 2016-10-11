@@ -46,6 +46,7 @@ class Kernel extends ConsoleKernel {
 
         // address
         \App\Console\Commands\Address\FindAddressCommand::class,
+        \App\Console\Commands\Address\ResurrectAddressCommand::class,
 
         // TXOs
         \App\Console\Commands\TXO\ReconcileTXOsCommand::class,

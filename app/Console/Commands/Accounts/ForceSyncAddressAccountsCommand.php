@@ -84,6 +84,13 @@ class ForceSyncAddressAccountsCommand extends Command {
             $payment_address = $payment_address_repo->findByUuid($payment_address_uuid);
             if (!$payment_address) { throw new Exception("Payment address not found", 1); }
 
+            // make sure the payment address has a default account
+            $default_account = AccountHandler::getAccount($payment_address);
+            if (!$default_account) {
+                $this->comment("Creating default account for  {$payment_address['address']} ({$payment_address['uuid']})");
+                AccountHandler::createDefaultAccount($payment_address);
+            }
+
             Log::debug("reconciling accounts for {$payment_address['address']} ({$payment_address['uuid']})");
 
             // get XCP balances
