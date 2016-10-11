@@ -62,6 +62,7 @@ class MultisigSendAPITest extends TestCase {
 
     public function testAPIAddMultisigSend() {
         // install mocks
+        app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
         $mock = app('CopayClientMockHelper')->mockCopayClient()->shouldIgnoreMissing();
         $copay_client_sign_args = [];
         $mock->shouldReceive('proposePublishAndSignTransaction')->once()
@@ -96,6 +97,7 @@ class MultisigSendAPITest extends TestCase {
 
     public function testAPIRemoveMultisigSend() {
         // install mocks
+        app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
         $mock = app('CopayClientMockHelper')->mockCopayClient()->shouldIgnoreMissing();
         $copay_client_sign_args = [];
         $copay_client_delete_args = [];
