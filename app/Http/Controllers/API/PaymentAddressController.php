@@ -163,33 +163,24 @@ class PaymentAddressController extends APIController {
         $copayers_m = intval($copayers_m);
         $copayers_n = intval($copayers_n);
         $copayer_name = isset($request_attributes['copayerName']) ? $request_attributes['copayerName'] : env('COPAYER_DEFAULT_NAME', 'XChain');
+        $wallet_name = $request_attributes['name'];
 
-        // create a wallet on the copay server
+        // create and join a wallet on the copay server
         try {
-            $wallet_id = $copay_client->createWallet($request_attributes['name'], [
+            $wallet_id = $copay_client->createAndJoinWallet($wallet, $wallet_name, $copayer_name, [
                 'm'      => $copayers_m,
                 'n'      => $copayers_n,
-                'pubKey' => $wallet['walletPubKey']->getHex(),
             ]);
         } catch (Exception $e) {
-            EventLog::logError('createWallet.failed', $e, ['name' => $request_attributes['name']]);
+            EventLog::logError('createAndJoinWallet.failed', $e, ['name' => $wallet_name]);
             return $helper->newJsonResponseWithErrors("Failed to create multisig wallet");
-        }
-
-        // join the wallet on the copay server
-        try {
-            // Log::debug("\$join_args=".json_encode([$wallet_id, $wallet['walletPrivKey']->getHex(), $wallet['xPubKey']->toExtendedKey(), $wallet['requestPubKey']->getHex(), $copayer_name], 192));
-            $wallet_info = $copay_client->joinWallet($wallet_id, $wallet['walletPrivKey'], $wallet['xPubKey'], $wallet['requestPubKey'], $copayer_name);
-        } catch (Exception $e) {
-            EventLog::logError('joinWallet.failed', $e, ['wallet_id' => $wallet_id, 'name' => $request_attributes['name'], 'copayer_name' => $copayer_name,]);
-            return $helper->newJsonResponseWithErrors("Failed to join multisig wallet");
         }
 
         // add the copay data
         $payment_address_attributes['copay_data'] = [
             'm'            => $copayers_m,
             'n'            => $copayers_n,
-            'name'         => $request_attributes['name'],
+            'name'         => $wallet_name,
             'copayer_name' => $copayer_name,
             'id'           => $wallet_id,
         ];

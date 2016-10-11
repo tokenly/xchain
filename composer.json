@@ -30,7 +30,8 @@
 		"tokenly/laravel-api-provider": "v1.0.0-rc2",
 		"guzzlehttp/guzzle": "~5",
 		"tokenly/counterparty-transaction-parser": "^1.2",
-		"tokenly/copay-client": "dev-master"
+		"tokenly/copay-client": "dev-master",
+		"tokenly/crypto-quantity": "^1.0"
 	},
 	"require-dev": {
 		"phpunit/phpunit": "^4.5",

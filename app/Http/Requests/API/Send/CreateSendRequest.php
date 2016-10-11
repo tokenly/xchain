@@ -42,7 +42,7 @@ class CreateSendRequest extends APIRequest {
             'quantity'           => 'numeric|notIn:0',
             'fee'                => 'numeric',
             'dust_size'          => 'numeric',
-            'asset'              => 'required|alpha|min:3',
+            'asset'              => 'required|min:3',
             'sweep'              => 'required_without:quantity|boolean',
             'requestId'          => 'max:36',
             'account'            => 'max:127',

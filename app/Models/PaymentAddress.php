@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Base\APIModel;
+use Tokenly\CopayClient\CopayWallet;
 use \Exception;
 
 /*
@@ -65,4 +66,22 @@ class PaymentAddress extends APIModel
 
         return 'complete';
     }
+
+    public function getCopayWallet() {
+        return CopayWallet::newWalletFromPlatformSeedAndWalletSeed(env('BITCOIN_MASTER_KEY'), $this['private_key_token']);
+    }
+
+    public function getCopayClient(CopayWallet $wallet) {
+        $copay_client = app('Tokenly\CopayClient\CopayClient');
+
+        $copay_client->withSharedEncryptionService(
+            app('Tokenly\CopayClient\EncryptionService\EncryptionServiceClient')->withEncryptionKey($wallet['sharedEncryptingKey'])
+        );
+        $copay_client->withPersonalEncryptionService(
+            app('Tokenly\CopayClient\EncryptionService\EncryptionServiceClient')->withEncryptionKey($wallet['personalEncryptingKey'])
+        );
+
+        return $copay_client;
+    }
+
 }

@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\PaymentAddress;
+use App\Models\PaymentAddressArchive;
 use App\Models\User;
 use App\Repositories\PaymentAddressArchiveRepository;
 use Illuminate\Database\Eloquent\Model;
@@ -138,6 +139,10 @@ class PaymentAddressRepository implements APIResourceRepositoryContract
             // now delete it
             return $address->delete();
         });
+    }
+
+    public function unDelete(PaymentAddressArchive $archived_address) {
+        return PaymentAddress::create($archived_address->getAttributes());
     }
 
     public function hardDelete(Model $address) {

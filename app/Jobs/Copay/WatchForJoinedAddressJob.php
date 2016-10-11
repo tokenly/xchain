@@ -94,10 +94,10 @@ class WatchForJoinedAddressJob
         // get the wallet info
         $wallet = CopayWallet::newWalletFromPlatformSeedAndWalletSeed(env('BITCOIN_MASTER_KEY'), $payment_address['private_key_token']);
         // Log::debug("\$data['payment_address_id']={$data['payment_address_id']} copayerId=".json_encode($wallet['copayerId'], 192));
-        $wallet_info = $this->copay_client->getWallet($wallet['copayerId'], $wallet['requestPrivKey']);
+        $wallet_info = $this->copay_client->getWallet($wallet);
         if ($wallet_info['wallet']['status'] == 'complete') {
             // get the address
-            $address_info = $this->copay_client->getAddressInfo($wallet['copayerId'], $wallet['requestPrivKey']);
+            $address_info = $this->copay_client->getAddressInfo($wallet);
             $address = $address_info['address'];
 
             // update the address in the database

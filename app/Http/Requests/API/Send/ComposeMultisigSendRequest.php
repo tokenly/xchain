@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Contracts\Validation\Validator;
 use LinusU\Bitcoin\AddressValidator;
 
-class EstimateFeeRequest extends APIRequest {
+class ComposeMultisigSendRequest extends APIRequest {
 
 
 
@@ -40,12 +40,15 @@ class EstimateFeeRequest extends APIRequest {
         return [
             'destination'        => 'required',
             'quantity'           => 'numeric|notIn:0',
+            'feePerKB'           => 'numeric|notIn:0',
             'dust_size'          => 'numeric',
             'asset'              => 'required|min:3',
-            'account'            => 'max:127',
-            'unconfirmed'        => 'boolean',
+            'requestId'          => 'max:36',
+            'message'            => 'max:255',
         ];
     }
+
+    // address, amountSat, feePerKB, [token=BTC], message
 
     /**
      * Determine if the user is authorized to make this request.

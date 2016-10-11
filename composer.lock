@@ -4,21 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "ff721618b0d8bb67e3d98ac4b5124acb",
-    "content-hash": "1a0a3fcebec1348cf082cc82efe85eb3",
+    "hash": "f1cfb052b11b949fd76e1212436c4aca",
+    "content-hash": "1da63d76375e8b2ba4ac8fbf0dd9e6c9",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
-            "version": "v0.0.30",
+            "version": "v0.0.30.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Bit-Wasp/bitcoin-php.git",
-                "reference": "7d1261ebba835d1d9ace5e2955d4690aed77f88a"
+                "reference": "4e34939e8bd896e08df2db9c859f9cf380ca4744"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Bit-Wasp/bitcoin-php/zipball/7d1261ebba835d1d9ace5e2955d4690aed77f88a",
-                "reference": "7d1261ebba835d1d9ace5e2955d4690aed77f88a",
+                "url": "https://api.github.com/repos/Bit-Wasp/bitcoin-php/zipball/4e34939e8bd896e08df2db9c859f9cf380ca4744",
+                "reference": "4e34939e8bd896e08df2db9c859f9cf380ca4744",
                 "shasum": ""
             },
             "require": {
@@ -61,7 +61,7 @@
             ],
             "description": "PHP Bitcoin library with functions for transactions, signatures, serialization, Random/Deterministic ECDSA keys, blocks, RPC bindings",
             "homepage": "https://github.com/bit-wasp/bitcoin-php",
-            "time": "2016-07-30 14:50:34"
+            "time": "2016-10-06 07:33:00"
         },
         {
             "name": "bitwasp/buffertools",
@@ -958,16 +958,16 @@
         },
         {
             "name": "league/flysystem",
-            "version": "1.0.27",
+            "version": "1.0.28",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/flysystem.git",
-                "reference": "50e2045ed70a7e75a5e30bc3662904f3b67af8a9"
+                "reference": "a9663643ff2d16d7f66ed1e0d3212c5491bc9044"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/flysystem/zipball/50e2045ed70a7e75a5e30bc3662904f3b67af8a9",
-                "reference": "50e2045ed70a7e75a5e30bc3662904f3b67af8a9",
+                "url": "https://api.github.com/repos/thephpleague/flysystem/zipball/a9663643ff2d16d7f66ed1e0d3212c5491bc9044",
+                "reference": "a9663643ff2d16d7f66ed1e0d3212c5491bc9044",
                 "shasum": ""
             },
             "require": {
@@ -1037,7 +1037,7 @@
                 "sftp",
                 "storage"
             ],
-            "time": "2016-08-10 08:55:11"
+            "time": "2016-10-07 12:20:37"
         },
         {
             "name": "linusu/bitcoin-address-validator",
@@ -1635,6 +1635,55 @@
             "time": "2015-08-07 21:42:41"
         },
         {
+            "name": "pear/math_biginteger",
+            "version": "v1.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/pear/Math_BigInteger.git",
+                "reference": "33d4357543037a458fad3e8c837a01b93104e592"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/pear/Math_BigInteger/zipball/33d4357543037a458fad3e8c837a01b93104e592",
+                "reference": "33d4357543037a458fad3e8c837a01b93104e592",
+                "shasum": ""
+            },
+            "require": {
+                "ext-pcre": "*",
+                "php": ">=4.2.0"
+            },
+            "suggest": {
+                "ext-bcmath": "Allows using the BCMath extension internally for computation. Faster than native implementation.",
+                "ext-gmp": "Allows using the GNU Multiple Precision extension internally for computation. If you are doing a lot of computation this is the recommended extension."
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Math_": "./"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jim Wigginton",
+                    "email": "terrafrost@php.net"
+                }
+            ],
+            "description": "Pure-PHP arbitrary precission integer arithmetic library. If GMP or BCMath are available they are used.",
+            "homepage": "https://github.com/pear/Math_BigInteger",
+            "keywords": [
+                "arbitrary",
+                "bcmath",
+                "gmp",
+                "integer",
+                "precision"
+            ],
+            "time": "2016-04-12 05:46:52"
+        },
+        {
             "name": "phpunit/php-timer",
             "version": "1.0.8",
             "source": {
@@ -1723,16 +1772,16 @@
         },
         {
             "name": "psr/log",
-            "version": "1.0.1",
+            "version": "1.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-fig/log.git",
-                "reference": "5277094ed527a1c4477177d102fe4c53551953e0"
+                "reference": "4ebe3a8bf773a19edfe0a84b6585ba3d401b724d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-fig/log/zipball/5277094ed527a1c4477177d102fe4c53551953e0",
-                "reference": "5277094ed527a1c4477177d102fe4c53551953e0",
+                "url": "https://api.github.com/repos/php-fig/log/zipball/4ebe3a8bf773a19edfe0a84b6585ba3d401b724d",
+                "reference": "4ebe3a8bf773a19edfe0a84b6585ba3d401b724d",
                 "shasum": ""
             },
             "require": {
@@ -1766,7 +1815,7 @@
                 "psr",
                 "psr-3"
             ],
-            "time": "2016-09-19 16:02:08"
+            "time": "2016-10-10 12:19:37"
         },
         {
             "name": "psy/psysh",
@@ -1842,16 +1891,16 @@
         },
         {
             "name": "ramsey/uuid",
-            "version": "3.5.0",
+            "version": "3.5.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ramsey/uuid.git",
-                "reference": "a6d15c8618ea3951fd54d34e326b68d3d0bc0786"
+                "reference": "a07797b986671b0dc823885a81d5e3516b931599"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ramsey/uuid/zipball/a6d15c8618ea3951fd54d34e326b68d3d0bc0786",
-                "reference": "a6d15c8618ea3951fd54d34e326b68d3d0bc0786",
+                "url": "https://api.github.com/repos/ramsey/uuid/zipball/a07797b986671b0dc823885a81d5e3516b931599",
+                "reference": "a07797b986671b0dc823885a81d5e3516b931599",
                 "shasum": ""
             },
             "require": {
@@ -1918,7 +1967,7 @@
                 "identifier",
                 "uuid"
             ],
-            "time": "2016-08-02 18:39:32"
+            "time": "2016-10-02 15:51:17"
         },
         {
             "name": "react/promise",
@@ -2017,23 +2066,23 @@
         },
         {
             "name": "rmccue/requests",
-            "version": "dev-master",
+            "version": "v1.6.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/rmccue/Requests.git",
-                "reference": "0048f3c0b33add0f924cf857961a2f02f4a802b6"
+                "reference": "6aac485666c2955077d77b796bbdd25f0013a4ea"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rmccue/Requests/zipball/0048f3c0b33add0f924cf857961a2f02f4a802b6",
-                "reference": "0048f3c0b33add0f924cf857961a2f02f4a802b6",
+                "url": "https://api.github.com/repos/rmccue/Requests/zipball/6aac485666c2955077d77b796bbdd25f0013a4ea",
+                "reference": "6aac485666c2955077d77b796bbdd25f0013a4ea",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.2"
             },
             "require-dev": {
-                "requests/test-server": "dev-master"
+                "satooshi/php-coveralls": "dev-master"
             },
             "type": "library",
             "autoload": {
@@ -2062,7 +2111,7 @@
                 "iri",
                 "sockets"
             ],
-            "time": "2016-09-22 16:46:57"
+            "time": "2014-05-18 04:59:02"
         },
         {
             "name": "swiftmailer/swiftmailer",
@@ -2236,7 +2285,7 @@
         },
         {
             "name": "symfony/event-dispatcher",
-            "version": "v2.8.11",
+            "version": "v2.8.12",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/event-dispatcher.git",
@@ -3066,20 +3115,22 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/copay-client.git",
-                "reference": "184000e1bac3e6cd6ebe52e6713b656928d3c546"
+                "reference": "2301abbf32c860deac227c4e07f3e93ca8f7b8b5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/copay-client/zipball/184000e1bac3e6cd6ebe52e6713b656928d3c546",
-                "reference": "184000e1bac3e6cd6ebe52e6713b656928d3c546",
+                "url": "https://api.github.com/repos/tokenly/copay-client/zipball/2301abbf32c860deac227c4e07f3e93ca8f7b8b5",
+                "reference": "2301abbf32c860deac227c4e07f3e93ca8f7b8b5",
                 "shasum": ""
             },
             "require": {
+                "bitwasp/bitcoin": "^0.0.30",
                 "php": ">=5.6.0",
-                "rmccue/requests": "dev-master"
+                "rmccue/requests": "^1.6.1|dev-master",
+                "tokenly/counterparty-transaction-composer": "^1.1.0|dev-master",
+                "tokenly/crypto-quantity": "^1.0"
             },
             "require-dev": {
-                "bitwasp/bitcoin": "^0.0.30",
                 "phpunit/phpunit": "~5"
             },
             "type": "library",
@@ -3100,7 +3151,7 @@
                 }
             ],
             "description": "A Copay protocol client",
-            "time": "2016-10-06 00:23:10"
+            "time": "2016-10-11 20:06:44"
         },
         {
             "name": "tokenly/counterparty-asset-info-cache",
@@ -3193,16 +3244,16 @@
         },
         {
             "name": "tokenly/counterparty-transaction-composer",
-            "version": "v1.0.0",
+            "version": "v1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-composer.git",
-                "reference": "305398891c9bfcd2f0e62c845f8d58ef999d5e26"
+                "reference": "3fb9b0af624937a53d40807011fe0cd06ec6ed3e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/305398891c9bfcd2f0e62c845f8d58ef999d5e26",
-                "reference": "305398891c9bfcd2f0e62c845f8d58ef999d5e26",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/3fb9b0af624937a53d40807011fe0cd06ec6ed3e",
+                "reference": "3fb9b0af624937a53d40807011fe0cd06ec6ed3e",
                 "shasum": ""
             },
             "require": {
@@ -3214,7 +3265,8 @@
             },
             "require-dev": {
                 "phpunit/phpunit": "~4",
-                "tokenly/bitcoin-address-lib": "dev-master"
+                "tokenly/bitcoin-address-lib": "dev-master",
+                "tokenly/crypto-quantity": "^1.0.0"
             },
             "type": "library",
             "autoload": {
@@ -3234,7 +3286,7 @@
                 }
             ],
             "description": "Composes counterparty and bitcoin transactions",
-            "time": "2016-09-30 15:52:10"
+            "time": "2016-10-11 15:46:22"
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
@@ -3277,6 +3329,48 @@
             ],
             "description": "A counterparty transaction parser",
             "time": "2016-09-30 14:39:15"
+        },
+        {
+            "name": "tokenly/crypto-quantity",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tokenly/crypto-quantity.git",
+                "reference": "6d841c4254d0080e7b796f887379d27564f02048"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tokenly/crypto-quantity/zipball/6d841c4254d0080e7b796f887379d27564f02048",
+                "reference": "6d841c4254d0080e7b796f887379d27564f02048",
+                "shasum": ""
+            },
+            "require": {
+                "ext-gmp": "*",
+                "pear/math_biginteger": "^1.0",
+                "php": ">=5.6.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Tokenly\\CryptoQuantity\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Devon Weller",
+                    "email": "devon@tokenly.com",
+                    "homepage": "http://tokenly.com"
+                }
+            ],
+            "description": "A quantity class for cryptocurrency values",
+            "time": "2016-10-11 15:14:56"
         },
         {
             "name": "tokenly/hmac-auth",
@@ -5234,16 +5328,16 @@
         },
         {
             "name": "symfony/config",
-            "version": "v3.1.4",
+            "version": "v3.1.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/config.git",
-                "reference": "431d28df9c7bb6e77f8f6289d8670b044fabb9e8"
+                "reference": "949e7e846743a7f9e46dc50eb639d5fde1f53341"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/config/zipball/431d28df9c7bb6e77f8f6289d8670b044fabb9e8",
-                "reference": "431d28df9c7bb6e77f8f6289d8670b044fabb9e8",
+                "url": "https://api.github.com/repos/symfony/config/zipball/949e7e846743a7f9e46dc50eb639d5fde1f53341",
+                "reference": "949e7e846743a7f9e46dc50eb639d5fde1f53341",
                 "shasum": ""
             },
             "require": {
@@ -5283,20 +5377,20 @@
             ],
             "description": "Symfony Config Component",
             "homepage": "https://symfony.com",
-            "time": "2016-08-27 18:50:07"
+            "time": "2016-09-25 08:27:07"
         },
         {
             "name": "symfony/css-selector",
-            "version": "v3.1.4",
+            "version": "v3.1.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/css-selector.git",
-                "reference": "2851e1932d77ce727776154d659b232d061e816a"
+                "reference": "ca809c64072e0fe61c1c7fb3c76cdc32265042ac"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/css-selector/zipball/2851e1932d77ce727776154d659b232d061e816a",
-                "reference": "2851e1932d77ce727776154d659b232d061e816a",
+                "url": "https://api.github.com/repos/symfony/css-selector/zipball/ca809c64072e0fe61c1c7fb3c76cdc32265042ac",
+                "reference": "ca809c64072e0fe61c1c7fb3c76cdc32265042ac",
                 "shasum": ""
             },
             "require": {
@@ -5336,11 +5430,11 @@
             ],
             "description": "Symfony CssSelector Component",
             "homepage": "https://symfony.com",
-            "time": "2016-06-29 05:41:56"
+            "time": "2016-09-06 11:02:40"
         },
         {
             "name": "symfony/dom-crawler",
-            "version": "v3.1.4",
+            "version": "v3.1.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/dom-crawler.git",
@@ -5396,16 +5490,16 @@
         },
         {
             "name": "symfony/filesystem",
-            "version": "v3.1.4",
+            "version": "v3.1.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/filesystem.git",
-                "reference": "bb29adceb552d202b6416ede373529338136e84f"
+                "reference": "682fd8fdb3135fdf05fc496a01579ccf6c85c0e5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/filesystem/zipball/bb29adceb552d202b6416ede373529338136e84f",
-                "reference": "bb29adceb552d202b6416ede373529338136e84f",
+                "url": "https://api.github.com/repos/symfony/filesystem/zipball/682fd8fdb3135fdf05fc496a01579ccf6c85c0e5",
+                "reference": "682fd8fdb3135fdf05fc496a01579ccf6c85c0e5",
                 "shasum": ""
             },
             "require": {
@@ -5441,11 +5535,11 @@
             ],
             "description": "Symfony Filesystem Component",
             "homepage": "https://symfony.com",
-            "time": "2016-07-20 05:44:26"
+            "time": "2016-09-14 00:18:46"
         },
         {
             "name": "symfony/stopwatch",
-            "version": "v3.1.4",
+            "version": "v3.1.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/stopwatch.git",
@@ -5494,16 +5588,16 @@
         },
         {
             "name": "symfony/yaml",
-            "version": "v3.1.4",
+            "version": "v3.1.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/yaml.git",
-                "reference": "f291ed25eb1435bddbe8a96caaef16469c2a092d"
+                "reference": "368b9738d4033c8b93454cb0dbd45d305135a6d3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/yaml/zipball/f291ed25eb1435bddbe8a96caaef16469c2a092d",
-                "reference": "f291ed25eb1435bddbe8a96caaef16469c2a092d",
+                "url": "https://api.github.com/repos/symfony/yaml/zipball/368b9738d4033c8b93454cb0dbd45d305135a6d3",
+                "reference": "368b9738d4033c8b93454cb0dbd45d305135a6d3",
                 "shasum": ""
             },
             "require": {
@@ -5539,7 +5633,7 @@
             ],
             "description": "Symfony Yaml Component",
             "homepage": "https://symfony.com",
-            "time": "2016-09-02 02:12:52"
+            "time": "2016-09-25 08:27:07"
         },
         {
             "name": "webmozart/assert",

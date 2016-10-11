@@ -30,6 +30,11 @@ $router->post('api/v1/multisig/addresses', ['as' => 'createMultisigAddress', 'us
 // delete a multisig address
 $router->delete('api/v1/multisig/addresses/{addressId}', ['as' => 'deleteMultisigAddress', 'uses' => 'API\PaymentAddressController@destroyMultisig']);
 
+// publish and sign a multisig send
+$router->post('api/v1/multisig/sends/{addressId}', ['as' => 'createMultisigSend', 'uses' => 'API\MultisigSendController@publishSignedSend']);
+// delete a multisig send
+$router->delete('api/v1/multisig/sends/{sendId}', ['as' => 'deleteMultisigSend', 'uses' => 'API\MultisigSendController@deleteSend']);
+
 // create a send
 $router->post('api/v1/sends/{addressId}', 'API\SendController@create');
 $router->post('api/v1/multisends/{addressId}', 'API\SendController@createMultisend');

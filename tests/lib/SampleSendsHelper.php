@@ -72,6 +72,17 @@ class SampleSendsHelper
         ], $override_vars);
     }
 
+    public function sampleMultisigPostVars($override_vars=[]) {
+        return array_merge([
+            // 'requestId' => Uuid::uuid4()->toString(),
+            'destination'  => '1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j',
+            'quantity'     => 25,
+            'asset'        => 'TOKENLY',
+            'feePerKB'     => 0.0005,
+            'message'      => 'My test message',
+        ], $override_vars);
+    }
+
     public function sampleDBVars($override_vars=[]) {
         return $this->sampleVars($override_vars);
     }
