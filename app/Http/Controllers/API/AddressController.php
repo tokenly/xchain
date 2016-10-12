@@ -1,28 +1,33 @@
 <?php
 namespace App\Http\Controllers\API;
-use Input, Exception;
 use App\Http\Controllers\API\Base\APIController;
+use App\Models\PaymentAddress;
+use BitWasp\BitcoinLib\BitcoinLib;
+use BitWasp\Bitcoin\Address\AddressFactory;
+use BitWasp\Bitcoin\Crypto\EcAdapter\EcSerializer;
+use BitWasp\Bitcoin\Crypto\EcAdapter\Serializer\Signature\CompactSignatureSerializerInterface;
+use BitWasp\Bitcoin\MessageSigner\MessageSigner;
+use BitWasp\Bitcoin\Serializer\MessageSigner\SignedMessageSerializer;
 use Illuminate\Http\JsonResponse as Response;
 use Illuminate\Support\Facades\Log;
-use Tokenly\CounterpartyAssetInfoCache\Cache;
+use Input, Exception;
+use LinusU\Bitcoin\AddressValidator;
 use Nbobtc\Bitcoind\Bitcoind;
-use BitWasp\BitcoinLib\BitcoinLib;
-use App\Models\PaymentAddress;
+use Tokenly\CounterpartyAssetInfoCache\Cache;
 
 
 class AddressController extends APIController {
 	
 	public function validateAddress($address)
 	{
-		$bitcoin = new BitcoinLib;
 		$output = array();
 		try{
-			$validate = $bitcoin->validate_address($address);
+			$is_valid = AddressValidator::isValid($address);
 		}
 		catch(Exception $e){
-			$validate = false;
+			$is_valid = false;
 		}
-		if(!$validate){
+		if(!$is_valid){
 			$output['result'] = false;
 			$output['is_mine'] = false;
 		}
@@ -43,7 +48,6 @@ class AddressController extends APIController {
 	{
 		$input = Input::all();
 		$output = array();
-		$bitcoin = new BitcoinLib;
 		if(!isset($input['message'])){
 			$output['error'] = 'Message required';
 			$output['result'] = false;
@@ -55,9 +59,22 @@ class AddressController extends APIController {
 			return new Response($output, 400);
 		}
 		$result = false;
-		try{
-			$verify = $bitcoin->verifyMessage($address, $input['sig'], $input['message']);
-			if($verify){
+		try {
+			$address_obj = AddressFactory::fromString($address);
+			$signer = new MessageSigner();
+			$cs = EcSerializer::getSerializer(CompactSignatureSerializerInterface::class);
+			$serializer = new SignedMessageSerializer($cs);
+
+			$built_signature = 
+			    "-----BEGIN BITCOIN SIGNED MESSAGE-----"."\n"
+			    .$input['message']."\n"
+			    ."-----BEGIN SIGNATURE-----"."\n"
+			    .$input['sig']."\n"
+			    ."-----END BITCOIN SIGNED MESSAGE-----";
+
+			$signed_message_obj = $serializer->parse($built_signature);
+
+			if ($signer->verify($signed_message_obj, $address_obj)) {
 				$result = true;
 			}
 		}
@@ -77,34 +94,32 @@ class AddressController extends APIController {
 			$output['result'] = false;
 			return new Response($output, 400);
 		}
-		$get = PaymentAddress::where('uuid', $address)->orWhere('address', $address)->first();
+		$payment_address = PaymentAddress::where('uuid', $address)->orWhere('address', $address)->first();
 		$found = false;
-		if(!$get){
+		if(!$payment_address){
 			$output['error'] = 'Bitcoin address does not belong to server';
 			$output['result'] = false;
 			return new Response($output, 400);
 		}
 
-		$address = $get->address;
 		$address_generator = app('Tokenly\BitcoinAddressLib\BitcoinAddressGenerator');
-		$lib = new BitcoinLib;
-		$priv_key = $address_generator->WIFPrivateKey($get->private_key_token);
-		$priv_key = BitcoinLib::WIF_to_private_key($priv_key);
-		$sign = $priv_key;
-
+		$priv_key = $address_generator->privateKey($payment_address->private_key_token);
+        $signer = new MessageSigner();
 		try{
-			$sign = $lib->signMessage($input['message'], $priv_key);
+	        $signed_message_obj = $signer->sign($input['message'], $priv_key);
+	        $signed_string = base64_encode($signed_message_obj->getCompactSignature()->getBinary());
 		}
 		catch(Exception $e){
-			$sign = false;
+			Log::debug("ERROR: ".$e->getMessage());
+			$signed_string = false;
 		}
 		
-		if(!$sign){
+		if(!$signed_string){
 			$output['error'] = 'Error signing message';
 			$output['result'] = false;
 			return new Response($output, 500);
 		}
-		$output['result'] = $sign;
+		$output['result'] = $signed_string;
 		return new Response($output);
 	}
 
