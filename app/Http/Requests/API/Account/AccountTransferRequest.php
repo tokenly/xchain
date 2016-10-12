@@ -17,7 +17,7 @@ class AccountTransferRequest extends APIRequest {
     {
         $validator = parent::getValidatorInstance();
 
-        $validator->sometimes('asset', 'required|alpha|min:3', function($input) {
+        $validator->sometimes('asset', 'required|min:3', function($input) {
             return !$input->close;
         });
         $validator->sometimes('quantity', 'required|numeric|min:0|notIn:0', function($input) {

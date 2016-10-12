@@ -130,8 +130,8 @@ class TransactionComposerHelper
 
     protected function parseTransactionData($binary_data) {
         list($type_id, $asset_id_hi, $asset_id_lo, $quantity_hi, $quantity_lo) = array_values(unpack('I1t/N4aq', $binary_data));
-        $asset_id = $asset_id_hi << 32 | $asset_id_lo; 
-        $quantity = $quantity_hi << 32 | $quantity_lo; 
+        $asset_id_gmp = (gmp_init($asset_id_hi) << 32) | gmp_init($asset_id_lo);
+        $quantity_gmp = (gmp_init($quantity_hi) << 32) | gmp_init($quantity_lo);
 
         $parsed_data = [
             'type' => 'unknown',
@@ -141,24 +141,27 @@ class TransactionComposerHelper
         }
 
         $parsed_data['type'] = 'send';
-        $parsed_data['quantity'] = $quantity;
-        $parsed_data['asset'] = $this->assetIdToName($asset_id);
+        $parsed_data['quantity'] = gmp_strval($quantity_gmp);
+        $parsed_data['asset'] = $this->assetIdToName($asset_id_gmp);
         return $parsed_data;
     }
 
-    protected function assetIdToName($asset_id) {
-        // BTC = 'BTC'
-        // XCP = 'XCP'
-        if ($asset_id === 0) { return 'BTC'; }
-        if ($asset_id === 1) { return 'XCP'; }
+    protected function assetIdToName(GMP $asset_id) {
+        if (gmp_cmp($asset_id, 0) === 0) { return 'BTC'; }
+        if (gmp_cmp($asset_id, 1) === 0) { return 'XCP'; }
 
         $b26_digits = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-        if ($asset_id < pow(26, 3)) { throw new Exception("asset ID was too low (".json_encode($asset_id, 192).")", 1); }
+        if ($asset_id < pow(26, 3)) { throw new Exception("asset ID was too low", 1); }
+
+        // look for numeric asset name
+        if (gmp_cmp($asset_id, gmp_add(gmp_pow(26, 12), 1)) >= 0) {
+            return 'A'.$asset_id;
+        }
 
         # Divide that integer into Base 26 string.
         $asset_name = '';
-        $n = gmp_init($asset_id);
+        $n = clone $asset_id;
         while (gmp_cmp($n, 0) > 0) {
             list($n, $r) = gmp_div_qr($n, 26, GMP_ROUND_ZERO);
             $asset_name = substr($b26_digits, gmp_intval($r), 1).$asset_name;
