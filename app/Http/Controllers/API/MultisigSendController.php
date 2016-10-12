@@ -50,16 +50,6 @@ class MultisigSendController extends APIController {
             $acquired_lock = RecordLock::acquireOnce($record_lock_key, $wait_time);
             if (!$acquired_lock) { throw new HttpResponseException(new JsonResponse(['message' => 'Unable to compose a new transaction for this address.'], 500)); }
 
-            // return [
-            //     'destination'        => 'required',
-            //     'quantity'           => 'numeric|notIn:0',
-            //     'feePerKB'           => 'numeric|notIn:0',
-            //     'dust_size'          => 'numeric',
-            //     'asset'              => 'required|min:3',
-            //     'requestId'          => 'max:36',
-            //     'account'            => 'max:127',
-            // ];
-
             $is_divisible = $request_attributes['asset'] == 'BTC' ? true : $asset_cache->isDivisible($request_attributes['asset']);
             $quantity = CryptoQuantity::fromFloat($request_attributes['quantity'], $is_divisible);
 
@@ -82,10 +72,11 @@ class MultisigSendController extends APIController {
                     $copay_client = $payment_address->getCopayClient($wallet);
 
                     $args = [
-                        'address'   => $locked_send['destination'],
-                        'amountSat' => $locked_send['quantity_sat'],
-                        'feePerKB'  => $request_attributes['feePerKB'],
-                        'divisible' => $is_divisible,
+                        'address'     => $locked_send['destination'],
+                        'amountSat'   => $locked_send['quantity_sat'],
+                        'token'       => $locked_send['asset'],
+                        'feePerKBSat' => $request_attributes['feePerKB'],
+                        'divisible'   => $is_divisible,
                     ];
 
                     // dust size
