@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "16a4c60c4209ba844e878982043bb5d4",
-    "content-hash": "10ea554c34c6e45a13ccc8b938d3b92c",
+    "hash": "92e637d5eb5e8f8b80e03a9b961d07f5",
+    "content-hash": "7c73cabd969275658d8ad8a3392cc7e4",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
@@ -3244,16 +3244,16 @@
         },
         {
             "name": "tokenly/counterparty-transaction-composer",
-            "version": "v1.1.0",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-composer.git",
-                "reference": "3fb9b0af624937a53d40807011fe0cd06ec6ed3e"
+                "reference": "5bb7b1988b3ca1778754d9afea4fb2c4e11a1c55"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/3fb9b0af624937a53d40807011fe0cd06ec6ed3e",
-                "reference": "3fb9b0af624937a53d40807011fe0cd06ec6ed3e",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/5bb7b1988b3ca1778754d9afea4fb2c4e11a1c55",
+                "reference": "5bb7b1988b3ca1778754d9afea4fb2c4e11a1c55",
                 "shasum": ""
             },
             "require": {
@@ -3286,7 +3286,7 @@
                 }
             ],
             "description": "Composes counterparty and bitcoin transactions",
-            "time": "2016-10-11 15:46:22"
+            "time": "2016-10-12 17:05:07"
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
@@ -5698,6 +5698,7 @@
         "tokenly/laravel-blocking-beanstalkd": 20,
         "tokenly/consul-health-daemon": 20,
         "tokenly/laravel-record-lock": 20,
+        "tokenly/counterparty-transaction-composer": 20,
         "tokenly/copay-client": 20
     },
     "prefer-stable": true,

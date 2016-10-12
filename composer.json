@@ -25,7 +25,7 @@
 		"tokenly/consul-health-daemon": "dev-master",
 		"tokenly/laravel-record-lock": "dev-master",
         "bitwasp/bitcoin": "^0.0.30",
-		"tokenly/counterparty-transaction-composer": "^1",
+		"tokenly/counterparty-transaction-composer": "dev-master",
 		"tokenly/hmac-auth": "^1",
 		"tokenly/laravel-api-provider": "v1.0.0-rc2",
 		"guzzlehttp/guzzle": "~5",
