@@ -64,7 +64,7 @@ class AccountTransferRequest extends APIRequest {
             'from'     => 'required|max:127',
             'to'       => 'required|max:127',
             // 'type'     => 'sometimes|in:unconfirmed,confirmed,sending',
-            'asset'    => 'sometimes|alpha|min:3',
+            'asset'    => 'sometimes|min:3',
             'quantity' => 'sometimes|numeric|min:0|notIn:0',
             'txid'     => 'sometimes|size:64',
             'close'    => 'sometimes|boolean',
