@@ -59,7 +59,7 @@ class MultisigPaymentAddressAPITest extends TestCase {
         app('CopayClientMockHelper')->mockTokenGenerator();
         $mock = app('CopayClientMockHelper')->mockCopayClient()->shouldIgnoreMissing();
         $mock->shouldReceive('createAndJoinWallet')->once()
-            ->andReturn('DEADBEEF-00000001');
+            ->andReturn(['wallet' => ['id' => 'DEADBEEF-00000001']]);
 
         $api_tester = $this->getAPITester();
         $posted_vars = $this->paymentAddressHelper()->sampleMultisigPostVars([]);
