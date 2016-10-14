@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\LedgerEntry;
+use App\Providers\Accounts\Facade\AccountHandler;
 use Illuminate\Queue\Jobs\SyncJob;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
@@ -50,6 +52,57 @@ class XChainInvalidCounterpartyTest extends TestCase {
 
         // check that the BTC value is still correct
         PHPUnit::assertEquals(0.00001250, $tx['bitcoinTx']['vout'][0]['value']);
+    }
+
+    public function testMultiplePaymentAddressesWithInvalidCounterpartyValue() {
+        // create 2 payment addresses with the same bitcoin address
+        // confirm a transaction with a 0 quantity
+        // verify that they were both deducted the BTC amount
+
+        $mocks = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        $block = app('SampleBlockHelper')->createSampleBlock('default_parsed_block_01.json');
+
+        // create two payment addresses
+        $address_1 = app('PaymentAddressHelper')->createSamplePaymentAddress(null, ['address' => '1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz']);
+        $address_2 = app('PaymentAddressHelper')->createSamplePaymentAddress(null, ['address' => '1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz']);
+
+        // listen for events
+        $heard_events = [];
+        Event::listen('xchain.tx.confirmed', function($tx, $confirmations, $block_seq, $block) use (&$heard_events) {
+            $heard_events[] = [$tx, $confirmations, $block_seq, $block];
+        });
+
+        // build and fire the job
+        $transaction_helper = app('SampleTransactionsHelper');
+        $parsed_tx = $transaction_helper->createSampleTransaction('default_xcp_parsed_01.json')['parsed_tx'];
+        $data = [
+            'tx'            => $parsed_tx,
+            'confirmations' => 1,
+            'block_seq'     => 100,
+            'block_id'      => $block['id'],
+        ];
+        $validate_job = app('App\Jobs\XChain\ValidateConfirmedCounterpartydTxJob');
+        $mock_job = new SyncJob(app(), $data);
+        $validate_job->fire($mock_job, $data);
+
+        // check for the event
+        PHPUnit::assertCount(1, $heard_events);
+
+        // make sure the address balances were updated
+        $ledger = app('App\Repositories\LedgerEntryRepository');
+        PHPUnit::assertEquals([
+            'BTC'     => 1 - 0.00008930,
+            'TOKENLY' => 100,
+        ], $ledger->combinedAccountBalancesByAsset($address_1, LedgerEntry::CONFIRMED));
+
+        $ledger = app('App\Repositories\LedgerEntryRepository');
+        PHPUnit::assertEquals([
+            'BTC'     => 1 - 0.00008930,
+            'TOKENLY' => 100,
+        ], $ledger->combinedAccountBalancesByAsset($address_2, LedgerEntry::CONFIRMED));
+
+
+
     }
 
     public function testInvalidateCounterpartyIssuance() {

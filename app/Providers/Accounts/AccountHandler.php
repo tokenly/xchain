@@ -561,11 +561,13 @@ class AccountHandler {
         $sent_balances_by_account_id = $this->ledger_entry_repository->accountBalancesByTXID($txid, LedgerEntry::SENDING);
         // Log::debug("\$sent_balances_by_account_id=".json_encode($sent_balances_by_account_id, 192));
         foreach($sent_balances_by_account_id as $account_id => $balances) {
-            $any_sending_funds_found = true;
             $account = $this->account_repository->findByID($account_id);
 
             // this account must belong to the payment address
             if ($account['payment_address_id'] != $payment_address['id']) { continue; }
+
+            // only match sending funds if this belongs to the correct payment address
+            $any_sending_funds_found = true;
 
             foreach($balances as $asset => $quantity) {
                 if ($quantity > 0) {

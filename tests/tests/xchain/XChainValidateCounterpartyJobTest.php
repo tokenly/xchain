@@ -45,7 +45,7 @@ class XChainValidateCounterpartyJobTest extends TestCase {
 
         $tx = $heard_events[0][0];
         
-        // check that the asset value is 0
+        // check the asset value
         PHPUnit::assertEquals(533.83451959, $tx['counterpartyTx']['quantity']);
         PHPUnit::assertEquals(53383451959, $tx['counterpartyTx']['quantitySat']);
         PHPUnit::assertEquals(533.83451959, $tx['values']['1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD']);
