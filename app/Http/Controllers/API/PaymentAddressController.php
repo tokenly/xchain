@@ -167,10 +167,11 @@ class PaymentAddressController extends APIController {
 
         // create and join a wallet on the copay server
         try {
-            $wallet_id = $copay_client->createAndJoinWallet($wallet, $wallet_name, $copayer_name, [
+            $wallet_info = $copay_client->createAndJoinWallet($wallet, $wallet_name, $copayer_name, [
                 'm'      => $copayers_m,
                 'n'      => $copayers_n,
             ]);
+            $wallet_id = $wallet_info['id'];
         } catch (Exception $e) {
             EventLog::logError('createAndJoinWallet.failed', $e, ['name' => $wallet_name]);
             return $helper->newJsonResponseWithErrors("Failed to create multisig wallet");
