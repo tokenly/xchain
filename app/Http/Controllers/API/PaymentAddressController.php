@@ -171,7 +171,7 @@ class PaymentAddressController extends APIController {
                 'm'      => $copayers_m,
                 'n'      => $copayers_n,
             ]);
-            $wallet_id = $wallet_info['id'];
+            $wallet_id = $wallet_info['wallet']['id'];
         } catch (Exception $e) {
             EventLog::logError('createAndJoinWallet.failed', $e, ['name' => $wallet_name]);
             return $helper->newJsonResponseWithErrors("Failed to create multisig wallet");
