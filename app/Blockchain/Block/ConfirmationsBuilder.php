@@ -26,7 +26,7 @@ class ConfirmationsBuilder {
 
     public function getConfirmationsForBlockHashAsOfHeight($hash, $as_of_height) {
         $block = $this->block_repository->findByHash($hash);
-        Log::debug("getConfirmationsForBlockHashAsOfHeight \$block=".json_encode($block, 192));
+        // Log::debug("getConfirmationsForBlockHashAsOfHeight \$block=".json_encode($block, 192));
         if ($block) {
             $block_height = $block['height'];
         } else {
@@ -43,7 +43,7 @@ class ConfirmationsBuilder {
 
         // convert to array
         $block = json_decode(json_encode($block), true);
-        Log::debug("getBlockHeightFromBlockHashFromBitcoind \$block=".json_encode($block, 192));
+        // Log::debug("getBlockHeightFromBlockHashFromBitcoind \$block=".json_encode($block, 192));
 
         if (!$block OR !is_array($block) OR !isset($block['height'])) {
             EventLog::logError('bitcoinBlock.error', "Failed to load block", ['hash' => $hash, 'blockData' => $block]);
