@@ -116,14 +116,17 @@ class WatchForJoinedAddressJob
             $this->sendJoinedNotification($monitor, $payment_address);
 
             // delete the monitor
-            if ($monitor) {
-                // archive all notifications first
-                $this->notification_repository->findByMonitoredAddressId($monitor['id'])->each(function($notification) {
-                    $this->notification_repository->archive($notification);
-                });
+            //   No - we can't delete the monitor because the result of the joined notification hasn't returned yet
+            //   if we delete the monitor here, the notification won't be available to update when it returns
 
-                $this->monitored_address_repository->delete($monitor);
-            }
+            // if ($monitor) {
+            //     // archive all notifications first
+            //     $this->notification_repository->findByMonitoredAddressId($monitor['id'])->each(function($notification) {
+            //         $this->notification_repository->archive($notification);
+            //     });
+
+            //     $this->monitored_address_repository->delete($monitor);
+            // }
 
             // return complete to delete the notification job
             $complete = true;
