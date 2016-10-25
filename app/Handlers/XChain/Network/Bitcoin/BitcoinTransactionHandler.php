@@ -15,6 +15,7 @@ use App\Repositories\MonitoredAddressRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\PaymentAddressRepository;
 use App\Repositories\ProvisionalTransactionRepository;
+use App\Repositories\SendRepository;
 use App\Repositories\UserRepository;
 use App\Util\DateTimeUtil;
 use Exception;
@@ -28,13 +29,14 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
     const CONFIRMATIONS_TO_INVALIDATE_PROVISIONAL_TRANSACTIONS = 2;
 
-    public function __construct(MonitoredAddressRepository $monitored_address_repository, EventMonitorRepository $event_monitor_repository, PaymentAddressRepository $payment_address_repository, UserRepository $user_repository, NotificationRepository $notification_repository, BitcoinTransactionStore $transaction_store, ProvisionalTransactionRepository $provisional_transaction_repository, Client $xcaller_client, BlockEventContextFactory $block_event_context_factory, ProvisionalTransactionInvalidationHandler $provisional_transaction_invalidation_handler) {
+    public function __construct(MonitoredAddressRepository $monitored_address_repository, EventMonitorRepository $event_monitor_repository, PaymentAddressRepository $payment_address_repository, UserRepository $user_repository, NotificationRepository $notification_repository, SendRepository $send_repository, BitcoinTransactionStore $transaction_store, ProvisionalTransactionRepository $provisional_transaction_repository, Client $xcaller_client, BlockEventContextFactory $block_event_context_factory, ProvisionalTransactionInvalidationHandler $provisional_transaction_invalidation_handler) {
         $this->monitored_address_repository                 = $monitored_address_repository;
         $this->event_monitor_repository                     = $event_monitor_repository;
         $this->payment_address_repository                   = $payment_address_repository;
         $this->provisional_transaction_repository           = $provisional_transaction_repository;
         $this->user_repository                              = $user_repository;
         $this->notification_repository                      = $notification_repository;
+        $this->send_repository                              = $send_repository;
         $this->transaction_store                            = $transaction_store;
         $this->xcaller_client                               = $xcaller_client;
         $this->block_event_context_factory                  = $block_event_context_factory;
@@ -513,6 +515,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
                 'notifiedAddress'        => null,
                 'notifiedAddressId'      => null,
                 'notifiedMonitorId'      => null,
+                'requestId'              => null,
 
                 'bitcoinTx'              => $parsed_tx['bitcoinTx'],
 
@@ -527,6 +530,17 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
                 unset($notification['notifiedAddress']);
                 unset($notification['notifiedAddressId']);
                 $notification['notifiedMonitorId'] = $event_monitor['uuid'];
+            }
+
+            // for sends, try and find the send request by the txid
+            if ($event_type == 'send') {
+                $loaded_send_model = $this->send_repository->findByTXID($parsed_tx['txid']);
+                // echo "\$parsed_tx['txid']={$parsed_tx['txid']} \$loaded_send_model: ".json_encode($loaded_send_model, 192)."\n";
+                if ($loaded_send_model) {
+                    $notification['requestId'] = $loaded_send_model['request_id'];
+                }
+            } else {
+                unset($notification['requestId']);
             }
         }
         if ($block_seq === null) { unset($notification['blockSeq']); }

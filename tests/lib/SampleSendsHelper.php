@@ -44,7 +44,7 @@ class SampleSendsHelper
         }
 
         if (isset($vars['requestId'])) {
-            $vars['request_id'] = CurrencyUtil::valueToSatoshis($vars['requestId']);
+            $vars['request_id'] = $vars['requestId'];
             unset($vars['requestId']);
         }
 

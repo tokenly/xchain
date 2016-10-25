@@ -1,0 +1,52 @@
+# test sending adds requestId to notification
+
+paymentAddresses:
+  - address: 1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j
+    accountBalances:
+      BTC: 10
+
+monitoredAddresses:
+  - address: 1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j
+    monitor_type: send
+
+events:
+  -
+    type: send
+    destination: 1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD
+    asset: BTC
+    quantity: 0.1
+    account: default
+    requestId: REQUEST00001
+  -
+    type: transaction
+    meta:
+        baseFilename: sample_btc_parsed_02.json
+    sender: 1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j
+    recipient: 1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD
+    asset: BTC
+    quantity: 0.1
+    txid: %%last_send_txid%%  # <-- automatically filled from the last send
+
+  # -
+  #   type: transaction
+  #   meta:
+  #       baseFilename: sample_btc_parsed_send_03.json
+  #   txid: cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741
+  #   sender: 1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j
+  #   recipient: 1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD
+  #   asset: BTC
+  #   quantity: 0.1
+  #   blockId: 300000
+
+notifications:
+  -
+    txid: %%last_send_txid%%  # <-- automatically filled from the last send
+    event: send
+    sources: [1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j]
+    destinations: [1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD]
+    notifiedAddress: 1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j
+    quantity: 0.1
+    asset: BTC
+    network: bitcoin
+    requestId: REQUEST00001
+

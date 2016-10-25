@@ -225,19 +225,23 @@ class ScenarioRunner
             // if ($actual_notification['event'] == 'broadcast' AND in_array($field, ['quantity','asset'])) { continue; }
 
             if (array_key_exists($field, $expected_notification)) { $normalized_expected_notification[$field] = $expected_notification[$field]; }
+
+            if ($field == 'txid') {
+                $normalized_expected_notification['txid'] = str_replace('%%last_send_txid%%', $this->last_send_txid, $normalized_expected_notification['txid']);
+            }
         }
         ///////////////////
 
         ///////////////////
         // OPTIONAL
-        foreach (['confirmations','confirmed','counterpartyTx','bitcoinTx','transactionTime','notificationId','notifiedAddressId','notifiedMonitorId','webhookEndpoint','blockSeq','confirmationTime','transactionFingerprint',] as $field) {
+        foreach (['confirmations','confirmed','counterpartyTx','bitcoinTx','transactionTime','notificationId','notifiedAddressId','notifiedMonitorId','webhookEndpoint','blockSeq','confirmationTime','transactionFingerprint','requestId',] as $field) {
             if (isset($expected_notification[$field])) {
                 if (is_array($expected_notification[$field])) {
                     $normalized_expected_notification[$field] = array_replace_recursive(isset($actual_notification[$field]) ? $actual_notification[$field] : [], $expected_notification[$field]);
                 } else {
                     $normalized_expected_notification[$field] = $expected_notification[$field];
                 }
-            } else if (isset($actual_notification[$field])) {
+            } else if (array_key_exists($field, $actual_notification)) {
                 $normalized_expected_notification[$field] = $actual_notification[$field];
             }
         }
@@ -794,7 +798,7 @@ class ScenarioRunner
 
         $api_test_helper = app('APITestHelper')->useUserHelper(app('UserHelper'))->setURLBase('/api/v1/sends/');
         $send_response = $api_test_helper->callAPIAndValidateResponse('POST', '/api/v1/sends/'.$payment_address['uuid'], app('SampleSendsHelper')->samplePostVars($vars));
-        Log::debug("\$send_response=".json_encode($send_response, 192));
+        // Log::debug("\$send_response=".json_encode($send_response, 192));
         $this->last_send_txid = $send_response['txid'];
     }
 }
