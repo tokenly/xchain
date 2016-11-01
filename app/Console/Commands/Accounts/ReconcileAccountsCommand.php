@@ -105,7 +105,7 @@ class ReconcileAccountsCommand extends Command {
         }
 
         $start_time = time();
-        $results = ['total' => 0, 'reconciled' => 0, 'unreconciled' => 0, 'runTime' => 0, 'unreconciledAddresses' => [],];
+        $results = ['total' => 0, 'reconciled' => 0, 'unreconciled' => 0, 'runTime' => 0, 'unreconciledAddresses' => [], 'errors' => [],];
         $total_count = $payment_addresses->count();
         $progress_bar = null;
         if ($with_progress) {
@@ -116,40 +116,50 @@ class ReconcileAccountsCommand extends Command {
             Log::debug("reconciling accounts for {$payment_address['address']} ({$payment_address['uuid']})");
             ++$results['total'];
 
-            // compare
-            $differences = $blockchain_balance_reconciler->buildDifferences($payment_address);
-            if ($differences['any']) {
-                $results['unreconciledAddresses'][] = [
-                    'address'     => $payment_address['address'],
-                    'id'          => $payment_address['id'],
-                    'uuid'        => $payment_address['uuid'],
-                    'managed'     => $payment_address->isManaged(),
-                    'differences' => $differences,
-                ];
-                ++$results['unreconciled'];
-                Log::debug("Found differences for {$payment_address['address']}");
+            try {
+                // compare
+                $differences = $blockchain_balance_reconciler->buildDifferences($payment_address);
+                if ($differences['any']) {
+                    $results['unreconciledAddresses'][] = [
+                        'address'     => $payment_address['address'],
+                        'id'          => $payment_address['id'],
+                        'uuid'        => $payment_address['uuid'],
+                        'managed'     => $payment_address->isManaged(),
+                        'differences' => $differences,
+                    ];
+                    ++$results['unreconciled'];
+                    Log::debug("Found differences for {$payment_address['address']}");
 
-                if (!$for_email) {
-                    if ($is_compact) {
-                        $this->line($payment_address['uuid']);
-                    } else {
-                        if ($with_progress) { $this->line(''); }
-                        $this->comment("Differences found for {$payment_address['address']} ({$payment_address['uuid']})");
-                        $this->line($this->formatDifferencesForOutput($differences));
-                        // $this->line(json_encode($differences, 192));
-                        $this->line('');
+                    if (!$for_email) {
+                        if ($is_compact) {
+                            $this->line($payment_address['uuid']);
+                        } else {
+                            if ($with_progress) { $this->line(''); }
+                            $this->comment("Differences found for {$payment_address['address']} ({$payment_address['uuid']})");
+                            $this->line($this->formatDifferencesForOutput($differences));
+                            // $this->line(json_encode($differences, 192));
+                            $this->line('');
+                        }
+                    }
+                } else {
+                    ++$results['reconciled'];
+                    Log::debug("no differences for {$payment_address['address']} ({$payment_address['uuid']})");
+
+                    if ($payment_address_uuid) {
+                        // only showing one address
+                        $this->comment("No differences found for {$payment_address['address']} ({$payment_address['uuid']})");
+
                     }
                 }
-            } else {
-                ++$results['reconciled'];
-                Log::debug("no differences for {$payment_address['address']} ({$payment_address['uuid']})");
-
-                if ($payment_address_uuid) {
-                    // only showing one address
-                    $this->comment("No differences found for {$payment_address['address']} ({$payment_address['uuid']})");
-
-                }
+            } catch (Exception $e) {
+                $results['errors'][] = [
+                    'address' => $payment_address['address'],
+                    'id'      => $payment_address['id'],
+                    'uuid'    => $payment_address['uuid'],
+                    'error'   => $e->getMessage(),
+                ];
             }
+
             if ($with_progress) { $progress_bar->advance(); }
         }
         if ($with_progress) {
