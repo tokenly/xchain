@@ -535,9 +535,20 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             // for sends, try and find the send request by the txid
             if ($event_type == 'send') {
                 $loaded_send_model = $this->send_repository->findByTXID($parsed_tx['txid']);
-                // echo "\$parsed_tx['txid']={$parsed_tx['txid']} \$loaded_send_model: ".json_encode($loaded_send_model, 192)."\n";
+
+                if (!$loaded_send_model) {
+                    // no txid was assigned yet to this send
+                    //   try to find recent sends with tx proposals and assign the txid if we can
+                    $any_resolved = $this->resolveTXIDsFromAddress($monitored_address['address']);
+                    if ($any_resolved) {
+                        $loaded_send_model = $this->send_repository->findByTXID($parsed_tx['txid']);
+                    }
+                }
+
                 if ($loaded_send_model) {
                     $notification['requestId'] = $loaded_send_model['request_id'];
+                } else {
+                    EventLog::warn('send.noSendModel', ['txid' => $parsed_tx['txid']]);
                 }
             } else {
                 unset($notification['requestId']);
@@ -661,6 +672,59 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         ];
 
         return $notification;
+    }
+
+    // ------------------------------------------------------------------------
+    
+    protected function resolveTXIDsFromAddress($bitcoin_address) {
+        $any_resolved = false;
+
+        // find all payment addresses for this bitcoin address
+        $payment_addresses = $this->payment_address_repository->findByAddress($bitcoin_address)->get();
+
+        foreach($payment_addresses as $payment_address) {
+            try {
+                
+                // check for any sends for this payment address that don't have a txid yet
+                $sends = $this->send_repository->findByPaymentAddressWithPendingMultisigTransactionId($payment_address);
+                if (!$sends) { continue; }
+
+                // get the wallet and the associated client
+                $wallet = $payment_address->getCopayWallet();
+                $copay_client = $payment_address->getCopayClient($wallet);
+
+                foreach($sends as $send) {
+                    // get the transaction proposal from copay
+                    EventLog::debug('copay.transactionLookup', ['address' => $bitcoin_address, 'tx_proposal_id' => $send['tx_proposal_id']]);
+                    $transaction_proposal = $copay_client->getTransactionProposal($wallet, $send['tx_proposal_id']);
+
+                    if ($transaction_proposal) {
+
+                        // check for a txid - rejected sends won't have a txid yet
+                        if (!isset($transaction_proposal['txid']) OR !$transaction_proposal['txid']) {
+                            if ($transaction_proposal['status'] == 'rejected') {
+                                // perhaps delete rejected txids here...
+                            }
+                            continue;
+                        }
+
+                        // make sure the status is 'broadcasted'
+                        if ($transaction_proposal['status'] != 'broadcasted') {
+                            EventLog::warning('copay.unexpectedStatus', ['status' => $transaction_proposal['status'], 'txid' => $transaction_proposal['txid']]);
+                            continue;
+                        }
+
+                        // update the transaction ID
+                        $this->send_repository->update($send, ['txid' => $transaction_proposal['txid']]);
+                        $any_resolved = true;
+                    }
+                }
+            } catch (Exception $e) {
+                EventLog::logError('copay.resolveTxidError', $e, ['address' => $bitcoin_address]);
+            }
+        }
+
+        return $any_resolved;
     }
 
 }

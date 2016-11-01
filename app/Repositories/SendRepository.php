@@ -63,6 +63,13 @@ class SendRepository implements APIResourceRepositoryContract
         return Send::where('payment_address_id', $payment_address['id'])->get();
     }
 
+    public function findByPaymentAddressWithPendingMultisigTransactionId(PaymentAddress $payment_address) {
+        return Send::where('payment_address_id', $payment_address['id'])
+            ->whereNull('txid')
+            ->whereNotNull('tx_proposal_id')
+            ->get();
+    }
+
     public function update(Model $send, $attributes) {
         return $send->update($attributes);
     }
