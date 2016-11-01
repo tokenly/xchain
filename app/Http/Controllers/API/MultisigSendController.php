@@ -54,7 +54,7 @@ class MultisigSendController extends APIController {
             $quantity = CryptoQuantity::fromFloat($request_attributes['quantity'], $is_divisible);
 
             // compose the send
-            $request_id = Uuid::uuid4()->toString();
+            $request_id = (isset($request_attributes['requestId']) AND strlen($request_attributes['requestId'])) ? $request_attributes['requestId'] : Uuid::uuid4()->toString();
 
             // create attibutes
             $create_attributes = [];
