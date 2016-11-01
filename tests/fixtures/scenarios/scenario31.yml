@@ -26,6 +26,11 @@ events:
     asset: BTC
     quantity: 0.1
     txid: %%last_send_txid%%  # <-- automatically filled from the last send
+  -
+    type: block
+    tx:
+        - aaa0000000000000000000000000000000000000000000000000000000000001
+        - %%last_send_txid%%
 
   # -
   #   type: transaction
@@ -49,4 +54,19 @@ notifications:
     asset: BTC
     network: bitcoin
     requestId: REQUEST00001
-
+    # block
+  - meta: { baseFilename: block_notification_01.yml }
+    # hash: BLOCKHASH01BASE
+    height: 333000
+  -
+    txid: %%last_send_txid%%  # <-- automatically filled from the last send
+    event: send
+    sources: [1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j]
+    destinations: [1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD]
+    notifiedAddress: 1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j
+    quantity: 0.1
+    asset: BTC
+    network: bitcoin
+    requestId: REQUEST00001
+    confirmations: 1
+    confirmed: true
