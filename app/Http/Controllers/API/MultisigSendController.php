@@ -75,7 +75,7 @@ class MultisigSendController extends APIController {
                         'address'     => $locked_send['destination'],
                         'amountSat'   => $locked_send['quantity_sat'],
                         'token'       => $locked_send['asset'],
-                        'feePerKBSat' => $request_attributes['feePerKB'],
+                        'feePerKBSat' => CurrencyUtil::valueToSatoshis($request_attributes['feePerKB']),
                         'divisible'   => $is_divisible,
                     ];
 
