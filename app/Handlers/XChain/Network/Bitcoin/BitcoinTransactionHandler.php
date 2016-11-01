@@ -548,7 +548,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
                 if ($loaded_send_model) {
                     $notification['requestId'] = $loaded_send_model['request_id'];
                 } else {
-                    EventLog::warn('send.noSendModel', ['txid' => $parsed_tx['txid']]);
+                    EventLog::warning('send.noSendModel', ['txid' => $parsed_tx['txid']]);
                 }
             } else {
                 unset($notification['requestId']);
@@ -695,7 +695,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
 
                 foreach($sends as $send) {
                     // get the transaction proposal from copay
-                    EventLog::debug('copay.transactionLookup', ['address' => $bitcoin_address, 'tx_proposal_id' => $send['tx_proposal_id']]);
+                    EventLog::debug('copay.transactionLookupBegin', ['address' => $bitcoin_address, 'tx_proposal_id' => $send['tx_proposal_id']]);
                     $transaction_proposal = $copay_client->getTransactionProposal($wallet, $send['tx_proposal_id']);
 
                     if ($transaction_proposal) {
@@ -715,6 +715,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
                         }
 
                         // update the transaction ID
+                    EventLog::debug('copay.transactionLookupFinish', ['address' => $bitcoin_address, 'txid' => $transaction_proposal['txid'], 'tx_proposal_id' => $send['tx_proposal_id']]);
                         $this->send_repository->update($send, ['txid' => $transaction_proposal['txid']]);
                         $any_resolved = true;
                     }
