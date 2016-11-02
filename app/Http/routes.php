@@ -34,6 +34,8 @@ $router->delete('api/v1/multisig/addresses/{addressId}', ['as' => 'deleteMultisi
 $router->post('api/v1/multisig/sends/{addressId}', ['as' => 'createMultisigSend', 'uses' => 'API\MultisigSendController@publishSignedSend']);
 // delete a multisig send
 $router->delete('api/v1/multisig/sends/{sendId}', ['as' => 'deleteMultisigSend', 'uses' => 'API\MultisigSendController@deleteSend']);
+// check on the status of a multisig send
+$router->get('api/v1/multisig/sends/{sendId}', ['as' => 'getMultisigSend', 'uses' => 'API\MultisigSendController@getSend']);
 
 // create a send
 $router->post('api/v1/sends/{addressId}', 'API\SendController@create');

@@ -150,6 +150,59 @@ class MultisigSendAPITest extends TestCase {
         Mockery::close();
     }
 
+    public function testAPIGetMultisigSend() {
+        // install mocks
+        app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        $mock = app('CopayClientMockHelper')->mockCopayClient()->shouldIgnoreMissing();
+        $copay_client_sign_args = [];
+        $copay_get_delete_args = [];
+        $mock->shouldReceive('proposePublishAndSignTransaction')->once()
+            ->andReturnUsing(function() use (&$copay_client_sign_args) {
+                // save passed args
+                $args = func_get_args();
+                foreach($args as $_k => $_v) { $copay_client_sign_args[$_k] = $_v; }
+                return ['id' => '11111111-2222-3333-4444-a94fbfbddfbd','bar'=>'baz'];
+            });
+        $mock->shouldReceive('getTransactionProposal')->once()
+            ->andReturnUsing(function() use (&$copay_get_delete_args) {
+                // save passed args
+                $args = func_get_args();
+                foreach($args as $_k => $_v) { $copay_get_delete_args[$_k] = $_v; }
+                return ['state' => 'rejected'];
+            });
+
+        // create a multisig payment address
+        $payment_address = $this->paymentAddressHelper()->createSampleMultisigPaymentAddress();
+
+        $api_tester = $this->getAPITester();
+        $posted_vars = app('SampleSendsHelper')->sampleMultisigPostVars();
+        $expected_created_resource = [
+            'id'               => '{{response.id}}',
+            'destination'      => '1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j',
+            'quantity'         => 25.0,
+            'asset'            => 'TOKENLY',
+            'requestId'        => '{{response.requestId}}',
+            'txProposalId'     => '11111111-2222-3333-4444-a94fbfbddfbd',
+            'copayTransaction' => '{{response.copayTransaction}}',
+        ];
+        $expected_loaded_resource = ['sweep' => false] + $expected_created_resource;
+        unset($expected_loaded_resource['txProposalId']);
+        unset($expected_loaded_resource['copayTransaction']);
+        $loaded_send = $api_tester->testAddResource($posted_vars, $expected_created_resource, '/'.$payment_address['uuid'], $expected_loaded_resource);
+        PHPUnit::assertEquals('My test message', $copay_client_sign_args[1]['message']);
+
+        // now get it
+        $get_send_api_response = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('GET', '/api/v1/multisig/sends/'.$loaded_send['uuid'], [], 200);
+
+        // check that it is gone
+        PHPUnit::assertNotEmpty($get_send_api_response);
+        PHPUnit::assertEquals('rejected', $get_send_api_response['copayTransaction']['state']);
+
+        PHPUnit::assertEquals('11111111-2222-3333-4444-a94fbfbddfbd', $copay_get_delete_args[1]);
+
+        Mockery::close();
+    }
+
 
     ////////////////////////////////////////////////////////////////////////
     

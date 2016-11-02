@@ -117,6 +117,34 @@ class MultisigSendController extends APIController {
         return $helper->buildJSONResponse($api_data);
     }
 
+    public function getSend(APIControllerHelper $helper, SendRepository $send_respository, PaymentAddressRepository $payment_address_repository, $send_uuid) {
+        try {
+            // get the user and send by id
+            $user = Auth::getUser();
+            if (!$user) { throw new Exception("User not found", 1); }
+            $send_model = $helper->requireResourceOwnedByUser($send_uuid, $user, $send_respository);
+
+            // get the payment address
+            $payment_address = $payment_address_repository->findById($send_model['payment_address_id']);
+
+            // tell copay to remove the proposal
+            $wallet = $payment_address->getCopayWallet();
+            $copay_client = $payment_address->getCopayClient($wallet);
+            $tx_proposal_id = $send_model['tx_proposal_id'];
+            $transaction_proposal = $copay_client->getTransactionProposal($wallet, $tx_proposal_id);
+
+            $api_data = $send_model->serializeForAPI('multisig');
+
+            // also include the transaction proposal details
+            $api_data['copayTransaction'] = $transaction_proposal;
+
+            return $helper->buildJSONResponse($api_data);
+
+        } catch (Exception $e) {
+            EventLog::logError('submitSend.error', $e);
+            throw $e;
+        }
+    }
 
     /**
      * delete a send
