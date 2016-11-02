@@ -80,15 +80,17 @@ class MultisigSendAPITest extends TestCase {
         $api_tester = $this->getAPITester();
         $posted_vars = app('SampleSendsHelper')->sampleMultisigPostVars();
         $expected_created_resource = [
-            'id'           => '{{response.id}}',
-            'destination'  => '1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j',
-            'quantity'     => 25.0,
-            'asset'        => 'TOKENLY',
-            'requestId'    => '{{response.requestId}}',
-            'txProposalId' => '11111111-2222-3333-4444-a94fbfbddfbd',
+            'id'               => '{{response.id}}',
+            'destination'      => '1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j',
+            'quantity'         => 25.0,
+            'asset'            => 'TOKENLY',
+            'requestId'        => '{{response.requestId}}',
+            'txProposalId'     => '11111111-2222-3333-4444-a94fbfbddfbd',
+            'copayTransaction' => '{{response.copayTransaction}}',
         ];
         $expected_loaded_resource = ['sweep' => false] + $expected_created_resource;
         unset($expected_loaded_resource['txProposalId']);
+        unset($expected_loaded_resource['copayTransaction']);
         $loaded_send = $api_tester->testAddResource($posted_vars, $expected_created_resource, '/'.$payment_address['uuid'], $expected_loaded_resource);
 
         PHPUnit::assertEquals('My test message', $copay_client_sign_args[1]['message']);
@@ -122,15 +124,17 @@ class MultisigSendAPITest extends TestCase {
         $api_tester = $this->getAPITester();
         $posted_vars = app('SampleSendsHelper')->sampleMultisigPostVars();
         $expected_created_resource = [
-            'id'           => '{{response.id}}',
-            'destination'  => '1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j',
-            'quantity'     => 25.0,
-            'asset'        => 'TOKENLY',
-            'requestId'    => '{{response.requestId}}',
-            'txProposalId' => '11111111-2222-3333-4444-a94fbfbddfbd',
+            'id'               => '{{response.id}}',
+            'destination'      => '1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j',
+            'quantity'         => 25.0,
+            'asset'            => 'TOKENLY',
+            'requestId'        => '{{response.requestId}}',
+            'txProposalId'     => '11111111-2222-3333-4444-a94fbfbddfbd',
+            'copayTransaction' => '{{response.copayTransaction}}',
         ];
         $expected_loaded_resource = ['sweep' => false] + $expected_created_resource;
         unset($expected_loaded_resource['txProposalId']);
+        unset($expected_loaded_resource['copayTransaction']);
         $loaded_send = $api_tester->testAddResource($posted_vars, $expected_created_resource, '/'.$payment_address['uuid'], $expected_loaded_resource);
         PHPUnit::assertEquals('My test message', $copay_client_sign_args[1]['message']);
 
