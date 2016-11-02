@@ -66,7 +66,8 @@ class MultisigSendController extends APIController {
             if (isset($request_attributes['dust_size'])) {
                 $create_attributes['dust_size_sat'] = CurrencyUtil::valueToSatoshis($request_attributes['dust_size']);
             }
-            $send_model = $send_respository->executeWithNewLockedSendByRequestID($request_id, $create_attributes, 
+
+            list($send_model, $transaction_proposal) = $send_respository->executeWithNewLockedSendByRequestID($request_id, $create_attributes, 
                 function($locked_send) use ($copay_client, $request_attributes, $payment_address, $is_divisible, $send_respository) {
                     $wallet = $payment_address->getCopayWallet();
                     $copay_client = $payment_address->getCopayClient($wallet);
@@ -94,7 +95,7 @@ class MultisigSendController extends APIController {
                         'tx_proposal_id' => $transaction_proposal['id'],
                     ]);
 
-                    return $locked_send;
+                    return [$locked_send, $transaction_proposal];
                 }
             );
 
@@ -109,6 +110,10 @@ class MultisigSendController extends APIController {
         }
 
         $api_data = $send_model->serializeForAPI('multisig');
+
+        // also include the transaction proposal details
+        $api_data['copayTransaction'] = $transaction_proposal;
+
         return $helper->buildJSONResponse($api_data);
     }
 
