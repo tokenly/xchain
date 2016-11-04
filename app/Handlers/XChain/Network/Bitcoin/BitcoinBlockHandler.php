@@ -226,7 +226,10 @@ class BitcoinBlockHandler implements NetworkBlockHandler {
 
             $block_event_context = $this->block_event_context_factory->newBlockEventContext();
             $_offset = 0;
-            foreach($this->transaction_repository->findAllTransactionsConfirmedInBlockHashesInvolvingAllMonitorAndPaymentAddresses($block_hashes) as $transaction_model) {
+
+            // we need to look at all transactions because event monitors without a monitor might have been triggered
+            //   that is why we can't use findAllTransactionsConfirmedInBlockHashesInvolvingAllMonitorAndPaymentAddresses
+            foreach($this->transaction_repository->findAllTransactionsConfirmedInBlockHashes($block_hashes) as $transaction_model) {
                 Log::debug("found transaction model: ".$transaction_model['txid']);
                 $confirmations = $this->confirmations_builder->getConfirmationsForBlockHashAsOfHeight($transaction_model['block_confirmed_hash'], $block_event['height']);
                 if ($_offset % 50 === 1) { Log::debug("tx {$_offset} $confirmations confirmations"); }
