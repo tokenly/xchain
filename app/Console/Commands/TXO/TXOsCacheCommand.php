@@ -54,6 +54,7 @@ class TXOsCacheCommand extends Command {
     {
         return [
             ['spent', 's', InputOption::VALUE_NONE, 'Include spent TXOs'],
+            ['clear-cache', null, InputOption::VALUE_NONE, 'Clear TXOs cache'],
         ];
     }
 
@@ -65,8 +66,17 @@ class TXOsCacheCommand extends Command {
      */
     public function fire()
     {
-        $address = $this->input->getArgument('address');
-        $show_spent = !!$this->input->getOption('spent');
+        $address     = $this->input->getArgument('address');
+        $show_spent  = !!$this->input->getOption('spent');
+        $clear_cache = !!$this->input->getOption('clear-cache');
+
+        if ($clear_cache) {
+            $this->comment("Clearing UTXO cache for address $address");
+            $result = DB::table('address_txos_cache')
+                ->where('address_reference', '=', $address)
+                ->delete();
+            $this->comment("cleared: ".json_encode($result, 192));
+        }
 
         $query = DB::table('address_txos_cache')
             ->where('address_reference', '=', $address)
