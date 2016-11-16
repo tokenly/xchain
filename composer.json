@@ -13,7 +13,7 @@
         "tokenly/bitcoin-address-lib": "^1",
         "tokenly/bitcoin-currency-lib": "^1",
         "tokenly/counterparty-asset-info-cache": "^1.2",
-        "tokenly/bitcoin-payer": "dev-master",
+        "tokenly/bitcoin-payer": "^0.1.2",
         "tokenly/counterparty-sender": "dev-master",
         "tokenly/pusher-client": "dev-master",
         "tokenly/token-generator": "dev-master@dev",

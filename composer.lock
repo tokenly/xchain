@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "410ce58927b7e9bfeca0316a703ae0f9",
-    "content-hash": "3cb828070322ae80d2e3b0a5c50f7df4",
+    "hash": "0f55678ae3793f7153803b4730ddd477",
+    "content-hash": "185f341c559695f135d60ee742192fd8",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
@@ -3068,16 +3068,16 @@
         },
         {
             "name": "tokenly/bitcoin-payer",
-            "version": "dev-master",
+            "version": "v0.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/bitcoin-payer.git",
-                "reference": "abbb7edcded2327895f5886c9a7a763dadbf3cd0"
+                "reference": "40e3198fafbd634287335257b37ec218ff39af25"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/abbb7edcded2327895f5886c9a7a763dadbf3cd0",
-                "reference": "abbb7edcded2327895f5886c9a7a763dadbf3cd0",
+                "url": "https://api.github.com/repos/tokenly/bitcoin-payer/zipball/40e3198fafbd634287335257b37ec218ff39af25",
+                "reference": "40e3198fafbd634287335257b37ec218ff39af25",
                 "shasum": ""
             },
             "require": {
@@ -3106,7 +3106,7 @@
                 }
             ],
             "description": "A bitcoin payment library",
-            "time": "2016-05-20 22:02:20"
+            "time": "2016-11-16 15:37:14"
         },
         {
             "name": "tokenly/consul-health-daemon",
@@ -5729,7 +5729,6 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "tokenly/bitcoin-payer": 20,
         "tokenly/counterparty-sender": 20,
         "tokenly/pusher-client": 20,
         "tokenly/token-generator": 20,
