@@ -72,6 +72,9 @@ class AccountHandler {
                     $existing_ledger_entries = $this->ledger_entry_repository->findByTXID($txid, $payment_address['id'], LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_RECEIVE);
                     if (count($existing_ledger_entries) > 0) { return; }
 
+                    // determine maximum amount of funds we can confirm
+                    $validated_receive_balances = $this->buildReceiveBalances($parsed_tx, $payment_address);
+
                     // find the funds and move each one to the confirmed status
                     $any_unconfirmed_funds_found = false;
                     $unconfirmed_balances_for_txid_by_account_id = $this->ledger_entry_repository->accountBalancesByTXID($txid, LedgerEntry::UNCONFIRMED);
@@ -86,14 +89,22 @@ class AccountHandler {
 
                         $any_unconfirmed_funds_found = true;
                         foreach($balances_for_txid as $unconfirmed_txid_asset => $unconfirmed_txid_quantity) {
+                            // determine if the unconfirmed transaction was an invalid amount
+                            //   this happens when a counterparty doublespend happens
+                            $validated_txid_quantity = isset($validated_receive_balances[$unconfirmed_txid_asset]) ? $validated_receive_balances[$unconfirmed_txid_asset] : 0;
+                            $invalid_txid_overpayment_quantity = 0;
+                            if ($unconfirmed_txid_quantity > $validated_txid_quantity) {
+                                $invalid_txid_overpayment_quantity = $unconfirmed_txid_quantity - $validated_txid_quantity;
+                            }
+
                             if ($unconfirmed_txid_quantity > 0) {
-                                $unconfirmed_amount_to_move = $unconfirmed_txid_quantity;
+                                $unconfirmed_amount_to_move = $validated_txid_quantity;
                                 $unconfirmed_funds_already_sent = 0;
                                 if (isset($unfiltered_unconfirmed_balances[$unconfirmed_txid_asset])) {
                                     if ($unconfirmed_amount_to_move > $unfiltered_unconfirmed_balances[$unconfirmed_txid_asset]) {
                                         $unconfirmed_amount_to_move = $unfiltered_unconfirmed_balances[$unconfirmed_txid_asset];
                                         // the rest have already been sent
-                                        $unconfirmed_funds_already_sent = $unconfirmed_txid_quantity - $unconfirmed_amount_to_move;
+                                        $unconfirmed_funds_already_sent = $validated_txid_quantity - $unconfirmed_amount_to_move;
                                     }
                                 }
 
@@ -106,6 +117,11 @@ class AccountHandler {
                                     // these funds were already moved from unconfirmed to sent
                                     EventLog::log('account.receive.unconfirmedAlreadySent', ['address' => $payment_address['uuid'], 'quantity' => $unconfirmed_funds_already_sent, 'asset' => $unconfirmed_txid_asset, 'txid' => $txid, ]);
                                 }
+                            }
+
+                            if ($invalid_txid_overpayment_quantity > 0) {
+                                // clear all unconfirmed balances
+                                $this->ledger_entry_repository->addDebit($invalid_txid_overpayment_quantity, $unconfirmed_txid_asset, $default_account, LedgerEntry::UNCONFIRMED, LedgerEntry::DIRECTION_RECEIVE, $txid);
                             }
                         }
                     }

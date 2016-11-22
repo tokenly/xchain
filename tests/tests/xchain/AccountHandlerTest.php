@@ -71,6 +71,72 @@ class AccountHandlerTest extends TestCase {
         PHPUnit::assertEquals(0, $balances['FOOCOIN']);
         PHPUnit::assertEquals(0.9999107, $balances['BTC']);
     }
+
+    public function testMoveConfirmedValidBalancesWithReceive() {
+        $payment_address = app('PaymentAddressHelper')->createSamplePaymentAddressWithoutInitialBalances();
+        $account = AccountHandler::getAccount($payment_address);
+        $address = $payment_address['address'];
+        $sample_txid = 'SAMPLETX002';
+
+        // put some unconfirmed FOOCOIN in the account
+        app('PaymentAddressHelper')->addBalancesToPaymentAddressAccount(['FOOCOIN' => 80, 'BTC' => 0.000035], $payment_address, $with_utxos=true, 'default', $sample_txid, LedgerEntry::UNCONFIRMED);
+
+        // now receive the entirety of the FOOCOIN
+        $confirmations = 2;
+        $source        = '1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j';
+        $dest          = $address;
+        $quantity      = 80;
+        $asset         = 'FOOCOIN';
+        $transaction_model = app('SampleTransactionsHelper')->createSampleCounterpartySendTransaction($source, $dest, $asset, $quantity, $sample_txid);
+
+        $parsed_tx = $transaction_model['parsed_tx'];
+        AccountHandler::receive($payment_address, $parsed_tx, $confirmations);
+
+        // check the ledger entries
+        $ledger = app('App\Repositories\LedgerEntryRepository');
+        $entries = $ledger->findByAccount($account);
+
+        // confirmed should have the FOOCOIN
+        $balances = $ledger->accountBalancesByAsset($account, LedgerEntry::CONFIRMED);
+        PHPUnit::assertEquals(80, $balances['FOOCOIN']);
+        PHPUnit::assertEquals(0.000035, $balances['BTC']);
+    }
+
+    public function testMoveConfirmedInvalidBalancesWithReceive() {
+        $payment_address = app('PaymentAddressHelper')->createSamplePaymentAddressWithoutInitialBalances();
+        $account = AccountHandler::getAccount($payment_address);
+        $address = $payment_address['address'];
+        $sample_txid = 'SAMPLETX002';
+
+        // put some unconfirmed FOOCOIN in the account
+        app('PaymentAddressHelper')->addBalancesToPaymentAddressAccount(['FOOCOIN' => 80, 'BTC' => 0.000035], $payment_address, $with_utxos=true, 'default', $sample_txid, LedgerEntry::UNCONFIRMED);
+
+        // the confirmed transaction actually sends 0 FOOCOIN (not 80)
+        $confirmations = 2;
+        $source        = '1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j';
+        $dest          = $address;
+        $quantity      = 0;
+        $asset         = 'FOOCOIN';
+        $transaction_model = app('SampleTransactionsHelper')->createSampleCounterpartySendTransaction($source, $dest, $asset, $quantity, $sample_txid);
+
+        $parsed_tx = $transaction_model['parsed_tx'];
+        AccountHandler::receive($payment_address, $parsed_tx, $confirmations);
+
+        // check the ledger entries
+        $ledger = app('App\Repositories\LedgerEntryRepository');
+        $entries = $ledger->findByAccount($account);
+
+        // confirmed balances should NOT have the FOOCOIN
+        $balances = $ledger->accountBalancesByAsset($account, LedgerEntry::CONFIRMED);
+        PHPUnit::assertArrayNotHasKey('FOOCOIN', $balances);
+        PHPUnit::assertEquals(0.000035, $balances['BTC']);
+
+        // unconfirmed should be cleared of FOOCOIN as well
+        $balances = $ledger->accountBalancesByAsset($account, LedgerEntry::UNCONFIRMED);
+        PHPUnit::assertEquals(0, $balances['FOOCOIN']);
+        PHPUnit::assertEquals(0, $balances['BTC']);
+    }
+
     // ------------------------------------------------------------------------
     
     protected function debugShowLedger($ledger, $account) {
