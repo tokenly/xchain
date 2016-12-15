@@ -1,0 +1,10 @@
+# block notification
+
+# notificationId: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+event: block
+network: bitcoin
+hash: 00000000000000000000000000000000000000000000000000000000000000b3
+height: 333001
+previousblockhash: 000000000000000015f697b296584d9d443d2225c67df9033157a9efe4a8faa0
+# time: 2014-12-05T01:21:00+0000
+

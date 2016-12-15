@@ -1,0 +1,20 @@
+[
+    {
+        "locked": 0,
+        "status": "valid",
+        "call_date": 0,
+        "description": "NEWCOIN Description here",
+        "fee_paid": 0,
+        "source": "1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL",
+        "call_price": 0,
+        "block_index": 300000,
+        "quantity": 100000000000,
+        "transfer": 0,
+        "tx_index": 505343,
+        "divisible": 1,
+        "asset": "NEWCOIN",
+        "tx_hash": "0000000000000000000000000000000000000000000000000000000033333333",
+        "issuer": "1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL",
+        "callable": 0
+    }
+]

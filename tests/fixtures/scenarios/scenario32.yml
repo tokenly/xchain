@@ -1,0 +1,87 @@
+# issuance 2 confirmations
+
+monitoredAddresses:
+  - address: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+    monitor_type: receive
+
+  - address: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+    monitor_type: send
+
+paymentAddresses:
+  - address: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+    accountBalances:
+      BTC: 1
+
+events:
+  -
+    type: transaction
+    meta: { baseFilename: RAW_sample_xcp_parsed_issuance_01_mempool.json }
+    useRaw: true
+    fillVars:
+      address: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+      txid: "0000000000000000000000000000000000000000000000000000000033333333"
+
+  -
+    type: block
+    tx:
+        - f88d98717dacb985e3ad49ffa66b8562d8194f1885f58425e1c8582ce2ac5b58
+        - "0000000000000000000000000000000000000000000000000000000033333333"
+
+  -
+    type: block
+    hash: 00000000000000000000000000000000000000000000000000000000000000b3
+    previousblockhash: 000000000000000015f697b296584d9d443d2225c67df9033157a9efe4a8faa0
+    height: 333001
+    tx: ["2c4eb2613c9b12c66f07527d9e58d53cf4bcaeb25fbdc2e44c62bd2a3d165d56"] # one random transaction we don't care about
+
+  # balance change event
+  -
+    type: creditsAndDebits
+    isCredit: true
+    height: 333000
+    quantity: 1000
+    asset: NEWCOIN
+    address: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+    
+
+notifications:
+  # unconfirmed issuance
+  - meta: { baseFilename: xcp_mempool_issuance_01.yml }
+    txid: "0000000000000000000000000000000000000000000000000000000033333333"
+    notifiedAddress: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+    sources: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+    destinations: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+
+  # block
+  - meta: { baseFilename: block_notification_01.yml }
+
+  # confirmed issuance
+  - meta: { baseFilename: xcp_confirmed_issuance_01.yml }
+    txid: "0000000000000000000000000000000000000000000000000000000033333333"
+    notifiedAddress: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+    sources: ["1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL"]
+    destinations: ["1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL"]
+
+  # block
+  - meta: { baseFilename: block_notification_02.yml }
+    notifiedAddress: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+    sources: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+    destinations: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+
+  # confirmed issuance
+  - meta: { baseFilename: xcp_confirmed_issuance_01.yml }
+    confirmations: 2
+    txid: "0000000000000000000000000000000000000000000000000000000033333333"
+    notifiedAddress: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+    sources: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+    destinations: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+
+  # credit
+  - meta: { baseFilename: xcp_issuance_credit_01.yml }
+
+accounts:
+  - meta: { baseFilename: default01.yml }
+    balances:
+      unconfirmed: { NEWCOIN: 0 }
+      confirmed: { NEWCOIN: 1000, BTC: '0.9999' }
+      sending: { BTC: 0 }

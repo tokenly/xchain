@@ -12,6 +12,7 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Queue\QueueManager;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Yaml\Yaml;
 use Tokenly\CurrencyLib\CurrencyUtil;
@@ -121,6 +122,10 @@ class ScenarioRunner
                 case 'send':
                     $this->processSendEvent($event);
                     break;
+
+                case 'creditsAndDebits':
+                    $this->processCreditsAndDebitsEvent($event);
+                    break;
                 
                 default:
                     throw new Exception("Unknown event type {$raw_event['type']}", 1);
@@ -153,6 +158,8 @@ class ScenarioRunner
             list($expected_notification, $meta) = $this->resolveExpectedNotificationMeta($raw_expected_notification);
             if ($expected_notification['event'] == 'block') {
                 $expected_notification = $this->normalizeExpectedBlockNotification($expected_notification, $actual_notification);
+            } else if ($expected_notification['event'] == 'credit') {
+                $expected_notification = $this->normalizeExpectedCreditNotification($expected_notification, $actual_notification);
             } else {
                 $expected_notification = $this->normalizeExpectedReceiveNotification($expected_notification, $actual_notification);
             }
@@ -226,7 +233,7 @@ class ScenarioRunner
 
             if (array_key_exists($field, $expected_notification)) { $normalized_expected_notification[$field] = $expected_notification[$field]; }
 
-            if ($field == 'txid') {
+            if ($field == 'txid' AND isset($normalized_expected_notification['txid'])) {
                 $normalized_expected_notification['txid'] = str_replace('%%last_send_txid%%', $this->last_send_txid, $normalized_expected_notification['txid']);
             }
         }
@@ -265,6 +272,27 @@ class ScenarioRunner
         ///////////////////
 
 
+
+        return $normalized_expected_notification;
+    }
+    protected function normalizeExpectedCreditNotification($expected_notification, $actual_notification) {
+        $normalized_expected_notification = [];
+        $normalized_expected_notification = $expected_notification;
+
+        ///////////////////
+        // OPTIONAL
+        foreach (['confirmations','confirmed','counterpartyTx','bitcoinTx','transactionTime','notificationId','notifiedAddressId','notifiedMonitorId','webhookEndpoint','blockSeq','confirmationTime','transactionFingerprint','requestId',] as $field) {
+            if (isset($expected_notification[$field])) {
+                if (is_array($expected_notification[$field])) {
+                    $normalized_expected_notification[$field] = array_replace_recursive(isset($actual_notification[$field]) ? $actual_notification[$field] : [], $expected_notification[$field]);
+                } else {
+                    $normalized_expected_notification[$field] = $expected_notification[$field];
+                }
+            } else if (array_key_exists($field, $actual_notification)) {
+                $normalized_expected_notification[$field] = $actual_notification[$field];
+            }
+        }
+        ///////////////////
 
         return $normalized_expected_notification;
     }
@@ -435,8 +463,21 @@ class ScenarioRunner
         } else {
             $sample_filename = 'default_xcp_parsed_01.json';
         }
+
+        if (isset($raw_transaction_event['useRaw']) AND $raw_transaction_event['useRaw']) {
+            $text = file_get_contents(base_path().'/tests/fixtures/transactions/'.$sample_filename);
+            if (isset($raw_transaction_event['fillVars'])) {
+                foreach ($raw_transaction_event['fillVars'] as $key => $value) {
+                    $text = str_replace('{{'.$key.'}}', $value, $text);
+                }
+            }
+            return json_decode($text, true);
+        }
+
+
         $default = json_decode(file_get_contents(base_path().'/tests/fixtures/transactions/'.$sample_filename), true);
         $normalized_transaction_event = $default;
+
 
         if (isset($raw_transaction_event['txid'])) {
             $normalized_transaction_event['txid'] = $raw_transaction_event['txid'];
@@ -625,6 +666,7 @@ class ScenarioRunner
     protected function clearDatabasesForScenario() {
         \App\Models\Block::truncate();
         \App\Models\Transaction::truncate();
+        \App\Models\ProvisionalTransaction::truncate();
         DB::table('transaction_address_lookup')->truncate();
         \App\Models\Notification::truncate();
         \App\Models\MonitoredAddress::truncate();
@@ -800,5 +842,43 @@ class ScenarioRunner
         $send_response = $api_test_helper->callAPIAndValidateResponse('POST', '/api/v1/sends/'.$payment_address['uuid'], app('SampleSendsHelper')->samplePostVars($vars));
         // Log::debug("\$send_response=".json_encode($send_response, 192));
         $this->last_send_txid = $send_response['txid'];
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    // CreditsAndDebits
+
+    protected function processCreditsAndDebitsEvent($event) {
+        // type: creditsAndDebits
+        $vars = $event;
+
+        unset($vars['type']);
+
+        $quantity_sat = CurrencyUtil::valueToSatoshis($vars['quantity']);
+        $quantity = CurrencyUtil::satoshisToValue($quantity_sat);
+
+        $balance_change_event = [
+            'event'            => $vars['isCredit'] ? 'credit' : 'debit',
+            'network'          => 'counterparty',
+
+            'blockheight'      => $vars['height'],
+            'timestamp'        => time(),
+
+            'asset'            => $vars['asset'],
+            'quantity'         => $quantity,
+            'quantitySat'      => $quantity_sat,
+            'address'          => $vars['address'],
+            'counterpartyData' => $vars,
+            'fingerprint'      => ($vars['isCredit'] ? 'CREDIT' : 'DEBIT').'xxxxxxx',
+        ];
+
+
+        // handle the parsed tx now
+        $block_height = $this->block_repository->findLatestBlockHeight();
+        $block = $this->block_repository->findAllWithExactlyHeight($block_height)->first();
+        if (!$block) { throw new Exception("Block not found", 1); }
+
+        $confirmations = $block_height - $balance_change_event['blockheight'] + 1;
+
+        Event::fire('xchain.balanceChange.confirmed', [$balance_change_event, $confirmations, $block]);
     }
 }

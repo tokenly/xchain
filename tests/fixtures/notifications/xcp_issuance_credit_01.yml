@@ -1,0 +1,16 @@
+event: credit
+network: counterparty
+asset: NEWCOIN
+quantity: 1000
+quantitySat: 100000000000
+address: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+confirmed: true
+confirmations: 2
+notifiedAddress: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+counterpartyData:
+  isCredit: true
+  height: 333000
+  quantity: 1000
+  asset: NEWCOIN
+  address: 1AAAA5555xxxxxxxxxxxxxxxxxxxwEhYkL
+transactionFingerprint: CREDITxxxxxxx
