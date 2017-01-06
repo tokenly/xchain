@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\Accounts;
 
+use App\Models\APICall;
 use App\Models\Account;
 use App\Models\LedgerEntry;
 use App\Providers\Accounts\Facade\AccountHandler;
@@ -63,11 +64,12 @@ class ReconcileAccountsCommand extends Command {
     protected function getOptions()
     {
         return [
-            ['compact',     'c', InputOption::VALUE_NONE,     'Output only the unreconciled address uuid'],
-            ['email',       'e', InputOption::VALUE_OPTIONAL, 'Email the results'],
-            ['log',         'l', InputOption::VALUE_NONE,     'Log results to the event log'],
-            ['progress',    'p', InputOption::VALUE_NONE,     'With progress'],
-            ['clear-cache', '',  InputOption::VALUE_NONE,     'Clear changed cache'],
+            ['adjust-balances', 'a', InputOption::VALUE_NONE,     'Adjusts balances if needed'],
+            ['compact',         'c', InputOption::VALUE_NONE,     'Output only the unreconciled address uuid'],
+            ['email',           'e', InputOption::VALUE_OPTIONAL, 'Email the results'],
+            ['log',             'l', InputOption::VALUE_NONE,     'Log results to the event log'],
+            ['progress',        'p', InputOption::VALUE_NONE,     'With progress'],
+            ['clear-cache',     '',  InputOption::VALUE_NONE,     'Clear changed cache'],
         ];
     }
 
@@ -91,6 +93,13 @@ class ReconcileAccountsCommand extends Command {
         $do_log               = !!$this->input->getOption('log');
         $with_progress        = !!$this->input->getOption('progress');
         $clear_cache          = !!$this->input->getOption('clear-cache');
+        $adjust_balances      = !!$this->input->getOption('adjust-balances');
+        $api_call = app('App\Repositories\APICallRepository')->create([
+            'user_id' => $this->getConsoleUser()['id'],
+            'details' => [
+                'command' => 'xchain:reconcile-accounts',
+            ],
+        ]);
 
         if ($clear_cache) {
             $this->clearChangedCache();
@@ -105,7 +114,7 @@ class ReconcileAccountsCommand extends Command {
         }
 
         $start_time = time();
-        $results = ['total' => 0, 'reconciled' => 0, 'unreconciled' => 0, 'runTime' => 0, 'unreconciledAddresses' => [], 'errors' => [],];
+        $results = ['total' => 0, 'reconciled' => 0, 'unreconciled' => 0, 'changes' => [], 'runTime' => 0, 'unreconciledAddresses' => [], 'errors' => [],];
         $total_count = $payment_addresses->count();
         $progress_bar = null;
         if ($with_progress) {
@@ -120,15 +129,27 @@ class ReconcileAccountsCommand extends Command {
                 // compare
                 $differences = $blockchain_balance_reconciler->buildDifferences($payment_address);
                 if ($differences['any']) {
+                    Log::debug("Found differences for {$payment_address['address']}");
+
+                    $change_data = [];
+                    if ($adjust_balances) {
+                        $adjustment_analysis = $this->buildAdjustmentData($payment_address, $differences['differences']);
+                        if ($adjustment_analysis['adjust']) {
+                            $change_data = $this->syncConfirmedBalances($payment_address, $differences['differences'], $api_call);
+                        } else {
+                            $change_data = $adjustment_analysis;
+                        }
+                    }
+
                     $results['unreconciledAddresses'][] = [
                         'address'     => $payment_address['address'],
                         'id'          => $payment_address['id'],
                         'uuid'        => $payment_address['uuid'],
                         'managed'     => $payment_address->isManaged(),
                         'differences' => $differences,
+                        'changes'     => $change_data,
                     ];
                     ++$results['unreconciled'];
-                    Log::debug("Found differences for {$payment_address['address']}");
 
                     if (!$for_email) {
                         if ($is_compact) {
@@ -137,6 +158,9 @@ class ReconcileAccountsCommand extends Command {
                             if ($with_progress) { $this->line(''); }
                             $this->comment("Differences found for {$payment_address['address']} ({$payment_address['uuid']})");
                             $this->line($this->formatDifferencesForOutput($differences));
+                            if ($change_data) {
+                                $this->line(json_encode($change_data, 192));
+                            }
                             // $this->line(json_encode($differences, 192));
                             $this->line('');
                         }
@@ -181,7 +205,11 @@ class ReconcileAccountsCommand extends Command {
         }
 
         if ($for_email) {
-            $changed_unreconciled_addresses = $this->applyCachedRecentUnreconciledAddresses($results['unreconciledAddresses']);
+            if ($adjust_balances) {
+                $changed_unreconciled_addresses = $results['unreconciledAddresses'];
+            } else {
+                $changed_unreconciled_addresses = $this->applyCachedRecentUnreconciledAddresses($results['unreconciledAddresses']);
+            }
             if ($changed_unreconciled_addresses) {
                 $changed_unreconciled_addresses_count = count($changed_unreconciled_addresses);
                 $date = Carbon::now()->toDayDateTimeString();
@@ -274,10 +302,92 @@ class ReconcileAccountsCommand extends Command {
         foreach($unreconciled_addresses as $unreconciled_address) {
             $out .= "   Address: {$unreconciled_address['address']} ({$unreconciled_address['uuid']})\n";
             $out .= $this->formatDifferencesForOutput($unreconciled_address['differences'])."\n";
+            if (isset($unreconciled_address['changes']) AND $unreconciled_address['changes']) {
+                $out .= rtrim("   Changes: ".str_replace("\n", "\n".str_repeat(" ", 12), json_encode($unreconciled_address['changes'], 192)))."\n";
+            }
             $out .= "\n";
             $out .= str_repeat('-', 82)."\n";
         }
         return $out;
     }
 
+    protected function getConsoleUser() {
+        $user_repository = app('App\Repositories\UserRepository');
+        $user = $user_repository->findByEmail('console-user@tokenly.co');
+        if ($user) { return $user; }
+
+        $user_vars = [
+            'email'    => 'console-user@tokenly.co',
+        ];
+        $user = $user_repository->create($user_vars);
+
+
+        return $user;
+    }
+
+    protected function buildAdjustmentData($payment_address) {
+        $ADDRESS = $payment_address['address'];
+        $APIKEY = env('BLOCKTRAIL_API_KEY');
+        if (!$APIKEY) { throw new Exception("Missing BLOCKTRAIL_API_KEY", 1); }
+
+        $min_conf = PHP_INT_MAX;
+        $result = json_decode(file_get_contents("https://api.blocktrail.com/v1/btc/address/{$ADDRESS}/transactions?api_key={$APIKEY}&sort_dir=desc&limit=3"), 1);
+        foreach($result['data'] as $tx) {
+            if (isset($tx['confirmations'])) {
+                $min_conf = min($min_conf, $tx['confirmations']);
+            }
+        }
+
+        $total_transactions = $result['total'];
+
+        if ($min_conf <= 3) {
+            return [
+                'adjust' => false,
+                'reason' => $min_conf.' '.str_plural('confirmation', $min_conf),
+            ];
+        }
+        if ($total_transactions > 2000) {
+            return [
+                'adjust' => false,
+                'reason' => 'too many transactions',
+            ];
+        }
+
+        return ['adjust' => true,];
+    }
+
+
+    protected function syncConfirmedBalances($payment_address, $balance_differences, APICall $api_call) {
+        $ledger = app('App\Repositories\LedgerEntryRepository');
+
+        $errors = [];
+        $changes = [];
+        foreach($balance_differences as $asset => $qty_by_type) {
+            try {
+                $xchain_quantity = $qty_by_type['xchain'];
+                $daemon_quantity = $qty_by_type['daemon'];
+
+                $default_account = AccountHandler::getAccount($payment_address);
+                if ($xchain_quantity > $daemon_quantity) {
+                    // debit
+                    $quantity = $xchain_quantity - $daemon_quantity;
+                    $msg = "Debiting $quantity $asset from account {$default_account['name']}";
+                    $this->info($msg);
+                    $ledger->addDebit($quantity, $asset, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, null, $api_call);
+                    $changes[] = "Debit $quantity $asset";
+                } else {
+                    // credit
+                    $quantity = $daemon_quantity - $xchain_quantity;
+                    $msg = "Crediting $quantity $asset to account {$default_account['name']}";
+                    $this->info($msg);
+                    $ledger->addCredit($quantity, $asset, $default_account, LedgerEntry::CONFIRMED, LedgerEntry::DIRECTION_OTHER, null, $api_call);
+                    $changes[] = "Credit $quantity $asset";
+                }
+            } catch (Exception $e) {
+                $errors[] = $e->getMessage();
+            }
+        }
+
+        return ['adjust' => true, 'changes' => $changes, 'errors' => $errors, ];
+    }
 }
