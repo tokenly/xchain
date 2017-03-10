@@ -59,6 +59,7 @@ class CreateMultiSendRequest extends APIRequest {
         return [
             'destinations' => 'required',
             'fee'          => 'numeric',
+            'feeRate'      => 'sometimes',
             'requestId'    => 'max:36',
             'account'      => 'max:127',
             'unconfirmed'  => 'boolean',

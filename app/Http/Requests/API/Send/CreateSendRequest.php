@@ -41,6 +41,7 @@ class CreateSendRequest extends APIRequest {
             'destination'        => 'required',
             'quantity'           => 'numeric|notIn:0',
             'fee'                => 'numeric',
+            'feeRate'            => 'sometimes',
             'dust_size'          => 'numeric',
             'asset'              => 'required|min:3',
             'sweep'              => 'required_without:quantity|boolean',

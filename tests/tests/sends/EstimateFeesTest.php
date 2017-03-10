@@ -26,7 +26,9 @@ class EstimateFeesTest extends TestCase {
             'size' => $bytes,
             'fees' => [
                 'low'     => (FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
+                'lowmed'  => (FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_LOWMED * $bytes),
                 'med'     => (FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
+                'medhigh' => (FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_MEDHIGH * $bytes),
                 'high'    => (FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
             ],
         ], $fees_info);
@@ -48,7 +50,9 @@ class EstimateFeesTest extends TestCase {
             'size' => $bytes,
             'fees' => [
                 'low'     => (FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
+                'lowmed'  => (FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_LOWMED * $bytes),
                 'med'     => (FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
+                'medhigh' => (FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_MEDHIGH * $bytes),
                 'high'    => (FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
             ],
         ], $fees_info);

@@ -71,6 +71,7 @@ class TXOChooser {
     // ------------------------------------------------------------------------
 
     public function chooseUTXOsWithBalancedStrategy(PaymentAddress $payment_address, $float_quantity, $float_fee, $float_minimum_change_size) {
+        Log::debug("chooseUTXOsWithBalancedStrategy \$float_fee=$float_fee {$payment_address['address']}");
         // select TXOs (confirmed only first)
         $confirmed_only_available_txos = iterator_to_array($this->txo_repository->findByPaymentAddress($payment_address, [TXO::CONFIRMED], true));
         $found_utxos = $this->chooseFromAvailableTXOs($confirmed_only_available_txos, $float_quantity, $float_fee, $float_minimum_change_size);

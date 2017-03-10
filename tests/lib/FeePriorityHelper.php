@@ -8,9 +8,11 @@ use App\Blockchain\Sender\FeeCache;
 class FeePriorityHelper
 {
 
-    const FEE_SATOSHIS_PER_BYTE_LOW = 5;
-    const FEE_SATOSHIS_PER_BYTE_MED = 118;
-    const FEE_SATOSHIS_PER_BYTE_HIGH = 201;
+    const FEE_SATOSHIS_PER_BYTE_LOW     = 5;
+    const FEE_SATOSHIS_PER_BYTE_LOWMED  = 84;
+    const FEE_SATOSHIS_PER_BYTE_MED     = 118;
+    const FEE_SATOSHIS_PER_BYTE_MEDHIGH = 151;
+    const FEE_SATOSHIS_PER_BYTE_HIGH    = 201;
 
     public function __construct() {
     }

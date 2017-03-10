@@ -156,11 +156,47 @@ class SendAPITest extends TestCase {
 
         // validate that a mock send was triggered
         $transaction_composer_helper = app('TransactionComposerHelper');
-        $send_details = $transaction_composer_helper->parseCounterpartyTransaction($mock_calls['btcd'][0]['args'][0]);
+        $send_details = $transaction_composer_helper->parseCounterpartyTransaction($mock_calls['btcd'][0]['args'][0], CurrencyUtil::valueToSatoshis(1));
         PHPUnit::assertEquals($payment_address['address'], $send_details['change'][0][0]);
         PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $send_details['destination']);
         PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(100), $send_details['quantity']);
         PHPUnit::assertEquals('TOKENLY', $send_details['asset']);
+        PHPUnit::assertEquals(10000, $send_details['fee']);
+    }
+
+    public function testFeePerByteSendAPI()
+    {
+        // mock the xcp sender
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $user = app('\UserHelper')->createSampleUser();
+        $payment_address = app('\PaymentAddressHelper')->createSamplePaymentAddress($user);
+
+        $api_tester = $this->getAPITester();
+
+        $posted_vars = $this->sendHelper()->samplePostVars(['feeRate' => '75']);
+        $expected_created_resource = [
+            'id'           => '{{response.id}}',
+            'destination'  => '{{response.destination}}',
+            'destinations' => '',
+            'asset'        => 'TOKENLY',
+            'sweep'        => '{{response.sweep}}',
+            'quantity'     => '{{response.quantity}}',
+            'txid'         => '{{response.txid}}',
+            'requestId'    => '{{response.requestId}}',
+            'feePerByte'   => '75',
+        ];
+        $api_response = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
+
+        // validate that a mock send was triggered
+        $transaction_composer_helper = app('TransactionComposerHelper');
+        $send_details = $transaction_composer_helper->parseCounterpartyTransaction($mock_calls['btcd'][0]['args'][0], CurrencyUtil::valueToSatoshis(1));
+        PHPUnit::assertEquals($payment_address['address'], $send_details['change'][0][0]);
+        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $send_details['destination']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(100), $send_details['quantity']);
+        PHPUnit::assertEquals('TOKENLY', $send_details['asset']);
+        PHPUnit::assertEquals(19875, $send_details['fee']);
+        PHPUnit::assertEquals(75, $send_details['fee_per_byte']);
     }
 
     public function testAPISweep()
@@ -199,6 +235,52 @@ class SendAPITest extends TestCase {
         $send_details = $transaction_composer_helper->parseBTCTransaction($mock_calls['btcd'][1]['args'][0]);
         PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $send_details['destination']);
         PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(1 - 0.0001 - 0.0001 - 0.00005430), $send_details['btc_amount']);
+    }
+
+    public function testFeePerByteAPISweep()
+    {
+        // mock the xcp sender
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $user = app('\UserHelper')->createSampleUser();
+        $payment_address = app('\PaymentAddressHelper')->createSamplePaymentAddress($user);
+
+        $api_tester = $this->getAPITester();
+
+        $posted_vars = $this->sendHelper()->samplePostVars(['feeRate' => '75',]);
+        unset($posted_vars['quantity']);
+        $posted_vars['sweep'] = true;
+        $expected_created_resource = [
+            'id'           => '{{response.id}}',
+            'destination'  => '{{response.destination}}',
+            'destinations' => '',
+            'asset'        => 'TOKENLY',
+            'sweep'        => '{{response.sweep}}',
+            'quantity'     => '{{response.quantity}}',
+            'txid'         => '{{response.txid}}',
+            'requestId'    => '{{response.requestId}}',
+            'feePerByte'   => '75',
+        ];
+        $api_response = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
+
+        // validate the sweep
+        PHPUnit::assertCount(2, $mock_calls['btcd']);
+        $transaction_composer_helper = app('TransactionComposerHelper');
+        $send_details = $transaction_composer_helper->parseCounterpartyTransaction($mock_calls['btcd'][0]['args'][0], CurrencyUtil::valueToSatoshis(1));
+        // echo "ASSET \$send_details: ".json_encode($send_details, 192)."\n";
+        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $send_details['destination']);
+        PHPUnit::assertEquals('TOKENLY', $send_details['asset']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.00005430), $send_details['btc_amount']);
+        $expected_asset_fee_sat = 19875;
+        PHPUnit::assertEquals(75, $send_details['fee_per_byte']);
+        PHPUnit::assertEquals($expected_asset_fee_sat, $send_details['fee']);
+
+        $remaining_btc = CurrencyUtil::valueToSatoshis(1) - $expected_asset_fee_sat - 5430;
+        $send_details = $transaction_composer_helper->parseBTCTransaction($mock_calls['btcd'][1]['args'][0], $remaining_btc);
+        // echo "BTC \$send_details: ".json_encode($send_details, 192)."\n";
+        $expected_btc_fee_sat = 14400;
+        PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $send_details['destination']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(1) - 5430 - $expected_asset_fee_sat - $expected_btc_fee_sat, $send_details['btc_amount']);
     }
 
     public function testSecondAPISweep()
@@ -475,6 +557,54 @@ class SendAPITest extends TestCase {
         PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.003), $send_details['change'][1][1]);
         PHPUnit::assertEquals($payment_address['address'], $send_details['change'][2][0]);
         PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(1 - 0.006 - 0.0001), $send_details['change'][2][1]);
+    }
+
+    public function testFeePerByteAPIAddMultisend()
+    {
+        // mock the xcp sender
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $user = app('\UserHelper')->createSampleUser();
+        $payment_address = app('\PaymentAddressHelper')->createSamplePaymentAddress($user);
+
+        $api_tester = $this->getAPITester('/api/v1/multisends');
+
+        $posted_vars = $this->sendHelper()->sampleMultisendPostVars(['feeRate' => '75']);
+        $expected_created_resource = [
+            'id'           => '{{response.id}}',
+            'destination'  => '',
+            'destinations' => '{{response.destinations}}',
+            'asset'        => 'BTC',
+            'txid'         => '{{response.txid}}',
+            'requestId'    => '{{response.requestId}}',
+            'sweep'        => '{{response.sweep}}',
+            'quantity'     => 0.006,
+            'feePerByte'   => '75',
+        ];
+        $api_response = $api_tester->testAddResource($posted_vars, $expected_created_resource, $payment_address['uuid']);
+
+        // validate the send details
+        $transaction_composer_helper = app('TransactionComposerHelper');
+
+        PHPUnit::assertCount(1, $mock_calls['btcd']);
+        $send_details = $transaction_composer_helper->parseBTCTransaction($mock_calls['btcd'][0]['args'][0], CurrencyUtil::valueToSatoshis(1));
+        // echo "\$send_details: ".json_encode($send_details, 192)."\n";
+
+        // primary send
+        PHPUnit::assertEquals('1ATEST111XXXXXXXXXXXXXXXXXXXXwLHDB', $send_details['destination']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.001), $send_details['btc_amount']);
+
+        // other change...
+        $expected_fee_sat = 21975;
+        PHPUnit::assertEquals('1ATEST222XXXXXXXXXXXXXXXXXXXYzLVeV', $send_details['change'][0][0]);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.002), $send_details['change'][0][1]);
+        PHPUnit::assertEquals('1ATEST333XXXXXXXXXXXXXXXXXXXatH8WE', $send_details['change'][1][0]);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.003), $send_details['change'][1][1]);
+        PHPUnit::assertEquals($payment_address['address'], $send_details['change'][2][0]);
+        PHPUnit::assertEquals($expected_fee_sat, $send_details['fee']);
+        PHPUnit::assertEquals(75, $send_details['fee_per_byte']);
+        PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(1 - 0.006 - CurrencyUtil::satoshisToValue($expected_fee_sat)), $send_details['change'][2][1]);
+
     }
 
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Blockchain\Composer\ComposerUtil;
+use App\Blockchain\Sender\FeePriority;
 use App\Blockchain\Sender\PaymentAddressSender;
 use App\Http\Controllers\API\Base\APIController;
 use App\Http\Requests\API\Send\CleanupRequest;
@@ -32,8 +33,8 @@ use Tokenly\LaravelEventLog\Facade\EventLog;
 
 class SendController extends APIController {
 
-    const SEND_LOCK_TIMEOUT = 3600; // 1 hour
-    const DEFAULT_FEE_PRIORITY = 'medium';
+    const SEND_LOCK_TIMEOUT     = 3600; // 1 hour
+    const DEFAULT_FEE_RATE_DESC = 'medium';
 
     /**
      * Create and execute a send
@@ -71,6 +72,8 @@ class SendController extends APIController {
     // ------------------------------------------------------------------------
     
     protected function executeSend(APIControllerHelper $helper, Request $request, PaymentAddressRepository $payment_address_respository, SendRepository $send_respository, PaymentAddressSender $address_sender, Guard $auth, APICallRepository $api_call_repository, $id) {
+        $fee_priority = app(FeePriority::class); 
+
         $user = $auth->getUser();
         if (!$user) { throw new Exception("User not found", 1); }
 
@@ -102,6 +105,16 @@ class SendController extends APIController {
         $request_id    = isset($request_attributes['requestId']) ? $request_attributes['requestId'] : Uuid::uuid4()->toString();
         $custom_inputs = isset($request_attributes['utxo_override']) ? $request_attributes['utxo_override'] : false;
 
+        // Calculate fee per byte if feeRate is specified
+        $fee_per_byte = null;
+        if (isset($request_attributes['feeRate']) AND strlen($request_attributes['feeRate'])) {
+            $fee_per_byte = $fee_priority->getSatoshisPerByte($request_attributes['feeRate']);
+            if ($fee_per_byte === null) {
+                return new JsonResponse(['message' => 'Invalid fee rate'], 422);
+            }
+            $float_fee = 0;
+        }
+
         // create attibutes
         $create_attributes = [];
         $create_attributes['user_id']            = $user['id'];
@@ -111,6 +124,7 @@ class SendController extends APIController {
         $create_attributes['asset']              = $asset;
         $create_attributes['is_sweep']           = $is_sweep;
         $create_attributes['fee']                = $float_fee;
+        $create_attributes['fee_per_byte']       = $fee_per_byte;
         $create_attributes['dust_size']          = $dust_size;
 
         // for multisends
@@ -125,7 +139,7 @@ class SendController extends APIController {
         $send_result = $send_respository->executeWithNewLockedSendByRequestID($request_id, $create_attributes, function($locked_send) 
             use (
                 $request_attributes, $create_attributes, $payment_address, $user, $helper, $send_respository, $address_sender, $api_call_repository, $request_id, 
-                $is_multisend, $is_regular_send, $quantity_sat, $asset, $destination, $destinations, $is_sweep, $float_fee, $dust_size, 
+                $is_multisend, $is_regular_send, $quantity_sat, $asset, $destination, $destinations, $is_sweep, $float_fee, $fee_per_byte, $dust_size, 
                 &$lock_must_be_released, &$lock_must_be_released_with_delay, $custom_inputs
             ) {
             $api_call = $api_call_repository->create([
@@ -156,7 +170,7 @@ class SendController extends APIController {
                     // move all balances to the default account
                     AccountHandler::consolidateAllAccounts($payment_address, $api_call);
 
-                    $sweep_transactions = $address_sender->sweepAllAssets($payment_address, $request_attributes['destination'], $float_fee);
+                    $sweep_transactions = $address_sender->sweepAllAssets($payment_address, $request_attributes['destination'], $float_fee, $fee_per_byte);
 
                     // clear all balances from all accounts
                     $account = AccountHandler::getAccount($payment_address);
@@ -198,8 +212,20 @@ class SendController extends APIController {
                     $allow_unconfirmed = isset($request_attributes['unconfirmed']) ? $request_attributes['unconfirmed'] : false;
                     // Log::debug("\$allow_unconfirmed=".json_encode($allow_unconfirmed, 192));
 
+                    $built_transaction_to_send = null;
+                    if (!$custom_inputs AND $fee_per_byte !== null) {
+                        // calculate the entire transaction before determining if funds are available
+                        $change_address_collection = null;
+                        $float_btc_dust_size       = null;
+                        $is_sweep                  = false;
+                        $built_transaction_to_send = $address_sender->composeUnsignedTransaction($payment_address, ($is_multisend ? $destinations : $destination), $float_quantity, $asset, $change_address_collection, $float_fee, $fee_per_byte, $float_btc_dust_size, $is_sweep);
+
+                        // get the actual calculated fee
+                        $float_fee = $built_transaction_to_send->feeFloat();
+                    }
+
                     // validate that the funds are available, bypass this if custom_inputs used
-                    if(!$custom_inputs){
+                    if(!$custom_inputs AND $fee_per_byte === null) {
                         $assets_to_send = ComposerUtil::buildAssetQuantities($float_quantity, $asset, $float_fee, $dust_size);
                         if ($allow_unconfirmed) {
                             $has_enough_funds = AccountHandler::accountHasSufficientFunds($account, $assets_to_send);
@@ -215,7 +241,7 @@ class SendController extends APIController {
 
                     // send the funds
                     EventLog::log('send.begin', ['request_id' => $request_id, 'address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset, 'destination' => ($is_multisend ? $destinations : $destination), 'custom_inputs' => $custom_inputs]);
-                    $txid = $address_sender->sendByRequestID($request_id, $payment_address, ($is_multisend ? $destinations : $destination), $float_quantity, $asset, $float_fee, $dust_size, false, $custom_inputs);
+                    $txid = $address_sender->sendByRequestID($request_id, $payment_address, ($is_multisend ? $destinations : $destination), $float_quantity, $asset, $float_fee, $dust_size, false, $custom_inputs, $built_transaction_to_send);
                     EventLog::log('send.complete', ['txid' => $txid, 'request_id' => $request_id, 'address_id' => $payment_address['id'], 'account' => $account_name, 'quantity' => $float_quantity, 'asset' => $asset, 'destination' => ($is_multisend ? $destinations : $destination)]);
 
 
@@ -379,7 +405,7 @@ class SendController extends APIController {
         $confirmed_txos = iterator_to_array($txo_repository->findByPaymentAddress($payment_address, [TXO::CONFIRMED], true));
 
         $utxo_count_to_consolidate = min($confirmed_txos, $request_attributes['max_utxos']);
-        $fee_priority = isset($request_attributes['priority']) ? $request_attributes['priority'] : self::DEFAULT_FEE_PRIORITY;
+        $fee_priority_desc = isset($request_attributes['priority']) ? $request_attributes['priority'] : self::DEFAULT_FEE_RATE_DESC;
 
 
         $txid = null;
@@ -390,7 +416,7 @@ class SendController extends APIController {
             $cleaned_up = true;
 
             // build the send transaction
-            $composed_transaction_object = $address_sender->consolidateUTXOs($payment_address, $utxo_count_to_consolidate, $fee_priority);
+            $composed_transaction_object = $address_sender->consolidateUTXOs($payment_address, $utxo_count_to_consolidate, $fee_priority_desc);
             $txid = $composed_transaction_object->getTxId();
             $txos_sent = count($composed_transaction_object->getInputUtxos());
             

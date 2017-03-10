@@ -28,8 +28,8 @@ class Send extends APIModel
 
     protected static $unguarded = true;
 
-    protected $api_attributes = ['id', 'destination', 'destinations', 'quantity', 'asset', 'sweep', 'txid', 'request_id', ];
-    protected $api_attributes_composed = ['id', 'destination', 'destinations', 'quantity', 'asset', 'sweep', 'txid', 'request_id', 'unsigned_tx', 'utxos', ];
+    protected $api_attributes = ['id', 'destination', 'destinations', 'quantity', 'asset', 'sweep', 'txid', 'request_id', 'fee_per_byte',];
+    protected $api_attributes_composed = ['id', 'destination', 'destinations', 'quantity', 'asset', 'sweep', 'txid', 'request_id', 'unsigned_tx', 'utxos', 'fee_per_byte',];
     protected $api_attributes_multisig = ['id', 'destination', 'quantity', 'asset', 'txid', 'request_id', 'tx_proposal_id', ];
 
     public function setSendDataAttribute($send_data) { $this->attributes['send_data'] = json_encode($send_data); }

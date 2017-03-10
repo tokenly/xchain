@@ -20,11 +20,15 @@ class TransactionComposerHelper
     }
 
 
-    public function parseCounterpartyTransaction($raw_transaction_hex) {
-        return $this->parseBTCTransaction($raw_transaction_hex, true);
+    public function parseCounterpartyTransaction($raw_transaction_hex, $input_satoshis=null) {
+        return $this->parseTransaction($raw_transaction_hex, true, $input_satoshis);
     }
 
-    public function parseBTCTransaction($raw_transaction_hex, $is_counterparty=false) {
+    public function parseBTCTransaction($raw_transaction_hex, $input_satoshis=null) {
+        return $this->parseTransaction($raw_transaction_hex, false, $input_satoshis);
+    }
+
+    public function parseTransaction($raw_transaction_hex, $is_counterparty=false, $input_satoshis=null) {
         if (!$raw_transaction_hex) { throw new Exception("Transaction hex was empty", 1); }
 
         $transaction = TransactionFactory::fromHex($raw_transaction_hex);
@@ -71,7 +75,6 @@ class TransactionComposerHelper
 
             $outpoint = $input->getOutPoint();
             $out['inputs'][] = ['txid' => $outpoint->getTxId()->getHex(), 'n' => $outpoint->getVout(), 'script' => $script->getHex(), 'asm' => $asm, /* 'addr' => $address, */];
-
         }
 
 
@@ -97,6 +100,7 @@ class TransactionComposerHelper
 
         // change
         ++$output_offset;
+        $change_sum = 0;
         $change = [];
         for ($i=$output_offset; $i < count($outputs); $i++) { 
             $script = $outputs[$i]->getScript();
@@ -105,6 +109,7 @@ class TransactionComposerHelper
             if ($script_type == OutputClassifier::PAYTOPUBKEYHASH) {
                 $output = $outputs[$i];
                 $change[] = [AddressFactory::getAssociatedAddress($script)->getAddress(), $output->getValue()];
+                $change_sum += $output->getValue();
             }
         }
         $out['change'] = $change;
@@ -116,6 +121,13 @@ class TransactionComposerHelper
         }
         $out['sum_out'] = $sum_out;
 
+        // fee and fee_per_byte
+        if ($input_satoshis != null) {
+            $out['input'] = $input_satoshis;
+            $out['fee'] = $input_satoshis - $sum_out;
+            $out['fee_per_byte'] = round($out['fee'] / (strlen($raw_transaction_hex) / 2));
+        }
+
         return $out;
     }
 
@@ -125,7 +137,7 @@ class TransactionComposerHelper
     protected function arc4decrypt($key, $encrypted_text)
     {
         $init_vector = '';
-        return bin2hex(mcrypt_decrypt(MCRYPT_ARCFOUR, hex2bin($key), hex2bin($encrypted_text), MCRYPT_MODE_STREAM, $init_vector));
+        return bin2hex(@mcrypt_decrypt(MCRYPT_ARCFOUR, hex2bin($key), hex2bin($encrypted_text), MCRYPT_MODE_STREAM, $init_vector));
     }
 
     protected function parseTransactionData($binary_data) {

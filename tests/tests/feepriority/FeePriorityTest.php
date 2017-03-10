@@ -40,6 +40,9 @@ class FeePriorityTest extends TestCase {
         // 10 block delay
         PHPUnit::assertEquals(101, $fee_priority->getSatoshisPerByte('11 blocks'));
 
+        // 15 block delay
+        PHPUnit::assertEquals(84, $fee_priority->getSatoshisPerByte('16 blocks'));
+
         // 120 block delay
         PHPUnit::assertEquals(5, $fee_priority->getSatoshisPerByte('120 blocks'));
 
