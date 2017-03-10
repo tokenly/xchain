@@ -25,6 +25,8 @@
         <env name="BITCOIN_MASTER_KEY" value="testingfoo123"/>
         <env name="XCALLER_QUEUE_CONNECTION" value="sync"/>
         <env name="COPAY_QUEUE_CONNECTION" value="sync"/>
+
+        <env name="BITCOINFEES_URL" value="none"/>
     </php>
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">

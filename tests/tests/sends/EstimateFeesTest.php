@@ -25,9 +25,9 @@ class EstimateFeesTest extends TestCase {
         PHPUnit::assertEquals([
             'size' => $bytes,
             'fees' => [
-                'low'     => (FeePriority::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
-                'med'     => (FeePriority::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
-                'high'    => (FeePriority::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
+                'low'     => (FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
+                'med'     => (FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
+                'high'    => (FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
             ],
         ], $fees_info);
     }
@@ -47,9 +47,9 @@ class EstimateFeesTest extends TestCase {
         PHPUnit::assertEquals([
             'size' => $bytes,
             'fees' => [
-                'low'     => (FeePriority::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
-                'med'     => (FeePriority::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
-                'high'    => (FeePriority::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
+                'low'     => (FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
+                'med'     => (FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
+                'high'    => (FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
             ],
         ], $fees_info);
 

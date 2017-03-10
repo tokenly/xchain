@@ -9,6 +9,8 @@ class TestCase extends Illuminate\Foundation\Testing\TestCase {
     protected $useDatabase           = false;
     protected $useRealSQLiteDatabase = false;
 
+    protected $mock_fee_priorities   = true;
+
 	/**
 	 * Creates the application.
 	 *
@@ -44,6 +46,11 @@ class TestCase extends Illuminate\Foundation\Testing\TestCase {
 
         // reset sample TXID
         SampleTXOHelper::resetSampleTXID();
+
+        if($this->mock_fee_priorities)
+        {
+            app('FeePriorityHelper')->mockFeeCache();
+        }
     }
 
     public function tearDown() {

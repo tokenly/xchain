@@ -66,12 +66,12 @@ class EstimateFeeAPITest extends TestCase {
         PHPUnit::assertEquals([
             'size' => $bytes,
             'fees' => [
-                'low'     => CurrencyUtil::satoshisToValue(FeePriority::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
-                'lowSat'  => FeePriority::FEE_SATOSHIS_PER_BYTE_LOW * $bytes,
-                'med'     => CurrencyUtil::satoshisToValue(FeePriority::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
-                'medSat'  => FeePriority::FEE_SATOSHIS_PER_BYTE_MED * $bytes,
-                'high'    => CurrencyUtil::satoshisToValue(FeePriority::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
-                'highSat' => FeePriority::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes,
+                'low'     => CurrencyUtil::satoshisToValue(FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
+                'lowSat'  => FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_LOW * $bytes,
+                'med'     => CurrencyUtil::satoshisToValue(FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
+                'medSat'  => FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_MED * $bytes,
+                'high'    => CurrencyUtil::satoshisToValue(FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
+                'highSat' => FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes,
             ],
         ], $fees_info);
 
@@ -87,12 +87,12 @@ class EstimateFeeAPITest extends TestCase {
         PHPUnit::assertEquals([
             'size' => $bytes,
             'fees' => [
-                'low'     => CurrencyUtil::satoshisToValue(FeePriority::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
-                'lowSat'  => FeePriority::FEE_SATOSHIS_PER_BYTE_LOW * $bytes,
-                'med'     => CurrencyUtil::satoshisToValue(FeePriority::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
-                'medSat'  => FeePriority::FEE_SATOSHIS_PER_BYTE_MED * $bytes,
-                'high'    => CurrencyUtil::satoshisToValue(FeePriority::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
-                'highSat' => FeePriority::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes,
+                'low'     => CurrencyUtil::satoshisToValue(FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_LOW * $bytes),
+                'lowSat'  => FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_LOW * $bytes,
+                'med'     => CurrencyUtil::satoshisToValue(FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_MED * $bytes),
+                'medSat'  => FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_MED * $bytes,
+                'high'    => CurrencyUtil::satoshisToValue(FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes),
+                'highSat' => FeePriorityHelper::FEE_SATOSHIS_PER_BYTE_HIGH * $bytes,
             ],
         ], $fees_info);
     }
