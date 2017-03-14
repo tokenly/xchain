@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Blockchain\Sender\Exception\CompositionException;
+use App\Blockchain\Sender\FeePriority;
 use App\Blockchain\Sender\PaymentAddressSender;
 use App\Blockchain\Sender\TXOChooser;
 use App\Http\Controllers\API\Base\APIController;
@@ -92,7 +94,7 @@ class PrimeController extends APIController {
      *
      * @return Response
      */
-    public function primeAddress($address_uuid, Guard $auth, Request $request, APIControllerHelper $helper, PaymentAddressRepository $payment_address_repository, TXORepository $txo_repository, TXOChooser $txo_chooser, PaymentAddressSender $payment_address_sender)
+    public function primeAddress($address_uuid, Guard $auth, Request $request, APIControllerHelper $helper, PaymentAddressRepository $payment_address_repository, TXORepository $txo_repository, TXOChooser $txo_chooser, PaymentAddressSender $payment_address_sender, FeePriority $fee_priority)
     {
         try {
             
@@ -101,9 +103,9 @@ class PrimeController extends APIController {
 
             $payment_address = $helper->requireResourceOwnedByUser($address_uuid, $user, $payment_address_repository);
 
-            $size = floatval($request->input('size'));
-            if ($size <= 0) { throw new Exception("Invalid size", 400); }
-            $size_satoshis = CurrencyUtil::valueToSatoshis($size);
+            $float_size = floatval($request->input('size'));
+            if ($float_size <= 0) { throw new Exception("Invalid size", 400); }
+            $size_satoshis = CurrencyUtil::valueToSatoshis($float_size);
 
             $desired_prime_count = floatval($request->input('count'));
             if ($desired_prime_count <= 0) { throw new Exception("Invalid count", 400); }
@@ -112,6 +114,16 @@ class PrimeController extends APIController {
             if ($fee !== null) {
                 $fee = floatval($fee);
                 if ($fee <= 0) { throw new Exception("Invalid fee", 400); }
+            }
+
+            $fee_per_byte = null;
+            $fee_priority_string = $request->input('feeRate');
+            if ($fee_priority_string !== null) {
+                try {
+                    $fee_per_byte = $fee_priority->getSatoshisPerByte($fee_priority_string);
+                } catch (Exception $e) {
+                    throw new Exception("Invalid fee rate", 400);
+                }
             }
 
             // get the UTXOs
@@ -132,10 +144,17 @@ class PrimeController extends APIController {
             if ($desired_prime_count > $current_primed_count) {
                 // create a new priming transaction...
                 $desired_new_primes_count_to_create = $desired_prime_count - $current_primed_count;
-                $actual_new_primes_count_to_create = $this->findMaximumNewPrimeCountTXOs($txo_chooser, $payment_address, $desired_new_primes_count_to_create, $size, $fee);
-                if ($actual_new_primes_count_to_create > 0) {
-                    $txid = $this->sendPrimingTransaction($payment_address_sender, $payment_address, $size, $actual_new_primes_count_to_create, $fee);
-                    $new_primed_count = $current_primed_count + $actual_new_primes_count_to_create;
+                if ($desired_new_primes_count_to_create > 0) {
+                    list($built_transaction_to_send, $actual_new_primes_count_to_create) = $this->buildPrimeTransactionWithFeePerByte($payment_address_sender, $payment_address, $float_size, $desired_new_primes_count_to_create, $fee, $fee_per_byte);
+
+                    if ($built_transaction_to_send) {
+                        // send the pre-built transaction
+                        $txid = $payment_address_sender->send($payment_address, $_destination=null, $_float_quantity=0, 'BTC', $_float_fee=null, $_float_btc_dust_size=null, $_is_sweep=false, $built_transaction_to_send);
+                        $new_primed_count = $current_primed_count + $actual_new_primes_count_to_create;
+                    } else {
+                        $txid = false;
+                        EventLog::info('prime.failed', ['payment_address_id' => $payment_address['uuid']]);
+                    }
                 }
             }
 
@@ -161,22 +180,31 @@ class PrimeController extends APIController {
 
     ////////////////////////////////////////////////////////////////////////
 
-    protected function findMaximumNewPrimeCountTXOs($txo_chooser, $payment_address, $desired_prime_count, $float_prime_size, $float_fee) {
-        $actual_prime_count = $desired_prime_count;
-        while ($actual_prime_count > 0) {
-            $float_quantity = $actual_prime_count * $float_prime_size;
-            $chosen_txos = $txo_chooser->chooseUTXOsForPriming($payment_address, $float_quantity, $float_fee, null, $float_prime_size);
-            if ($chosen_txos) {
-                return $actual_prime_count;
+    protected function buildPrimeTransactionWithFeePerByte($payment_address_sender, $payment_address, $float_size, $desired_prime_count, $float_fee, $fee_per_byte) {
+        $built_prime_count = $desired_prime_count;
+        while ($built_prime_count > 0) {
+            // $float_quantity = $built_prime_count * $float_prime_size;
+            try {
+                $built_transaction_to_send = $this->buildComposedPrimingTransaction($payment_address_sender, $payment_address, $float_size, $built_prime_count, $float_fee, $fee_per_byte);
+                if ($built_transaction_to_send) {
+                    return [$built_transaction_to_send, $built_prime_count];
+                }
+            } catch (CompositionException $e) {
+                if ($e->getCode() == -100) {
+                    // not enough BTC to compose this transaction
+                    //   fall through to try one less prime
+                } else {
+                    throw $e;
+                }
             }
             
-            --$actual_prime_count;
+            --$built_prime_count;
         }
 
-        return 0;
+        return [null, null];
     }
 
-    protected function sendPrimingTransaction($payment_address_sender, $payment_address, $float_size, $count, $float_fee) {
+    protected function buildComposedPrimingTransaction($payment_address_sender, $payment_address, $float_size, $count, $float_fee, $fee_per_byte) {
         $float_quantity = 0.0;
         $bitcoin_address = $payment_address['address'];
 
@@ -186,7 +214,9 @@ class PrimeController extends APIController {
             $float_quantity += $float_size;
         }
 
-        return $payment_address_sender->send($payment_address, $destinations_collection, $float_quantity, 'BTC', $float_fee);
+        $built_transaction_to_send = $payment_address_sender->composeUnsignedTransaction($payment_address, $destinations_collection, $float_quantity, 'BTC', $_change_address_collection=null, $float_fee, $fee_per_byte, $_float_btc_dust_size=null, $_is_sweep=false);
+
+        return $built_transaction_to_send;
     }
     
     // returns only green or confirmed TXOs

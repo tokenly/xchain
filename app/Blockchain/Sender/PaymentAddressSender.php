@@ -3,6 +3,7 @@
 namespace App\Blockchain\Sender;
 
 use App\Blockchain\Sender\Exception\BitcoinDaemonException;
+use App\Blockchain\Sender\Exception\CompositionException;
 use App\Blockchain\Sender\FeePriority;
 use App\Blockchain\Sender\TXOChooser;
 use App\Models\LedgerEntry;
@@ -148,7 +149,7 @@ class PaymentAddressSender {
     }
 
     public function sendByRequestID($request_id, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false, $custom_inputs=false, $built_transaction_to_send=null) {
-        $composed_transaction_model = $this->generateSignedTransactionModelAndUpdateUTXORecords($request_id, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep, $custom_inputs);
+        $composed_transaction_model = $this->generateSignedTransactionModelAndUpdateUTXORecords($request_id, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep, $custom_inputs, $built_transaction_to_send);
         if (!$composed_transaction_model) { return null;}
 
         $signed_transaction_hex = $composed_transaction_model['transaction'];
@@ -158,9 +159,9 @@ class PaymentAddressSender {
         return $sent_tx_id;
     }
 
-    public function send(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false) {
+    public function send(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false, $built_transaction_to_send=null) {
         $request_id = Uuid::uuid4()->toString();
-        return $this->sendByRequestID($request_id, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep);
+        return $this->sendByRequestID($request_id, $payment_address, $destination, $float_quantity, $asset, $float_fee, $float_btc_dust_size, $is_sweep, $_custom_inputs=false, $built_transaction_to_send);
     }
 
     /**
@@ -416,48 +417,53 @@ class PaymentAddressSender {
         // optimize for the lowest total fee with a ratio >= 1
         while (true) {
             ++$attempt_count;
-            Log::debug("TRYING \$working_float_fee=".CurrencyUtil::valueToFormattedString($working_float_fee)." | desired \$fee_per_byte=".CurrencyUtil::valueToFormattedString($fee_per_byte)." \$best_fee_ratio=".CurrencyUtil::valueToFormattedString($best_fee_ratio)." \$best_float_fee=".CurrencyUtil::valueToFormattedString($best_float_fee)." \$is_sweep=".json_encode($is_sweep, 192));
+            Log::debug("TRYING ($attempt_count) \$working_float_fee=".CurrencyUtil::valueToFormattedString($working_float_fee)." | desired \$fee_per_byte=".CurrencyUtil::valueToFormattedString($fee_per_byte)." \$best_fee_ratio=".CurrencyUtil::valueToFormattedString($best_fee_ratio)." \$best_float_fee=".CurrencyUtil::valueToFormattedString($best_float_fee)." \$is_sweep=".json_encode($is_sweep, 192));
 
             // $attempted_float_quantity = $float_quantity;
             // // when calculating a sweep transaction, always adjust the quantity so that all BTC is spent
             // if ($is_sweep) { $attempted_float_quantity = $float_quantity - $working_float_fee; }
             
-            $composed_transaction = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $working_float_fee, $_float_btc_dust_size=null, $is_sweep);
-            $size = strlen($composed_transaction->getTransactionHex()) / 2;
+            try {
+                $composed_transaction = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $working_float_fee, $_float_btc_dust_size=null, $is_sweep);
+                $size = strlen($composed_transaction->getTransactionHex()) / 2;
 
-            $actual_fee_per_byte = ceil($working_float_fee * self::SATOSHI / $size);
+                $actual_fee_per_byte = ceil($working_float_fee * self::SATOSHI / $size);
 
-            $ratio = ($actual_fee_per_byte / $fee_per_byte);
+                $ratio = ($actual_fee_per_byte / $fee_per_byte);
 
-            $ratio_is_acceptable = ($ratio >= 1);
-            Log::debug("RESULT for \$working_float_fee=".CurrencyUtil::valueToFormattedString($working_float_fee)." \$ratio=".round($ratio, 4)." \$actual_fee_per_byte=$actual_fee_per_byte");
+                $ratio_is_acceptable = ($ratio >= 1);
+                Log::debug("RESULT for \$working_float_fee=".CurrencyUtil::valueToFormattedString($working_float_fee)." \$ratio=".round($ratio, 4)." \$actual_fee_per_byte=$actual_fee_per_byte");
 
-            // see if this ratio is better
-            $tx_is_better = ($ratio_is_acceptable AND ($best_float_fee === null OR $working_float_fee < $best_float_fee));
-            if ($tx_is_better) {
-                $best_float_fee = $working_float_fee;
-                $best_composed_transaction = $composed_transaction;
-                $best_fee_ratio = $ratio;
-            }
-            
-            if ($best_composed_transaction) {
-                $ratio_is_good = false;
-                if ($attempt_count >= 2 AND $best_fee_ratio <= 1.05) {
-                    $ratio_is_good = true;
+                // see if this ratio is better
+                $tx_is_better = ($ratio_is_acceptable AND ($best_float_fee === null OR $working_float_fee < $best_float_fee));
+                if ($tx_is_better) {
+                    $best_float_fee = $working_float_fee;
+                    $best_composed_transaction = $composed_transaction;
+                    $best_fee_ratio = $ratio;
                 }
-                if ($attempt_count >= 3 AND $best_fee_ratio <= 1.1) {
-                    $ratio_is_good = true;
+                
+                if ($best_composed_transaction) {
+                    $ratio_is_good = false;
+                    if ($attempt_count >= 2 AND $best_fee_ratio <= 1.05) {
+                        $ratio_is_good = true;
+                    }
+                    if ($attempt_count >= 3 AND $best_fee_ratio <= 1.1) {
+                        $ratio_is_good = true;
+                    }
+                    if ($attempt_count >= 5 AND $best_fee_ratio <= 1.15) {
+                        $ratio_is_good = true;
+                    }
+                    if ($attempt_count >= 7 AND $best_fee_ratio <= 1.2) {
+                        $ratio_is_good = true;
+                    }
+                    if ($ratio_is_good) {
+                        Log::debug("USING \$attempt_count=$attempt_count \$best_float_fee=".CurrencyUtil::valueToFormattedString($best_float_fee)." \$best_fee_ratio=".round($best_fee_ratio, 4)."");
+                        return $best_composed_transaction;
+                    }
                 }
-                if ($attempt_count >= 5 AND $best_fee_ratio <= 1.15) {
-                    $ratio_is_good = true;
-                }
-                if ($attempt_count >= 7 AND $best_fee_ratio <= 1.2) {
-                    $ratio_is_good = true;
-                }
-                if ($ratio_is_good) {
-                    Log::debug("USING \$attempt_count=$attempt_count \$best_float_fee=".CurrencyUtil::valueToFormattedString($best_float_fee)." \$best_fee_ratio=".round($best_fee_ratio, 4)."");
-                    return $best_composed_transaction;
-                }
+            } catch (Exception $e) {
+                Log::debug("FAILED to build transaction");
+                return null;
             }
 
             if ($attempt_count >= 10) {
@@ -521,7 +527,7 @@ class PaymentAddressSender {
                     $debug_strategy_text = 'balanced';
                 }
                 // Log::debug("strategy=$debug_strategy_text Chosen UTXOs: ".$this->debugDumpUTXOs($chosen_txos));
-                if (!$chosen_txos) { throw new Exception("Unable to select transaction outputs (UTXOs)", 1); }
+                if (!$chosen_txos) { throw new CompositionException("Unable to select transaction outputs (UTXOs)", -100); }
 
                 // $signed_transaction = $this->bitcoin_payer->buildSignedTransactionHexToSendBTC($payment_address['address'], $destination, $float_quantity, $wif_private_key, $float_fee);
                 if ($change_address_collection === null) { $change_address_collection = $payment_address['address']; }

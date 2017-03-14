@@ -20,15 +20,15 @@ class TransactionComposerHelper
     }
 
 
-    public function parseCounterpartyTransaction($raw_transaction_hex, $input_satoshis=null) {
-        return $this->parseTransaction($raw_transaction_hex, true, $input_satoshis);
+    public function parseCounterpartyTransaction($raw_transaction_hex, $input_satoshis_or_sample_utxos=null) {
+        return $this->parseTransaction($raw_transaction_hex, true, $input_satoshis_or_sample_utxos);
     }
 
-    public function parseBTCTransaction($raw_transaction_hex, $input_satoshis=null) {
-        return $this->parseTransaction($raw_transaction_hex, false, $input_satoshis);
+    public function parseBTCTransaction($raw_transaction_hex, $input_satoshis_or_sample_utxos=null) {
+        return $this->parseTransaction($raw_transaction_hex, false, $input_satoshis_or_sample_utxos);
     }
 
-    public function parseTransaction($raw_transaction_hex, $is_counterparty=false, $input_satoshis=null) {
+    public function parseTransaction($raw_transaction_hex, $is_counterparty=false, $input_satoshis_or_sample_utxos=null) {
         if (!$raw_transaction_hex) { throw new Exception("Transaction hex was empty", 1); }
 
         $transaction = TransactionFactory::fromHex($raw_transaction_hex);
@@ -122,7 +122,14 @@ class TransactionComposerHelper
         $out['sum_out'] = $sum_out;
 
         // fee and fee_per_byte
-        if ($input_satoshis != null) {
+        if ($input_satoshis_or_sample_utxos != null) {
+            if (is_array($input_satoshis_or_sample_utxos)) {
+                // echo "\$input_satoshis_or_sample_utxos: ".json_encode($input_satoshis_or_sample_utxos, 192)."\n";
+                $input_satoshis = $this->sumInputValues($out['inputs'], $input_satoshis_or_sample_utxos);
+            } else {
+                $input_satoshis = $input_satoshis_or_sample_utxos;
+            }
+
             $out['input'] = $input_satoshis;
             $out['fee'] = $input_satoshis - $sum_out;
             $out['fee_per_byte'] = round($out['fee'] / (strlen($raw_transaction_hex) / 2));
@@ -182,4 +189,19 @@ class TransactionComposerHelper
     }
 
 
+    // 
+    protected function sumInputValues($inputs, $sample_utxos) {
+        $sample_utxo_amounts = [];
+        foreach($sample_utxos as $sample_utxo) {
+            $sample_utxo_amounts[$sample_utxo['txid'].':'.$sample_utxo['n']] = $sample_utxo['amount'];
+        }
+        $sum = 0;
+        foreach($inputs as $input) {
+            $key = $input['txid'].':'.$input['n'];
+            if (isset($sample_utxo_amounts[$key])) {
+                $sum += $sample_utxo_amounts[$key];
+            }
+        }
+        return $sum;
+    }
 }
