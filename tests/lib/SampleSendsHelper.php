@@ -83,6 +83,16 @@ class SampleSendsHelper
         ], $override_vars);
     }
 
+    public function sampleMultisigIssuancePostVars($override_vars=[]) {
+        return array_merge([
+            'quantity'     => 25,
+            'divisible'    => true,
+            'asset'        => 'MYNEWASSET',
+            'description'  => 'hello world',
+            'feePerKB'     => 0.0005,
+        ], $override_vars);
+    }
+
     public function sampleDBVars($override_vars=[]) {
         return $this->sampleVars($override_vars);
     }

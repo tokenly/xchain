@@ -1,6 +1,7 @@
 <?php namespace App\Providers;
 
 use App\Handlers\XChain\Error\XChainErrorCounter;
+use Tokenly\AssetNameUtils\Validator as AssetValidator;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Tokenly\TokenGenerator\TokenGenerator;
@@ -16,6 +17,13 @@ class AppServiceProvider extends ServiceProvider {
 	{
         Validator::extend('fee_priority', function($attribute, $value, $parameters, $validator) {
             return app('App\Blockchain\Sender\FeePriority')->isValid($value);
+        });
+
+        Validator::extend('asset', function($attribute, $value, $parameters, $validator) {
+            if (isset($parameters[0]) AND $parameters[0] == 'multi') {
+                return AssetValidator::isValidAssetNames(splitAssetNames($value));
+            }
+            return AssetValidator::isValidAssetName($value);
         });
 	}
 

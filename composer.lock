@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "3560cb7ea088ea15451dba4f15b4d888",
+    "content-hash": "6d95b2f87c744b97dc96c5fbe1b8d7af",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
@@ -2065,23 +2065,23 @@
         },
         {
             "name": "rmccue/requests",
-            "version": "v1.6.1",
+            "version": "v1.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/rmccue/Requests.git",
-                "reference": "6aac485666c2955077d77b796bbdd25f0013a4ea"
+                "reference": "87932f52ffad70504d93f04f15690cf16a089546"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/rmccue/Requests/zipball/6aac485666c2955077d77b796bbdd25f0013a4ea",
-                "reference": "6aac485666c2955077d77b796bbdd25f0013a4ea",
+                "url": "https://api.github.com/repos/rmccue/Requests/zipball/87932f52ffad70504d93f04f15690cf16a089546",
+                "reference": "87932f52ffad70504d93f04f15690cf16a089546",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.2"
             },
             "require-dev": {
-                "satooshi/php-coveralls": "dev-master"
+                "requests/test-server": "dev-master"
             },
             "type": "library",
             "autoload": {
@@ -2110,7 +2110,7 @@
                 "iri",
                 "sockets"
             ],
-            "time": "2014-05-18T04:59:02+00:00"
+            "time": "2016-10-13T00:11:37+00:00"
         },
         {
             "name": "swiftmailer/swiftmailer",
@@ -3150,16 +3150,16 @@
         },
         {
             "name": "tokenly/copay-client",
-            "version": "dev-master",
+            "version": "v0.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/copay-client.git",
-                "reference": "1e1b2ced20a4ff3bdd69c82931fad992f385d45c"
+                "reference": "79eaa461246ceba9a4bf76a6b34276db437b7d0c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/copay-client/zipball/1e1b2ced20a4ff3bdd69c82931fad992f385d45c",
-                "reference": "1e1b2ced20a4ff3bdd69c82931fad992f385d45c",
+                "url": "https://api.github.com/repos/tokenly/copay-client/zipball/79eaa461246ceba9a4bf76a6b34276db437b7d0c",
+                "reference": "79eaa461246ceba9a4bf76a6b34276db437b7d0c",
                 "shasum": ""
             },
             "require": {
@@ -3190,7 +3190,7 @@
                 }
             ],
             "description": "A Copay protocol client",
-            "time": "2016-11-01 14:14:26"
+            "time": "2017-03-22T15:33:32+00:00"
         },
         {
             "name": "tokenly/counterparty-asset-info-cache",
@@ -3283,16 +3283,16 @@
         },
         {
             "name": "tokenly/counterparty-transaction-composer",
-            "version": "v1.1.1",
+            "version": "v1.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-composer.git",
-                "reference": "50f7ac1943ff77000731a546e54fe33c6c9c5882"
+                "reference": "21258816ffd6ffa4bdeccce6f7bc6250e2d88408"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/50f7ac1943ff77000731a546e54fe33c6c9c5882",
-                "reference": "50f7ac1943ff77000731a546e54fe33c6c9c5882",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-composer/zipball/21258816ffd6ffa4bdeccce6f7bc6250e2d88408",
+                "reference": "21258816ffd6ffa4bdeccce6f7bc6250e2d88408",
                 "shasum": ""
             },
             "require": {
@@ -3325,7 +3325,7 @@
                 }
             ],
             "description": "Composes counterparty and bitcoin transactions",
-            "time": "2017-03-10T18:44:55+00:00"
+            "time": "2017-03-22T15:41:00+00:00"
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
@@ -5735,8 +5735,7 @@
         "tokenly/xcaller-client": 20,
         "tokenly/laravel-blocking-beanstalkd": 20,
         "tokenly/consul-health-daemon": 20,
-        "tokenly/laravel-record-lock": 20,
-        "tokenly/copay-client": 20
+        "tokenly/laravel-record-lock": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
