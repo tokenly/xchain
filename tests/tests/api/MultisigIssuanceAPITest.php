@@ -50,7 +50,7 @@ class MultisigIssuanceAPITest extends TestCase {
         ], '/'.$payment_address['uuid']);
     }
 
-    public function testAPIAddMultisigIssuance() {
+    public function testAPIAddMultisigNumericIssuance() {
         // install mocks
         app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
         $mock = app('CopayClientMockHelper')->mockCopayClient()->shouldIgnoreMissing();
@@ -72,6 +72,48 @@ class MultisigIssuanceAPITest extends TestCase {
         $issuance_response = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/multisig/issuances/'.$payment_address['uuid'], $posted_vars, 200);
         PHPUnit::assertEquals('11111111-2222-3333-4444-a94fbfbddfbd', $issuance_response['txProposalId']);
         PHPUnit::assertEquals('baz', $issuance_response['copayTransaction']['bar']);
+        PHPUnit::assertEquals('A10203205023283554629', $issuance_response['asset']);
+        PHPUnit::assertEquals(25, $issuance_response['quantity']);
+
+        PHPUnit::assertEquals([
+            'counterpartyType' => 'issuance',
+            'amountSat'        => '2500000000',
+            'token'            => 'A10203205023283554629',
+            'divisible'        => true,
+            'description'      => 'hello world',
+            'feePerKBSat'      => 50000,
+        ], $copay_client_sign_args[1]);
+
+        Mockery::close();
+    }
+
+    public function testAPIAddMultisigNamedIssuance() {
+        // install mocks
+        app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        $mock = app('CopayClientMockHelper')->mockCopayClient()->shouldIgnoreMissing();
+        $copay_client_sign_args = [];
+        $mock->shouldReceive('proposePublishAndSignTransaction')->once()
+            ->andReturnUsing(function() use (&$copay_client_sign_args) {
+                // save passed args
+                $args = func_get_args();
+                foreach($args as $_k => $_v) { $copay_client_sign_args[$_k] = $_v; }
+
+                return ['id' => '11111111-2222-3333-4444-a94fbfbddfbd','bar'=>'baz'];
+            });
+
+        // create a multisig payment address
+        $payment_address = $this->paymentAddressHelper()->createSampleMultisigPaymentAddress();
+
+        // add some XCP
+        $this->paymentAddressHelper()->addBalancesToPaymentAddressAccountWithoutUTXOs([
+            'XCP' => 2,
+        ], $payment_address);
+
+        $api_tester = $this->getAPITester();
+        $posted_vars = app('SampleSendsHelper')->sampleMultisigIssuancePostVars(['asset' => 'MYNEWASSET']);
+        $issuance_response = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/multisig/issuances/'.$payment_address['uuid'], $posted_vars, 200);
+        PHPUnit::assertEquals('11111111-2222-3333-4444-a94fbfbddfbd', $issuance_response['txProposalId']);
+        PHPUnit::assertEquals('baz', $issuance_response['copayTransaction']['bar']);
         PHPUnit::assertEquals('MYNEWASSET', $issuance_response['asset']);
         PHPUnit::assertEquals(25, $issuance_response['quantity']);
 
@@ -87,6 +129,21 @@ class MultisigIssuanceAPITest extends TestCase {
         Mockery::close();
     }
 
+    public function testCheckXCPBalanceForAddMultisigIssuance() {
+        // install mocks
+        app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        $mock = app('CopayClientMockHelper')->mockCopayClient()->shouldIgnoreMissing();
+        $copay_client_sign_args = [];
+
+        // create a multisig payment address
+        $payment_address = $this->paymentAddressHelper()->createSampleMultisigPaymentAddress();
+
+        $api_tester = $this->getAPITester();
+        $posted_vars = app('SampleSendsHelper')->sampleMultisigIssuancePostVars(['asset' => 'MYNEWASSET']);
+        $issuance_response = $api_tester->callAPIWithAuthenticationAndReturnJSONContent('POST', '/api/v1/multisig/issuances/'.$payment_address['uuid'], $posted_vars, 412);
+        PHPUnit::assertContains('Not enough confirmed XCP to issue this asset', $issuance_response['message']);
+        Mockery::close();
+    }
 
 
 

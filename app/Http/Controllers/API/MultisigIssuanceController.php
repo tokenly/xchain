@@ -5,7 +5,10 @@ namespace App\Http\Controllers\API;
 use App\Blockchain\Sender\Exception\BitcoinDaemonException;
 use App\Http\Controllers\API\Base\APIController;
 use App\Http\Requests\API\Send\ComposeMultisigIssuanceRequest;
+use App\Models\LedgerEntry;
+use App\Providers\Accounts\Facade\AccountHandler;
 use App\Repositories\APICallRepository;
+use App\Repositories\LedgerEntryRepository;
 use App\Repositories\PaymentAddressRepository;
 use App\Repositories\SendRepository;
 use Exception;
@@ -15,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Ramsey\Uuid\Uuid;
+use Tokenly\AssetNameUtils\Validator as AssetValidator;
 use Tokenly\CopayClient\CopayClient;
 use Tokenly\CopayClient\CopayWallet;
 use Tokenly\CounterpartyAssetInfoCache\Cache;
@@ -33,7 +37,7 @@ class MultisigIssuanceController extends APIController {
      *
      * @return Response
      */
-    public function proposeSignAndPublishIssuance(APIControllerHelper $helper, ComposeMultisigIssuanceRequest $request, SendRepository $send_repository, PaymentAddressRepository $payment_address_repository, Cache $asset_cache, CopayClient $copay_client, $address_uuid) {
+    public function proposeSignAndPublishIssuance(APIControllerHelper $helper, ComposeMultisigIssuanceRequest $request, SendRepository $send_repository, PaymentAddressRepository $payment_address_repository, LedgerEntryRepository $ledger_entry_repository, Cache $asset_cache, CopayClient $copay_client, $address_uuid) {
         // attributes
         $request_attributes = $request->only(array_keys($request->rules()));
 
@@ -49,6 +53,14 @@ class MultisigIssuanceController extends APIController {
             $wait_time = (app()->environment() == 'testing' ? 1 : self::COMPOSE_LOCK_TIME);
             $acquired_lock = RecordLock::acquireOnce($record_lock_key, $wait_time);
             if (!$acquired_lock) { throw new HttpResponseException(new JsonResponse(['message' => 'Unable to compose a new transaction for this address.'], 500)); }
+
+            // check XCP balance for vanity tokens
+            if (!AssetValidator::isValidFreeAssetName($request_attributes['asset'])) {
+                $xcp_balance_float = $ledger_entry_repository->accountBalance(AccountHandler::getAccount($payment_address), 'XCP', LedgerEntry::CONFIRMED);
+                if ($xcp_balance_float < 0.5) {
+                    throw new HttpResponseException(new JsonResponse(['message' => 'Not enough confirmed XCP to issue this asset'], 412));
+                }
+            }
 
             $is_divisible = !!$request_attributes['divisible'];
             $quantity = CryptoQuantity::fromFloat($request_attributes['quantity'], $is_divisible);

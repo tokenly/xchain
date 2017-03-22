@@ -87,7 +87,7 @@ class SampleSendsHelper
         return array_merge([
             'quantity'     => 25,
             'divisible'    => true,
-            'asset'        => 'MYNEWASSET',
+            'asset'        => 'A10203205023283554629',
             'description'  => 'hello world',
             'feePerKB'     => 0.0005,
         ], $override_vars);
