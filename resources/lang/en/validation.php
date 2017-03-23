@@ -4,6 +4,7 @@ return [
 
     // custom
     'fee_priority' => 'The :attribute must be a valid fee priority like low, medium, high or a number between 1 and 1000.',
+    'asset'        => 'The :attribute must be a valid token name.',
 
 	/*
 	|--------------------------------------------------------------------------
