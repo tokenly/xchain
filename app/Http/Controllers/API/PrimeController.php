@@ -150,6 +150,11 @@ class PrimeController extends APIController {
                 if ($desired_new_primes_count_to_create > 0) {
                     list($built_transaction_to_send, $actual_new_primes_count_to_create) = $this->buildPrimeTransactionWithFeePerByte($payment_address_sender, $payment_address, $float_size, $desired_new_primes_count_to_create, $fee, $fee_per_byte);
 
+                    if ($actual_new_primes_count_to_create <= $current_primed_count) {
+                        // don't bother if the number of primes won't increase
+                        throw new Exception("Unable to create any new primed transactions", 400);
+                    }
+
                     if ($built_transaction_to_send) {
                         // send the pre-built transaction
                         $txid = $payment_address_sender->send($payment_address, $_destination=null, $_float_quantity=0, 'BTC', $_float_fee=null, $_float_btc_dust_size=null, $_is_sweep=false, $built_transaction_to_send);

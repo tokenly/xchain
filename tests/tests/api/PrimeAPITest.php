@@ -190,13 +190,33 @@ class PrimeAPITest extends TestCase {
 
     }
 
+    public function testFeeRateTooHighCreatePrimesAPI()
+    {
+        $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        // setup
+        list($payment_address, $sample_txos) = $this->setupSimpleSmallPrimes(3);
+
+        // api tester
+        $api_tester = $this->getAPITester();
+        $create_primes_vars = [
+            'size'  => CurrencyUtil::satoshisToValue(30000),
+            'count' => 5,
+            'feeRate' => 85,
+        ];
+        $response = $api_tester->callAPIWithAuthentication('POST', '/api/v1/primes/'.$payment_address['uuid'], $create_primes_vars);
+        PHPUnit::assertEquals(400, $response->getStatusCode());
+        $api_data = json_decode($response->getContent(), true);
+        PHPUnit::assertEquals('Unable to create any new primed transactions', $api_data['errors'][0]);
+    }
+
     public function testTooHighFeeRateCreatePrimesAPI_1() {
         // what happens when the fee rate is too high to create any number of primes?
 
         $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
         // setup
-        list($payment_address, $sample_txos) = $this->setupSimpleSmallPrime();
+        list($payment_address, $sample_txos) = $this->setupSimpleSmallPrimes();
 
         // api tester
         $api_tester = $this->getAPITester();
@@ -207,12 +227,9 @@ class PrimeAPITest extends TestCase {
         ];
         $response = $api_tester->callAPIWithAuthentication('POST', '/api/v1/primes/'.$payment_address['uuid'], $create_primes_vars);
         $api_data = json_decode($response->getContent(), true);
-        PHPUnit::assertArrayNotHasKey('message', $api_data, "Found unexpected message: ".(isset($api_data['message']) ? $api_data['message'] : null));
-
-        PHPUnit::assertEquals(0, $api_data['oldPrimedCount']);
-        PHPUnit::assertEquals(0, $api_data['newPrimedCount']);
-        PHPUnit::assertEmpty($api_data['txid']);
-        PHPUnit::assertEquals(false, $api_data['primed']);
+        PHPUnit::assertEquals(400, $response->getStatusCode());
+        $api_data = json_decode($response->getContent(), true);
+        PHPUnit::assertEquals('Unable to create any new primed transactions', $api_data['errors'][0]);
     }
 
     public function testTooHighFeeRateCreatePrimesAPI_2() {
@@ -221,7 +238,7 @@ class PrimeAPITest extends TestCase {
         $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
 
         // setup
-        list($payment_address, $sample_txos) = $this->setupSimpleSmallPrime();
+        list($payment_address, $sample_txos) = $this->setupSimpleSmallPrimes();
 
         // api tester
         $api_tester = $this->getAPITester();
@@ -305,7 +322,7 @@ $api_data: {
     }
 
 
-    protected function setupSimpleSmallPrime() {
+    protected function setupSimpleSmallPrimes($count=1) {
         // mock the xcp sender
         $user = $this->app->make('\UserHelper')->createSampleUser();
         $payment_address = $this->app->make('\PaymentAddressHelper')->createSamplePaymentAddressWithoutInitialBalances($user);
@@ -314,7 +331,9 @@ $api_data: {
         $txo_helper = app('SampleTXOHelper');
         $sample_txos = [];
         $txid = $txo_helper->nextTXID();
-        $sample_txos[0] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txid, 'amount' => 30000,  'n' => 0]);
+        for ($i=0; $i < $count; $i++) { 
+            $sample_txos[$i] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txid, 'amount' => 30000,  'n' => $i]);
+        }
 
         return [$payment_address, $sample_txos];
     }
