@@ -462,6 +462,7 @@ class PaymentAddressSender {
                     }
                 }
             } catch (Exception $e) {
+                EventLog::logError('compose.feeestimation.error', $e);
                 Log::debug("FAILED to build transaction");
                 return null;
             }
