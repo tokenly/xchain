@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Blockchain\Sender\Exception\BitcoinDaemonException;
+use App\Blockchain\Sender\FeePriority;
 use App\Http\Controllers\API\Base\APIController;
 use App\Http\Requests\API\Send\ComposeMultisigSendRequest;
 use App\Repositories\APICallRepository;
@@ -33,7 +34,7 @@ class MultisigSendController extends APIController {
      *
      * @return Response
      */
-    public function publishSignedSend(APIControllerHelper $helper, ComposeMultisigSendRequest $request, SendRepository $send_respository, PaymentAddressRepository $payment_address_repository, Cache $asset_cache, CopayClient $copay_client, $address_uuid) {
+    public function publishSignedSend(APIControllerHelper $helper, ComposeMultisigSendRequest $request, SendRepository $send_respository, PaymentAddressRepository $payment_address_repository, Cache $asset_cache, FeePriority $fee_priority, CopayClient $copay_client, $address_uuid) {
         // attributes
         $request_attributes = $request->only(array_keys($request->rules()));
 
@@ -68,15 +69,22 @@ class MultisigSendController extends APIController {
             }
 
             list($send_model, $transaction_proposal) = $send_respository->executeWithNewLockedSendByRequestID($request_id, $create_attributes, 
-                function($locked_send) use ($copay_client, $request_attributes, $payment_address, $is_divisible, $send_respository) {
+                function($locked_send) use ($copay_client, $request_attributes, $payment_address, $is_divisible, $send_respository, $fee_priority) {
                     $wallet = $payment_address->getCopayWallet();
                     $copay_client = $payment_address->getCopayClient($wallet);
+
+                    if (isset($request_attributes['feePerKB'])) {
+                        $fee_sat_per_kb = CurrencyUtil::valueToSatoshis($request_attributes['feePerKB']);
+                    } else {
+                        $fee_rate = isset($request_attributes['feeRate']) ? $request_attributes['feeRate'] : 'medium';
+                        $fee_sat_per_kb = $fee_priority->getSatoshisPerByte($fee_rate) * 1024;
+                    }
 
                     $args = [
                         'address'     => $locked_send['destination'],
                         'amountSat'   => $locked_send['quantity_sat'],
                         'token'       => $locked_send['asset'],
-                        'feePerKBSat' => CurrencyUtil::valueToSatoshis($request_attributes['feePerKB']),
+                        'feePerKBSat' => $fee_sat_per_kb,
                         'divisible'   => $is_divisible,
                     ];
 

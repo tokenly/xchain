@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Blockchain\Sender\Exception\BitcoinDaemonException;
+use App\Blockchain\Sender\FeePriority;
 use App\Http\Controllers\API\Base\APIController;
 use App\Http\Requests\API\Send\ComposeMultisigIssuanceRequest;
 use App\Models\LedgerEntry;
@@ -37,7 +38,7 @@ class MultisigIssuanceController extends APIController {
      *
      * @return Response
      */
-    public function proposeSignAndPublishIssuance(APIControllerHelper $helper, ComposeMultisigIssuanceRequest $request, SendRepository $send_repository, PaymentAddressRepository $payment_address_repository, LedgerEntryRepository $ledger_entry_repository, Cache $asset_cache, CopayClient $copay_client, $address_uuid) {
+    public function proposeSignAndPublishIssuance(APIControllerHelper $helper, ComposeMultisigIssuanceRequest $request, SendRepository $send_repository, PaymentAddressRepository $payment_address_repository, LedgerEntryRepository $ledger_entry_repository, Cache $asset_cache, FeePriority $fee_priority, CopayClient $copay_client, $address_uuid) {
         // attributes
         $request_attributes = $request->only(array_keys($request->rules()));
 
@@ -79,9 +80,16 @@ class MultisigIssuanceController extends APIController {
             $description = $request_attributes['description'];
 
             list($send_model, $transaction_proposal) = $send_repository->executeWithNewLockedSendByRequestID($request_id, $create_attributes, 
-                function($locked_send) use ($copay_client, $request_attributes, $payment_address, $is_divisible, $description, $send_repository) {
+                function($locked_send) use ($copay_client, $request_attributes, $payment_address, $is_divisible, $description, $send_repository, $fee_priority) {
                     $wallet = $payment_address->getCopayWallet();
                     $copay_client = $payment_address->getCopayClient($wallet);
+
+                    if (isset($request_attributes['feePerKB'])) {
+                        $fee_sat_per_kb = CurrencyUtil::valueToSatoshis($request_attributes['feePerKB']);
+                    } else {
+                        $fee_rate = isset($request_attributes['feeRate']) ? $request_attributes['feeRate'] : 'medium';
+                        $fee_sat_per_kb = $fee_priority->getSatoshisPerByte($fee_rate) * 1024;
+                    }
 
                     $args = [
                         'counterpartyType' => 'issuance',
@@ -89,7 +97,7 @@ class MultisigIssuanceController extends APIController {
                         'token'            => $locked_send['asset'],
                         'divisible'        => $is_divisible,
                         'description'      => $description,
-                        'feePerKBSat'      => CurrencyUtil::valueToSatoshis($request_attributes['feePerKB']),
+                        'feePerKBSat'      => $fee_sat_per_kb,
                     ];
 
                     // no message for issuances

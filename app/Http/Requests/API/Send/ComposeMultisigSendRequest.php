@@ -20,9 +20,13 @@ class ComposeMultisigSendRequest extends APIRequest {
         $validator->after(function () use ($validator)
         {
             // validate destination
-            $destination = $this->json('destination');
+            $destination = $this->input('destination');
             if (!AddressValidator::isValid($destination)) {
                 $validator->errors()->add('destination', 'The destination was invalid.');
+            }
+
+            if (strlen($this->input('feePerKB')) AND strlen($this->input('feeRate'))) {
+                $validator->errors()->add('destination', 'feePerKB and feeRate cannot both be specified');
             }
         });
 
@@ -41,6 +45,7 @@ class ComposeMultisigSendRequest extends APIRequest {
             'destination'        => 'required',
             'quantity'           => 'numeric|notIn:0',
             'feePerKB'           => 'numeric|notIn:0',
+            'feeRate'            => 'sometimes',
             'dust_size'          => 'numeric',
             'asset'              => 'required|min:3',
             'requestId'          => 'max:36',

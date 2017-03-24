@@ -11,6 +11,19 @@ use LinusU\Bitcoin\AddressValidator;
 
 class ComposeMultisigIssuanceRequest extends APIRequest {
 
+    public function getValidatorInstance()
+    {
+        $validator = parent::getValidatorInstance();
+
+        $validator->after(function () use ($validator)
+        {
+            if (strlen($this->input('feePerKB')) AND strlen($this->input('feeRate'))) {
+                $validator->errors()->add('destination', 'feePerKB and feeRate cannot both be specified');
+            }
+        });
+
+        return $validator;
+    }
 
     /**
      * Get the validation rules that apply to the request.
@@ -25,6 +38,7 @@ class ComposeMultisigIssuanceRequest extends APIRequest {
             'divisible'   => 'boolean',
             'description' => 'max:41',
             'feePerKB'    => 'numeric|notIn:0',
+            'feeRate'     => 'sometimes',
             'requestId'   => 'max:36',
             'message'     => 'max:255',
         ];

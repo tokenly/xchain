@@ -12,7 +12,7 @@ use \PHPUnit_Framework_Assert as PHPUnit;
 class MultisigSendAPITest extends TestCase {
 
     protected $useDatabase = true;
-    // protected $useRealSQLiteDatabase = true;
+    protected $mock_fee_priorities = true;
 
     public function testAPIErrorsAddMultisigSend()
     {
@@ -57,6 +57,16 @@ class MultisigSendAPITest extends TestCase {
                 ],
                 'expectedErrorString' => 'asset field is required',
             ],
+            [
+                'postVars' => [
+                    'destination' => '1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j',
+                    'quantity'    => 5,
+                    'feePerKB'    => 0.0001,
+                    'feeRate'     => 'medium',
+                    'asset'       => 'SOUP',
+                ],
+                'expectedErrorString' => 'feePerKB and feeRate cannot both be specified',
+            ],
         ], '/'.$payment_address['uuid']);
     }
 
@@ -93,6 +103,46 @@ class MultisigSendAPITest extends TestCase {
         unset($expected_loaded_resource['copayTransaction']);
         $loaded_send = $api_tester->testAddResource($posted_vars, $expected_created_resource, '/'.$payment_address['uuid'], $expected_loaded_resource);
 
+        PHPUnit::assertEquals(50000, $copay_client_sign_args[1]['feePerKBSat']);
+        PHPUnit::assertEquals('My test message', $copay_client_sign_args[1]['message']);
+        Mockery::close();
+    }
+
+    public function testAPIAddMultisigSendWithFeeRate() {
+        // install mocks
+        app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        $mock = app('CopayClientMockHelper')->mockCopayClient()->shouldIgnoreMissing();
+        $copay_client_sign_args = [];
+        $mock->shouldReceive('proposePublishAndSignTransaction')->once()
+            ->andReturnUsing(function() use (&$copay_client_sign_args) {
+                // save passed args
+                $args = func_get_args();
+                foreach($args as $_k => $_v) { $copay_client_sign_args[$_k] = $_v; }
+
+                return ['id' => '11111111-2222-3333-4444-a94fbfbddfbd','bar'=>'baz'];
+            });
+
+        // create a multisig payment address
+        $payment_address = $this->paymentAddressHelper()->createSampleMultisigPaymentAddress();
+
+        $api_tester = $this->getAPITester();
+        $posted_vars = app('SampleSendsHelper')->sampleMultisigPostVars(['feeRate' => 'medium']);
+        unset($posted_vars['feePerKB']);
+        $expected_created_resource = [
+            'id'               => '{{response.id}}',
+            'destination'      => '1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j',
+            'quantity'         => 25.0,
+            'asset'            => 'TOKENLY',
+            'requestId'        => '{{response.requestId}}',
+            'txProposalId'     => '11111111-2222-3333-4444-a94fbfbddfbd',
+            'copayTransaction' => '{{response.copayTransaction}}',
+        ];
+        $expected_loaded_resource = ['sweep' => false] + $expected_created_resource;
+        unset($expected_loaded_resource['txProposalId']);
+        unset($expected_loaded_resource['copayTransaction']);
+        $loaded_send = $api_tester->testAddResource($posted_vars, $expected_created_resource, '/'.$payment_address['uuid'], $expected_loaded_resource);
+
+        PHPUnit::assertEquals(120832, $copay_client_sign_args[1]['feePerKBSat']);
         PHPUnit::assertEquals('My test message', $copay_client_sign_args[1]['message']);
         Mockery::close();
     }
