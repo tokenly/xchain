@@ -193,7 +193,7 @@ class SimpleAPITester
     
     protected function runErrorScenario($method, $url_path, $posted_vars, $expected_error) {
         $response = $this->callAPIWithAuthentication($method, $this->url_base.$url_path, $posted_vars);
-        PHPUnit::assertEquals(400, $response->getStatusCode(), "Response was: ".$response->getContent());
+        PHPUnit::assertEquals('4', substr($response->getStatusCode(),0,1), "Expected 4xx error.  Response was: (".$response->getStatusCode().") ".$response->getContent());
         $response_data = json_decode($response->getContent(), true);
         $error = (isset($response_data['errors']) ? implode(", ", $response_data['errors']) : (isset($response_data['message']) ? $response_data['message'] : ''));
         PHPUnit::assertContains($expected_error, $error);

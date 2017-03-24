@@ -119,6 +119,9 @@ class PrimeController extends APIController {
             $fee_per_byte = null;
             $fee_priority_string = $request->input('feeRate');
             if ($fee_priority_string !== null) {
+                if ($fee !== null) {
+                    throw new Exception("You cannot specify a fee rate and a fee", 400);
+                }
                 try {
                     $fee_per_byte = $fee_priority->getSatoshisPerByte($fee_priority_string);
                 } catch (Exception $e) {

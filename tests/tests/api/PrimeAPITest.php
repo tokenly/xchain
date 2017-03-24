@@ -35,6 +35,16 @@ class PrimeAPITest extends TestCase {
                 ],
                 'expectedErrorString' => 'Invalid size',
             ],
+            [
+                'method' => 'POST',
+                'postVars' => [
+                    'size'    => 2,
+                    'count'   => 2,
+                    'fee'     => 0.0001,
+                    'feeRate' => 80,
+                ],
+                'expectedErrorString' => 'You cannot specify a fee rate and a fee',
+            ],
         ], '/'.$payment_address['uuid']);
     }
 

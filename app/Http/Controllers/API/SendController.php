@@ -112,6 +112,12 @@ class SendController extends APIController {
             if ($fee_per_byte === null) {
                 return new JsonResponse(['message' => 'Invalid fee rate'], 422);
             }
+            if ($custom_inputs !== false) {
+                return new JsonResponse(['message' => 'You cannot specify a fee rate with utxo_override.'], 422);
+            }
+            if (isset($request_attributes['fee'])) {
+                return new JsonResponse(['message' => 'You cannot specify a fee rate and a fee.'], 422);
+            }
             $float_fee = 0;
         }
 

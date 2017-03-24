@@ -64,6 +64,28 @@ class SendAPITest extends TestCase {
                 'expectedErrorString' => 'request id may not be greater than 36 characters.',
             ],
 
+            [
+                'postVars' => [
+                    'destination'   => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD',
+                    'quantity'      => 1,
+                    'asset'         => 'TOKENLY',
+                    'utxo_override' => 'foo',
+                    'feeRate'       => 80,
+                ],
+                'expectedErrorString' => 'You cannot specify a fee rate with utxo_override.',
+            ],
+
+            [
+                'postVars' => [
+                    'destination' => '1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD',
+                    'quantity'    => 1,
+                    'asset'       => 'TOKENLY',
+                    'feeRate'     => 80,
+                    'fee'         => 0.0001,
+                ],
+                'expectedErrorString' => 'You cannot specify a fee rate and a fee.',
+            ],
+
         ], '/'.$payment_address['uuid']);
     }
 
