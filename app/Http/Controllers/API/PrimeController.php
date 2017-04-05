@@ -190,25 +190,10 @@ class PrimeController extends APIController {
 
     protected function buildPrimeTransactionWithFeePerByte($payment_address_sender, $payment_address, $float_size, $desired_prime_count, $float_fee, $fee_per_byte) {
         $built_prime_count = $desired_prime_count;
-        while ($built_prime_count > 0) {
-            // $float_quantity = $built_prime_count * $float_prime_size;
-            try {
-                $built_transaction_to_send = $this->buildComposedPrimingTransaction($payment_address_sender, $payment_address, $float_size, $built_prime_count, $float_fee, $fee_per_byte);
-                if ($built_transaction_to_send) {
-                    return [$built_transaction_to_send, $built_prime_count];
-                }
-            } catch (CompositionException $e) {
-                if ($e->getCode() == -100) {
-                    // not enough BTC to compose this transaction
-                    //   fall through to try one less prime
-                } else {
-                    throw $e;
-                }
-            }
-            
-            --$built_prime_count;
+        $built_transaction_to_send = $this->buildComposedPrimingTransaction($payment_address_sender, $payment_address, $float_size, $built_prime_count, $float_fee, $fee_per_byte);
+        if ($built_transaction_to_send) {
+            return [$built_transaction_to_send, $built_prime_count];
         }
-
         return [null, null];
     }
 

@@ -206,7 +206,7 @@ class PrimeAPITest extends TestCase {
         ];
         $response = $api_tester->callAPIWithAuthentication('POST', '/api/v1/primes/'.$payment_address['uuid'], $create_primes_vars);
         $api_data = json_decode($response->getContent(), true);
-        echo "\$api_data: ".json_encode($api_data, 192)."\n";
+        // echo "\$api_data: ".json_encode($api_data, 192)."\n";
         PHPUnit::assertEquals(400, $response->getStatusCode());
         PHPUnit::assertEquals('Unable to create any new primed transactions', $api_data['errors'][0]);
     }
@@ -249,28 +249,9 @@ class PrimeAPITest extends TestCase {
         ];
         $response = $api_tester->callAPIWithAuthentication('POST', '/api/v1/primes/'.$payment_address['uuid'], $create_primes_vars);
         $api_data = json_decode($response->getContent(), true);
-        PHPUnit::assertArrayNotHasKey('message', $api_data, "Found unexpected message: ".(isset($api_data['message']) ? $api_data['message'] : null));
-
-        PHPUnit::assertEquals(0, $api_data['oldPrimedCount']);
-        PHPUnit::assertEquals(2, $api_data['newPrimedCount']);
-        PHPUnit::assertNotEmpty($api_data['txid']);
-        PHPUnit::assertEquals(true, $api_data['primed']);
-
-        // check the composed transaction
-        $composed_transaction_raw = DB::connection('untransacted')->table('composed_transactions')->first();
-        $send_data = app('TransactionComposerHelper')->parseBTCTransaction($composed_transaction_raw->transaction, $sample_txos);
-        $bitcoin_address = $payment_address['address'];
-        PHPUnit::assertCount(2, $send_data['change']);
-        PHPUnit::assertEquals($bitcoin_address, $send_data['destination']);
-        PHPUnit::assertEquals(5430, $send_data['btc_amount']);
-        PHPUnit::assertEquals($bitcoin_address, $send_data['change'][0][0]);
-        PHPUnit::assertEquals(5430, $send_data['change'][0][1]);
-        PHPUnit::assertEquals($bitcoin_address, $send_data['change'][1][0]);
-        PHPUnit::assertEquals(5154, $send_data['change'][1][1]);
-        
-        PHPUnit::assertEquals(54, $send_data['fee_per_byte']);
-
-        // echo "\$send_data: ".json_encode($send_data, 192)."\n";
+        // this should error out and not do anything
+        PHPUnit::assertEquals(400, $response->getStatusCode());
+        PHPUnit::assertEquals('Unable to create any new primed transactions', $api_data['errors'][0]);
     }
 
     public function testTooHighFeeRateCreatePrimesAPI_3() {
@@ -309,6 +290,30 @@ class PrimeAPITest extends TestCase {
         $composed_transaction_raw = DB::connection('untransacted')->table('composed_transactions')->first();
         $send_data = app('TransactionComposerHelper')->parseBTCTransaction($composed_transaction_raw->transaction, $sample_txos);
         // echo "\$send_data: ".json_encode($send_data, 192)."\n";
+    }
+
+    public function testFeeRateTooHighCreatePrimesAPI_4()
+    {
+
+        // if we can't create ALL of the requested primes, don't create ANY
+
+        $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        // setup
+        list($payment_address, $sample_txos) = $this->setupSimpleSmallPrimes(3);
+
+        // api tester
+        $api_tester = $this->getAPITester();
+        $create_primes_vars = [
+            'size'  => CurrencyUtil::satoshisToValue(30000),
+            'count' => 5,
+            'feeRate' => 100,
+        ];
+        $response = $api_tester->callAPIWithAuthentication('POST', '/api/v1/primes/'.$payment_address['uuid'], $create_primes_vars);
+        $api_data = json_decode($response->getContent(), true);
+        // echo "\$api_data: ".json_encode($api_data, 192)."\n";
+        PHPUnit::assertEquals(400, $response->getStatusCode());
+        PHPUnit::assertEquals('Unable to create any new primed transactions', $api_data['errors'][0]);
     }
 
 
