@@ -217,7 +217,7 @@ class SendAPITest extends TestCase {
         PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $send_details['destination']);
         PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(100), $send_details['quantity']);
         PHPUnit::assertEquals('TOKENLY', $send_details['asset']);
-        PHPUnit::assertEquals(19875, $send_details['fee']);
+        PHPUnit::assertEquals(19800, $send_details['fee']); // 264 * 75
         PHPUnit::assertEquals(75, $send_details['fee_per_byte']);
     }
 
@@ -293,14 +293,14 @@ class SendAPITest extends TestCase {
         PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $send_details['destination']);
         PHPUnit::assertEquals('TOKENLY', $send_details['asset']);
         PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(0.00005430), $send_details['btc_amount']);
-        $expected_asset_fee_sat = 19875;
+        $expected_asset_fee_sat = 19800; // 264 * 75
         PHPUnit::assertEquals(75, $send_details['fee_per_byte']);
         PHPUnit::assertEquals($expected_asset_fee_sat, $send_details['fee']);
 
         $remaining_btc = CurrencyUtil::valueToSatoshis(1) - $expected_asset_fee_sat - 5430;
         $send_details = $transaction_composer_helper->parseBTCTransaction($mock_calls['btcd'][1]['args'][0], $remaining_btc);
         // echo "BTC \$send_details: ".json_encode($send_details, 192)."\n";
-        $expected_btc_fee_sat = 14400;
+        $expected_btc_fee_sat = 10000;
         PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $send_details['destination']);
         PHPUnit::assertEquals(CurrencyUtil::valueToSatoshis(1) - 5430 - $expected_asset_fee_sat - $expected_btc_fee_sat, $send_details['btc_amount']);
     }

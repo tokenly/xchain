@@ -133,6 +133,7 @@ class TransactionComposerHelper
             $out['input'] = $input_satoshis;
             $out['fee'] = $input_satoshis - $sum_out;
             $out['fee_per_byte'] = round($out['fee'] / (strlen($raw_transaction_hex) / 2));
+            $out['size'] = (strlen($raw_transaction_hex) / 2);
         }
 
         return $out;

@@ -2,6 +2,7 @@
 
 namespace App\Blockchain\Sender;
 
+use App\Blockchain\Sender\CoinSelector;
 use App\Blockchain\Sender\Exception\BitcoinDaemonException;
 use App\Blockchain\Sender\Exception\CompositionException;
 use App\Blockchain\Sender\FeePriority;
@@ -42,6 +43,8 @@ class PaymentAddressSender {
 
     const DEFAULT_REGULAR_DUST_SIZE = 0.00005430;
     const MINIMUM_DUST_SIZE         = 0.00005000;
+
+    const ASSET_SEND_OP_RETURN_SIZE = 28;
 
     public function __construct(XCPDClient $xcpd_client, Bitcoind $bitcoind, CounterpartySender $xcpd_sender, BitcoinPayer $bitcoin_payer, BitcoinAddressGenerator $address_generator, Cache $asset_cache, ComposedTransactionRepository $composed_transaction_repository, TXOChooser $txo_chooser, Composer $transaction_composer, TXORepository $txo_repository, LedgerEntryRepository $ledger_entry_repository, PaymentAddressRepository $payment_address_repository, FeePriority $fee_priority) {
         $this->xcpd_client                     = $xcpd_client;
@@ -214,7 +217,7 @@ class PaymentAddressSender {
 
     public function estimateSizeWithFee(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size = null, $is_sweep=false) {
         $change_address_collection = null;
-        $composed_transaction = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep);
+        $composed_transaction = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $_fee_per_byte=null, $float_btc_dust_size, $is_sweep);
         $size = strlen($composed_transaction->getTransactionHex()) / 2;
         return $size;
     }
@@ -228,7 +231,7 @@ class PaymentAddressSender {
         if ($fee_per_byte AND !$is_sweep) {
             $composed_transaction = $this->buildBestComposedTransactionWithFeePerByte($fee_per_byte, $payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee);
         } else {
-            $composed_transaction = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep);
+            $composed_transaction = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $_fee_per_byte=null, $float_btc_dust_size, $is_sweep);
         }
         return $composed_transaction;
     }
@@ -244,7 +247,7 @@ class PaymentAddressSender {
         if ($fee_per_byte AND !$is_sweep) {
             $built_transaction_to_send = $this->buildBestComposedTransactionWithFeePerByte($fee_per_byte, $payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee);
         } else {
-            $built_transaction_to_send = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep);
+            $built_transaction_to_send = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $_fee_per_byte=null, $float_btc_dust_size, $is_sweep);
         }
 
         // get the transaction variables
@@ -289,7 +292,7 @@ class PaymentAddressSender {
                 if ($fee_per_byte AND !$is_sweep AND !$custom_inputs) {
                     $built_transaction_to_send = $this->buildBestComposedTransactionWithFeePerByte($fee_per_byte, $payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee);
                 } else {
-                    $built_transaction_to_send = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $float_btc_dust_size, $is_sweep, $custom_inputs);
+                    $built_transaction_to_send = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $_fee_per_byte=null, $float_btc_dust_size, $is_sweep, $custom_inputs);
                 }
             }
 
@@ -405,86 +408,18 @@ class PaymentAddressSender {
     }
 
     protected function buildBestComposedTransactionWithFeePerByte($fee_per_byte, PaymentAddress $payment_address, $destination, $float_quantity, $asset, $change_address_collection, $is_sweep=false) {
-        $attempt_count = 0;
-
-        $working_float_fee = 0;
-
-        $best_composed_transaction = null;
-        $best_float_fee = null;
-        $best_fee_ratio = null;
-
-        
-        // optimize for the lowest total fee with a ratio >= 1
-        while (true) {
-            ++$attempt_count;
-            Log::debug("TRYING ($attempt_count) \$working_float_fee=".CurrencyUtil::valueToFormattedString($working_float_fee)." | desired \$fee_per_byte=".CurrencyUtil::valueToFormattedString($fee_per_byte)." \$best_fee_ratio=".CurrencyUtil::valueToFormattedString($best_fee_ratio)." \$best_float_fee=".CurrencyUtil::valueToFormattedString($best_float_fee)." \$is_sweep=".json_encode($is_sweep, 192));
-
-            // $attempted_float_quantity = $float_quantity;
-            // // when calculating a sweep transaction, always adjust the quantity so that all BTC is spent
-            // if ($is_sweep) { $attempted_float_quantity = $float_quantity - $working_float_fee; }
-            
-            try {
-                $composed_transaction = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $working_float_fee, $_float_btc_dust_size=null, $is_sweep);
-                $size = strlen($composed_transaction->getTransactionHex()) / 2;
-
-                $actual_fee_per_byte = ceil($working_float_fee * self::SATOSHI / $size);
-
-                $ratio = ($actual_fee_per_byte / $fee_per_byte);
-
-                $ratio_is_acceptable = ($ratio >= 1);
-                Log::debug("RESULT for \$working_float_fee=".CurrencyUtil::valueToFormattedString($working_float_fee)." \$ratio=".round($ratio, 4)." \$actual_fee_per_byte=$actual_fee_per_byte");
-
-                // see if this ratio is better
-                $tx_is_better = ($ratio_is_acceptable AND ($best_float_fee === null OR $working_float_fee < $best_float_fee));
-                if ($tx_is_better) {
-                    $best_float_fee = $working_float_fee;
-                    $best_composed_transaction = $composed_transaction;
-                    $best_fee_ratio = $ratio;
-                }
-                
-                if ($best_composed_transaction) {
-                    $ratio_is_good = false;
-                    if ($attempt_count >= 2 AND $best_fee_ratio <= 1.05) {
-                        $ratio_is_good = true;
-                    }
-                    if ($attempt_count >= 3 AND $best_fee_ratio <= 1.1) {
-                        $ratio_is_good = true;
-                    }
-                    if ($attempt_count >= 5 AND $best_fee_ratio <= 1.15) {
-                        $ratio_is_good = true;
-                    }
-                    if ($attempt_count >= 7 AND $best_fee_ratio <= 1.2) {
-                        $ratio_is_good = true;
-                    }
-                    if ($ratio_is_good) {
-                        Log::debug("USING \$attempt_count=$attempt_count \$best_float_fee=".CurrencyUtil::valueToFormattedString($best_float_fee)." \$best_fee_ratio=".round($best_fee_ratio, 4)."");
-                        return $best_composed_transaction;
-                    }
-                }
-            } catch (Exception $e) {
-                EventLog::logError('compose.feeestimation.error', $e);
-                Log::debug("FAILED to build transaction");
-                return null;
-            }
-
-            if ($attempt_count >= 10) {
-                EventLog::logError('compose.feeestimation.failure', 'attempted 10 times', [
-                    'payment_address_id' => $payment_address['id'],
-                    'qty'                => $float_quantity,
-                    'asset'              => $asset,
-                    'destination'        => $destination,
-                ]);
-                Log::debug("USING (timed out) \$attempt_count=$attempt_count \$best_float_fee=".CurrencyUtil::valueToFormattedString($best_float_fee)." \$best_fee_ratio=".round($best_fee_ratio, 4)."");
-                return $best_composed_transaction;
-            }
-
-            // set the next fee
-            $working_float_fee = round($fee_per_byte * $size / self::SATOSHI, 8);
+        try {
+            $composed_transaction = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $_float_fee=null, $fee_per_byte, $_float_btc_dust_size=null, $is_sweep);
+            return $composed_transaction;
+        } catch (Exception $e) {
+            EventLog::logError('compose.feeestimation.error', $e);
+            Log::debug("FAILED to build transaction");
+            return null;
         }
     }
 
-    protected function buildComposedTransaction(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $change_address_collection=null, $float_fee=null, $float_btc_dust_size=null, $is_sweep=false, $utxo_override=false) {
-        Log::debug("buildComposedTransaction \$float_quantity=".json_encode($float_quantity, 192)." \$asset=".json_encode($asset, 192)." \$float_fee=".json_encode($float_fee, 192)." \$float_btc_dust_size=".json_encode($float_btc_dust_size, 192)." is_sweep=".json_encode($is_sweep, 192));
+    protected function buildComposedTransaction(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $change_address_collection=null, $float_fee=null, $fee_per_byte=null, $float_btc_dust_size=null, $is_sweep=false, $utxo_override=false) {
+        Log::debug("buildComposedTransaction \$float_quantity=".json_encode($float_quantity, 192)." \$asset=".json_encode($asset, 192)." \$float_fee=".json_encode($float_fee, 192)." \$fee_per_byte=".json_encode($fee_per_byte, 192)." \$float_btc_dust_size=".json_encode($float_btc_dust_size, 192)." is_sweep=".json_encode($is_sweep, 192));
         $signed_transaction = null;
 
         if ($float_fee === null)            { $float_fee            = self::DEFAULT_FEE; }
@@ -519,7 +454,14 @@ class PaymentAddressSender {
                 if (is_array($utxo_override) AND count($utxo_override) > 0){
                     $chosen_txos = $this->txo_chooser->chooseSpecificUTXOs($payment_address, $utxo_override);
                     $debug_strategy_text = 'custom';
+                } else if ($fee_per_byte !== null) {
+                    $coin_group = $this->selectCoinGroupForPaymentAddress($payment_address, $fee_per_byte, $float_quantity, $destination, $change_address_collection, false);
+                    if (!$coin_group) { throw new CompositionException("Unable to select transaction outputs (UTXOs)", -100); }
+                    $chosen_txos = $coin_group['txos'];
+                    $debug_strategy_text = 'fee_per_byte';
+                    $float_fee = CurrencyUtil::satoshisToValue($coin_group['fee']);
                 } else if ($this->isPrimeSend($payment_address, $destination)) {
+                    // prime send (with standard fee)
                     $float_prime_size = $this->getPrimeSendSize($destination, $float_quantity);
                     $chosen_txos = $this->txo_chooser->chooseUTXOsForPriming($payment_address, $float_quantity, $float_fee, null, $float_prime_size);
                     $debug_strategy_text = 'prime';
@@ -536,7 +478,7 @@ class PaymentAddressSender {
 
                 // parse the composed transaction as a sanity check
                 try {
-                    $_debug_parsed_tx = app('\TransactionComposerHelper')->parseBTCTransaction($composed_transaction->getTransactionHex());
+                    $_debug_parsed_tx = app('\TransactionComposerHelper')->parseBTCTransaction($composed_transaction->getTransactionHex(), $chosen_txos);
                     Log::debug("BTC send: \$_debug_parsed_tx=".json_encode($_debug_parsed_tx, 192));
                     // Log::debug("BTC send: \$signed_tx=".$composed_transaction->getTransactionHex());
                 } catch (Exception $e) {
@@ -561,9 +503,15 @@ class PaymentAddressSender {
                 // compose the Counterpary and BTC transaction
                 if (is_array($utxo_override) AND count($utxo_override) > 0){
                     $chosen_txos = $this->txo_chooser->chooseSpecificUTXOs($payment_address, $utxo_override);
+                } else if ($fee_per_byte !== null) {
+                    $coin_group = $this->selectCoinGroupForPaymentAddress($payment_address, $fee_per_byte, $float_btc_dust_size, $destination, $change_address_collection, true);
+                    if (!$coin_group) { throw new CompositionException("Unable to select transaction outputs (UTXOs)", -100); }
+                    $chosen_txos = $coin_group['txos'];
+                    $float_fee = CurrencyUtil::satoshisToValue($coin_group['fee']);
                 } else {
                     $chosen_txos = $this->txo_chooser->chooseUTXOs($payment_address, $float_btc_dust_size, $float_fee);
                 }
+
                 Log::info('Txos: '.json_encode($chosen_txos));
                 Log::debug("Counterparty send Chosen UTXOs: ".$this->debugDumpUTXOs($chosen_txos));
 
@@ -573,8 +521,8 @@ class PaymentAddressSender {
 
                 // parse the composed transaction as a sanity check
                 try {
-                    $_debug_parsed_tx = app('\TransactionComposerHelper')->parseCounterpartyTransaction($composed_transaction->getTransactionHex());
-                     // Log::debug("Counterparty send: \$_debug_parsed_tx=".json_encode($_debug_parsed_tx, 192));
+                    $_debug_parsed_tx = app('\TransactionComposerHelper')->parseCounterpartyTransaction($composed_transaction->getTransactionHex(), $chosen_txos);
+                     Log::debug("Counterparty send: \$_debug_parsed_tx=".json_encode($_debug_parsed_tx, 192));
                 } catch (Exception $e) {
                     $qty_desc = (($quantity instanceof Quantity) ? $quantity->getRawValue() : $quantity);
                     $msg = "Error parsing new send of $qty_desc $asset to $destination";
@@ -730,6 +678,71 @@ class PaymentAddressSender {
         } else {
             return $float_quantity;
         }
+    }
+
+    // ------------------------------------------------------------------------
+    
+    protected function selectCoinGroupForPaymentAddress(PaymentAddress $payment_address, $fee_per_byte, $float_quantity, $destination_or_destinations, $change_address_collection, $is_asset_send) {
+        $utxos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::UNCONFIRMED, TXO::CONFIRMED], true)->toArray();
+
+        // build destination outputs
+        $outputs = [];
+        if (is_array($destination_or_destinations)) {
+            foreach($destination_or_destinations as $destination_pair) {
+                if (isset($destination_pair[1])) {
+                    $float_amount = $destination_pair[1];
+                    $outputs[] = ['amount' => CurrencyUtil::valueToSatoshis($float_amount)];
+                }
+            }
+        } else {
+            $outputs[] = ['amount' => CurrencyUtil::valueToSatoshis($float_quantity)];
+        }
+
+        // build change outputs
+        if ($change_address_collection AND is_array($change_address_collection)) {
+            foreach($change_address_collection as $change_address_collection_entry) {
+                if (isset($change_address_collection_entry[1])) {
+                    $float_amount = $change_address_collection_entry[1];
+                    $outputs[] = ['amount' => CurrencyUtil::valueToSatoshis($float_amount)];
+                }
+            }
+        }
+
+        // build the selector with the utxos and outputs
+        $selector = new CoinSelector($utxos, $outputs, $fee_per_byte);
+
+
+        // set prime size
+        if ($this->isPrimeSend($payment_address, $destination_or_destinations)) {
+            $float_prime_size = $this->getPrimeSendSize($destination_or_destinations, $float_quantity);
+            $prime_input_size = CurrencyUtil::valueToSatoshis($float_prime_size);
+            $selector->setPrimeInputSize($prime_input_size);
+        }
+
+        // set OP_RETURN
+        if ($is_asset_send) {
+            $selector->setOpReturnSize(self::ASSET_SEND_OP_RETURN_SIZE);
+        }
+
+
+        $coin_group = $selector->chooseCoins(); 
+        if (!$coin_group) {
+            EventLog::debug('coins.selection.failed', [
+                'quantity'         => $float_quantity,
+                'paymentAddressID' => $payment_address['uuid'],
+                'feePerByte'       => $fee_per_byte,
+            ]);
+            return null;
+        }
+
+        EventLog::debug('coins.selected', [
+            'in_amount'     => $coin_group['in_amount'],
+            'change_amount' => $coin_group['change_amount'],
+            'fee'           => $coin_group['fee'],
+            'size'          => $coin_group['size'],
+        ]);
+
+        return $coin_group;
     }
 
     // ------------------------------------------------------------------------

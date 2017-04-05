@@ -150,7 +150,7 @@ class PrimeController extends APIController {
                 if ($desired_new_primes_count_to_create > 0) {
                     list($built_transaction_to_send, $actual_new_primes_count_to_create) = $this->buildPrimeTransactionWithFeePerByte($payment_address_sender, $payment_address, $float_size, $desired_new_primes_count_to_create, $fee, $fee_per_byte);
 
-                    if ($actual_new_primes_count_to_create <= $current_primed_count) {
+                    if ($actual_new_primes_count_to_create <= 0) {
                         // don't bother if the number of primes won't increase
                         throw new Exception("Unable to create any new primed transactions", 400);
                     }

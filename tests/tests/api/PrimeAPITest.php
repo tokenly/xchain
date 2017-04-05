@@ -202,11 +202,12 @@ class PrimeAPITest extends TestCase {
         $create_primes_vars = [
             'size'  => CurrencyUtil::satoshisToValue(30000),
             'count' => 5,
-            'feeRate' => 85,
+            'feeRate' => 200,
         ];
         $response = $api_tester->callAPIWithAuthentication('POST', '/api/v1/primes/'.$payment_address['uuid'], $create_primes_vars);
-        PHPUnit::assertEquals(400, $response->getStatusCode());
         $api_data = json_decode($response->getContent(), true);
+        echo "\$api_data: ".json_encode($api_data, 192)."\n";
+        PHPUnit::assertEquals(400, $response->getStatusCode());
         PHPUnit::assertEquals('Unable to create any new primed transactions', $api_data['errors'][0]);
     }
 
@@ -223,12 +224,11 @@ class PrimeAPITest extends TestCase {
         $create_primes_vars = [
             'size'  => CurrencyUtil::satoshisToValue(5430),
             'count' => 3,
-            'feeRate' => 120,
+            'feeRate' => 250,
         ];
         $response = $api_tester->callAPIWithAuthentication('POST', '/api/v1/primes/'.$payment_address['uuid'], $create_primes_vars);
         $api_data = json_decode($response->getContent(), true);
         PHPUnit::assertEquals(400, $response->getStatusCode());
-        $api_data = json_decode($response->getContent(), true);
         PHPUnit::assertEquals('Unable to create any new primed transactions', $api_data['errors'][0]);
     }
 
@@ -245,7 +245,7 @@ class PrimeAPITest extends TestCase {
         $create_primes_vars = [
             'size'  => CurrencyUtil::satoshisToValue(5430),
             'count' => 3,
-            'feeRate' => 40,
+            'feeRate' => 54,
         ];
         $response = $api_tester->callAPIWithAuthentication('POST', '/api/v1/primes/'.$payment_address['uuid'], $create_primes_vars);
         $api_data = json_decode($response->getContent(), true);
@@ -266,10 +266,48 @@ class PrimeAPITest extends TestCase {
         PHPUnit::assertEquals($bitcoin_address, $send_data['change'][0][0]);
         PHPUnit::assertEquals(5430, $send_data['change'][0][1]);
         PHPUnit::assertEquals($bitcoin_address, $send_data['change'][1][0]);
-        PHPUnit::assertEquals(8740, $send_data['change'][1][1]);
+        PHPUnit::assertEquals(5154, $send_data['change'][1][1]);
         
-        PHPUnit::assertEquals(40, $send_data['fee_per_byte']);
+        PHPUnit::assertEquals(54, $send_data['fee_per_byte']);
 
+        // echo "\$send_data: ".json_encode($send_data, 192)."\n";
+    }
+
+    public function testTooHighFeeRateCreatePrimesAPI_3() {
+        // never spend primes to make primes
+        $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        // setup
+        list($payment_address, $sample_txos) = $this->setupSimpleSmallPrimes(5);
+
+        // 2 existing primes
+        $txo_helper = app('SampleTXOHelper');
+        $i = count($sample_txos);
+        $txid = $txo_helper->nextTXID();
+        $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txid, 'amount' => 5430,  'n' => $i]);
+        $i = count($sample_txos);
+        $txid = $txo_helper->nextTXID();
+        $sample_txos[] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txid, 'amount' => 5430,  'n' => $i]);
+
+        // api tester
+        $api_tester = $this->getAPITester();
+        $create_primes_vars = [
+            'size'    => CurrencyUtil::satoshisToValue(5430),
+            'count'   => 3,
+            'feeRate' => 10,
+        ];
+        $response = $api_tester->callAPIWithAuthentication('POST', '/api/v1/primes/'.$payment_address['uuid'], $create_primes_vars);
+        $api_data = json_decode($response->getContent(), true);
+        PHPUnit::assertArrayNotHasKey('errors', $api_data, "Found unexpected errors: ".(isset($api_data['errors']) ? implode("\n", $api_data['errors']) : null));
+
+        PHPUnit::assertEquals(2, $api_data['oldPrimedCount']);
+        PHPUnit::assertEquals(3, $api_data['newPrimedCount']);
+        PHPUnit::assertNotEmpty($api_data['txid']);
+        PHPUnit::assertEquals(true, $api_data['primed']);
+
+        // check the composed transaction
+        $composed_transaction_raw = DB::connection('untransacted')->table('composed_transactions')->first();
+        $send_data = app('TransactionComposerHelper')->parseBTCTransaction($composed_transaction_raw->transaction, $sample_txos);
         // echo "\$send_data: ".json_encode($send_data, 192)."\n";
     }
 
