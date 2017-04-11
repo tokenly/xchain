@@ -91,6 +91,9 @@ $router->get('api/v1/validate/{address}', ['as' => 'validateAddress', 'uses' => 
 // estimate fee
 $router->post('api/v1/estimatefee/{addressId}', 'API\SendController@estimateFee');
 
+// get fee rates
+$router->get('api/v1/feerates', 'API\SendController@getFeeRates');
+
 // cleanup UTXOs
 $router->post('api/v1/cleanup/{addressId}', 'API\SendController@cleanup');
 

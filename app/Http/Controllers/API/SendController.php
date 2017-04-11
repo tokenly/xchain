@@ -58,6 +58,16 @@ class SendController extends APIController {
         return $this->cleanupFromRequest($helper, $request, $payment_address_respository, $txo_repository, $send_respository, $address_sender, $auth, $api_call_repository, $id);
     }
 
+    public function getFeeRates(APIControllerHelper $helper, FeePriority $fee_priority) {
+        $raw_rates = $fee_priority->getFeeRates();
+        $out = [];
+        foreach($raw_rates as $desc => $rate_sat) {
+            $out[$desc] = CurrencyUtil::satoshisToValue($rate_sat);
+            $out[$desc.'Sat'] = $rate_sat;
+        }
+        return $out;
+    }
+
     /**
      * Display the specified resource.
      *

@@ -24,15 +24,7 @@ class FeePriority {
     }
 
     public function getSatoshisPerByte($fee_priority_string) {
-        if (stristr($fee_priority_string, 'block')) {
-            $fee_priority_string = strtolower($fee_priority_string);
-            if (preg_match('!^([\d.]+)\s*blocks?$!', $fee_priority_string, $matches)) {
-                $blocks_delay = max(0, floatval($matches[1]) - 1);
-                return $this->resolveBitcoinFee($blocks_delay);
-            }
-        }
-
-        // resolve a number a fee per byte
+        // resolve a fee per byte number
         if (is_numeric($fee_priority_string)) {
             $fee_priority_string = intval($fee_priority_string);
             if ($fee_priority_string >= self::MIN_PRIORITY AND $fee_priority_string <= self::MAX_PRIORITY) {
@@ -41,45 +33,27 @@ class FeePriority {
             throw new Exception("Invalid numeric fee: $fee_priority_string", 1);
         }
 
-        $blocks_delay = null;
-        switch (strtolower(trim($fee_priority_string))) {
-            case 'low':
-            case 'lo':
-                $blocks_delay = 143; // 24 hours
-                break;
-
-            case 'medlow':
-            case 'lowmed':
-                $blocks_delay = 15; // 3 hours
-                break;
-
-            case 'medium':
-            case 'med':
-                $blocks_delay = 5; // 1 hour
-                break;
-
-            case 'medhigh':
-            case 'highmed':
-                $blocks_delay = 2; // 30 min.
-                break;
-
-            case 'high':
-            case 'hi':
-                $blocks_delay = 0; // 10 min
-                break;
-        }
-
-        if ($blocks_delay === null) {
-            throw new Exception("Unknown fee string: $fee_priority_string", 1);
-        }
-
-        return $this->resolveBitcoinFee($blocks_delay);
+        return $this->resolveBitcoinFee($this->blocksDelayFromFeePriorityString($fee_priority_string));
     }
 
-    public function resolveBitcoinFee($blocks_delay) {
-        $list = $this->fee_cache->getFeesList();
+    public function getFeeRates() {
+        $fees_list = $this->fee_cache->getFeesList();
+        $fees = [
+            'low'     => $this->resolveBitcoinFee($this->blocksDelayFromFeePriorityString('low'),     $fees_list),
+            'medlow'  => $this->resolveBitcoinFee($this->blocksDelayFromFeePriorityString('medlow'),  $fees_list),
+            'medium'  => $this->resolveBitcoinFee($this->blocksDelayFromFeePriorityString('medium'),  $fees_list),
+            'medhigh' => $this->resolveBitcoinFee($this->blocksDelayFromFeePriorityString('medhigh'), $fees_list),
+            'high'    => $this->resolveBitcoinFee($this->blocksDelayFromFeePriorityString('high'),    $fees_list),
+        ];
+        return $fees;
+    }
 
-        list($previous, $current) = $this->getPreviousAndCurrentEntriesForBlocksDelay($blocks_delay, $list);
+    public function resolveBitcoinFee($blocks_delay, $fees_list=null) {
+        if ($fees_list === null) {
+            $fees_list = $this->fee_cache->getFeesList();
+        }
+
+        list($previous, $current) = $this->getPreviousAndCurrentEntriesForBlocksDelay($blocks_delay, $fees_list);
         $fee = $current['minFee'];
         if ($current['maxDelay'] < $blocks_delay) {
             $min_delay = $current['maxDelay'];
@@ -96,10 +70,46 @@ class FeePriority {
         return $fee;
     }
 
-    protected function getPreviousAndCurrentEntriesForBlocksDelay($blocks_delay, $list) {
+    // ------------------------------------------------------------------------
+
+    protected function blocksDelayFromFeePriorityString($fee_priority_string) {
+        if (stristr($fee_priority_string, 'block')) {
+            $fee_priority_string = strtolower($fee_priority_string);
+            if (preg_match('!^([\d.]+)\s*blocks?$!', $fee_priority_string, $matches)) {
+                $blocks_delay = max(0, floatval($matches[1]) - 1);
+                return $blocks_delay;
+            }
+        }
+
+        switch (strtolower(trim($fee_priority_string))) {
+            case 'low':
+            case 'lo':
+                return 143; // 24 hours
+
+            case 'medlow':
+            case 'lowmed':
+                return 15; // 3 hours
+
+            case 'medium':
+            case 'med':
+                return 5; // 1 hour
+
+            case 'medhigh':
+            case 'highmed':
+                return 2; // 30 min.
+
+            case 'high':
+            case 'hi':
+                return 0; // 10 min
+        }
+
+        throw new Exception("Unknown fee string: $fee_priority_string", 1);
+    }
+
+    protected function getPreviousAndCurrentEntriesForBlocksDelay($blocks_delay, $fees_list) {
         $previous = null;
-        $count = count($list);
-        foreach($list as $index => $entry) {
+        $count = count($fees_list);
+        foreach($fees_list as $index => $entry) {
             if ($entry['maxDelay'] <= $blocks_delay OR $index >= $count - 1) {
                 return [$previous === null ? $entry : $previous, $entry];
             }
