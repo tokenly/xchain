@@ -39,6 +39,7 @@ class ComposeMultisigIssuanceRequest extends APIRequest {
             'description' => 'max:41',
             'feePerKB'    => 'numeric|notIn:0',
             'feeRate'     => 'sometimes',
+            'feeSat'      => 'sometimes',
             'requestId'   => 'max:36',
             'message'     => 'max:255',
         ];
