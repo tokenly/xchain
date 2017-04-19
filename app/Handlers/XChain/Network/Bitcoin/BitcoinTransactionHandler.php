@@ -533,7 +533,7 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             }
 
             // for sends, try and find the send request by the txid
-            if ($event_type == 'send') {
+            if ($event_type == 'send' OR $event_type == 'issuance') {
                 $loaded_send_model = $this->send_repository->findByTXID($parsed_tx['txid']);
 
                 if (!$loaded_send_model) {
