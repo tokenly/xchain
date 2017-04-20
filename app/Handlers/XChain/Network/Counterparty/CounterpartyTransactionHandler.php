@@ -63,7 +63,18 @@ class CounterpartyTransactionHandler extends BitcoinTransactionHandler {
             return null;
         }
 
+        // for issuances, ensure that the tx is resolved
+        $loaded_send_model = null;
+        if ($counterparty_event_type == 'issuance') {
+            $loaded_send_model = $this->loadSendModelByTxidAndAddress($parsed_tx['txid'], $monitored_address['address']);
+        }
+
         $notification = parent::buildNotification($event_type, $parsed_tx, $quantity, $sources, $destinations, $confirmations, $block, $block_seq, $monitored_address, $event_monitor);
+
+        // add the request id for issuances
+        if ($counterparty_event_type == 'issuance' AND $loaded_send_model) {
+            $notification['requestId'] = $loaded_send_model['request_id'];
+        }
 
         // add the counterparty Tx details
         $notification['counterpartyTx'] = $parsed_tx['counterpartyTx'];

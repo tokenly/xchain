@@ -533,18 +533,8 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
             }
 
             // for sends, try and find the send request by the txid
-            if ($event_type == 'send' OR $event_type == 'issuance') {
-                $loaded_send_model = $this->send_repository->findByTXID($parsed_tx['txid']);
-
-                if (!$loaded_send_model) {
-                    // no txid was assigned yet to this send
-                    //   try to find recent sends with tx proposals and assign the txid if we can
-                    $any_resolved = $this->resolveTXIDsFromAddress($monitored_address['address']);
-                    if ($any_resolved) {
-                        $loaded_send_model = $this->send_repository->findByTXID($parsed_tx['txid']);
-                    }
-                }
-
+            if ($event_type == 'send') {
+                $loaded_send_model = $this->loadSendModelByTxidAndAddress($parsed_tx['txid'], $monitored_address['address']);
                 if ($loaded_send_model) {
                     $notification['requestId'] = $loaded_send_model['request_id'];
                 } else {
@@ -560,6 +550,20 @@ class BitcoinTransactionHandler implements NetworkTransactionHandler {
         return $notification;
     }
     
+    protected function loadSendModelByTxidAndAddress($txid, $bitcoin_address) {
+        $loaded_send_model = $this->send_repository->findByTXID($txid);
+
+        if (!$loaded_send_model) {
+            // no txid was assigned yet to this send
+            //   try to find recent sends with tx proposals and assign the txid if we can
+            $any_resolved = $this->resolveTXIDsFromAddress($bitcoin_address);
+            if ($any_resolved) {
+                $loaded_send_model = $this->send_repository->findByTXID($txid);
+            }
+        }
+
+        return $loaded_send_model;
+    }
 
     protected function wlog($text) {
         Log::info($text);
