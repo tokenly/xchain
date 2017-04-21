@@ -20,6 +20,12 @@ class ComposeMultisigIssuanceRequest extends APIRequest {
             if (strlen($this->input('feePerKB')) AND strlen($this->input('feeRate'))) {
                 $validator->errors()->add('destination', 'feePerKB and feeRate cannot both be specified');
             }
+            if (strlen($this->input('feePerKB')) AND strlen($this->input('feeSat'))) {
+                $validator->errors()->add('destination', 'feePerKB and feeSat cannot both be specified');
+            }
+            if (strlen($this->input('feeRate')) AND strlen($this->input('feeSat'))) {
+                $validator->errors()->add('destination', 'feeRate and feeSat cannot both be specified');
+            }
         });
 
         return $validator;
@@ -39,6 +45,7 @@ class ComposeMultisigIssuanceRequest extends APIRequest {
             'description' => 'max:41',
             'feePerKB'    => 'numeric|notIn:0',
             'feeRate'     => 'sometimes',
+            'feeSat'      => 'sometimes',
             'requestId'   => 'max:36',
             'message'     => 'max:255',
         ];

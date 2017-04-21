@@ -84,7 +84,11 @@ class MultisigIssuanceController extends APIController {
                     $wallet = $payment_address->getCopayWallet();
                     $copay_client = $payment_address->getCopayClient($wallet);
 
-                    if (isset($request_attributes['feePerKB'])) {
+                    $fee_sat        = null;
+                    $fee_sat_per_kb = null;
+                    if (isset($request_attributes['feeSat'])) {
+                        $fee_sat = intval($request_attributes['feeSat']);
+                    } else if (isset($request_attributes['feePerKB'])) {
                         $fee_sat_per_kb = CurrencyUtil::valueToSatoshis($request_attributes['feePerKB']);
                     } else {
                         $fee_rate = isset($request_attributes['feeRate']) ? $request_attributes['feeRate'] : 'medium';
@@ -97,8 +101,13 @@ class MultisigIssuanceController extends APIController {
                         'token'            => $locked_send['asset'],
                         'divisible'        => $is_divisible,
                         'description'      => $description,
-                        'feePerKBSat'      => $fee_sat_per_kb,
                     ];
+
+                    if ($fee_sat !== null) {
+                        $args['feeSat'] = $fee_sat;
+                    } else {
+                        $args['feePerKBSat'] = $fee_sat_per_kb;
+                    }
 
                     // no message for issuances
                     // if (isset($request_attributes['message'])) {
