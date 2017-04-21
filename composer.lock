@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "1e9ad2134b7ab97b781d2ce621ad7597",
+    "content-hash": "d05c5e8da7e98d9d14d324db0cd45734",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
@@ -3150,16 +3150,16 @@
         },
         {
             "name": "tokenly/copay-client",
-            "version": "v0.1.1",
+            "version": "v0.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/copay-client.git",
-                "reference": "fcacf7ffaf08505248b88eab8f31ce999ac7e9f1"
+                "reference": "33f289bf7a67a09798810223c2ec1210e350e000"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/copay-client/zipball/fcacf7ffaf08505248b88eab8f31ce999ac7e9f1",
-                "reference": "fcacf7ffaf08505248b88eab8f31ce999ac7e9f1",
+                "url": "https://api.github.com/repos/tokenly/copay-client/zipball/33f289bf7a67a09798810223c2ec1210e350e000",
+                "reference": "33f289bf7a67a09798810223c2ec1210e350e000",
                 "shasum": ""
             },
             "require": {
@@ -3190,7 +3190,7 @@
                 }
             ],
             "description": "A Copay protocol client",
-            "time": "2017-04-13T01:37:16+00:00"
+            "time": "2017-04-21T12:38:54+00:00"
         },
         {
             "name": "tokenly/counterparty-asset-info-cache",

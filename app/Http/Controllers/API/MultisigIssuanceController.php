@@ -105,6 +105,7 @@ class MultisigIssuanceController extends APIController {
 
                     if ($fee_sat !== null) {
                         $args['feeSat'] = $fee_sat;
+                        $args['inputs'] = $this->determineInputsForExactFee($copay_client, $wallet, $fee_sat);
                     } else {
                         $args['feePerKBSat'] = $fee_sat_per_kb;
                     }
@@ -142,6 +143,56 @@ class MultisigIssuanceController extends APIController {
     }
 
     // ------------------------------------------------------------------------
+
+    protected function determineInputsForExactFee(CopayClient $copay_client, CopayWallet $wallet, $fee_sat) {
+        $utxos = collect($copay_client->getUtxos($wallet));
+
+        // reject locked utxos
+        //   then sort by most satoshis to least (confirmations break a tie)
+        $utxos = $utxos
+            ->reject(function($utxo) {
+                return $utxo['locked'];
+            })
+            ->sort(function($a, $b) {
+                if ($a['satoshis'] == $b['satoshis']) {
+                    return $b['confirmations'] - $a['confirmations'];
+                }
+                return $b['satoshis'] - $a['satoshis'];
+            });
+
+
+        // The first exact match wins
+        foreach($utxos as $utxo) {
+            if ($utxo['satoshis'] == $fee_sat) {
+                return [$utxo];
+            }
+        }
+
+        // use the highest confirmed UTXO
+        $confirmed_utxos = $utxos->reject(function($utxo) { return $utxo['confirmations'] < 1; });
+        if ($confirmed_utxos[0]['satoshis'] >= $fee_sat) {
+            return [$confirmed_utxos[0]];
+        }
+
+        // use the highest unconfirmed UTXO
+        if ($utxos[0]['satoshis'] >= $fee_sat) {
+            return [$utxos[0]];
+        }
+
+        // sum all confirmed utxos
+        if ($confirmed_utxos->sum('satoshis') >= $fee_sat) {
+            return $confirmed_utxos->toArray();
+        }
+
+        // sum all confirmed and unconfirmed utxos
+        if ($utxos->sum('satoshis') >= $fee_sat) {
+            return $utxos->toArray();
+        }
+
+        // unable to meet the fee
+        throw new Exception("Unable to choose inputs to meet this fee", 1);
+    }
+
     
     protected function buildRecordLockKey($payment_address) {
         return 'compose-issuance/'.$payment_address['uuid'];
