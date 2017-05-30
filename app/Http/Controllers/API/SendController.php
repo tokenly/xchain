@@ -235,6 +235,10 @@ class SendController extends APIController {
                         $float_btc_dust_size       = null;
                         $is_sweep                  = false;
                         $built_transaction_to_send = $address_sender->composeUnsignedTransaction($payment_address, ($is_multisend ? $destinations : $destination), $float_quantity, $asset, $change_address_collection, $float_fee, $fee_per_byte, $float_btc_dust_size, $is_sweep);
+                        if (!$built_transaction_to_send) {
+                            $error = $built_transaction_to_send->getLastErrorMessage();
+                            throw new PaymentException($error ? $error : "Failed to build transaction", 1);
+                        }
 
                         // get the actual calculated fee
                         $float_fee = $built_transaction_to_send->feeFloat();

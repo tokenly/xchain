@@ -46,6 +46,8 @@ class PaymentAddressSender {
 
     const ASSET_SEND_OP_RETURN_SIZE = 28;
 
+    protected $last_composition_error_data = null;
+
     public function __construct(XCPDClient $xcpd_client, Bitcoind $bitcoind, CounterpartySender $xcpd_sender, BitcoinPayer $bitcoin_payer, BitcoinAddressGenerator $address_generator, Cache $asset_cache, ComposedTransactionRepository $composed_transaction_repository, TXOChooser $txo_chooser, Composer $transaction_composer, TXORepository $txo_repository, LedgerEntryRepository $ledger_entry_repository, PaymentAddressRepository $payment_address_repository, FeePriority $fee_priority) {
         $this->xcpd_client                     = $xcpd_client;
         $this->bitcoind                        = $bitcoind;
@@ -228,6 +230,8 @@ class PaymentAddressSender {
      * @return ComposedTransaction $composed_transaction
      */
     public function composeUnsignedTransaction(PaymentAddress $payment_address, $destination, $float_quantity, $asset, $change_address_collection=null, $float_fee=null, $fee_per_byte=null, $float_btc_dust_size=null, $is_sweep=false) {
+        $this->resetLastError();
+
         if ($fee_per_byte AND !$is_sweep) {
             $composed_transaction = $this->buildBestComposedTransactionWithFeePerByte($fee_per_byte, $payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee);
         } else {
@@ -275,6 +279,27 @@ class PaymentAddressSender {
         $sent_tx_id = $this->pushSignedTransaction($signed_transaction_hex, $transaction->getTxId()->getHex(), $input_utxo_identifiers, null);
         return $sent_tx_id;
 
+    }
+
+    // ------------------------------------------------------------------------
+    // errors
+    
+    public function resetLastError() {
+        $this->last_composition_error_data = null;
+    }
+    public function setLastError($message, $code=1) {
+        $this->last_composition_error_data = [
+            'message' => $message,
+            'code'    => $code,
+        ];
+    }
+    public function getLastErrorMessage() {
+        if ($this->last_composition_error_data === null) { return null; }
+        return $this->last_composition_error_data['message'];
+    }
+    public function getLastErrorCode() {
+        if ($this->last_composition_error_data === null) { return null; }
+        return $this->last_composition_error_data['code'];
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -414,6 +439,7 @@ class PaymentAddressSender {
         } catch (Exception $e) {
             EventLog::logError('compose.feeestimation.error', $e);
             Log::debug("FAILED to build transaction");
+            $this->setLastError($e->getMessage(), $e->getCode());
             return null;
         }
     }
