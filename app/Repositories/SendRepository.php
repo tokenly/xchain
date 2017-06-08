@@ -112,13 +112,17 @@ class SendRepository implements APIResourceRepositoryContract
             } catch (QueryException $e) {
                 if ($e->errorInfo[0] == 23000) {
                     $locked_send = $this->findByRequestID($request_id);
-                    Log::debug("\$locked_send not found by request_id.  looking up by txid ".(isset($create_attributes['txid']) ? $create_attributes['txid'] : null));
-
-                    // this could also be a txid conflict
-                    if (!$locked_send AND isset($create_attributes['txid'])) {
-                        $locked_send = $this->findByTXID($create_attributes['txid']);
+                    if (!$locked_send) {
+                        Log::debug("\$locked_send not found by request_id.  looking up by txid ".(isset($create_attributes['txid']) ? $create_attributes['txid'] : json_encode(null, 192)));
+                        // this could also be a txid conflict
+                        if (!$locked_send AND isset($create_attributes['txid'])) {
+                            $locked_send = $this->findByTXID($create_attributes['txid']);
+                        }
                     }
 
+                    if (!$locked_send) {
+                        throw new Exception("Duplicate send parameters detected.  Please specify a unique requestId and try again.", 1);
+                    }
                 } else {
                     // some other kind of query exception
                     throw $e;

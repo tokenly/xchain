@@ -236,7 +236,7 @@ class SendController extends APIController {
                         $is_sweep                  = false;
                         $built_transaction_to_send = $address_sender->composeUnsignedTransaction($payment_address, ($is_multisend ? $destinations : $destination), $float_quantity, $asset, $change_address_collection, $float_fee, $fee_per_byte, $float_btc_dust_size, $is_sweep);
                         if (!$built_transaction_to_send) {
-                            $error = $built_transaction_to_send->getLastErrorMessage();
+                            $error = $address_sender->getLastErrorMessage();
                             throw new PaymentException($error ? $error : "Failed to build transaction", 1);
                         }
 
