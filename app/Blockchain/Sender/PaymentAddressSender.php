@@ -37,8 +37,8 @@ use Tokenly\XCPDClient\Client as XCPDClient;
 
 class PaymentAddressSender {
 
-    const DEFAULT_FEE                = 0.0001;
-    const HIGH_FEE_SATOSHIS          = 1000000; // 0.01;
+    const DEFAULT_FEE                = 0.0003;
+    const HIGH_FEE_SATOSHIS          = 3000000; // 0.03;
     const SATOSHI                    = 100000000;
 
     const DEFAULT_REGULAR_DUST_SIZE = 0.00005430;
