@@ -37,9 +37,9 @@ use Tokenly\XCPDClient\Client as XCPDClient;
 
 class PaymentAddressSender {
 
-    const DEFAULT_FEE                = 0.0003;
-    const HIGH_FEE_SATOSHIS          = 3000000; // 0.03;
-    const SATOSHI                    = 100000000;
+    static $_DEFAULT_FEE             = null;    // this is set by the DEFAULT_BITCOIN_FEE environemt variable
+    const HIGH_FEE_SATOSHIS         = 1000000; // 0.01;
+    const SATOSHI                   = 100000000;
 
     const DEFAULT_REGULAR_DUST_SIZE = 0.00005430;
     const MINIMUM_DUST_SIZE         = 0.00005000;
@@ -47,6 +47,13 @@ class PaymentAddressSender {
     const ASSET_SEND_OP_RETURN_SIZE = 28;
 
     protected $last_composition_error_data = null;
+
+    public static function getDefaultFee() {
+        if (!isset(self::$_DEFAULT_FEE)) {
+            self::$_DEFAULT_FEE = env('DEFAULT_BITCOIN_FEE', 0.0003);
+        }
+        return self::$_DEFAULT_FEE;
+    }
 
     public function __construct(XCPDClient $xcpd_client, Bitcoind $bitcoind, CounterpartySender $xcpd_sender, BitcoinPayer $bitcoin_payer, BitcoinAddressGenerator $address_generator, Cache $asset_cache, ComposedTransactionRepository $composed_transaction_repository, TXOChooser $txo_chooser, Composer $transaction_composer, TXORepository $txo_repository, LedgerEntryRepository $ledger_entry_repository, PaymentAddressRepository $payment_address_repository, FeePriority $fee_priority) {
         $this->xcpd_client                     = $xcpd_client;
@@ -93,7 +100,7 @@ class PaymentAddressSender {
     }
 
     public function sweepAllAssetsByRequestID($request_id, PaymentAddress $payment_address, $destination, $float_fee=null, $fee_per_byte=null, $float_btc_dust_size=null) {
-        if ($float_fee === null)            { $float_fee            = self::DEFAULT_FEE; }
+        if ($float_fee === null)            { $float_fee            = self::getDefaultFee(); }
         if ($float_btc_dust_size === null)  { $float_btc_dust_size  = self::DEFAULT_REGULAR_DUST_SIZE; }
 
         // combine all balances
@@ -448,7 +455,7 @@ class PaymentAddressSender {
         Log::debug("buildComposedTransaction \$float_quantity=".json_encode($float_quantity, 192)." \$asset=".json_encode($asset, 192)." \$float_fee=".json_encode($float_fee, 192)." \$fee_per_byte=".json_encode($fee_per_byte, 192)." \$float_btc_dust_size=".json_encode($float_btc_dust_size, 192)." is_sweep=".json_encode($is_sweep, 192));
         $signed_transaction = null;
 
-        if ($float_fee === null)            { $float_fee            = self::DEFAULT_FEE; }
+        if ($float_fee === null)            { $float_fee            = self::getDefaultFee(); }
         if ($float_btc_dust_size === null)  { $float_btc_dust_size  = self::DEFAULT_REGULAR_DUST_SIZE; }
 
         if ($payment_address->isManaged()) {
@@ -576,7 +583,7 @@ class PaymentAddressSender {
 
         // use approximate fee
         $float_quantity = $float_quantity_orig;
-        $float_fee = self::DEFAULT_FEE;
+        $float_fee = self::getDefaultFee();
         if ($float_fee > $float_quantity) { $float_fee = $float_quantity; }
         $float_quantity -= $float_fee;
         $composed_transaction_object = $this->transaction_composer->composeSend('BTC', $float_quantity, $payment_address['address'], $wif_private_key, $chosen_txos, $payment_address['address'], $float_fee);

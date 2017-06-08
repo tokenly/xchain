@@ -110,7 +110,7 @@ class SendController extends APIController {
         $quantity_sat  = CurrencyUtil::valueToSatoshis($is_multisend ? $this->sumMultisendQuantity($destinations) : $request_attributes['quantity']);
         $asset         = $is_regular_send ? $request_attributes['asset'] : 'BTC';
         $is_sweep      = isset($request_attributes['sweep']) ? !!$request_attributes['sweep'] : false;
-        $float_fee     = isset($request_attributes['fee']) ? $request_attributes['fee'] : PaymentAddressSender::DEFAULT_FEE;
+        $float_fee     = isset($request_attributes['fee']) ? $request_attributes['fee'] : PaymentAddressSender::getDefaultFee();
         $dust_size     = isset($request_attributes['dust_size']) ? $request_attributes['dust_size'] : PaymentAddressSender::DEFAULT_REGULAR_DUST_SIZE;
         $request_id    = isset($request_attributes['requestId']) ? $request_attributes['requestId'] : Uuid::uuid4()->toString();
         $custom_inputs = isset($request_attributes['utxo_override']) ? $request_attributes['utxo_override'] : false;

@@ -29,6 +29,7 @@
         <env name="COPAY_QUEUE_CONNECTION" value="sync"/>
 
         <env name="BITCOINFEES_URL" value="none"/>
+        <env name="DEFAULT_BITCOIN_FEE" value="0.0001"/>
     </php>
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">
