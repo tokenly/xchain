@@ -242,7 +242,7 @@ class PaymentAddressSender {
         if ($fee_per_byte AND !$is_sweep) {
             $composed_transaction = $this->buildBestComposedTransactionWithFeePerByte($fee_per_byte, $payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee);
         } else {
-            $composed_transaction = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $_fee_per_byte=null, $float_btc_dust_size, $is_sweep);
+            $composed_transaction = $this->buildComposedTransaction($payment_address, $destination, $float_quantity, $asset, $change_address_collection, $float_fee, $fee_per_byte, $float_btc_dust_size, $is_sweep);
         }
         return $composed_transaction;
     }
@@ -474,6 +474,21 @@ class PaymentAddressSender {
             if ($float_utxo_sum < self::MINIMUM_DUST_SIZE) {
                 throw new Exception("BTC amount is too small to sweep", 1);
             }
+
+            if ($fee_per_byte !== null) {
+                $this->resetLastError();
+                $coin_group = $this->selectCoinGroupForPaymentAddress($payment_address, $fee_per_byte, $float_utxo_sum, $destination, $_change_address_collection=null, false, $_is_sweep=true);
+                if (!$coin_group) {
+                    if ($this->getLastErrorMessage()) {
+                        throw new CompositionException($this->getLastErrorMessage(), $this->getLastErrorCode());
+                    }
+                    throw new CompositionException("Unable to select transaction outputs (UTXOs)", -100);
+                }
+                $chosen_txos = $coin_group['txos'];
+                $debug_strategy_text = 'fee_per_byte';
+                $float_fee = CurrencyUtil::satoshisToValue($coin_group['fee']);
+            }
+
             $float_quantity = $float_utxo_sum - $float_fee;
             if ($float_quantity <= 0) {
                 // the fee is too large - try to send it with as much fee as possible
@@ -715,7 +730,7 @@ class PaymentAddressSender {
 
     // ------------------------------------------------------------------------
     
-    protected function selectCoinGroupForPaymentAddress(PaymentAddress $payment_address, $fee_per_byte, $float_quantity, $destination_or_destinations, $change_address_collection, $is_asset_send) {
+    protected function selectCoinGroupForPaymentAddress(PaymentAddress $payment_address, $fee_per_byte, $float_quantity, $destination_or_destinations, $change_address_collection, $is_asset_send, $is_sweep=false) {
         $utxos = $this->txo_repository->findByPaymentAddress($payment_address, [TXO::UNCONFIRMED, TXO::CONFIRMED], true)->toArray();
 
         // build destination outputs
@@ -757,8 +772,28 @@ class PaymentAddressSender {
             $selector->setOpReturnSize(self::ASSET_SEND_OP_RETURN_SIZE);
         }
 
+        // sweep 
+        if ($is_sweep) {
+            $selector->sweep(); 
+        }
 
         $coin_group = $selector->chooseCoins(); 
+
+        if ($is_sweep) {
+            // don't sweep if everything would go to fees
+            $utxo_count = count($utxos);
+            EventLog::debug('coins.selection.sweepFailed.feeTooHigh', [
+                'quantity'         => $float_quantity,
+                'utxoCount'        => $utxo_count,
+                'paymentAddressID' => $payment_address['uuid'],
+                'feePerByte'       => $fee_per_byte,
+            ]);
+            if ($coin_group['fee'] >= $coin_group['in_amount']) {
+                $this->setLastError("The fee rate was too high to sweep all of the UTXOs.", -101);
+                return null;
+            }
+        }
+
         if (!$coin_group) {
             EventLog::debug('coins.selection.failed', [
                 'quantity'         => $float_quantity,

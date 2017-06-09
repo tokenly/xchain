@@ -91,6 +91,57 @@ class FeePerByteTest extends TestCase {
     }
 
 
+    public function testSweepFeeCoinSelection_1() {
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $user = $this->app->make('\UserHelper')->createSampleUser();
+        list($payment_address, $input_utxos) = $this->makeAddressAndSimpleSampleTXOs($user);
+
+        $sender = app(PaymentAddressSender::class);
+        $is_sweep = true;
+        $fee_per_byte = 500;
+        $unsigned_transaction = $sender->composeUnsignedTransaction($payment_address, '1AAAA2222xxxxxxxxxxxxxxxxxxy4pQ3tU', 0, 'BTC', $_change_address_collection=null, $_float_fee=null, $fee_per_byte, $_float_btc_dust_size=null, $is_sweep);
+
+        // size for a single input/single output is 191 bytes
+        PHPUnit::assertEquals(95500, $unsigned_transaction->feeSatoshis());
+        PHPUnit::assertEquals(1, count($unsigned_transaction->getInputUtxos()));
+    }
+
+    public function testSweepFeeCoinSelection_2() {
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $user = $this->app->make('\UserHelper')->createSampleUser();
+        list($payment_address, $input_utxos) = $this->makeAddressAndSampleTXOs($user);
+
+        $sender = app(PaymentAddressSender::class);
+        $is_sweep = true;
+        $fee_per_byte = 500;
+        $unsigned_transaction = $sender->composeUnsignedTransaction($payment_address, '1AAAA2222xxxxxxxxxxxxxxxxxxy4pQ3tU', 0, 'BTC', $_change_address_collection=null, $_float_fee=null, $fee_per_byte, $_float_btc_dust_size=null, $is_sweep);
+
+        // size is 1073 bytes
+        PHPUnit::assertEquals(7, count($unsigned_transaction->getInputUtxos()));
+        PHPUnit::assertEquals(1073*500, $unsigned_transaction->feeSatoshis());
+    }
+
+
+    /**
+     * @expectedException App\Blockchain\Sender\Exception\CompositionException
+     * @expectedExceptionMessage The fee rate was too high to sweep all of the UTXOs
+     */
+    public function testSweepFeeCoinSelectionTooSmall_3() {
+        $mock_calls = app('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+
+        $user = $this->app->make('\UserHelper')->createSampleUser();
+        list($payment_address, $input_utxos) = $this->makeAddressAndSampleTinyTXOs($user);
+
+        $sender = app(PaymentAddressSender::class);
+        $is_sweep = true;
+        $fee_per_byte = 350;
+        $unsigned_transaction = $sender->composeUnsignedTransaction($payment_address, '1AAAA2222xxxxxxxxxxxxxxxxxxy4pQ3tU', 0, 'BTC', $_change_address_collection=null, $_float_fee=null, $fee_per_byte, $_float_btc_dust_size=null, $is_sweep);
+    }
+
+
+
     // ------------------------------------------------------------------------
 
     // total is 50019001 satoshis
@@ -127,6 +178,24 @@ class FeePerByteTest extends TestCase {
         $sample_txos = [];
         $txid = $txo_helper->nextTXID();
         $sample_txos[0] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txid, 'amount' => 100000000,  'n' => 0]);
+
+        return [$payment_address, $sample_txos];
+    }
+
+    // total is 6000 satoshis
+    protected function makeAddressAndSampleTinyTXOs($user=null) {
+        $payment_address_helper = app('PaymentAddressHelper');
+        $txo_helper             = app('SampleTXOHelper');
+
+        $payment_address = $payment_address_helper->createSamplePaymentAddressWithoutInitialBalances($user, ['address' => '1AAAA1111xxxxxxxxxxxxxxxxxxy43CZ9j']);
+
+        // make 3 TXOs (with 0.00006000 BTC)
+        $sample_txos = [];
+        $txid = $txo_helper->nextTXID();
+        $sample_txos[0] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txid, 'amount' => 1000,  'n' => 0]);
+        $sample_txos[1] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txid, 'amount' => 2000,  'n' => 1]);
+        $txid = $txo_helper->nextTXID();
+        $sample_txos[2] = $txo_helper->createSampleTXO($payment_address, ['txid' => $txid, 'amount' => 3000,  'n' => 0]);
 
         return [$payment_address, $sample_txos];
     }

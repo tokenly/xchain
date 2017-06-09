@@ -29,6 +29,9 @@ class CoinSelector {
     // set if confirmed txos are required
     var $require_confirmed = false;
 
+    // set if confirmed txos are required
+    var $is_sweep = false;
+
     // the fee per byte
     var $fee_per_byte = 0;
 
@@ -75,6 +78,11 @@ class CoinSelector {
         return $this;
     }
 
+    public function sweep() {
+        $this->is_sweep = true;
+        return $this;
+    }
+
     /**
      * builds a coin group
      *
@@ -107,9 +115,16 @@ class CoinSelector {
 
         // get confirmed and green UTXOs first
         $source_utxos = $this->filterGreenOrConfirmedUTXOs($all_sorted_utxos);
-        $target_coin_group = $this->buildBestCoinGroup($this->output_amount, $source_utxos, $base_tx_size, $this->fee_per_byte);
-        if ($target_coin_group) {
-            return $target_coin_group;
+        if (!$this->is_sweep OR $this->require_confirmed) {
+            if ($this->is_sweep) {
+                $target_coin_group = $this->buildTargetCoinGroupFromUTXOsForSweep($source_utxos, $base_tx_size, $this->fee_per_byte);
+            } else {
+                $target_coin_group = $this->buildBestCoinGroup($this->output_amount, $source_utxos, $base_tx_size, $this->fee_per_byte);
+            }
+            if ($target_coin_group) {
+                // Log::debug("chooseCoins confirmed/green \$target_coin_group=".json_encode($target_coin_group, 192));
+                return $target_coin_group;
+            }
         }
 
         if ($this->require_confirmed) {
@@ -119,7 +134,13 @@ class CoinSelector {
 
         // fallback to include unconfirmed UTXOs
         $source_utxos = $all_sorted_utxos;
-        $target_coin_group = $this->buildBestCoinGroup($this->output_amount, $source_utxos, $base_tx_size, $this->fee_per_byte);
+        if ($this->is_sweep) {
+            $target_coin_group = $this->buildTargetCoinGroupFromUTXOsForSweep($source_utxos, $base_tx_size, $this->fee_per_byte);
+        } else {
+            $target_coin_group = $this->buildBestCoinGroup($this->output_amount, $source_utxos, $base_tx_size, $this->fee_per_byte);
+        }
+
+        // Log::debug("chooseCoins \$target_coin_group=".json_encode($target_coin_group, 192));
         return $target_coin_group;
     }
 
@@ -192,10 +213,34 @@ class CoinSelector {
         return null;
     }
 
+    protected function buildTargetCoinGroupFromUTXOsForSweep($source_utxos, $base_tx_size, $fee_per_byte) {
+        $input_amount = $this->sumUTXOs($source_utxos);
+        $tx_size = $this->buildTransactionSize($base_tx_size, count($source_utxos), $_with_change_output=false);
+        $fee = $tx_size * $fee_per_byte;
+        $change = 0;
+
+        // the fee can never be more than the input amount
+        if ($fee > $input_amount) {
+            $fee = $input_amount;
+        }
+
+        $coin_group = [
+            'in_amount'     => $input_amount,
+            'change_amount' => $change,
+            'fee'           => $fee,
+            'fee_per_byte'  => $fee / $tx_size,
+            'size'          => $tx_size,
+            'txos'          => $source_utxos,
+        ];
+
+        return $coin_group;
+    }
+
+
     protected function buildCoinGroup($input_amount, $output_amount, $fee_per_byte, $base_tx_size, $txos, $with_change_output) {
         // check the fee
-        $size = $this->buildTransactionSize($base_tx_size, count($txos), $with_change_output);
-        $required_fee = $size * $fee_per_byte;
+        $tx_size = $this->buildTransactionSize($base_tx_size, count($txos), $with_change_output);
+        $required_fee = $tx_size * $fee_per_byte;
 
         if ($input_amount >= $output_amount + $required_fee) {
             // calculate the fee
@@ -215,8 +260,8 @@ class CoinSelector {
                 'in_amount'     => $input_amount,
                 'change_amount' => $change,
                 'fee'           => $fee,
-                'fee_per_byte'  => $fee / $size,
-                'size'          => $size,
+                'fee_per_byte'  => $fee / $tx_size,
+                'size'          => $tx_size,
                 'txos'          => $txos,
             ];
 
@@ -323,6 +368,14 @@ class CoinSelector {
     }
 
     // ------------------------------------------------------------------------
+
+    protected function sumUTXOs($utxos) {
+        $total = 0;
+        foreach($utxos as $utxo) {
+            $total += $utxo['amount'];
+        }
+        return $total;
+    }
 
 }
 
