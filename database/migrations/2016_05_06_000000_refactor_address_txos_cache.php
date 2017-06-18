@@ -45,7 +45,7 @@ class RefactorAddressTxosCache extends Migration
             $table->longText('script')->nullable();
 
             $table->char('destination_address', 35)->index()->nullable();
-            $table->integer('destination_value')->unsigned()->nullable();
+            $table->bigInteger('destination_value')->unsigned()->nullable();
 
             $table->boolean('spent')->default(false);
             $table->integer('spent_confirmations')->unsigned()->nullable();
