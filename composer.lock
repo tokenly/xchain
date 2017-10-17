@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "d05c5e8da7e98d9d14d324db0cd45734",
+    "content-hash": "be888ea39cb0b05faafb8a56db22cff8",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
@@ -3146,7 +3146,7 @@
                 }
             ],
             "description": "A library to monitor services health and report to consul",
-            "time": "2016-05-07 17:06:25"
+            "time": "2016-05-07T17:06:25+00:00"
         },
         {
             "name": "tokenly/copay-client",
@@ -3279,7 +3279,7 @@
                 }
             ],
             "description": "A library",
-            "time": "2015-09-16 02:07:35"
+            "time": "2015-09-16T02:07:35+00:00"
         },
         {
             "name": "tokenly/counterparty-transaction-composer",
@@ -3329,16 +3329,16 @@
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
-            "version": "v1.3.1",
+            "version": "v1.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-parser.git",
-                "reference": "bf07c9c675c5cf869051331b1969306a696a6282"
+                "reference": "370e3748e33fc28723d6fe8529c092d5fda9a017"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/bf07c9c675c5cf869051331b1969306a696a6282",
-                "reference": "bf07c9c675c5cf869051331b1969306a696a6282",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/370e3748e33fc28723d6fe8529c092d5fda9a017",
+                "reference": "370e3748e33fc28723d6fe8529c092d5fda9a017",
                 "shasum": ""
             },
             "require": {
@@ -3367,7 +3367,7 @@
                 }
             ],
             "description": "A counterparty transaction parser",
-            "time": "2016-10-19T12:23:42+00:00"
+            "time": "2017-10-17T14:32:35+00:00"
         },
         {
             "name": "tokenly/crypto-quantity",
@@ -3545,7 +3545,7 @@
                 }
             ],
             "description": "A library",
-            "time": "2015-04-18 16:25:40"
+            "time": "2015-04-18T16:25:40+00:00"
         },
         {
             "name": "tokenly/laravel-event-log",
@@ -3626,7 +3626,7 @@
                 }
             ],
             "description": "A library for locking records in a database",
-            "time": "2016-02-06 16:23:20"
+            "time": "2016-02-06T16:23:20+00:00"
         },
         {
             "name": "tokenly/pusher-client",
@@ -3668,7 +3668,7 @@
                 }
             ],
             "description": "A library",
-            "time": "2016-06-07 18:29:44"
+            "time": "2016-06-07T18:29:44+00:00"
         },
         {
             "name": "tokenly/token-generator",
@@ -3708,7 +3708,7 @@
                 }
             ],
             "description": "A library to generate random strings",
-            "time": "2014-12-03 03:55:02"
+            "time": "2014-12-03T03:55:02+00:00"
         },
         {
             "name": "tokenly/xcaller-client",
@@ -3748,7 +3748,7 @@
                 }
             ],
             "description": "A library to push webhook notifications to XCaller",
-            "time": "2016-02-17 02:51:04"
+            "time": "2016-02-17T02:51:04+00:00"
         },
         {
             "name": "tokenly/xcpd-client",
@@ -3789,7 +3789,7 @@
                 }
             ],
             "description": "A client library for the counterpartyd API",
-            "time": "2015-07-11 19:35:43"
+            "time": "2015-07-11T19:35:43+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
