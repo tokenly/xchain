@@ -227,7 +227,7 @@ class TransactionParserTest extends TestCase {
 
     }
 
-    public function testParserForCounterpartyEnhancedSend() {
+    public function testParserForCounterpartyEnhancedSend_1() {
         $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
         
         $enhanced_builder = app('App\Handlers\XChain\Network\Bitcoin\EnhancedBitcoindTransactionBuilder');
@@ -247,6 +247,30 @@ class TransactionParserTest extends TestCase {
         PHPUnit::assertArrayNotHasKey('BTC', $parsed_data['receivedAssets']['1EuJjmRA2kMFRhjAee8G6aqCoFpFnNTJh4'], "Failed to assert recipient did not receive BTC");
         PHPUnit::assertArrayNotHasKey('1MFHQCPGtcSfNPXAS6NryWja3TbUN9239Y', $parsed_data['receivedAssets'], "Failed to assert sender did not receive assets");
         PHPUnit::assertEquals(7334, $parsed_data['receivedAssets']['1EuJjmRA2kMFRhjAee8G6aqCoFpFnNTJh4']['SOUP']);
+
+    }
+
+    public function testParserForCounterpartyEnhancedSend_2() {
+        $mock_calls = $this->app->make('CounterpartySenderMockBuilder')->installMockCounterpartySenderDependencies($this->app, $this);
+        
+        $enhanced_builder = app('App\Handlers\XChain\Network\Bitcoin\EnhancedBitcoindTransactionBuilder');
+        $bitcoin_data = $enhanced_builder->buildTransactionData('a13efa00507c51d52a4e7638a2e65674d9f271de1533a0eba4845876b90b41bf');
+        // echo "\$bitcoin_data: ".json_encode($bitcoin_data, 192)."\n";
+
+        $builder = app('App\Handlers\XChain\Network\Bitcoin\BitcoinTransactionEventBuilder');
+        $ts = time() * 1000;
+        $parsed_data = $builder->buildParsedTransactionData($bitcoin_data, $ts);
+        PHPUnit::assertEquals('counterparty', $parsed_data['network']);
+        // echo "\$parsed_data: ".json_encode($parsed_data, 192)."\n";
+
+        PHPUnit::assertArrayHasKey('spentAssets', $parsed_data);
+        $fee = 0.00045779;
+        PHPUnit::assertEquals($fee, $parsed_data['spentAssets']['16xWx8Zgn52aMdNyk8TXqjq3gwqXZcSCxj']['BTC']);
+        PHPUnit::assertEquals(5, $parsed_data['spentAssets']['16xWx8Zgn52aMdNyk8TXqjq3gwqXZcSCxj']['LTBCOIN']);
+
+        PHPUnit::assertArrayNotHasKey('BTC', $parsed_data['receivedAssets']['15QLj4s59PyLUkXdGxW5YkJFfqvA2uBeDT'], "Failed to assert recipient did not receive BTC");
+        PHPUnit::assertArrayNotHasKey('16xWx8Zgn52aMdNyk8TXqjq3gwqXZcSCxj', $parsed_data['receivedAssets'], "Failed to assert sender did not receive assets");
+        PHPUnit::assertEquals(5, $parsed_data['receivedAssets']['15QLj4s59PyLUkXdGxW5YkJFfqvA2uBeDT']['LTBCOIN']);
 
     }
 

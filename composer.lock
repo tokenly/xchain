@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "be888ea39cb0b05faafb8a56db22cff8",
+    "content-hash": "117ba4dd99a060c945f1f73489cd30d9",
     "packages": [
         {
             "name": "bitwasp/bitcoin",
@@ -3329,16 +3329,16 @@
         },
         {
             "name": "tokenly/counterparty-transaction-parser",
-            "version": "v1.4.0",
+            "version": "v1.4.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tokenly/counterparty-transaction-parser.git",
-                "reference": "370e3748e33fc28723d6fe8529c092d5fda9a017"
+                "reference": "dd39cba0f595948e3c99d1ab7bc134d3f9a88bec"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/370e3748e33fc28723d6fe8529c092d5fda9a017",
-                "reference": "370e3748e33fc28723d6fe8529c092d5fda9a017",
+                "url": "https://api.github.com/repos/tokenly/counterparty-transaction-parser/zipball/dd39cba0f595948e3c99d1ab7bc134d3f9a88bec",
+                "reference": "dd39cba0f595948e3c99d1ab7bc134d3f9a88bec",
                 "shasum": ""
             },
             "require": {
@@ -3367,7 +3367,7 @@
                 }
             ],
             "description": "A counterparty transaction parser",
-            "time": "2017-10-17T14:32:35+00:00"
+            "time": "2017-10-17T18:58:44+00:00"
         },
         {
             "name": "tokenly/crypto-quantity",
