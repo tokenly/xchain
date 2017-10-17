@@ -16,6 +16,7 @@ class Kernel extends ConsoleKernel {
         \App\Console\Commands\Blocks\ReparseBlockCommand::class,
         \App\Console\Commands\Transaction\ResendTransactionNotificationsCommand::class,
         \App\Console\Commands\Transaction\ReprocessAllNotificationsCommand::class,
+        \App\Console\Commands\Transaction\MultiInputSweepCommand::class,
 
         // development
         \App\Console\Commands\Development\PopulateNotificationCommand::class,
