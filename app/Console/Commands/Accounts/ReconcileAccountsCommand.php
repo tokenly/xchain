@@ -346,7 +346,7 @@ class ReconcileAccountsCommand extends Command {
                 'reason' => $min_conf.' '.str_plural('confirmation', $min_conf),
             ];
         }
-        if ($total_transactions > 2000) {
+        if ($total_transactions > 3000) {
             return [
                 'adjust' => false,
                 'reason' => 'too many transactions',
